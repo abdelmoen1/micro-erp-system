@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\InvitationController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\DashboardController;
 
 
 // Authentication
@@ -25,6 +26,7 @@ Route::middleware(['auth:sanctum', 'store'])->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::post('/invitations', [InvitationController::class, 'store']);
     Route::get('/users', [UserController::class, 'index']);
 
