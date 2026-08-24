@@ -1,3 +1,4 @@
+import Button from "./Button";
 function Navbar() {
   return (
     <nav>
@@ -28,9 +29,7 @@ function Navbar() {
 
           <a href="/login">Login</a>
 
-          <a href="/register" className="signup-button">
-            Get Started
-          </a>
+          <Button />
         </div>
       </div>
     </nav>
