@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Features from "./components/Features";
 import WhyErpSystem from "./components/WhyErpSystem";
+import Steps from "./components/Steps";
 import "./App.css";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Hero />
         <Features />
         <WhyErpSystem />
+        <Steps />
       </main>
     </>
   );

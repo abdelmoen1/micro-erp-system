@@ -622,3 +622,52 @@ nav .container {
   font-size: 10px;
   color: var(--gray);
 }
+
+.steps-section {
+  background: var(--navy);
+  padding: 96px 0px;
+}
+
+.steps-subtitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 14px;
+}
+
+.steps-title {
+  font-size: clamp(1.6rem, 3vw, 2.6rem);
+  font-weight: 700;
+  color: rgb(255, 255, 255);
+  margin-bottom: 56px;
+  line-height: 1.2;
+  white-space: pre-line;
+}
+
+.step-card {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 24px;
+}
+
+.step-number {
+  font-size: 40px;
+  font-weight: 800;
+  color: rgba(42, 142, 158, 0.8);
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.step-card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: rgb(255, 255, 255);
+  margin-bottom: 10px;
+}
+
+.step-card-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.72;
+}
