@@ -5,6 +5,7 @@ import heroImg from "./assets/hero.png";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Features from "./components/Features";
+import WhyErpSystem from "./components/WhyErpSystem";
 import "./App.css";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
       <main>
         <Hero />
         <Features />
+        <WhyErpSystem />
       </main>
     </>
   );
