@@ -9,6 +9,8 @@ import WhyErpSystem from "./components/WhyErpSystem";
 import Steps from "./components/Steps";
 import Mission from "./components/Mission";
 import Plans from "./components/Plans";
+import CTA from "./components/CTA";
+import Footer from "./components/Footer";
 import "./App.css";
 
 function App() {
@@ -24,7 +26,11 @@ function App() {
         <Steps />
         <Mission />
         <Plans />
+        <CTA />
       </main>
+      <footer className="footer-section">
+        <Footer />
+      </footer>
     </>
   );
 }
