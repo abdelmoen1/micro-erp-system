@@ -671,3 +671,57 @@ nav .container {
   color: rgba(255, 255, 255, 0.6);
   line-height: 1.72;
 }
+
+.mission-section {
+  padding-top: 96px;
+  padding-bottom: 96px;
+  background: var(--white);
+}
+
+.mission-container {
+  text-align: center;
+}
+
+.mission-subtitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 14px;
+}
+
+.mission-title {
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--dark);
+  line-height: 1.18;
+  white-space: pre-line;
+  margin-bottom: 16px;
+}
+
+.mission-description {
+  font-size: 15px;
+  color: var(--gray);
+  line-height: 1.72;
+  max-width: 440px;
+  margin: 0px auto;
+}
+
+.metric-item {
+  padding: 24px 0px;
+}
+
+.metric-value {
+  font-size: 44px;
+  font-weight: 800;
+  color: var(--dark);
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+
+.metric-label {
+  font-size: 15px;
+  color: var(--gray);
+}

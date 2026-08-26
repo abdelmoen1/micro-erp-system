@@ -8,6 +8,7 @@ import Features from "./components/Features";
 import WhyErpSystem from "./components/WhyErpSystem";
 import Steps from "./components/Steps";
 import "./App.css";
+import Mission from "./components/Mission";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Features />
         <WhyErpSystem />
         <Steps />
+        <Mission />
       </main>
     </>
   );
