@@ -105,7 +105,7 @@ nav .container {
 
 .hero-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 48px;
   align-items: center;
 }
@@ -384,7 +384,7 @@ nav .container {
 /* الهيدر والترتيب العلوي */
 .features-header {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 40px;
   margin-bottom: 56px;
   align-items: end;
@@ -724,4 +724,183 @@ nav .container {
 .metric-label {
   font-size: 15px;
   color: var(--gray);
+}
+
+/* Container Layout */
+.plans-section {
+  padding-top: 96px;
+  padding-bottom: 96px;
+  background: var(--teal-light);
+}
+
+.plans-header {
+  text-align: center;
+  margin-bottom: 0px;
+}
+
+.plan-grid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.plans-subtitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 14px;
+}
+
+.plans-title {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--dark);
+}
+
+/* Card Structures */
+.plan-card {
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  transition: 0.4s ease;
+  width: 400px;
+  margin: auto; 
+}
+
+.plan-card:hover {
+  transform: translateY(-4px);
+}
+
+.plan-basic {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+}
+
+.plan-professional {
+  background: var(--teal);
+  border: none;
+}
+
+.plan-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+/* Typography Variations */
+.plan-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.plan-price {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.font-dark {
+  color: var(--dark);
+}
+
+.font-light {
+  color: rgb(255, 255, 255);
+}
+
+.plan-description {
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.text-gray {
+  color: var(--gray);
+}
+
+.text-light {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Action Icons */
+.arrow-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.border-btn {
+  border: 1.5px solid var(--border);
+  color: var(--gray);
+}
+
+.opaque-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgb(255, 255, 255);
+}
+
+/* Feature Lists */
+.plan-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+  list-style: none;
+  padding: 0;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.item-dark {
+  color: var(--text);
+}
+
+.item-light {
+  color: rgb(255, 255, 255);
+}
+
+.checkmark-teal {
+  color: var(--teal);
+  font-size: 14px;
+}
+
+.checkmark-opaque {
+  opacity: 0.9;
+}
+
+/* Footer Action Buttons */
+.plan-action-btn {
+  margin-top: auto;
+  display: block;
+  text-align: center;
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.action-basic {
+  border: 1.5px solid var(--border);
+  color: var(--text);
+}
+
+.action-professional {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgb(255, 255, 255);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
 }

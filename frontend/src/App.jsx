@@ -7,8 +7,9 @@ import Hero from "./components/Hero";
 import Features from "./components/Features";
 import WhyErpSystem from "./components/WhyErpSystem";
 import Steps from "./components/Steps";
-import "./App.css";
 import Mission from "./components/Mission";
+import Plans from "./components/Plans";
+import "./App.css";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <WhyErpSystem />
         <Steps />
         <Mission />
+        <Plans />
       </main>
     </>
   );
