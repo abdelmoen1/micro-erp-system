@@ -16,7 +16,7 @@ import "./App.css";
 import { translation } from "./data/translation";
 
 function App() {
-  const [lang, setLang] = useState("en");
+  const [lang, setLang] = useState("ar");
   const t = translation[lang];
   useEffect(() => {
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
