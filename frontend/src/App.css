@@ -1121,3 +1121,93 @@ nav .container {
   padding: 5px 12px;
   cursor: pointer;
 }
+
+/* Container Layout */
+.faq-section {
+  padding-top: 96px;
+  padding-bottom: 96px;
+  background: var(--white);
+}
+
+.faq-container {
+  max-width: 760px;
+  margin: 0px auto;
+}
+
+.faq-subtitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 14px;
+}
+
+.faq-title {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--dark);
+  margin-bottom: 40px;
+}
+
+/* Accordion Wrapper Items */
+.faq-item {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0px;
+}
+
+.faq-trigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 0px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  gap: 16px;
+  text-align: inherit;
+}
+
+.faq-question {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: inherit;
+}
+
+/* Animated Caret Icon Indicators */
+.faq-arrow {
+  font-size: 18px;
+  color: var(--teal);
+  flex-shrink: 0;
+  transform: rotate(0deg);
+  transition: transform 0.3s;
+  display: inline-block;
+}
+
+.arrow-rotated {
+  transform: rotate(180deg);
+}
+
+/* Accordion Dynamic Height Panels */
+.faq-content {
+  overflow: hidden;
+  transition: max-height 0.35s ease-in-out;
+}
+
+.content-hidden {
+  max-height: 0px;
+}
+
+.content-visible {
+  max-height: 200px;
+}
+
+.faq-answer {
+  font-size: 14px;
+  color: var(--gray);
+  line-height: 1.7;
+  padding-bottom: 18px;
+}
