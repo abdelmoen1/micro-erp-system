@@ -1,27 +1,25 @@
 import HeroCard from "./HeroCard";
-import Button from "./Button";
-function Hero() {
+function Hero({ t }) {
   return (
     <section className="hero-section">
       <div className="container">
         <div className="hero-grid">
           <div className="hero-title">
-            <p>✦ Built for small businesses</p>
-            <h1>Run Your Entire Store From One Place.</h1>
-            <p>
-              Supports small shops and businesses with simple invoicing, debt
-              tracking, and effective sales management tools.
-            </p>
+            <p>{t.heroSubTitle}</p>
+            <h1>{t.heroTitle}</h1>
+            <p>{t.heroSub}</p>
             <div className="hero-form">
               <input
                 type="email"
                 name="email"
-                placeholder="Your business email"
+                placeholder={t.heroPlaceholder}
               />
-              <Button />
+              <a href="/register" className="register-button">
+                {t.heroCta}
+              </a>
             </div>
             <div className="hero-foot">
-              <p>Trusted by</p>
+              <p>{t.partnerLabel}</p>
               <ul>
                 <li>Noon</li>
                 <li>Salla</li>
@@ -31,7 +29,7 @@ function Hero() {
             </div>
           </div>
           <div>
-            <HeroCard />
+            <HeroCard t={t} />
           </div>
         </div>
       </div>

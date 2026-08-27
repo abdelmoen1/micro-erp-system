@@ -1,22 +1,20 @@
-function WhySection() {
+function WhySection({ t }) {
   return (
     <section id="why" className="why-section">
       <div className="container">
-        <p className="why-subtitle">Why us</p>
-        <h2 className="why-title">Why they prefer Micro ERP</h2>
+        <p className="why-subtitle">{t.whyEyebrow}</p>
+        <h2 className="why-title">{t.whyTitle}</h2>
 
         <div className="why-grid">
           <div className="flex-column-gap20">
             <div className="why-card card-padding32">
-              <div className="stat-number">500+</div>
-              <p className="stat-text">Stores already running on Micro ERP</p>
+              <div className="stat-number">{t.stat1Num}</div>
+              <p className="stat-text">{t.stat1Label}</p>
             </div>
 
             <div className="why-card card-padding24">
-              <h3 className="card-title">Access your reports anytime</h3>
-              <p className="card-text mb16">
-                Sales, debts, and payments always at your fingertips.
-              </p>
+              <h3 className="card-title">{t.stat2Title}</h3>
+              <p className="card-text mb16">{t.stat2Sub}</p>
 
               <div className="report-icons-container">
                 <div className="icon-box bg-teal">📊</div>
@@ -27,20 +25,17 @@ function WhySection() {
           </div>
           <div className="flex-column-gap20">
             <div className="why-card card-padding24">
-              <h3 class="card-title">No lost debts</h3>
-              <p class="card-text">
-                Track every debt and payment automatically with no manual
-                errors.
-              </p>
+              <h3 class="card-title">{t.stat3Title}</h3>
+              <p class="card-text">{t.stat3Sub}</p>
             </div>
 
             <div className="why-card card-padding20">
               <div className="chart-header">
-                <span className="chart-title">Sales Summary</span>
-                <span className="chart-badge">6 Months</span>
+                <span className="chart-title">{t.chartLabel}</span>
+                <span className="chart-badge">{t.chartPeriod}</span>
               </div>
 
-              <div className="chart-amount">24,800 SAR</div>
+              <div className="chart-amount">{t.chartNum}</div>
 
               <svg
                 className="chart-svg"

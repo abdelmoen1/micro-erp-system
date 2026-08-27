@@ -1,19 +1,16 @@
-function Mission() {
+function Mission({ t }) {
   const metrics = [
-    { value: "98%", label: "Customer satisfaction" },
-    { value: "500+", label: "Active stores" },
-    { value: "24/7", label: "Technical support" },
+    { value: t.metric1Num, label: t.metric1Label },
+    { value: t.metric2Num, label: t.metric2Label },
+    { value: t.metric3Num, label: t.metric3Label },
   ];
   return (
     <section className="mission-section">
       <div className="container mission-container">
-        <p className="mission-subtitle">Our mission</p>
-        <h2 className="mission-title">
-          We've helped hundreds{"\n"}of small stores.
-        </h2>
+        <p className="mission-subtitle">{t.missionEyebrow}</p>
+        <h2 className="mission-title">{t.missionTitle}</h2>
         <p className="mission-description">
-          From retail shops to startups — Micro ERP makes management easier and
-          faster.
+          {t.missionSub}
         </p>
 
         <div className="metric-grid">

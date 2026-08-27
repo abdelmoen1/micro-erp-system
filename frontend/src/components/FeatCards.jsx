@@ -1,19 +1,19 @@
-function FeatCards() {
+function FeatCards({ t }) {
   const features = [
     {
       icon: "🧾",
-      title: "Free invoices",
-      desc: "Create a complete financial experience and automate invoice issuance and payment tracking.",
+      title: t.feat1Title,
+      desc: t.feat1Desc,
     },
     {
       icon: "🏪",
-      title: "Multiple stores",
-      desc: "Run each store's operations independently and generate custom reports per branch.",
+      title: t.feat2Title,
+      desc: t.feat2Desc,
     },
     {
       icon: "🔐",
-      title: "Unmatched security",
-      desc: "Manage your store data securely with full isolation and role-based permissions.",
+      desc: t.feat3Title,
+      desc: t.feat3Desc,
     },
   ];
   return (

@@ -1,27 +1,27 @@
-function Steps() {
+function Steps({t}) {
   const steps = [
     {
       number: "1",
-      title: "Open your account",
-      desc: "Register as a store owner and set up your business profile in  minutes from the dashboard",
+      title: t.step1Title,
+      desc: t.step1Desc,
     },
     {
       number: "2",
-      title: "Add your data",
-      desc: "Enter customers, invoices, and payments and assign your employees the right permissions",
+      title: t.step2Title,
+      desc: t.step2Desc,
     },
     {
       number: "3",
-      title: "Watch your store grow",
-      desc: "Monitor sales, track debts, and collect payments — everythinginstant and accurate.",
+      title: t.step3Title,
+      desc: t.step3Desc,
     },
   ];
   return (
     <section className="steps-section">
       <div className="container">
-        <p className="steps-subtitle">Steps</p>
+        <p className="steps-subtitle">{t.stepsEyebrow}</p>
         <h2 className="steps-title">
-          Start smart management{"\n"}with simple steps.
+          {t.stepsTitle}
         </h2>
 
         <div className="steps-grid">
