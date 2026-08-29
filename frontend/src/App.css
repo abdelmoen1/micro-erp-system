@@ -766,7 +766,7 @@ nav .container {
   flex-direction: column;
   gap: 0px;
   transition: 0.4s ease;
-  width: 400px;
+  min-width: 300px;
   margin: auto;
 }
 
@@ -1210,4 +1210,119 @@ nav .container {
   color: var(--gray);
   line-height: 1.7;
   padding-bottom: 18px;
+}
+
+.mobile-only-btn {
+  background: var(--gray-light);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 16px;
+  color: var(--navy);
+  cursor: pointer;
+  visibility: hidden;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+}
+
+/* تأثير عند تمرير الماوس فوق الزر */
+.mobile-only-btn:hover {
+  filter: brightness(0.95);
+}
+
+/* تأثير بسيط عند الضغط على الزر */
+.mobile-only-btn:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 890px) {
+  .mobile-only-btn {
+    visibility: visible;
+  }
+  .nav-links {
+    visibility: hidden;
+    width: 1px;
+  }
+  .nav-actions button:first-child,
+  .nav-actions a[href="/register"],
+  .nav-actions a[href="/login"] {
+    font-size: 10px;
+  }
+}
+
+/* الحاوية الرئيسية للقائمة المنسدلة */
+.mobile-menu-container {
+  position: fixed;
+  top: var(--nav-h);
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: rgba(26, 13, 57, 0.1) 0px 8px 32px;
+  visibility: hidden;
+}
+
+/* روابط التنقل داخل القائمة */
+.menu-link {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--gray);
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.menu-link:hover {
+  background-color: #f7fafc;
+}
+
+/* حاوية أزرار التحكم السفلى */
+.menu-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* زر تسجيل الدخول */
+.btn-login {
+  flex: 1 1 0%;
+  text-align: center;
+  padding: 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-login:hover {
+  background-color: #f7fafc;
+}
+
+/* زر ابدأ مجاناً */
+.btn-register {
+  flex: 1 1 0%;
+  text-align: center;
+  padding: 10px;
+  border-radius: 9px;
+  background: var(--teal);
+  color: rgb(255, 255, 255);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.btn-register:hover {
+  opacity: 0.9;
 }
