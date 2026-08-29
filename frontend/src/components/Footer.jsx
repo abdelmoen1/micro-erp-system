@@ -1,11 +1,17 @@
+import lightfavicon from "../assets/lightfavicon.png";
+import blackHesba from "../assets/blackHesba.png";
 function Footer({ t, lang, setLang }) {
   return (
     <div className="container">
       <div className="footer-grid">
         <div className="footer-brand-col">
           <div className="footer-logo-wrapper">
-            <div className="footer-logo-icon">M</div>
-            <span className="footer-brand-name">Micro ERP</span>
+            <div>
+              <img className="fav-icon" src={lightfavicon} alt="" />
+            </div>
+            <span>
+              <img className="name" src={blackHesba} alt="" />
+            </span>
           </div>
           <p className="footer-brand-desc">{t.footerDesc}</p>
           <p className="social-label">{t.followUs}</p>
@@ -39,9 +45,7 @@ function Footer({ t, lang, setLang }) {
       </div>
 
       <div className="footer-bottom-bar">
-        <span className="footer-copyright">
-          © Micro ERP 2026. All Rights Reserved.
-        </span>
+        <span className="footer-copyright">{t.copyright}</span>
         <button
           className="footer-lang-btn"
           onClick={() => setLang(lang === "ar" ? "en" : "ar")}

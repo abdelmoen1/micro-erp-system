@@ -28,7 +28,7 @@ export const translation = {
     heroCardCustomres: "Active clients",
     heroCardUp: "↑ 5 new this week",
     partnerLabel: "Trusted by",
-    featureEyebrow: "Why Micro ERP",
+    featureEyebrow: "Why Hesba",
     featureTitle: "Experience that grows with your scale.",
     featureSub:
       "Design a management system that works for your store and streamlines daily operations.",
@@ -42,9 +42,9 @@ export const translation = {
     feat3Desc:
       "Manage your store data securely with full isolation and role-based permissions.",
     whyEyebrow: "Why us",
-    whyTitle: "Why they prefer Micro ERP",
+    whyTitle: "Why they prefer Hesba",
     stat1Num: "500+",
-    stat1Label: "Stores already running on Micro ERP",
+    stat1Label: "Stores already running on Hesba",
     stat2Title: "Access your reports anytime",
     stat2Sub: "Sales, debts, and payments always at your fingertips.",
     stat3Title: "No lost debts",
@@ -66,7 +66,7 @@ export const translation = {
     missionEyebrow: "Our mission",
     missionTitle: "We've helped hundreds\nof small stores.",
     missionSub:
-      "From retail shops to startups — Micro ERP makes management easier and faster.",
+      "From retail shops to startups — Hesba makes management easier and faster.",
     metric1Num: "98%",
     metric1Label: "Customer satisfaction",
     metric2Num: "500+",
@@ -103,8 +103,8 @@ export const translation = {
     faqTitle: "Got a question?",
     faqs: [
       {
-        q: "What is Micro ERP?",
-        a: "Micro ERP is a complete management system for small shops covering invoices, customers, debts, payments, and team management.",
+        q: "What is Hesba?",
+        a: "Hesba is a complete management system for small shops covering invoices, customers, debts, payments, and team management.",
       },
       {
         q: "Does it require technical knowledge?",
@@ -134,7 +134,7 @@ export const translation = {
       { title: "Learn", links: ["Blog", "Docs", "Case Studies", "Templates"] },
     ],
     followUs: "Follow us",
-    copyright: "© Micro ERP 2026. All Rights Reserved.",
+    copyright: "© Hesba 2026. All Rights Reserved.",
   },
   ar: {
     dir: "rtl",
@@ -166,7 +166,7 @@ export const translation = {
     heroCardBtn: "عرض الفاتورة",
     heroCardCustomres: "عملاء نشطون",
     heroCardUp: "↑ ٥ جدد هذا الأسبوع",
-    featureEyebrow: "لماذا Micro ERP",
+    featureEyebrow: "لماذا حِسبة؟",
     featureTitle: "تجربة تنمو مع نمو أعمالك.",
     featureSub:
       "صمّم نظام إدارة متكامل يعمل لصالح متجرك ويبسّط سير العمل اليومي.",
@@ -178,9 +178,9 @@ export const translation = {
     feat3Title: "أمان لا مثيل له",
     feat3Desc: "أدر بيانات متجرك بأمان مع عزل كامل وصلاحيات محددة لكل دور.",
     whyEyebrow: "لماذا يختارنا",
-    whyTitle: "لماذا يفضلون Micro ERP",
+    whyTitle: "لماذا يفضلون حِسبة؟",
     stat1Num: "500+",
-    stat1Label: "متجر يعمل على Micro ERP",
+    stat1Label: "متجر يعمل على حِسبة",
     stat2Title: "استخرج تقاريرك في أي وقت",
     stat2Sub: "المبيعات والديون والمدفوعات دائماً في متناول يدك.",
     stat3Title: "لا ديون ضائعة",
@@ -201,7 +201,7 @@ export const translation = {
     missionEyebrow: "مهمتنا",
     missionTitle: "ساعدنا مئات\nالمتاجر الصغيرة.",
     missionSub:
-      "من المحلات التجارية إلى الشركات الناشئة — Micro ERP يجعل الإدارة أسهل وأسرع.",
+      "من المحلات التجارية إلى الشركات الناشئة — حِسبة يجعل الإدارة أسهل وأسرع.",
     metric1Num: "98%",
     metric1Label: "نسبة رضا العملاء",
     metric2Num: "500+",
@@ -225,8 +225,8 @@ export const translation = {
     faqTitle: "هل لديك سؤال؟",
     faqs: [
       {
-        q: "ما هو Micro ERP؟",
-        a: "Micro ERP نظام إدارة متكامل للمحلات والأعمال الصغيرة يغطي الفواتير والعملاء والديون والمدفوعات وفريق العمل.",
+        q: "ما هو حِسبة؟",
+        a: "حِسبة نظام إدارة متكامل للمحلات والأعمال الصغيرة يغطي الفواتير والعملاء والديون والمدفوعات وفريق العمل.",
       },
       {
         q: "هل يحتاج النظام خبرة تقنية؟",
@@ -258,11 +258,11 @@ export const translation = {
       },
       {
         title: "الشركة",
-        links: ["عن Micro ERP", "الفريق", "المدونة", "تواصل معنا"],
+        links: ["عن حِسبة", "الفريق", "المدونة", "تواصل معنا"],
       },
       { title: "تعلّم", links: ["المدونة", "التوثيق", "قصص نجاح", "القوالب"] },
     ],
     followUs: "تابعنا",
-    copyright: "© Micro ERP 2026. جميع الحقوق محفوظة.",
+    copyright: "© حِسبة 2026. جميع الحقوق محفوظة.",
   },
 };

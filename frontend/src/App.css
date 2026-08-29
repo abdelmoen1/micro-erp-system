@@ -17,7 +17,14 @@ nav .container {
   align-items: center;
   gap: 32px;
 }
-
+.fav-icon {
+  width: 38px;
+  border-radius: 10px;
+}
+.name {
+  width: 100px;
+  height: 63px;
+}
 .logo-link {
   display: flex;
   align-items: center;
@@ -1244,10 +1251,9 @@ nav .container {
     visibility: hidden;
     width: 1px;
   }
-  .nav-actions button:first-child,
   .nav-actions a[href="/register"],
   .nav-actions a[href="/login"] {
-    font-size: 10px;
+    display: none;
   }
 }
 
@@ -1325,4 +1331,18 @@ nav .container {
 
 .btn-register:hover {
   opacity: 0.9;
+}
+/* الحالة الافتراضية لكل قسم (مخفي ومنزاح لأسفل) */
+.reveal-section {
+  opacity: 0;
+  transform: translateY(50px);
+  transition:
+    opacity 0.8s ease-out,
+    transform 0.8s ease-out;
+}
+
+/* الكلاس الذي سيتم تفعيله عند وصول السكرول للقسم */
+.reveal-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }

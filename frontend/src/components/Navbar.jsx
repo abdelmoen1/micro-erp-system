@@ -5,20 +5,28 @@ const links = [
   ["faq", "#faq"],
 ];
 import { useState } from "react";
+import hesba from "../assets/hesba.png";
+import favIcon from "../assets/favIcon.png";
 function Navbar({ t, lang, setLang }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
+  const visabel =
+    isOpen === true ? { visibility: "visible" } : { visibility: "hidden" };
   return (
     <>
       {" "}
       <nav>
         <div className="container">
           <a href="#" className="logo-link">
-            <div className="logo-icon">M</div>
-            <span>Micro ERP</span>
+            <div>
+              <img className="fav-icon" src={favIcon} alt="" />
+            </div>
+            <span>
+              <img className="name" src={hesba} alt="" />
+            </span>
           </a>
           <ul className="nav-links">
             <>
@@ -50,12 +58,7 @@ function Navbar({ t, lang, setLang }) {
           </div>
         </div>
       </nav>
-      <div
-        className="mobile-menu-container"
-        style={
-          isOpen === true ? { visibility: "visible" } : { visibility: "hidden" }
-        }
-      >
+      <div className="mobile-menu-container" style={visabel}>
         <ul>
           {" "}
           <>
@@ -70,10 +73,10 @@ function Navbar({ t, lang, setLang }) {
         </ul>
         <div className="menu-actions">
           <a href="/login" className="btn-login">
-            تسجيل الدخول
+            {t.nav.login}
           </a>
           <a href="/register" className="btn-register">
-            ابدأ مجاناً
+            {t.nav.signup}
           </a>
         </div>
       </div>
