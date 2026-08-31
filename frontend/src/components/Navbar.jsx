@@ -4,6 +4,7 @@ const links = [
   ["prices", "#plans"],
   ["faq", "#faq"],
 ];
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import hesba from "../assets/hesba.png";
 import favIcon from "../assets/favIcon.png";
@@ -42,11 +43,11 @@ function Navbar({ t, lang, setLang }) {
               {lang === "en" ? "العربية" : "English"}
             </button>
 
-            <a href="/login">{t.nav.login}</a>
+            <Link to="/login">{t.nav.login}</Link>
 
-            <a href="/register" className="register-button">
+            <Link to="/register" className="register-button">
               {t.nav.signup}
-            </a>
+            </Link>
             <button
               className="mobile-only-btn"
               aria-expanded={isOpen}

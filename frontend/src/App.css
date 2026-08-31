@@ -973,7 +973,7 @@ nav .container {
   padding: 13px 28px;
   font-size: 15px;
   font-weight: 700;
-  display: inline-block;
+  display: flex;
   text-decoration: none;
 }
 
