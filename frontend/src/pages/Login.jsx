@@ -1,3 +1,4 @@
+import { loginUser } from "../services/api";
 import { Link } from "react-router-dom";
 import { CiLock } from "react-icons/ci";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
@@ -20,12 +21,12 @@ function Login() {
       [name]: value,
     });
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
-    const formData = new FormData(e.target);
-    const email = formData.get("email");
-    const password = formData.get("password");
+    const formDataErrors = new FormData(e.target);
+    const email = formDataErrors.get("email");
+    const password = formDataErrors.get("password");
 
     if (!email) {
       newErrors.email = "البريد الإلكتروني مطلوب";
@@ -35,8 +36,13 @@ function Login() {
       newErrors.password = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
     }
     setErrors(newErrors);
-    if (Object.keys(newErrors).length === 0) {
-      setLoding(!loading);
+    setLoding(!loading);
+    try {
+      const result = await loginUser(formData);
+      localStorage.setItem("token", result.token);
+      console.log(result);
+    } catch (error) {
+      console.log(error);
     }
   };
   return (
@@ -57,12 +63,7 @@ function Login() {
             </Link>
           </div>
 
-          <form
-            className="auth-form"
-            action=""
-            method="POST"
-            onSubmit={handleSubmit}
-          >
+          <form className="auth-form" method="POST" onSubmit={handleSubmit}>
             <div className={`input-wrapper ${errors.email ? "has-error" : ""}`}>
               <IoMailOutline className="input-icon" />
               <input
