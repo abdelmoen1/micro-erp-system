@@ -17,6 +17,7 @@ export async function loginUser(data) {
   if (!response.ok) {
     throw result;
   }
-
+  localStorage.setItem("token", result.token);
+  localStorage.setItem("user", json.stringify(result.user));
   return result;
 }

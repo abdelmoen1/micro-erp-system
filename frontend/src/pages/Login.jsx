@@ -1,14 +1,15 @@
 import { loginUser } from "../services/api";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CiLock } from "react-icons/ci";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { IoMailOutline } from "react-icons/io5";
 import "../Sign.css";
 import { useState } from "react";
 function Login() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [loading, setLoding] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFromData] = useState({
     email: "",
     password: "",
@@ -36,13 +37,16 @@ function Login() {
       newErrors.password = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
     }
     setErrors(newErrors);
-    setLoding(!loading);
+    setLoading(true);
     try {
       const result = await loginUser(formData);
-      localStorage.setItem("token", result.token);
       console.log(result);
+
+      navigate("/dashboard");
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
   return (
