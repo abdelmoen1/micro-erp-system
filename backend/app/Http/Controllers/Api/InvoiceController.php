@@ -11,7 +11,7 @@ use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Http\Resources\InvoiceResource;
 use App\Enums\InvoiceSource;
-use App\Enums\UserRole;
+use App\Support\Money;
 
 class InvoiceController extends Controller
 {
@@ -40,74 +40,43 @@ class InvoiceController extends Controller
 
         $storeId = $request->user()->store_id;
 
-        // Make sure the selected customer belongs to the current store
-        $customerExists = \App\Models\Customer::query()
-            ->where('id', $validated['customer_id'])
-            ->where('store_id', $storeId)
-            ->exists();
+        $totalAmount = self::itemsTotal($validated['items']);
 
-        if (!$customerExists) {
-            return response()->json([
-                'message' => 'العميل غير موجود أو لا ينتمي إلى متجرك.',
-            ], 404);
-        }
+        $invoice = DB::transaction(function () use ($validated, $totalAmount, $storeId) {
+            $invoice = Invoice::create([
+                'store_id' => $storeId,
+                'customer_id' => $validated['customer_id'],
+                'has_debt' => $validated['has_debt'],
+                'payment_method' => $validated['has_debt']
+                    ? null
+                    : $validated['payment_method'],
+                'total_amount' => $totalAmount,
+                'source' => InvoiceSource::SALE,
+            ]);
 
-        $totalAmount = collect($validated['items'])->sum(function ($item) {
-            return round($item['quantity'] * (float) $item['unit_price'], 2);
+            self::createItems($invoice, $validated['items']);
+
+            if ($validated['has_debt'] === true) {
+                Debt::create([
+                    'invoice_id' => $invoice->id,
+                    'store_id' => $storeId,
+                    'amount' => $totalAmount,
+                    'remaining_amount' => $totalAmount,
+                    'status' => 'unpaid',
+                ]);
+            }
+
+            return $invoice;
         });
 
-        try {
-            $invoice = DB::transaction(function () use (
-                $validated,
-                $totalAmount,
-                $storeId
-            ) {
-                $invoice = Invoice::create([
-                    'store_id' => $storeId,
-                    'customer_id' => $validated['customer_id'],
-                    'has_debt' => $validated['has_debt'],
-                    'payment_method' => $validated['has_debt']
-                        ? null
-                        : $validated['payment_method'],
-                    'total_amount' => $totalAmount,
-                    'source' => \App\Enums\InvoiceSource::SALE,
-                ]);
-
-                foreach ($validated['items'] as $item) {
-                    $invoice->items()->create([
-                        'item_name' => $item['item_name'],
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $item['unit_price'],
-                        'total' => round($item['quantity'] * (float) $item['unit_price'], 2),
-                    ]);
-                }
-
-                if ($validated['has_debt'] === true) {
-                    Debt::create([
-                        'invoice_id' => $invoice->id,
-                        'store_id' => $storeId,
-                        'amount' => $totalAmount,
-                        'remaining_amount' => $totalAmount,
-                        'status' => 'unpaid',
-                    ]);
-                }
-
-                return $invoice;
-            });
-
-            return response()->json([
-                'message' => 'تم حفظ الفاتورة'
-                    . ($validated['has_debt'] ? ' وتسجيل الدين' : '')
-                    . ' بنجاح.',
-                'data' => new InvoiceResource(
-                    $invoice->load(['customer', 'items', 'debt.payments'])
-                ),
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'حدث خطأ أثناء حفظ الفاتورة، يرجى المحاولة لاحقاً.',
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'تم حفظ الفاتورة'
+                . ($validated['has_debt'] ? ' وتسجيل الدين' : '')
+                . ' بنجاح.',
+            'data' => new InvoiceResource(
+                $invoice->load(['customer', 'items', 'debt.payments'])
+            ),
+        ], 201);
     }
 
     /**
@@ -227,27 +196,11 @@ class InvoiceController extends Controller
                     );
                 }
 
-                $totalAmount = collect($validated['items'])
-                    ->sum(function ($item) {
-                        return round(
-                            $item['quantity'] * (float) $item['unit_price'],
-                            2
-                        );
-                    });
+                $totalAmount = self::itemsTotal($validated['items']);
 
                 $invoice->items()->delete();
 
-                foreach ($validated['items'] as $item) {
-                    $invoice->items()->create([
-                        'item_name' => $item['item_name'],
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $item['unit_price'],
-                        'total' => round(
-                            $item['quantity'] * (float) $item['unit_price'],
-                            2
-                        ),
-                    ]);
-                }
+                self::createItems($invoice, $validated['items']);
 
                 $invoice->total_amount = $totalAmount;
 
@@ -289,15 +242,7 @@ class InvoiceController extends Controller
         Request $request,
         Invoice $invoice
     ) {
-        abort_unless(
-            $request->user()?->hasRole(UserRole::OWNER, UserRole::MANAGER),
-            403
-        );
-
-        abort_unless(
-            $invoice->store_id === $request->user()->store_id,
-            404
-        );
+        $this->authorize('delete', $invoice);
 
         DB::transaction(function () use ($invoice) {
             $lockedInvoice = Invoice::query()
@@ -324,5 +269,28 @@ class InvoiceController extends Controller
         return response()->json([
             'message' => 'تم حذف الفاتورة بنجاح.',
         ]);
+    }
+
+    /**
+     * Exact invoice total: Σ unit_price × quantity (US-0102).
+     */
+    private static function itemsTotal(array $items): string
+    {
+        return Money::sum(array_map(
+            fn(array $item) => Money::times($item['unit_price'], (int) $item['quantity']),
+            $items,
+        ));
+    }
+
+    private static function createItems(Invoice $invoice, array $items): void
+    {
+        foreach ($items as $item) {
+            $invoice->items()->create([
+                'item_name' => $item['item_name'],
+                'quantity' => $item['quantity'],
+                'unit_price' => Money::of($item['unit_price']),
+                'total' => Money::times($item['unit_price'], (int) $item['quantity']),
+            ]);
+        }
     }
 }

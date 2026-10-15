@@ -11,10 +11,15 @@ use App\Http\Resources\DebtDetailsResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Enums\InvoiceSource;
-use App\Enums\UserRole;
+use App\Http\Resources\InvoiceResource;
+use App\Models\Invoice;
+use App\Services\AuditService;
+use App\Support\Money;
 
 class DebtController extends Controller
 {
+    public function __construct(private readonly AuditService $audit) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -47,30 +52,36 @@ class DebtController extends Controller
         $validated = $request->validated();
         $storeId = $request->user()->store_id;
 
-        $invoice = DB::transaction(function () use ($validated, $storeId) {
+        $amount = Money::of($validated['amount']);
 
-            $invoice = \App\Models\Invoice::create([
+        $invoice = DB::transaction(function () use ($validated, $storeId, $amount) {
+            $invoice = Invoice::create([
                 'store_id' => $storeId,
                 'customer_id' => $validated['customer_id'],
-                'total_amount' => $validated['amount'],
+                'total_amount' => $amount,
                 'has_debt' => true,
                 'payment_method' => null,
-                'source' => \App\Enums\InvoiceSource::OPENING_DEBT,
+                'source' => InvoiceSource::OPENING_DEBT,
             ]);
 
             $invoice->items()->create([
                 'item_name' => 'دين قديم',
                 'quantity' => 1,
-                'unit_price' => $validated['amount'],
-                'total' => $validated['amount'],
+                'unit_price' => $amount,
+                'total' => $amount,
             ]);
 
-            Debt::create([
+            $debt = Debt::create([
                 'invoice_id' => $invoice->id,
                 'store_id' => $storeId,
-                'amount' => $validated['amount'],
-                'remaining_amount' => $validated['amount'],
+                'amount' => $amount,
+                'remaining_amount' => $amount,
                 'status' => 'unpaid',
+            ]);
+
+            $this->audit->record('opening_debt.created', $debt, [
+                'customer_id' => $invoice->customer_id,
+                'amount' => $amount,
             ]);
 
             return $invoice;
@@ -78,7 +89,7 @@ class DebtController extends Controller
 
         return response()->json([
             'message' => 'تم تسجيل الدين القديم بنجاح.',
-            'data' => new \App\Http\Resources\InvoiceResource(
+            'data' => new InvoiceResource(
                 $invoice->load([
                     'customer',
                     'items',
@@ -133,6 +144,7 @@ class DebtController extends Controller
         $validated = $request->validated();
 
         $updatedDebt = DB::transaction(function () use ($validated, $debt) {
+            $previousAmount = Money::of($debt->amount);
 
             $lockedDebt = Debt::query()
                 ->whereKey($debt->id)
@@ -163,7 +175,7 @@ class DebtController extends Controller
 
             if (array_key_exists('amount', $validated)) {
 
-                $newAmount = round((float) $validated['amount'], 2);
+                $newAmount = Money::of($validated['amount']);
 
                 // Update Debt
                 $lockedDebt->amount = $newAmount;
@@ -185,6 +197,11 @@ class DebtController extends Controller
                     $item->total = $newAmount;
                     $item->save();
                 }
+
+                $this->audit->record('opening_debt.updated', $lockedDebt, [
+                    'old_amount' => $previousAmount,
+                    'new_amount' => $newAmount,
+                ]);
             }
 
             return $lockedDebt->fresh()->load([
@@ -201,15 +218,7 @@ class DebtController extends Controller
         Request $request,
         Debt $debt
     ) {
-        abort_unless(
-            $request->user()?->hasRole(UserRole::OWNER, UserRole::MANAGER),
-            403
-        );
-
-        abort_unless(
-            $debt->store_id === $request->user()->store_id,
-            404
-        );
+        $this->authorize('delete', $debt);
 
         DB::transaction(function () use ($debt) {
 
@@ -246,6 +255,11 @@ class DebtController extends Controller
          *
          * Therefore permanently remove this unused opening-debt record.
          */
+            $this->audit->record('opening_debt.deleted', $lockedDebt, [
+                'customer_id' => $invoice->customer_id,
+                'amount' => Money::of($lockedDebt->amount),
+            ]);
+
             $lockedDebt->forceDelete();
 
             /*

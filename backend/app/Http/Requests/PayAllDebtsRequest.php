@@ -2,51 +2,27 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserRole;
-use Illuminate\Contracts\Validation\ValidationRule;
+use App\Models\Payment;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class PayAllDebtsRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+    /** D-12: any role may record a customer's full repayment. */
     public function authorize(): bool
     {
-        return $this->user()?->hasRole(UserRole::OWNER, UserRole::MANAGER) ?? false;
+        return $this->user()->can('payAll', Payment::class);
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'method' => [
-                'required',
-                'string',
-                Rule::in([
-                    'cash',
-                    'jawwal_pay',
-                    'palpay',
-                    'bank_of_palestine',
-                ]),
-            ],
-
-            'paid_at' => [
-                'nullable',
-                'date',
-            ],
-
-            'notes' => [
-                'nullable',
-                'string',
-            ],
+            'method' => ['required', 'string', Rule::in(PaymentMethods::ALL)],
+            'paid_at' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
+
     public function messages(): array
     {
         return [

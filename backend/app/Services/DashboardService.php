@@ -6,17 +6,23 @@ use App\Models\Customer;
 use App\Models\Debt;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Store;
+use App\Support\BusinessClock;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class DashboardService
 {
-    public function dashboard(int $storeId, string $period): array
+    public function dashboard(Store $store, string $period): array
     {
-        [$from, $to] = $this->periodBounds($period);
+        $storeId = $store->id;
+        $clock = BusinessClock::forStore($store);
+        [$from, $to] = $clock->periodBounds($period);
 
         $invoiceMetrics = $this->invoiceMetrics($storeId, $from, $to);
-        $paymentMetrics = $this->paymentMetrics($storeId, $from, $to);
+        $paymentMetrics = $this->paymentMetrics($storeId, $clock, $from, $to);
         $debtMetrics = $this->debtMetrics($storeId);
         $customerMetrics = $this->customerMetrics($storeId);
 
@@ -25,7 +31,7 @@ class DashboardService
                 'key' => $period,
                 'from' => $from->toISOString(),
                 'to' => $to->toISOString(),
-                'timezone' => config('app.timezone'),
+                'timezone' => $clock->timezone(),
             ],
             'summary' => [
                 'total_sales' => $invoiceMetrics['total_sales'],
@@ -56,48 +62,36 @@ class DashboardService
             ],
             'debts' => $debtMetrics,
             'charts' => [
-                'sales' => $this->salesChart($storeId, $from, $to, $period),
-                'payments' => $this->paymentsChart($storeId, $from, $to, $period),
+                'sales' => $this->salesChart($storeId, $clock, $from, $to, $period),
+                'payments' => $this->paymentsChart($storeId, $clock, $from, $to, $period),
             ],
             'recent_invoices' => $this->recentInvoices($storeId, $from, $to),
             'recent_payments' => $this->recentPayments($storeId, $from, $to),
         ];
     }
 
-    private function periodBounds(string $period): array
+    private function invoicesBetween(int $storeId, CarbonImmutable $from, CarbonImmutable $to): Builder
     {
-        $now = CarbonImmutable::now(config('app.timezone'));
-
-        return match ($period) {
-            'today' => [$now->startOfDay(), $now->endOfDay()],
-            'this_week' => [$now->startOfWeek(), $now->endOfWeek()],
-            'this_year' => [$now->startOfYear(), $now->endOfYear()],
-            default => [$now->startOfMonth(), $now->endOfMonth()],
-        };
+        return Invoice::query()
+            ->where('store_id', $storeId)
+            ->whereBetween('created_at', BusinessClock::toUtc($from, $to));
     }
 
     private function invoiceMetrics(int $storeId, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $row = Invoice::query()
-            ->where('store_id', $storeId)
-            ->whereBetween('created_at', [$from, $to])
-            ->selectRaw('COUNT(*) as total')
-            ->selectRaw('SUM(CASE WHEN has_debt = 0 THEN 1 ELSE 0 END) as cash')
-            ->selectRaw('SUM(CASE WHEN has_debt = 1 THEN 1 ELSE 0 END) as debt')
-            ->selectRaw('COALESCE(SUM(total_amount), 0) as total_value')
-            ->selectRaw("COALESCE(SUM(CASE WHEN source = 'sale' THEN total_amount ELSE 0 END), 0) as total_sales")
-            ->selectRaw("COALESCE(SUM(CASE WHEN source = 'sale' AND has_debt = 0 THEN total_amount ELSE 0 END), 0) as cash_sales")
-            ->selectRaw("COALESCE(SUM(CASE WHEN source = 'sale' AND has_debt = 1 THEN total_amount ELSE 0 END), 0) as credit_sales")
-            ->first();
+        $invoices = $this->invoicesBetween($storeId, $from, $to)
+            ->get(['total_amount', 'has_debt', 'source']);
+
+        $sales = $invoices->filter(fn(Invoice $invoice) => $invoice->source?->value === 'sale');
 
         return [
-            'total' => (int) $row->total,
-            'cash' => (int) $row->cash,
-            'debt' => (int) $row->debt,
-            'total_value' => $this->money($row->total_value),
-            'total_sales' => $this->money($row->total_sales),
-            'cash_sales' => $this->money($row->cash_sales),
-            'credit_sales' => $this->money($row->credit_sales),
+            'total' => $invoices->count(),
+            'cash' => $invoices->where('has_debt', false)->count(),
+            'debt' => $invoices->where('has_debt', true)->count(),
+            'total_value' => Money::sum($invoices->pluck('total_amount')),
+            'total_sales' => Money::sum($sales->pluck('total_amount')),
+            'cash_sales' => Money::sum($sales->where('has_debt', false)->pluck('total_amount')),
+            'credit_sales' => Money::sum($sales->where('has_debt', true)->pluck('total_amount')),
         ];
     }
 
@@ -110,23 +104,26 @@ class DashboardService
         );
     }
 
-    private function paymentMetrics(int $storeId, CarbonImmutable $from, CarbonImmutable $to): array
+    private function collectedBetween(int $storeId, CarbonImmutable $from, CarbonImmutable $to): Builder
     {
-        $periodQuery = $this->paymentQuery($storeId)
+        return $this->paymentQuery($storeId)
             ->where('is_reversed', false)
-            ->whereBetween('paid_at', [$from, $to]);
-        $now = CarbonImmutable::now(config('app.timezone'));
+            ->whereBetween('paid_at', BusinessClock::toUtc($from, $to));
+    }
+
+    private function paymentMetrics(int $storeId, BusinessClock $clock, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $now = $clock->now();
+        $period = $this->collectedBetween($storeId, $from, $to)->pluck('amount');
 
         return [
-            'total_collected' => $this->money((clone $periodQuery)->sum('amount')),
-            'count' => (int) (clone $periodQuery)->count(),
-            'today' => $this->money(
-                $this->paymentQuery($storeId)->where('is_reversed', false)
-                    ->whereBetween('paid_at', [$now->startOfDay(), $now->endOfDay()])->sum('amount')
+            'total_collected' => Money::sum($period),
+            'count' => $period->count(),
+            'today' => Money::sum(
+                $this->collectedBetween($storeId, $now->startOfDay(), $now->endOfDay())->pluck('amount')
             ),
-            'this_month' => $this->money(
-                $this->paymentQuery($storeId)->where('is_reversed', false)
-                    ->whereBetween('paid_at', [$now->startOfMonth(), $now->endOfMonth()])->sum('amount')
+            'this_month' => Money::sum(
+                $this->collectedBetween($storeId, $now->startOfMonth(), $now->endOfMonth())->pluck('amount')
             ),
         ];
     }
@@ -137,8 +134,8 @@ class DashboardService
         $statuses = (clone $query)->select('status')->selectRaw('COUNT(*) as count')->groupBy('status')->pluck('count', 'status');
 
         return [
-            'total_debt' => $this->money((clone $query)->sum('amount')),
-            'total_remaining' => $this->money((clone $query)->sum('remaining_amount')),
+            'total_debt' => Money::sum((clone $query)->pluck('amount')),
+            'total_remaining' => Money::sum((clone $query)->pluck('remaining_amount')),
             'paid_count' => (int) ($statuses['paid'] ?? 0),
             'partially_paid_count' => (int) ($statuses['partially_paid'] ?? 0),
             'unpaid_count' => (int) ($statuses['unpaid'] ?? 0),
@@ -159,58 +156,65 @@ class DashboardService
         ];
     }
 
-    private function salesChart(int $storeId, CarbonImmutable $from, CarbonImmutable $to, string $period): array
+    /**
+     * Sales per local day (or month for this_year), bucketed in the store timezone.
+     */
+    private function salesChart(int $storeId, BusinessClock $clock, CarbonImmutable $from, CarbonImmutable $to, string $period): array
     {
-        $rows = Invoice::query()->where('store_id', $storeId)->where('source', 'sale')
-            ->whereBetween('created_at', [$from, $to])
-            ->selectRaw('DATE(created_at) as bucket')
-            ->selectRaw('COALESCE(SUM(total_amount), 0) as amount')
-            ->selectRaw('COALESCE(SUM(CASE WHEN has_debt = 0 THEN total_amount ELSE 0 END), 0) as cash_amount')
-            ->selectRaw('COALESCE(SUM(CASE WHEN has_debt = 1 THEN total_amount ELSE 0 END), 0) as credit_amount')
-            ->groupByRaw('DATE(created_at)')->pluck('amount', 'bucket');
-        $details = Invoice::query()->where('store_id', $storeId)->where('source', 'sale')
-            ->whereBetween('created_at', [$from, $to])->selectRaw('DATE(created_at) as bucket')
-            ->selectRaw('COALESCE(SUM(CASE WHEN has_debt = 0 THEN total_amount ELSE 0 END), 0) as cash_amount')
-            ->selectRaw('COALESCE(SUM(CASE WHEN has_debt = 1 THEN total_amount ELSE 0 END), 0) as credit_amount')
-            ->groupByRaw('DATE(created_at)')->get()->keyBy('bucket');
+        $rows = $this->invoicesBetween($storeId, $from, $to)
+            ->where('source', 'sale')
+            ->toBase()
+            ->get(['created_at', 'total_amount', 'has_debt']);
 
-        return $this->buckets($from, $to, $period, function (string $date) use ($rows, $details, $period): array {
-            $key = $period === 'this_year' ? substr($date, 0, 7) : $date;
-            $amount = $period === 'this_year' ? $rows->filter(fn($value, $bucket) => str_starts_with($bucket, $key))->sum() : ($rows[$key] ?? 0);
-            $cash = $period === 'this_year' ? $details->filter(fn($row, $bucket) => str_starts_with($bucket, $key))->sum('cash_amount') : ($details[$key]->cash_amount ?? 0);
-            $credit = $period === 'this_year' ? $details->filter(fn($row, $bucket) => str_starts_with($bucket, $key))->sum('credit_amount') : ($details[$key]->credit_amount ?? 0);
+        $byBucket = $this->groupByLocalBucket($rows, $clock, 'created_at', $period);
 
-            return $period === 'this_year'
-                ? ['month' => $key, 'amount' => $this->money($amount), 'cash_amount' => $this->money($cash), 'credit_amount' => $this->money($credit)]
-                : ['date' => $key, 'amount' => $this->money($amount), 'cash_amount' => $this->money($cash), 'credit_amount' => $this->money($credit)];
+        return $this->buckets($from, $to, $period, function (string $key, string $label) use ($byBucket): array {
+            $bucket = $byBucket->get($key, collect());
+
+            return [
+                $label => $key,
+                'amount' => Money::sum($bucket->pluck('total_amount')),
+                'cash_amount' => Money::sum($bucket->filter(fn($row) => !(bool) $row->has_debt)->pluck('total_amount')),
+                'credit_amount' => Money::sum($bucket->filter(fn($row) => (bool) $row->has_debt)->pluck('total_amount')),
+            ];
         });
     }
 
-    private function paymentsChart(int $storeId, CarbonImmutable $from, CarbonImmutable $to, string $period): array
+    private function paymentsChart(int $storeId, BusinessClock $clock, CarbonImmutable $from, CarbonImmutable $to, string $period): array
     {
-        $rows = $this->paymentQuery($storeId)->where('is_reversed', false)->whereBetween('paid_at', [$from, $to])
-            ->selectRaw('DATE(paid_at) as bucket')->selectRaw('COALESCE(SUM(amount), 0) as amount')
-            ->groupByRaw('DATE(paid_at)')->pluck('amount', 'bucket');
+        $rows = $this->collectedBetween($storeId, $from, $to)
+            ->toBase()
+            ->get(['paid_at', 'amount']);
 
-        return $this->buckets($from, $to, $period, function (string $date) use ($rows, $period): array {
-            $key = $period === 'this_year' ? substr($date, 0, 7) : $date;
-            $amount = $period === 'this_year' ? $rows->filter(fn($value, $bucket) => str_starts_with($bucket, $key))->sum() : ($rows[$key] ?? 0);
+        $byBucket = $this->groupByLocalBucket($rows, $clock, 'paid_at', $period);
 
-            return $period === 'this_year'
-                ? ['month' => $key, 'amount' => $this->money($amount)]
-                : ['date' => $key, 'amount' => $this->money($amount)];
+        return $this->buckets($from, $to, $period, fn(string $key, string $label): array => [
+            $label => $key,
+            'amount' => Money::sum($byBucket->get($key, collect())->pluck('amount')),
+        ]);
+    }
+
+    private function groupByLocalBucket(Collection $rows, BusinessClock $clock, string $column, string $period): Collection
+    {
+        return $rows->groupBy(function ($row) use ($clock, $column, $period) {
+            $date = $clock->localDate($row->{$column});
+
+            return $period === 'this_year' ? substr($date, 0, 7) : $date;
         });
     }
 
     private function buckets(CarbonImmutable $from, CarbonImmutable $to, string $period, callable $format): array
     {
         $dates = [];
-        $date = $period === 'this_year' ? $from->startOfMonth() : $from->startOfDay();
-        $lastDate = $period === 'this_year' ? $to->startOfMonth() : $to->startOfDay();
+        $yearly = $period === 'this_year';
+        $date = $yearly ? $from->startOfMonth() : $from->startOfDay();
+        $lastDate = $yearly ? $to->startOfMonth() : $to->startOfDay();
 
         while ($date <= $lastDate) {
-            $dates[] = $format($date->format('Y-m-d'));
-            $date = $period === 'this_year' ? $date->addMonth() : $date->addDay();
+            $dates[] = $yearly
+                ? $format($date->format('Y-m'), 'month')
+                : $format($date->format('Y-m-d'), 'date');
+            $date = $yearly ? $date->addMonth() : $date->addDay();
         }
 
         return $dates;
@@ -218,12 +222,12 @@ class DashboardService
 
     private function recentInvoices(int $storeId, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        return Invoice::query()->where('store_id', $storeId)->whereBetween('created_at', [$from, $to])
+        return $this->invoicesBetween($storeId, $from, $to)
             ->with(['customer:id,name', 'debt:id,invoice_id,status'])->latest('created_at')->limit(10)->get()
             ->map(fn(Invoice $invoice) => [
                 'id' => $invoice->id,
                 'customer' => $invoice->customer ? ['id' => $invoice->customer->id, 'name' => $invoice->customer->name] : null,
-                'total_amount' => $this->money($invoice->total_amount),
+                'total_amount' => Money::of($invoice->total_amount),
                 'type' => $invoice->has_debt ? 'credit' : 'cash',
                 'source' => $invoice->source?->value ?? $invoice->source,
                 'status' => $invoice->has_debt ? ($invoice->debt?->status ?? 'unpaid') : 'cash',
@@ -233,7 +237,7 @@ class DashboardService
 
     private function recentPayments(int $storeId, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        return $this->paymentQuery($storeId)->whereBetween('paid_at', [$from, $to])
+        return $this->paymentQuery($storeId)->whereBetween('paid_at', BusinessClock::toUtc($from, $to))
             ->with('debt.invoice.customer:id,name')->latest('paid_at')->limit(10)->get()
             ->map(fn(Payment $payment) => [
                 'id' => $payment->id,
@@ -241,18 +245,11 @@ class DashboardService
                     'id' => $payment->debt->invoice->customer->id,
                     'name' => $payment->debt->invoice->customer->name,
                 ] : null,
-                'amount' => $this->money($payment->amount),
+                'amount' => Money::of($payment->amount),
                 'method' => $payment->method,
-                'paid_at' => $payment->paid_at
-                    ? CarbonImmutable::parse($payment->paid_at)->toISOString()
-                    : null,
+                'paid_at' => $payment->paid_at?->toISOString(),
                 'is_reversed' => (bool) $payment->is_reversed,
                 'status' => $payment->is_reversed ? 'reversed' : 'active',
             ])->all();
-    }
-
-    private function money(mixed $value): float
-    {
-        return round((float) ($value ?? 0), 2);
     }
 }

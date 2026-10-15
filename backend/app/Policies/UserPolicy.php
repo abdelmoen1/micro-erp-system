@@ -5,37 +5,37 @@ namespace App\Policies;
 use App\Enums\UserRole;
 use App\Models\User;
 
+/**
+ * Staff administration is owner-only. The owner role can never be assigned,
+ * changed or deactivated through the API (DEF-04, D-13).
+ */
 class UserPolicy
 {
-    /**
-     * Owner can view users from his own store.
-     */
     public function viewAny(User $user): bool
     {
         return $user->hasRole(UserRole::OWNER);
     }
 
-    /**
-     * Owner can update the role of a user
-     * from the same store.
-     */
-    public function updateRole(User $user, User $targetUser): bool
+    public function invite(User $user): bool
     {
-        return $user->hasRole(UserRole::OWNER)
-            && $user->store_id === $targetUser->store_id
-            && $user->id !== $targetUser->id
-            && $targetUser->role !== UserRole::OWNER;
+        return $user->hasRole(UserRole::OWNER);
     }
 
-    /**
-     * Owner can delete managers/employees
-     * from the same store.
-     */
-    public function delete(User $user, User $targetUser): bool
+    public function updateRole(User $user, User $target): bool
+    {
+        return $this->manages($user, $target);
+    }
+
+    public function deactivate(User $user, User $target): bool
+    {
+        return $this->manages($user, $target);
+    }
+
+    private function manages(User $user, User $target): bool
     {
         return $user->hasRole(UserRole::OWNER)
-            && $user->store_id === $targetUser->store_id
-            && $user->id !== $targetUser->id
-            && $targetUser->role !== UserRole::OWNER;
+            && $user->store_id === $target->store_id
+            && $user->id !== $target->id
+            && !$target->hasRole(UserRole::OWNER);
     }
 }

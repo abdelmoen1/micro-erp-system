@@ -20,6 +20,16 @@ class Payment extends Model
         'reversed_at',
         'reversal_reason',
     ];
+    protected function casts(): array
+    {
+        return [
+            'amount' => 'decimal:2',
+            'is_reversed' => 'boolean',
+            'paid_at' => 'datetime',
+            'reversed_at' => 'datetime',
+        ];
+    }
+
     public function debt()
     {
         return $this->belongsTo(Debt::class);

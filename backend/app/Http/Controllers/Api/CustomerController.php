@@ -78,20 +78,8 @@ class CustomerController extends Controller
      */
     public function destroy(Request $request, Customer $customer)
     {
-        // Employee cannot delete customers
-        abort_unless(
-            $request->user()?->hasRole(
-                \App\Enums\UserRole::OWNER,
-                \App\Enums\UserRole::MANAGER
-            ),
-            403
-        );
-
-        // Store isolation
-        abort_unless(
-            $customer->store_id === $request->user()->store_id,
-            404
-        );
+        // Employees cannot delete customers; store isolation is enforced by route binding.
+        $this->authorize('delete', $customer);
 
         // Customer with any financial history cannot be deleted
         if ($customer->invoices()->exists()) {

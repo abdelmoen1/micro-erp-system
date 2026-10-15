@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hisbah S1 Low-fi</title>
+<style>
+  /* Low-fidelity wireframes: structure only, grayscale on purpose. No visual direction before DR-2. */
+  :root {
+    --ink: #1f1f1f; --mid: #6b6b6b; --soft: #a3a3a3; --line: #cfcfcf;
+    --fill: #ececec; --paper: #ffffff; --page: #f4f4f2; --dark: #2b2b2b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+         font: 15px/1.5 "Segoe UI", Tahoma, "Noto Sans Arabic", Arial, sans-serif; }
+  header.sheet { padding: 24px 16px 8px; max-width: 1200px; margin: 0 auto; }
+  header.sheet h1 { font-size: 22px; margin: 0 0 4px; }
+  header.sheet p { margin: 4px 0; color: var(--mid); }
+  /* English notes read LTR inside the RTL page. */
+  header.sheet, figcaption, section.group > h2, section.group > p { direction: ltr; text-align: left; }
+  .tag { display: inline-block; border: 1px dashed var(--mid); padding: 0 8px; border-radius: 4px; font-size: 13px; }
+  nav.toc { max-width: 1200px; margin: 8px auto 0; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+  nav.toc a { color: var(--ink); font-size: 14px; }
+  section.group { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  section.group > h2 { font-size: 18px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 28px 24px; }
+  figure { margin: 0; width: 360px; max-width: 100%; }
+  figcaption { margin-top: 8px; font-size: 13px; color: var(--mid); }
+  figcaption b { color: var(--ink); font-size: 14px; display: block; }
+  figcaption ol { margin: 4px 0 0; padding-inline-start: 18px; }
+  .ltr { direction: ltr; unicode-bidi: isolate; }
+
+  /* Phone frame */
+  .phone { width: 360px; max-width: 100%; height: 740px; background: var(--paper); border: 2px solid var(--dark);
+           border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+  .sbar { height: 22px; font-size: 11px; color: var(--mid); display: flex; justify-content: space-between; padding: 3px 14px; }
+  .appbar { height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid var(--line); font-weight: 600; }
+  .appbar .sp { flex: 1; }
+  .body { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+  .center { align-items: center; justify-content: center; text-align: center; }
+
+  /* Primitives */
+  .ph { background: var(--fill); border-radius: 6px; }
+  .logo { width: 72px; height: 72px; border-radius: 16px; border: 2px dashed var(--soft); display: grid; place-items: center; color: var(--mid); font-size: 12px; margin: 8px auto; }
+  .h1 { font-size: 20px; font-weight: 700; }
+  .muted { color: var(--mid); font-size: 13px; }
+  .field label { display: block; font-size: 13px; margin-bottom: 4px; }
+  .input { height: 48px; border: 1.5px solid var(--soft); border-radius: 8px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; color: var(--mid); }
+  .input.err { border: 2.5px solid var(--dark); }
+  .input.ro { background: var(--fill); }
+  .ferr { font-size: 12px; margin-top: 4px; font-weight: 600; }
+  .ferr::before { content: "⚠ "; }
+  .btn { height: 52px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; border: 2px solid var(--dark); }
+  .btn.pri { background: var(--dark); color: #fff; }
+  .btn.dis { background: var(--fill); color: var(--soft); border-color: var(--line); }
+  .btn.ghost { border-style: dashed; font-weight: 600; }
+  .link { text-decoration: underline; font-size: 14px; }
+  .banner { border: 1.5px solid var(--dark); border-inline-start-width: 6px; border-radius: 8px; padding: 10px 12px; font-size: 14px; display: flex; gap: 8px; align-items: flex-start; }
+  .banner .i { font-weight: 700; }
+  .banner.soft { border-color: var(--soft); border-inline-start-color: var(--dark); }
+  .offline { background: var(--dark); color: #fff; font-size: 13px; padding: 6px 14px; text-align: center; }
+  .count { font-size: 28px; font-weight: 700; direction: ltr; unicode-bidi: isolate; }
+
+  /* Bottom navigation */
+  .nav { height: 64px; border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; text-align: center; font-size: 11px; }
+  .nav div::before { content: ""; display: block; width: 22px; height: 22px; margin: 0 auto 2px; border: 1.5px solid var(--mid); border-radius: 6px; }
+  .nav .on { font-weight: 700; }
+  .nav .on::before { background: var(--dark); border-color: var(--dark); }
+  .nav .pos::before { width: 40px; height: 40px; border-radius: 50%; margin-top: -18px; background: var(--paper); border: 2px solid var(--dark); }
+  .nav .pos.on::before { background: var(--dark); }
+
+  /* POS */
+  .scan { height: 96px; border: 2px dashed var(--dark); border-radius: 12px; display: grid; place-items: center; font-weight: 700; }
+  .search { height: 44px; border: 1.5px solid var(--soft); border-radius: 22px; padding: 0 14px; display: flex; align-items: center; color: var(--mid); font-size: 14px; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .row .nm { font-weight: 600; }
+  .row .tot { font-weight: 700; text-align: end; }
+  .step { display: inline-flex; align-items: center; border: 1.5px solid var(--soft); border-radius: 8px; height: 40px; }
+  .step span { width: 40px; text-align: center; }
+  .step .q { border-inline: 1.5px solid var(--soft); font-weight: 700; }
+  .hl { outline: 3px solid var(--dark); outline-offset: -3px; border-radius: 6px; padding-inline: 6px; }
+  .money { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
+  .footbar { border-top: 2px solid var(--dark); padding: 10px 14px 12px; display: grid; gap: 8px; }
+  .totline { display: flex; justify-content: space-between; align-items: baseline; }
+  .big { font-size: 30px; font-weight: 800; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid var(--dark); border-radius: 10px; overflow: hidden; }
+  .seg div { height: 48px; display: grid; place-items: center; font-weight: 600; border-inline-start: 1.5px solid var(--dark); }
+  .seg div:first-child { border-inline-start: 0; }
+  .seg .on { background: var(--dark); color: #fff; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { border: 1.5px solid var(--soft); border-radius: 18px; padding: 6px 14px; font-size: 13px; }
+  .chip.on { border: 2px solid var(--dark); font-weight: 700; }
+  .sum { border: 1.5px solid var(--dark); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 14px; }
+  .sum div { display: flex; justify-content: space-between; }
+  .sum .debt { font-weight: 800; }
+
+  /* Status cues: shape + icon + label, never colour (ia.md §5) */
+  .cue { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; border-radius: 14px; padding: 3px 10px; }
+  .cue::before { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--dark); }
+  .cue.paid { background: var(--fill); }
+  .cue.paid::before { background: var(--dark); }
+  .cue.partial::before { background: linear-gradient(90deg, var(--dark) 50%, transparent 50%); }
+  .cue.debt { border: 2px solid var(--dark); background: repeating-linear-gradient(45deg, transparent 0 4px, var(--fill) 4px 8px); }
+  .cue.ret { border: 2px dashed var(--dark); }
+  .cue.ret::before { border-style: dashed; }
+
+  /* Scanner overlay */
+  .cam { flex: 1; background: #3a3a3a; position: relative; color: #fff; display: flex; flex-direction: column; }
+  .cam .top { display: flex; justify-content: space-between; padding: 12px 14px; font-size: 14px; }
+  .reticle { position: absolute; inset: 28% 12% auto; height: 150px; border: 3px solid #fff; border-radius: 12px; }
+  .reticle::after { content: ""; position: absolute; inset: 50% 8px auto; border-top: 2px dashed #fff; }
+  .toast { position: absolute; inset: auto 14px 16px; background: #fff; color: var(--ink); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; }
+  .sheet { border-top: 2px solid var(--dark); border-radius: 16px 16px 0 0; padding: 12px 14px; background: var(--paper); }
+  .grab { width: 40px; height: 4px; border-radius: 2px; background: var(--soft); margin: 0 auto 8px; }
+
+  .anno { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 2px solid var(--dark); font: 700 12px/18px sans-serif; text-align: center; color: var(--dark); }
+</style>
+</head>
+<body>
+<header class="sheet">
+  <h1>Hisbah — Sprint 1 low-fi wireframes</h1>
+  <p><span class="tag">PROPOSAL — for DR-1</span> &nbsp;Structure, content and states only. Grayscale on purpose: colour, type and the visual direction are decided at DR-2.</p>
+  <p>Frame 360 × 740 (Android, 360 dp). RTL. Every screen and trigger is listed in <a href="../ia.md">ia.md</a> §4. Numbered circles refer to the notes under each frame.</p>
+</header>
+<nav class="toc"><a href="#f0">F-0 Sign-in and shell (US-1507)</a> · <a href="#f1">F-1 Quick sale (US-1502)</a> · <a href="#cues">Status cues</a></nav>
+
+<!-- ========================= F-0 ========================= -->
+<section class="group" id="f0">
+<h2>F-0 Sign-in, session and shell — SCR-M-01 (US-1507 low-fi)</h2>
+<div class="grid">
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="body">
+      <div class="logo">شعار</div>
+      <div style="text-align:center"><div class="h1">تسجيل الدخول</div><div class="muted">حسبة — إدارة المتجر</div></div>
+      <div class="field"><label>البريد الإلكتروني</label><div class="input"><span class="ltr">name@example.com</span></div></div>
+      <div class="field"><label>كلمة المرور</label><div class="input"><span>••••••••</span><span>👁</span></div></div>
+      <div class="btn pri" style="margin-top:8px">دخول</div>
+      <div style="flex:1"></div>
+      <div class="muted" style="text-align:center">إنشاء متجر جديد يتم من موقع الويب</div>
+    </div>
+    <span class="anno" style="top:262px;left:20px">1</span>
+    <span class="anno" style="top:412px;left:20px">2</span>
+  </div>
+  <figcaption><b>01 · Login — default</b>
+    <ol><li>Visible labels (not placeholder-only). Email keyboard, no autocorrect, LTR input inside the RTL form.</li>
+    <li>Show / hide password. Keyboard "go" submits. Registration is web-only in R1 (D-38: no OTP).</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="body">
+      <div class="logo">شعار</div>
+      <div style="text-align:center"><div class="h1">تسجيل الدخول</div></div>
+      <div class="field"><label>البريد الإلكتروني</label><div class="input err"><span class="ltr">owner@demo</span></div><div class="ferr">أدخل بريداً إلكترونياً صحيحاً</div></div>
+      <div class="field"><label>كلمة المرور</label><div class="input err"><span></span><span>👁</span></div><div class="ferr">أدخل كلمة المرور</div></div>
+      <div class="btn pri">دخول</div>
+    </div>
+  </div>
+  <figcaption><b>02 · Field validation</b>
+    <ol><li>Checked on the phone before any request, in Arabic. Focus moves to the first invalid field.</li>
+    <li>Server 422 <code>VALIDATION_FAILED</code> uses the same positions (fallback; server text is English until DEF-19).</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="body">
+      <div class="logo">شعار</div>
+      <div style="text-align:center"><div class="h1">تسجيل الدخول</div></div>
+      <div class="banner"><span class="i">!</span><span>البريد الإلكتروني أو كلمة المرور غير صحيحة.</span></div>
+      <div class="field"><label>البريد الإلكتروني</label><div class="input"><span class="ltr">owner@demo.test</span></div></div>
+      <div class="field"><label>كلمة المرور</label><div class="input"><span></span><span>👁</span></div></div>
+      <div class="btn pri">دخول</div>
+    </div>
+  </div>
+  <figcaption><b>03 · Invalid credentials</b> — 401 <code>INVALID_CREDENTIALS</code>
+    <ol><li>Banner above the form; the email is kept, the password cleared and focused.</li>
+    <li>Never says which of the two is wrong.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="body">
+      <div class="logo">شعار</div>
+      <div style="text-align:center"><div class="h1">تسجيل الدخول</div></div>
+      <div class="banner"><span class="i">⏱</span><span>محاولات كثيرة. حاول مجدداً بعد <b class="ltr">0:42</b></span></div>
+      <div class="field"><label>البريد الإلكتروني</label><div class="input ro"><span class="ltr">owner@demo.test</span></div></div>
+      <div class="field"><label>كلمة المرور</label><div class="input ro"><span></span><span>👁</span></div></div>
+      <div class="btn dis">دخول (0:42)</div>
+    </div>
+  </div>
+  <figcaption><b>04 · Throttled with countdown</b> — 429 <code>TOO_MANY_REQUESTS</code>
+    <ol><li>Countdown from the <code>Retry-After</code> header (seconds). The button re-enables at 0:00.</li>
+    <li>Triggered after 5 failures per email + IP in 60 s.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="body center">
+      <div class="logo" style="border-radius:50%">⊘</div>
+      <div class="h1">تم إيقاف هذا الحساب</div>
+      <div class="muted" style="max-width:260px">لا يمكنك الدخول بهذا الحساب حالياً. تواصل مع صاحب المتجر لإعادة تفعيله.</div>
+      <div style="height:24px"></div>
+      <div class="btn" style="width:100%">العودة لتسجيل الدخول</div>
+    </div>
+  </div>
+  <figcaption><b>05 · Account deactivated</b> — 403 <code>USER_INACTIVE</code>
+    <ol><li>Shown at login or on any call mid-use; the token is cleared (the server already revoked it).</li>
+    <li>No retry button: retrying cannot succeed.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="appbar"><span>بيع</span></div>
+    <div class="body" style="opacity:.35"><div class="scan">مسح الباركود</div><div class="row"><span class="nm">منتج</span><span class="tot money">₪ 12.00</span></div></div>
+    <div class="sheet" style="position:absolute;inset:auto 0 0;padding-bottom:24px;display:grid;gap:10px">
+      <div class="grab"></div>
+      <div class="h1">انتهت الجلسة</div>
+      <div class="muted">سجّل الدخول مجدداً للمتابعة. سلة البيع محفوظة.</div>
+      <div class="field"><label>البريد الإلكتروني</label><div class="input ro"><span class="ltr">employee@demo.test</span></div></div>
+      <div class="field"><label>كلمة المرور</label><div class="input"><span></span><span>👁</span></div></div>
+      <div class="btn pri">دخول والمتابعة</div>
+      <div class="link" style="text-align:center">تسجيل الدخول بحساب آخر</div>
+    </div>
+  </div>
+  <figcaption><b>06 · Session expired mid-use</b> — 401 <code>UNAUTHENTICATED</code>
+    <ol><li>A re-login sheet over the current screen; the email is fixed to the same user.</li>
+    <li>Same user → back to the same place with the cart intact. "Another account" clears state and applies role landing.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>✕ ▮▮</span></div>
+    <div class="body">
+      <div class="logo">شعار</div>
+      <div style="text-align:center"><div class="h1">تسجيل الدخول</div></div>
+      <div class="banner soft"><span class="i">⚡</span><span>تعذر الاتصال بالخادم. تحقق من الإنترنت ثم أعد المحاولة.</span></div>
+      <div class="field"><label>البريد الإلكتروني</label><div class="input"><span class="ltr">owner@demo.test</span></div></div>
+      <div class="field"><label>كلمة المرور</label><div class="input"><span>••••••••</span><span>👁</span></div></div>
+      <div class="btn pri">إعادة المحاولة</div>
+      <div class="muted" style="text-align:center">خطأ غير متوقع؟ يظهر رمز مرجعي قصير: <span class="ltr">…ZT1FA</span></div>
+    </div>
+  </div>
+  <figcaption><b>07 · Network / server error</b> — no response · 5xx <code>SERVER_ERROR</code>
+    <ol><li>Both fields are kept; the primary action becomes "retry".</li>
+    <li>For 5xx a short reference (last 6 characters of <code>correlation_id</code>) is shown for support.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="body center"><div class="logo">شعار</div><div class="muted">جارٍ التحميل…</div></div>
+  </div>
+  <figcaption><b>08 · Restoring session</b> — launch with a stored token, <code>GET /me</code>
+    <ol><li>Splash only; no flash of the login screen.</li>
+    <li>200 → role landing · 401 → login with "انتهت الجلسة" · no network → shell offline with the cached user.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="appbar"><span>الرئيسية</span><span class="sp"></span><span class="muted">متجر التجربة</span></div>
+    <div class="body">
+      <div class="muted">اليوم</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="ph" style="height:84px"></div><div class="ph" style="height:84px"></div></div>
+      <div class="ph" style="height:120px"></div>
+      <div class="muted">المحتوى يُصمَّم في US-1508 (S4)</div>
+    </div>
+    <div class="nav"><div class="on">الرئيسية</div><div>الزبائن</div><div class="pos">بيع</div><div>المنتجات</div><div>المزيد</div></div>
+  </div>
+  <figcaption><b>09 · Shell — owner / manager landing (Home)</b>
+    <ol><li>Five tabs; RTL so Home is at the right edge; POS is the centre, emphasised tab.</li>
+    <li>Employee lands on POS (frame 10). Home content is out of S1 scope.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>✕ ▮▮</span></div>
+    <div class="appbar"><span>بيع</span><span class="sp"></span><span class="muted">موظف</span></div>
+    <div class="offline">لا يوجد اتصال — البيع يحتاج إنترنت</div>
+    <div class="body">
+      <div class="scan">مسح الباركود</div>
+      <div class="search">ابحث باسم المنتج…</div>
+      <div class="body center" style="padding:0"><div class="muted">امسح منتجاً للبدء</div></div>
+    </div>
+    <div class="nav"><div>الرئيسية</div><div>الزبائن</div><div class="pos on">بيع</div><div>المنتجات</div><div>المزيد</div></div>
+  </div>
+  <figcaption><b>10 · Shell — employee landing (POS) + offline banner</b>
+    <ol><li>The banner sits under the app bar on every tab while offline.</li>
+    <li>R1 has no offline sales: server actions stay visible and explain why they are unavailable when tapped.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="appbar"><span>المزيد</span></div>
+    <div class="body">
+      <div style="display:flex;gap:12px;align-items:center"><div class="ph" style="width:56px;height:56px;border-radius:50%"></div><div><div class="nm" style="font-weight:700">أحمد</div><div class="muted">موظف · متجر التجربة</div></div></div>
+      <div class="row"><span>الملف الشخصي</span><span>‹</span></div>
+      <div class="row"><span>عن التطبيق</span><span>‹</span></div>
+      <div style="flex:1"></div>
+      <div class="btn">تسجيل الخروج</div>
+    </div>
+    <div class="nav"><div>الرئيسية</div><div>الزبائن</div><div class="pos">بيع</div><div>المنتجات</div><div class="on">المزيد</div></div>
+  </div>
+  <figcaption><b>11 · More tab — profile and logout</b>
+    <ol><li>Logout revokes the server token, then clears secure storage, even without network.</li>
+    <li>If a cart has items: confirm "سيتم إفراغ السلة" before logout.</li></ol></figcaption>
+</figure>
+
+</div>
+</section>
+
+<!-- ========================= F-1 ========================= -->
+<section class="group" id="f1">
+<h2>F-1 Quick sale — SCR-M-02 – M-06 (US-1502 low-fi)</h2>
+<p class="muted">scan → cart (repeat scan +1) → checkout (cash default; partial / credit) → receipt. Walk-in cash after the last scan: <b>3 taps</b> (الدفع → تأكيد البيع → بيع جديد). Prices are examples.</p>
+<div class="grid">
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="appbar"><span>بيع</span></div>
+    <div class="body">
+      <div class="scan">📷 مسح الباركود</div>
+      <div class="search">ابحث باسم المنتج…</div>
+      <div class="body center" style="padding:0"><div class="h1" style="font-size:16px">السلة فارغة</div><div class="muted">امسح منتجاً للبدء</div></div>
+    </div>
+    <div class="nav"><div>الرئيسية</div><div>الزبائن</div><div class="pos on">بيع</div><div>المنتجات</div><div>المزيد</div></div>
+  </div>
+  <figcaption><b>12 · SCR-M-02 Cart — empty</b>
+    <ol><li>Scan is the largest target, within thumb reach. Search is the fallback for unlabelled goods.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="cam">
+      <div class="top"><span>✕ إغلاق</span><span>🔦</span></div>
+      <div class="reticle"></div>
+      <div style="position:absolute;inset:auto 0 140px;text-align:center;font-size:14px">وجّه الكاميرا نحو الباركود</div>
+      <div class="toast">
+        <div style="display:flex;justify-content:space-between"><b>تمت الإضافة ✓</b><span class="money">₪ 4.50</span></div>
+        <div class="muted">حليب كامل الدسم 1 لتر · <b class="hl">الكمية: 2</b></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px"><span class="muted">3 أصناف</span><span class="money" style="font-weight:800">₪ 27.50</span></div>
+        <div class="btn pri" style="height:44px;margin-top:6px">عرض السلة</div>
+      </div>
+    </div>
+  </div>
+  <figcaption><b>13 · SCR-M-03 Scanner — repeat scan +1</b>
+    <ol><li>The camera stays open for the next item; each accepted scan gives haptic + short sound + this toast.</li>
+    <li>Same code again → quantity +1 on one line (UI-AC-01); the changed quantity is highlighted.</li>
+    <li>The rule for a code held in view (continuous detection) is decided by the barcode spike (D-31).</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="appbar"><span>بيع</span><span class="sp"></span><span class="link">إفراغ</span></div>
+    <div class="body" style="gap:4px">
+      <div class="scan" style="height:56px">📷 مسح الباركود</div>
+      <div class="row"><span class="nm">حليب كامل الدسم 1 لتر</span><span class="tot money">₪ 9.00</span>
+        <span class="muted money" style="text-align:start">₪ 4.50 × 2</span><span class="step"><span>−</span><span class="q">2</span><span>+</span></span></div>
+      <div class="row"><span class="nm">خبز عربي</span><span class="tot money">₪ 6.00</span>
+        <span class="muted money" style="text-align:start">₪ 6.00 × 1</span><span class="step"><span>−</span><span class="q">1</span><span>+</span></span></div>
+      <div class="row"><span class="nm">أرز 1 كغ</span><span class="tot money">₪ 12.50</span>
+        <span class="muted money" style="text-align:start">₪ 12.50 × 1</span><span class="step"><span>−</span><span class="q">1</span><span>+</span></span></div>
+      <div class="muted">اسحب الصنف لحذفه</div>
+    </div>
+    <div class="footbar">
+      <div class="totline"><span class="muted">4 قطع</span><span class="big money">₪ 27.50</span></div>
+      <div class="btn pri">الدفع</div>
+    </div>
+    <div class="nav"><div>الرئيسية</div><div>الزبائن</div><div class="pos on">بيع</div><div>المنتجات</div><div>المزيد</div></div>
+  </div>
+  <figcaption><b>14 · SCR-M-02 Cart — with items</b>
+    <ol><li>The total is the largest element; tabular, LTR-isolated digits with ₪ and 2 decimals (UI-AC-04).</li>
+    <li>Swipe removes a line with a 4 s undo. Stepper targets are 40–48 dp.</li>
+    <li>The cart survives tab switches and session-expiry re-login.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="appbar"><span>›</span><span>الدفع</span></div>
+    <div class="body">
+      <div style="text-align:center"><div class="muted">الإجمالي</div><div class="big money">₪ 27.50</div></div>
+      <div class="seg"><div class="on">نقداً</div><div>جزئي</div><div>دين</div></div>
+      <div class="field"><label>المبلغ المدفوع</label><div class="input ro"><span class="money">27.50</span><span>₪</span></div></div>
+      <div class="chips"><span class="chip on">نقداً</span><span class="chip">بطاقة</span><span class="chip">تحويل</span></div>
+      <div class="link">+ إضافة زبون (اختياري)</div>
+      <div style="flex:1"></div>
+      <div class="sum"><div><span>الإجمالي</span><span class="money">₪ 27.50</span></div><div><span>المدفوع</span><span class="money">₪ 27.50</span></div><div><span>الحالة</span><span class="cue paid">مدفوع</span></div></div>
+    </div>
+    <div class="footbar"><div class="btn pri">تأكيد البيع <span class="money">₪ 27.50</span></div></div>
+  </div>
+  <figcaption><b>15 · SCR-M-04 Checkout — cash (default)</b>
+    <ol><li>Paid = total and method = cash are pre-filled: one tap to commit.</li>
+    <li>The commit button names the action and the exact amount (UI-AC-02); the summary replaces a confirmation dialog.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="appbar"><span>›</span><span>الدفع</span></div>
+    <div class="body">
+      <div style="text-align:center"><div class="muted">الإجمالي</div><div class="big money">₪ 27.50</div></div>
+      <div class="seg"><div>نقداً</div><div class="on">جزئي</div><div>دين</div></div>
+      <div class="field"><label>المبلغ المدفوع</label><div class="input"><span class="money">10.00</span><span>₪</span></div></div>
+      <div class="field"><label>الزبون (مطلوب)</label><div class="input err"><span>اختر زبوناً…</span><span>‹</span></div><div class="ferr">اختر الزبون لتسجيل الدين</div></div>
+      <div class="field"><label>تاريخ الاستحقاق (اختياري)</label><div class="input"><span>—</span><span>📅</span></div></div>
+      <div class="sum"><div><span>المدفوع</span><span class="money">₪ 10.00</span></div><div class="debt"><span>دين على الزبون</span><span class="money">₪ 17.50</span></div><div><span>الحالة</span><span class="cue partial">جزئي</span></div></div>
+    </div>
+    <div class="footbar"><div class="btn dis">تأكيد البيع <span class="money">₪ 27.50</span></div></div>
+  </div>
+  <figcaption><b>16 · Checkout — partial, customer missing</b>
+    <ol><li>Paid &lt; total → customer required; the error is inline (UI-AC-03) and the button stays disabled.</li>
+    <li>The debt amount is the boldest summary line, so the user sees what is owed before confirming.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="appbar"><span>›</span><span>الدفع</span></div>
+    <div class="body">
+      <div style="text-align:center"><div class="muted">الإجمالي</div><div class="big money">₪ 27.50</div></div>
+      <div class="seg"><div>نقداً</div><div>جزئي</div><div class="on">دين</div></div>
+      <div class="field"><label>الزبون</label><div class="input"><span>أبو محمد · <span class="ltr">0599 123 456</span></span><span>‹</span></div><div class="muted">الرصيد الحالي: <span class="money">₪ 140.00</span></div></div>
+      <div class="field"><label>تاريخ الاستحقاق (اختياري)</label><div class="input"><span class="ltr">2026-11-01</span><span>📅</span></div></div>
+      <div style="flex:1"></div>
+      <div class="sum"><div><span>المدفوع</span><span class="money">₪ 0.00</span></div><div class="debt"><span>دين على الزبون</span><span class="money">₪ 27.50</span></div><div><span>الرصيد بعد البيع</span><span class="money">₪ 167.50</span></div><div><span>الحالة</span><span class="cue debt">دين</span></div></div>
+    </div>
+    <div class="footbar"><div class="btn pri">تأكيد البيع بالدين <span class="money">₪ 27.50</span></div></div>
+  </div>
+  <figcaption><b>17 · Checkout — credit</b>
+    <ol><li>The commit label changes to say "on credit"; the summary shows the balance after the sale.</li>
+    <li>Credit-limit / stock 422 errors (S2/S3 contract) appear inline here with the cart kept.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="appbar"><span>✕</span><span>اختيار زبون</span></div>
+    <div class="body" style="gap:6px">
+      <div class="search">ابحث بالاسم أو الهاتف…  أبو</div>
+      <div class="row"><span class="nm">أبو محمد</span><span class="tot money">₪ 140.00</span><span class="muted ltr" style="text-align:start">0599 123 456</span><span class="cue debt" style="justify-self:end">دين</span></div>
+      <div class="row"><span class="nm">أبو خالد</span><span class="tot money">₪ 0.00</span><span class="muted ltr" style="text-align:start">0598 777 010</span><span class="cue paid" style="justify-self:end">لا يوجد دين</span></div>
+      <div style="flex:1"></div>
+      <div class="btn ghost">+ إضافة زبون جديد</div>
+    </div>
+  </div>
+  <figcaption><b>18 · SCR-M-05 Customer picker / quick-create</b>
+    <ol><li>Search as you type; each row shows the current balance with its status cue.</li>
+    <li>Quick-create asks only name + phone and returns to checkout with the customer selected.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>✕ ▮▮</span></div>
+    <div class="appbar"><span>›</span><span>الدفع</span></div>
+    <div class="body">
+      <div style="text-align:center"><div class="muted">الإجمالي</div><div class="big money">₪ 27.50</div></div>
+      <div class="seg"><div class="on">نقداً</div><div>جزئي</div><div>دين</div></div>
+      <div class="banner soft"><span class="i">⚡</span><span>لم يصل رد من الخادم. أعد المحاولة — لن يُسجَّل البيع مرتين.</span></div>
+      <div style="flex:1"></div>
+      <div class="sum"><div><span>الإجمالي</span><span class="money">₪ 27.50</span></div><div><span>المدفوع</span><span class="money">₪ 27.50</span></div></div>
+    </div>
+    <div class="footbar"><div class="btn pri">إعادة المحاولة</div></div>
+  </div>
+  <figcaption><b>19 · Checkout — no response (retry)</b>
+    <ol><li>Retry sends the <b>same</b> Idempotency-Key, so a sale that did reach the server is not duplicated (UI-AC-02).</li>
+    <li>While submitting, the commit button is disabled and shows progress.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="body center">
+      <div class="logo" style="border-radius:50%;border-style:solid">✓</div>
+      <div class="h1">تم البيع</div>
+      <div class="big money">₪ 27.50</div>
+      <span class="cue paid">مدفوع نقداً</span>
+      <div class="muted">فاتورة رقم <span class="ltr">#1042</span> · <span class="ltr">14:32</span></div>
+      <div style="height:24px"></div>
+      <div class="btn pri" style="width:100%">بيع جديد</div>
+      <div class="link">عرض الفاتورة</div>
+    </div>
+  </div>
+  <figcaption><b>20 · SCR-M-06 Receipt — cash</b>
+    <ol><li>"New sale" is the primary action and returns to an empty cart.</li>
+    <li>A replayed response (<code>Idempotent-Replay</code>) shows this same receipt, never a second sale.</li></ol></figcaption>
+</figure>
+
+<figure>
+  <div class="phone">
+    <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+    <div class="body center">
+      <div class="logo" style="border-radius:50%;border-style:solid">✓</div>
+      <div class="h1">تم البيع</div>
+      <div class="sum" style="width:100%;text-align:start"><div><span>الإجمالي</span><span class="money">₪ 27.50</span></div><div><span>المدفوع</span><span class="money">₪ 10.00</span></div><div class="debt"><span>دين جديد على أبو محمد</span><span class="money">₪ 17.50</span></div><div><span>يستحق في</span><span class="ltr">2026-11-01</span></div></div>
+      <span class="cue partial">مدفوع جزئياً</span>
+      <div style="height:16px"></div>
+      <div class="btn pri" style="width:100%">بيع جديد</div>
+      <div class="link">عرض حساب الزبون</div>
+    </div>
+  </div>
+  <figcaption><b>21 · Receipt — debt created</b>
+    <ol><li>States the customer, the new debt and the due date so the cashier can tell the customer.</li></ol></figcaption>
+</figure>
+
+</div>
+</section>
+
+<section class="group" id="cues">
+<h2>Status cues — shape + icon + label, never colour alone (ia.md §5)</h2>
+<div class="chips" style="gap:14px"><span class="cue paid">مدفوع / نقداً</span><span class="cue partial">جزئي</span><span class="cue debt">دين</span><span class="cue ret">مرتجع</span><span class="cue" style="text-decoration:line-through">ملغى</span></div>
+<p class="muted">The DR-2 directions give each cue its colour role; the shape and label stay the same so the meaning survives greyscale and colour-blindness.</p>
+</section>
+</body>
+</html>

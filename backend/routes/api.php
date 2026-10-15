@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController;
@@ -10,18 +9,22 @@ use App\Http\Controllers\Api\DebtController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\InvitationController;
+use App\Http\Controllers\Api\StoreSettingsController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DashboardController;
 
+// All routes are served under /api/v1 (bootstrap/app.php, D-22).
 
-// Authentication
-Route::post('/register', [AuthController::class, 'register']);
+// Authentication (login throttling lives in AuthService: 5 failures/min per email+IP)
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register/invitation', [AuthController::class, 'acceptInvitation']);
+Route::middleware('throttle:register')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register/invitation', [AuthController::class, 'acceptInvitation']);
+});
 
 
 // Protected API
-Route::middleware(['auth:sanctum', 'store'])->group(function () {
+Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
 
 
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -35,18 +38,15 @@ Route::middleware(['auth:sanctum', 'store'])->group(function () {
         'updateRole',
     ]);
 
-    Route::delete('/users/{user}', [
+    // D-13: staff are deactivated, never deleted.
+    Route::post('/users/{user}/deactivate', [
         UserController::class,
-        'destroy',
+        'deactivate',
     ]);
 
     // Current user's store
-    Route::get('/my-store', function (Request $request) {
-        return response()->json([
-            'user' => $request->user()->name,
-            'store' => $request->user()->store,
-        ]);
-    });
+    Route::get('/my-store', [StoreSettingsController::class, 'show']);
+    Route::patch('/my-store', [StoreSettingsController::class, 'update']);
 
 
     // Customers
@@ -57,18 +57,20 @@ Route::middleware(['auth:sanctum', 'store'])->group(function () {
         [CustomerDebtController::class, 'index']
     );
 
+    // Financial writes require an Idempotency-Key (US-0101).
     Route::post(
         '/customers/{customer}/debts/pay-all',
         [CustomerDebtController::class, 'payAll']
-    );
+    )->middleware('idempotent');
 
 
     // Invoices
-    Route::apiResource('invoices', InvoiceController::class);
+    Route::apiResource('invoices', InvoiceController::class)->except('store');
+    Route::post('invoices', [InvoiceController::class, 'store'])->middleware('idempotent');
 
     // Debts
     Route::get('debts', [DebtController::class, 'index']);
-    Route::post('debts', [DebtController::class, 'store']);
+    Route::post('debts', [DebtController::class, 'store'])->middleware('idempotent');
     Route::get('debts/{debt}', [DebtController::class, 'show']);
     Route::get('debts/{debt}/details', [DebtController::class, 'details']);
     Route::put('debts/{debt}', [DebtController::class, 'update']);
@@ -76,16 +78,16 @@ Route::middleware(['auth:sanctum', 'store'])->group(function () {
     Route::delete('debts/{debt}', [DebtController::class, 'destroy']);
 
     // Payments
-    Route::apiResource('payments', PaymentController::class)
-        ->only(['index', 'store']);
+    Route::get('payments', [PaymentController::class, 'index']);
+    Route::post('payments', [PaymentController::class, 'store'])->middleware('idempotent');
 
     Route::post(
         '/payments/{payment}/reverse',
         [PaymentController::class, 'is_reverse']
-    );
+    )->middleware('idempotent');
 
     Route::post(
         '/payment-groups/{paymentGroupId}/reverse',
         [PaymentController::class, 'reverseGroup']
-    );
+    )->middleware('idempotent');
 });

@@ -2,24 +2,20 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserRole;
+use App\Models\Payment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ReversePaymentGroupRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasRole(UserRole::OWNER, UserRole::MANAGER) ?? false;
+        return $this->user()->can('reverse', Payment::class);
     }
 
     public function rules(): array
     {
         return [
-            'reason' => [
-                'required',
-                'string',
-                'max:500',
-            ],
+            'reason' => ['required', 'string', 'max:500'],
         ];
     }
 

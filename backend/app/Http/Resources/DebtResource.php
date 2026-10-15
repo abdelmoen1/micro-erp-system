@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,11 +19,9 @@ class DebtResource extends JsonResource
             'id' => $this->id,
             'invoice_id' => $this->invoice?->id,
             'source' => $this->invoice?->source?->value,
-            'amount' => (float) $this->amount,
-            'total_payments' => (float) $this->payments
-                ->where('is_reversed', false)
-                ->sum('amount'),
-            'remaining_amount' => (float) $this->remaining_amount,
+            'amount' => Money::of($this->amount),
+            'total_payments' => Money::sum($this->payments->where('is_reversed', false)->pluck('amount')),
+            'remaining_amount' => Money::of($this->remaining_amount),
             'status' => $this->status,
         ];
     }

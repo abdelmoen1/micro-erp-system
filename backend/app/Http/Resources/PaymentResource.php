@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,7 +17,7 @@ class PaymentResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'amount' => (float) $this->amount,
+            'amount' => Money::of($this->amount),
             'method' => $this->method,
             'paid_at' => $this->paid_at,
             'notes' => $this->notes,

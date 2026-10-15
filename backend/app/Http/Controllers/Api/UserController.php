@@ -7,10 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserRoleRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
+    public function __construct(private readonly AuditService $audit) {}
+
     /**
      * Display employees belonging to the authenticated owner's store.
      */
@@ -29,6 +33,8 @@ class UserController extends Controller
                 'name',
                 'email',
                 'role',
+                'status',
+                'deactivated_at',
                 'created_at',
             ])
             ->latest()
@@ -46,24 +52,47 @@ class UserController extends Controller
     ) {
         $this->authorize('updateRole', $user);
 
-        $user->update([
-            'role' => $request->validated('role'),
-        ]);
+        DB::transaction(function () use ($request, $user) {
+            $oldRole = $user->role->value;
+            $user->update(['role' => $request->validated('role')]);
+
+            $this->audit->record('user.role_changed', $user, [
+                'old_role' => $oldRole,
+                'new_role' => $user->role->value,
+            ]);
+        });
 
         return new UserResource($user->refresh());
     }
 
     /**
-     * Delete a user.
+     * Deactivate a staff member (D-13). Users are never deleted, so the
+     * history they created keeps its attribution; their tokens are revoked.
      */
-    public function destroy(Request $request, User $user)
+    public function deactivate(Request $request, User $user)
     {
-        $this->authorize('delete', $user);
+        $this->authorize('deactivate', $user);
 
-        $user->delete();
+        DB::transaction(function () use ($user) {
+            if (!$user->isActive()) {
+                return;
+            }
+
+            $user->forceFill([
+                'status' => User::STATUS_INACTIVE,
+                'deactivated_at' => now(),
+            ])->save();
+
+            $user->tokens()->delete();
+
+            $this->audit->record('user.deactivated', $user, [
+                'role' => $user->role->value,
+            ]);
+        });
 
         return response()->json([
-            'message' => 'تم حذف المستخدم بنجاح',
+            'message' => 'تم إيقاف حساب المستخدم بنجاح',
+            'data' => new UserResource($user->refresh()),
         ]);
     }
 }

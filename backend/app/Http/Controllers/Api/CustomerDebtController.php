@@ -2,18 +2,23 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\PayAllDebtsRequest;
+use App\Http\Resources\DebtResource;
 use App\Models\Customer;
 use App\Models\Debt;
-use App\Http\Resources\DebtResource;
-use App\Http\Requests\PayAllDebtsRequest;
+use App\Models\Payment;
+use App\Services\DebtLedger;
+use App\Support\Money;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 
 class CustomerDebtController extends Controller
 {
+    public function __construct(private readonly DebtLedger $ledger) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -28,8 +33,8 @@ class CustomerDebtController extends Controller
 
         $summary = [
             'debts_count' => (clone $query)->count(),
-            'total_debt' => (float) (clone $query)->sum('amount'),
-            'total_payments' => (float) \App\Models\Payment::query()
+            'total_debt' => Money::sum((clone $query)->pluck('amount')),
+            'total_payments' => Money::sum(Payment::query()
                 ->where('is_reversed', false)
                 ->whereHas('debt', function ($debtQuery) use ($request, $customer) {
                     $debtQuery
@@ -37,8 +42,8 @@ class CustomerDebtController extends Controller
                         ->whereHas('invoice', fn($invoiceQuery) => $invoiceQuery
                             ->where('customer_id', $customer->id));
                 })
-                ->sum('amount'),
-            'total_remaining' => (float) (clone $query)->sum('remaining_amount'),
+                ->pluck('amount')),
+            'total_remaining' => Money::sum((clone $query)->pluck('remaining_amount')),
         ];
 
         $debts = (clone $query)
@@ -68,33 +73,32 @@ class CustomerDebtController extends Controller
                 ->get();
 
             if ($debts->isEmpty()) {
-                throw ValidationException::withMessages([
+                throw ApiException::businessRule('NOTHING_TO_PAY', 'لا يوجد على هذا العميل أي مبلغ متبقي.', [
                     'customer' => ['لا يوجد على هذا العميل أي مبلغ متبقي.'],
                 ]);
             }
 
             $paymentGroupId = (string) Str::uuid();
 
-            $totalPaid = 0;
+            $totalPaid = '0.00';
 
+            // D-12: a real repayment of what is owed, recorded as payments.
+            // Write-offs are a different operation and never go through here.
             foreach ($debts as $debt) {
-                $amount = $debt->remaining_amount;
+                $amount = Money::of($debt->remaining_amount);
 
                 $debt->payments()->create([
                     'amount' => $amount,
                     'method' => $validated['method'],
                     'paid_at' => $validated['paid_at'] ?? now(),
                     'notes' => $validated['notes'] ?? null,
-                    'created_by' => $request->user()?->id,
+                    'created_by' => $request->user()->id,
                     'payment_group_id' => $paymentGroupId,
-
                 ]);
 
-                $debt->remaining_amount = 0;
-                $debt->status = 'paid';
-                $debt->save();
+                $this->ledger->recalculate($debt);
 
-                $totalPaid += $amount;
+                $totalPaid = Money::add($totalPaid, $amount);
             }
 
             return [

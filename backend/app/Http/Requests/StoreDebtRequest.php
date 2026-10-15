@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserRole;
-use App\Models\User;
+use App\Models\Debt;
+use App\Support\Money;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -11,10 +11,7 @@ class StoreDebtRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasRole(
-            UserRole::OWNER,
-            UserRole::MANAGER
-        ) ?? false;
+        return $this->user()->can('create', Debt::class);
     }
 
     public function rules(): array
@@ -23,17 +20,9 @@ class StoreDebtRequest extends FormRequest
             'customer_id' => [
                 'required',
                 Rule::exists('customers', 'id')
-                    ->where(
-                        fn($query) =>
-                        $query->where('store_id', $this->user()->store_id)
-                    ),
+                    ->where(fn($query) => $query->where('store_id', $this->user()->store_id)->whereNull('deleted_at')),
             ],
-
-            'amount' => [
-                'required',
-                'numeric',
-                'min:0.01',
-            ],
+            'amount' => ['required', ...Money::inputRules()],
         ];
     }
 
@@ -44,7 +33,9 @@ class StoreDebtRequest extends FormRequest
             'customer_id.exists' => 'العميل غير موجود في متجرك.',
             'amount.required' => 'يجب إدخال قيمة الدين.',
             'amount.numeric' => 'قيمة الدين يجب أن تكون رقمية.',
-            'amount.min' => 'قيمة الدين يجب أن تكون أكبر من صفر.',
+            'amount.decimal' => 'قيمة الدين يجب ألا تتجاوز منزلتين عشريتين.',
+            'amount.gt' => 'قيمة الدين يجب أن تكون أكبر من صفر.',
+            'amount.max' => 'قيمة الدين أكبر من الحد المسموح.',
         ];
     }
 }

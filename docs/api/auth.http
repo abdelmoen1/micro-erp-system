@@ -1,0 +1,81 @@
+# Hisbah Smart Shop — API v1 authentication contract (US-0106 contract freeze, 2026-10-13)
+#
+# Source of truth for the Flutter session (US-0205, US-1304) and the design state matrix (US-1505).
+# Error codes: see error-codes.md. Responses below were captured from the real local API.
+# Runs in VS Code REST Client / JetBrains HTTP client. Use a disposable local database only.
+
+@base = http://127.0.0.1:8000/api/v1
+@email = owner@demo.test
+@password = password123
+
+### 1. Login — 200
+# Response:
+# {
+#   "message": "تم تسجيل دخولك بنجاح",
+#   "user": {
+#     "id": 1, "name": "Demo Owner", "email": "owner@demo.test",
+#     "role": "owner",                     // owner | manager | employee
+#     "status": "active",                  // active | inactive
+#     "store_id": 1, "deactivated_at": null,
+#     "created_at": "…", "updated_at": "…",
+#     "store": { "id": 1, "name": "Demo Shop", "phone": null, "address": null,
+#                "timezone": "Asia/Gaza", "created_at": "…", "updated_at": "…" }
+#   },
+#   "token": "<sanctum token, expires after 30 days>",
+#   "meta": { "currency": "ILS" }
+# }
+# @name login
+POST {{base}}/login
+Accept: application/json
+Content-Type: application/json
+
+{ "email": "{{email}}", "password": "{{password}}" }
+
+### 2. Current user — 200 { "user": {…same shape as login…}, "meta": {…} }
+GET {{base}}/me
+Accept: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+### 3. Logout — 200 { "message": "تم تسجيل الخروج بنجاح", "meta": {…} }
+# Revokes only the current token. The same token then gets 401 UNAUTHENTICATED.
+POST {{base}}/logout
+Accept: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+### 4. Wrong password — 401 INVALID_CREDENTIALS
+# { "message": "البيانات المدخلة غير صحيحة", "code": "INVALID_CREDENTIALS", "errors": {}, "correlation_id": "…" }
+# The 6th failure for the same email + IP within 60 s returns 429 TOO_MANY_REQUESTS
+# with header Retry-After: <seconds> and errors.retry_after = [<seconds>].
+POST {{base}}/login
+Accept: application/json
+Content-Type: application/json
+
+{ "email": "{{email}}", "password": "wrong-password" }
+
+### 5. Missing fields — 422 VALIDATION_FAILED
+# { "message": "The email field is required.", "code": "VALIDATION_FAILED",
+#   "errors": { "email": ["The email field is required."], "password": ["The password field is required."] }, … }
+# Messages are English until DEF-19 is fixed; clients show their own Arabic validation text.
+POST {{base}}/login
+Accept: application/json
+Content-Type: application/json
+
+{}
+
+### 6. No / expired / revoked token — 401 UNAUTHENTICATED
+# { "message": "يجب تسجيل الدخول للمتابعة.", "code": "UNAUTHENTICATED", "errors": {}, "correlation_id": "…" }
+GET {{base}}/me
+Accept: application/json
+
+### 7. Deactivated user
+# POST /login with the correct password → 403 USER_INACTIVE (no token issued).
+# Any authenticated call with a token issued before deactivation → 403 USER_INACTIVE,
+# and that token is revoked (the next call gets 401 UNAUTHENTICATED).
+# { "message": "تم إيقاف هذا الحساب. تواصل مع صاحب المتجر.", "code": "USER_INACTIVE", "errors": {}, … }
+
+### 8. Old prefix is gone — 404 (no /api/* route outside /api/v1)
+POST http://127.0.0.1:8000/api/login
+Accept: application/json
+Content-Type: application/json
+
+{}

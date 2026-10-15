@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\ApiException;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,9 +14,7 @@ class EnsureUserHasStore
         $user = $request->user();
 
         if (!$user || !$user->store_id) {
-            return response()->json([
-                'message' => 'المستخدم غير مرتبط بمتجر',
-            ], 403);
+            throw new ApiException(403, 'STORE_REQUIRED', 'المستخدم غير مرتبط بمتجر');
         }
 
         return $next($request);

@@ -50,7 +50,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Personal access tokens expire after 30 days by default (US-0104, DEF-08).
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 60 * 24 * 30),
 
     /*
     |--------------------------------------------------------------------------

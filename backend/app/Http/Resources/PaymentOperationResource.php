@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,7 +20,7 @@ class PaymentOperationResource extends JsonResource
             'payment_group_id' => $this->payment_group_id,
 
 
-            'total_amount' => (float) $this->total_amount,
+            'total_amount' => Money::of($this->total_amount),
 
             'method' => $this->method,
 

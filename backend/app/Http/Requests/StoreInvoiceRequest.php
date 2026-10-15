@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Money;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,7 +28,7 @@ class StoreInvoiceRequest extends FormRequest
             'customer_id' => [
                 'required',
                 Rule::exists('customers', 'id')->where(function ($query) {
-                    $query->where('store_id', $this->user()->store_id);
+                    $query->where('store_id', $this->user()->store_id)->whereNull('deleted_at');
                 }),
             ],
 
@@ -39,12 +40,7 @@ class StoreInvoiceRequest extends FormRequest
             'payment_method' => [
                 'nullable',
                 'string',
-                Rule::in([
-                    'cash',
-                    'jawwal_pay',
-                    'palpay',
-                    'bank_of_palestine',
-                ]),
+                Rule::in(PaymentMethods::ALL),
                 'required_if:has_debt,false',
                 'prohibited_if:has_debt,true',
             ],
@@ -67,11 +63,7 @@ class StoreInvoiceRequest extends FormRequest
                 'min:1',
             ],
 
-            'items.*.unit_price' => [
-                'required',
-                'numeric',
-                'min:0.01',
-            ],
+            'items.*.unit_price' => ['required', ...Money::inputRules()],
         ];
     }
 
@@ -94,7 +86,8 @@ class StoreInvoiceRequest extends FormRequest
 
             'items.*.unit_price.required' => 'يرجى تحديد سعر المنتج.',
             'items.*.unit_price.numeric'  => 'السعر يجب أن يكون قيمة مالية صحيحة.',
-            'items.*.unit_price.min'      => 'سعر المنتج لا يمكن أن يكون مجانياً أو بالسالب.',
+            'items.*.unit_price.gt'       => 'سعر المنتج لا يمكن أن يكون مجانياً أو بالسالب.',
+            'items.*.unit_price.decimal'  => 'السعر يجب ألا يتجاوز منزلتين عشريتين.',
         ];
     }
 }

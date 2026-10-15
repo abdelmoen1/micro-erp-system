@@ -1,4 +1,7 @@
-const API_URL = "http://127.0.0.1:8000/api";
+// Base URL of the Laravel API (v1). Override with VITE_API_URL, e.g.
+// VITE_API_URL=https://api.example.com/api/v1. The default goes through the
+// Vite dev-server proxy (vite.config.js) to the local Laravel server.
+const API_URL = (import.meta.env.VITE_API_URL || "/api/v1").replace(/\/+$/, "");
 
 export async function loginUser(data) {
   const response = await fetch(`${API_URL}/login`, {
@@ -18,6 +21,6 @@ export async function loginUser(data) {
     throw result;
   }
   localStorage.setItem("token", result.token);
-  localStorage.setItem("user", json.stringify(result.user));
+  localStorage.setItem("user", JSON.stringify(result.user));
   return result;
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,8 +18,8 @@ class InvoiceItemResource extends JsonResource
         return [
             'item_name' => $this->item_name,
             'quantity' => (int) $this->quantity,
-            'unit_price' => (float) $this->unit_price,
-            'total' => (float) $this->total,
+            'unit_price' => Money::of($this->unit_price),
+            'total' => Money::of($this->total),
         ];
     }
 }

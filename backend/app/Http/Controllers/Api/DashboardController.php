@@ -15,7 +15,7 @@ class DashboardController extends Controller
     {
         return new DashboardResource(
             $this->dashboardService->dashboard(
-                (int) $request->user()->store_id,
+                $request->user()->store,
                 $request->period(),
             )
         );

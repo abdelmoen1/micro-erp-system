@@ -2,21 +2,28 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReversePaymentGroupRequest;
+use App\Http\Requests\ReversePaymentRequest;
+use App\Http\Requests\StorePaymentRequest;
+use App\Http\Resources\PaymentOperationResource;
+use App\Http\Resources\PaymentResource;
 use App\Models\Debt;
 use App\Models\Payment;
-use App\Http\Requests\StorePaymentRequest;
-use App\Http\Resources\PaymentResource;
-use App\Http\Resources\PaymentOperationResource;
+use App\Services\AuditService;
+use App\Services\DebtLedger;
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\ReversePaymentRequest;
-use App\Http\Requests\ReversePaymentGroupRequest;
-use Illuminate\Validation\ValidationException;
-use App\Enums\UserRole;
 
 class PaymentController extends Controller
 {
+    public function __construct(
+        private readonly DebtLedger $ledger,
+        private readonly AuditService $audit,
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -135,7 +142,7 @@ class PaymentController extends Controller
                     $firstPayment->debt?->invoice?->customer;
 
                 $operation->total_amount =
-                    (float) $group->sum('amount');
+                    Money::sum($group->pluck('amount'));
 
                 $operation->method =
                     $firstPayment->method;
@@ -180,51 +187,44 @@ class PaymentController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Record a real payment against one debt. Any role (D-12).
      */
     public function store(StorePaymentRequest $request)
     {
         $validated = $request->validated();
         $storeId = $request->user()->store_id;
+        $amount = Money::of($validated['amount']);
 
-        $payment = DB::transaction(function () use ($validated, $request, $storeId) {
-
-            $debt = Debt::with('invoice')
+        $payment = DB::transaction(function () use ($validated, $request, $storeId, $amount) {
+            $debt = Debt::query()
                 ->whereKey($validated['debt_id'])
                 ->where('store_id', $storeId)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($debt->remaining_amount <= 0) {
-                throw ValidationException::withMessages([
+            if (Money::isZero($debt->remaining_amount)) {
+                throw ApiException::businessRule('DEBT_ALREADY_PAID', 'هذا الدين مسدد بالكامل.', [
                     'debt_id' => ['هذا الدين مسدد بالكامل.'],
                 ]);
             }
 
-            if ($validated['amount'] > $debt->remaining_amount) {
-                throw ValidationException::withMessages([
-                    'amount' => [
-                        'مبلغ الدفعة أكبر من المبلغ المتبقي: '
-                            . number_format($debt->remaining_amount, 2)
-                    ],
+            if (Money::compare($amount, $debt->remaining_amount) > 0) {
+                $message = 'مبلغ الدفعة أكبر من المبلغ المتبقي: ' . Money::of($debt->remaining_amount);
+
+                throw ApiException::businessRule('PAYMENT_EXCEEDS_REMAINING', $message, [
+                    'amount' => [$message],
                 ]);
             }
 
             $payment = $debt->payments()->create([
-                'amount' => $validated['amount'],
-                'method' => $validated['method'] ?? 'cash',
+                'amount' => $amount,
+                'method' => $validated['method'],
                 'paid_at' => $validated['paid_at'] ?? now(),
                 'notes' => $validated['notes'] ?? null,
-                'created_by' => $request->user()?->id,
+                'created_by' => $request->user()->id,
             ]);
 
-            $debt->remaining_amount -= $validated['amount'];
-
-            $debt->status = $debt->remaining_amount <= 0
-                ? 'paid'
-                : 'partially_paid';
-
-            $debt->save();
+            $this->ledger->recalculate($debt);
 
             return $payment;
         });
@@ -232,15 +232,12 @@ class PaymentController extends Controller
         return new PaymentResource($payment->load('debt'));
     }
 
+    /**
+     * Reverse one payment (owner/manager). The debt balance is re-derived
+     * from the remaining non-reversed payments.
+     */
     public function is_reverse(ReversePaymentRequest $request, Payment $payment)
     {
-        abort_unless(
-            $request->user()?->hasRole([UserRole::OWNER, \App\Enums\UserRole::MANAGER]),
-            403
-        );
-
-        $this->ensurePaymentBelongsToStore($request, $payment);
-
         $this->ensurePaymentBelongsToStore($request, $payment);
 
         DB::transaction(function () use ($request, $payment) {
@@ -250,7 +247,7 @@ class PaymentController extends Controller
                 ->firstOrFail();
 
             if ($lockedPayment->is_reversed) {
-                throw ValidationException::withMessages([
+                throw ApiException::businessRule('PAYMENT_ALREADY_REVERSED', 'هذه الدفعة ملغاة بالفعل.', [
                     'payment' => ['هذه الدفعة ملغاة بالفعل.'],
                 ]);
             }
@@ -266,14 +263,13 @@ class PaymentController extends Controller
                 'reversal_reason' => $request->validated('reason'),
             ]);
 
-            $paidAmount = $debt->payments()
-                ->where('is_reversed', false)
-                ->sum('amount');
-            $debt->remaining_amount = max(0, (float) $debt->amount - $paidAmount);
-            $debt->status = $debt->remaining_amount <= 0
-                ? 'paid'
-                : ($paidAmount > 0 ? 'partially_paid' : 'unpaid');
-            $debt->save();
+            $this->ledger->recalculate($debt);
+
+            $this->audit->record('payment.reversed', $lockedPayment, [
+                'amount' => Money::of($lockedPayment->amount),
+                'debt_id' => $debt->id,
+                'reason' => $request->validated('reason'),
+            ]);
         });
 
         return response()->json([
@@ -281,28 +277,27 @@ class PaymentController extends Controller
         ]);
     }
 
+    /**
+     * Reverse every payment of a pay-all operation (owner/manager).
+     */
     public function reverseGroup(ReversePaymentGroupRequest $request, string $paymentGroupId)
     {
-        abort_unless(
-            $request->user()?->hasRole([UserRole::OWNER, \App\Enums\UserRole::MANAGER]),
-            403
-        );
-
         $storeId = $request->user()->store_id;
 
         $result = DB::transaction(function () use ($request, $paymentGroupId, $storeId) {
-
-            $payments = Payment::where('payment_group_id', $paymentGroupId)
-                ->where('is_reversed', false)
+            $groupPayments = Payment::where('payment_group_id', $paymentGroupId)
                 ->forStore($storeId)
                 ->lockForUpdate()
                 ->get();
 
+            // Unknown or another store's group: never reveal existence.
+            abort_if($groupPayments->isEmpty(), 404);
+
+            $payments = $groupPayments->where('is_reversed', false);
+
             if ($payments->isEmpty()) {
-                throw ValidationException::withMessages([
-                    'payment_group_id' => [
-                        'عملية السداد غير موجودة أو تم إلغاؤها بالفعل.'
-                    ],
+                throw ApiException::businessRule('PAYMENT_ALREADY_REVERSED', 'تم إلغاء عملية السداد هذه بالفعل.', [
+                    'payment_group_id' => ['تم إلغاء عملية السداد هذه بالفعل.'],
                 ]);
             }
 
@@ -313,35 +308,31 @@ class PaymentController extends Controller
                 ->get()
                 ->keyBy('id');
 
-            $totalReversed = 0;
-            $debtsCount = 0;
-
             foreach ($payments as $payment) {
-                $debt = $debts->get($payment->debt_id);
-
                 $payment->update([
                     'is_reversed' => true,
                     'reversed_at' => now(),
                     'reversal_reason' => $request->validated('reason'),
                 ]);
-
-                $paidAmount = $debt->payments()
-                    ->where('is_reversed', false)
-                    ->sum('amount');
-                $debt->remaining_amount = max(0, (float) $debt->amount - $paidAmount);
-                $debt->status = $debt->remaining_amount <= 0
-                    ? 'paid'
-                    : ($paidAmount > 0 ? 'partially_paid' : 'unpaid');
-                $debt->save();
-
-                $totalReversed += $payment->amount;
-                $debtsCount++;
             }
+
+            foreach ($debts as $debt) {
+                $this->ledger->recalculate($debt);
+            }
+
+            $total = Money::sum($payments->pluck('amount'));
+
+            $this->audit->record('payment_group.reversed', 'PaymentGroup', [
+                'entity_id' => $paymentGroupId,
+                'payments_count' => $payments->count(),
+                'total_reversed' => $total,
+                'reason' => $request->validated('reason'),
+            ]);
 
             return [
                 'payment_group_id' => $paymentGroupId,
-                'debts_count' => $debtsCount,
-                'total_reversed' => $totalReversed,
+                'debts_count' => $debts->count(),
+                'total_reversed' => $total,
             ];
         });
 

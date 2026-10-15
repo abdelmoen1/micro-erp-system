@@ -11,7 +11,17 @@ class Store extends Model
         'name',
         'phone',
         'address',
+        'timezone',
     ];
+
+    /** D-23 / CR-14: Gaza pilot default; each store may use its own zone. */
+    public const DEFAULT_TIMEZONE = 'Asia/Gaza';
+
+    public function businessTimezone(): string
+    {
+        return $this->timezone ?: self::DEFAULT_TIMEZONE;
+    }
+
     public function users()
     {
         return $this->hasMany(User::class);

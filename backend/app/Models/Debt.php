@@ -20,6 +20,14 @@ class Debt extends Model
         'reversal_reason',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'amount' => 'decimal:2',
+            'remaining_amount' => 'decimal:2',
+        ];
+    }
+
     public function store()
     {
         return $this->belongsTo(Store::class);

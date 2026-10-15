@@ -2,33 +2,28 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserRole;
-use Illuminate\Contracts\Validation\ValidationRule;
+use App\Support\Money;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateDebtRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return $this->user()?->hasRole(UserRole::OWNER, UserRole::MANAGER) ?? false;
+        return $this->user()->can('update', $this->route('debt'));
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'amount' => [
-                'sometimes',
-                'numeric',
-                'min:0.01',
-            ],
+            'amount' => ['sometimes', ...Money::inputRules()],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'amount.decimal' => 'قيمة الدين يجب ألا تتجاوز منزلتين عشريتين.',
+            'amount.gt' => 'قيمة الدين يجب أن تكون أكبر من صفر.',
         ];
     }
 }

@@ -97,13 +97,13 @@ class DashboardFeatureTest extends TestCase
 
     public function test_dashboard_requires_authentication_and_rejects_store_id(): void
     {
-        $this->getJson('/api/dashboard')->assertUnauthorized();
+        $this->getJson('/api/v1/dashboard')->assertUnauthorized();
 
         $store = $this->store('Main');
         $user = $this->user($store);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson('/api/dashboard?store_id=999')
+            ->getJson('/api/v1/dashboard?store_id=999')
             ->assertUnprocessable()
             ->assertJsonValidationErrors('store_id');
     }
@@ -114,13 +114,13 @@ class DashboardFeatureTest extends TestCase
 
         foreach (['owner', 'manager', 'employee'] as $role) {
             $this->actingAs($this->user($store, $role), 'sanctum')
-                ->getJson('/api/dashboard')
+                ->getJson('/api/v1/dashboard')
                 ->assertOk();
         }
 
         $userWithoutStore = User::factory()->make(['store_id' => null]);
         $this->actingAs($userWithoutStore, 'sanctum')
-            ->getJson('/api/dashboard')
+            ->getJson('/api/v1/dashboard')
             ->assertForbidden();
     }
 
@@ -159,25 +159,25 @@ class DashboardFeatureTest extends TestCase
         $this->assertNotNull($payment);
         $this->assertNotNull($reversed);
 
-        $response = $this->actingAs($userA, 'sanctum')->getJson('/api/dashboard?period=this_month');
+        $response = $this->actingAs($userA, 'sanctum')->getJson('/api/v1/dashboard?period=this_month');
 
         $response->assertOk()
             ->assertJsonPath('data.invoices.total', 3)
             ->assertJsonPath('data.invoices.cash', 1)
             ->assertJsonPath('data.invoices.debt', 2)
-            ->assertJsonPath('data.invoices.total_value', 600)
-            ->assertJsonPath('data.sales.total', 300)
-            ->assertJsonPath('data.sales.cash', 100)
-            ->assertJsonPath('data.sales.credit', 200)
-            ->assertJsonPath('data.payments.total_collected', 50)
+            ->assertJsonPath('data.invoices.total_value', '600.00')
+            ->assertJsonPath('data.sales.total', '300.00')
+            ->assertJsonPath('data.sales.cash', '100.00')
+            ->assertJsonPath('data.sales.credit', '200.00')
+            ->assertJsonPath('data.payments.total_collected', '50.00')
             ->assertJsonPath('data.payments.count', 1)
-            ->assertJsonPath('data.debts.total_debt', 500)
-            ->assertJsonPath('data.debts.total_remaining', 450)
+            ->assertJsonPath('data.debts.total_debt', '500.00')
+            ->assertJsonPath('data.debts.total_remaining', '450.00')
             ->assertJsonPath('data.debts.partially_paid_count', 1)
             ->assertJsonPath('data.debts.unpaid_count', 1)
             ->assertJsonPath('data.customers.total', 1)
-            ->assertJsonPath('data.customers.with_outstanding_debts', 1)
-            ->assertJsonMissing(['id' => $foreign->id]);
+            ->assertJsonPath('data.customers.with_outstanding_debts', 1);
+        $this->assertNotContains($foreign->id, $response->json('data.recent_invoices.*.id'));
     }
 
     public function test_dashboard_periods_charts_zero_buckets_and_recent_activity(): void
@@ -193,26 +193,26 @@ class DashboardFeatureTest extends TestCase
             'paid_at' => '2026-08-20 09:00:00',
         ]);
 
-        $daily = $this->actingAs($user, 'sanctum')->getJson('/api/dashboard?period=this_week');
+        $daily = $this->actingAs($user, 'sanctum')->getJson('/api/v1/dashboard?period=this_week');
         $daily->assertOk()
             ->assertJsonPath('data.period.key', 'this_week')
-            ->assertJsonPath('data.charts.sales.0.amount', 0)
-            ->assertJsonPath('data.charts.sales.3.amount', 100)
-            ->assertJsonPath('data.charts.payments.3.amount', 75)
+            ->assertJsonPath('data.charts.sales.0.amount', '0.00')
+            ->assertJsonPath('data.charts.sales.3.amount', '100.00')
+            ->assertJsonPath('data.charts.payments.3.amount', '75.00')
             ->assertJsonPath('data.recent_invoices.0.id', $debtInvoice->id)
             ->assertJsonPath('data.recent_invoices.0.customer.id', $customer->id)
             ->assertJsonPath('data.recent_payments.0.id', $payment->id)
             ->assertJsonPath('data.recent_payments.0.status', 'active');
 
-        $year = $this->actingAs($user, 'sanctum')->getJson('/api/dashboard?period=this_year');
+        $year = $this->actingAs($user, 'sanctum')->getJson('/api/v1/dashboard?period=this_year');
         $year->assertOk()
             ->assertJsonPath('data.charts.sales.7.month', '2026-08')
-            ->assertJsonPath('data.charts.sales.7.amount', 300)
+            ->assertJsonPath('data.charts.sales.7.amount', '300.00')
             ->assertJsonPath('data.charts.payments.7.month', '2026-08')
-            ->assertJsonPath('data.charts.payments.7.amount', 75);
+            ->assertJsonPath('data.charts.payments.7.amount', '75.00');
 
         $this->actingAs($user, 'sanctum')
-            ->getJson('/api/dashboard?period=invalid')
+            ->getJson('/api/v1/dashboard?period=invalid')
             ->assertUnprocessable()
             ->assertJsonValidationErrors('period');
     }

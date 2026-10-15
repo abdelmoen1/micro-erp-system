@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,7 +20,7 @@ class InvoiceResource extends JsonResource
             'source' => $this->source,
             'has_debt' => (bool) $this->has_debt,
             'payment_method' => $this->payment_method,
-            'total_amount' => (float) $this->total_amount,
+            'total_amount' => Money::of($this->total_amount),
             'items' => InvoiceItemResource::collection($this->whenLoaded('items')),
             'customer' => new CustomerResource($this->whenLoaded('customer')),
             'debt' => new DebtResource($this->whenLoaded('debt')),

@@ -14,6 +14,14 @@ class InvoiceItem extends Model
         'total',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'unit_price' => 'decimal:2',
+            'total' => 'decimal:2',
+        ];
+    }
+
     public function invoice()
     {
         return $this->belongsTo(Invoice::class);

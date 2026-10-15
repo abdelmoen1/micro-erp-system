@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,13 +17,11 @@ class DebtDetailsResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'amount' => (float) $this->amount,
+            'amount' => Money::of($this->amount),
 
-            'total_payments' => (float) $this->payments
-                ->where('is_reversed', false)
-                ->sum('amount'),
+            'total_payments' => Money::sum($this->payments->where('is_reversed', false)->pluck('amount')),
 
-            'remaining_amount' => (float) $this->remaining_amount,
+            'remaining_amount' => Money::of($this->remaining_amount),
 
             'payments' => PaymentResource::collection(
                 $this->whenLoaded('payments')
@@ -35,7 +34,7 @@ class DebtDetailsResource extends JsonResource
                     $this->invoice->customer
                 ),
 
-                'total_amount' => (float) $this->invoice->total_amount,
+                'total_amount' => Money::of($this->invoice->total_amount),
 
                 'items' => InvoiceItemResource::collection(
                     $this->invoice->items

@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hisbah Visual Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* US-1506 — two visual directions on the same two screens. PROPOSAL for DR-2 part 1.
+     Colours are copied from ../tokens.json (contrast verified in ../contrast-report.md). */
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9E9E6; color: #1D1E20; font: 15px/1.55 "Segoe UI", Tahoma, sans-serif; }
+  .sheet { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
+  .sheet > header h1 { margin: 0 0 4px; font-size: 22px; }
+  .sheet > header p { margin: 4px 0; color: #55554F; max-width: 860px; }
+  /* English notes read LTR inside the RTL page; Arabic UI samples stay RTL. */
+  .sheet > header, .lede, .why, .direction > h2 { direction: ltr; text-align: left; }
+  .why .chips-rtl, .why .swatches { direction: rtl; }
+  .tag { display: inline-block; border: 1.5px solid #1D1E20; border-radius: 4px; padding: 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+  .direction { margin-top: 32px; padding-top: 16px; border-top: 2px solid #1D1E20; }
+  .direction > h2 { margin: 0; font-size: 20px; }
+  .lede { color: #55554F; margin: 4px 0 16px; max-width: 860px; }
+  .row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .why { flex: 1 1 300px; min-width: 260px; max-width: 420px; font-size: 14px; }
+  .why h3 { font-size: 15px; margin: 0 0 6px; }
+  .why ul { margin: 0 0 12px; padding-inline-start: 18px; }
+  .why li { margin-bottom: 4px; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; margin-top: 8px; }
+  .sw { border-radius: 8px; padding: 30px 6px 6px; font-size: 11px; line-height: 1.3; border: 1px solid rgba(0,0,0,.12); background: var(--c); }
+  .sw span { display: block; background: rgba(255,255,255,.92); border-radius: 4px; padding: 2px 4px; direction: ltr; text-align: left; }
+
+  /* ---------- Shared phone + component structure (direction supplies the tokens) ---------- */
+  .phone { width: 360px; max-width: 100%; height: 760px; border-radius: 28px; overflow: hidden; position: relative;
+           display: flex; flex-direction: column; background: var(--page); color: var(--text);
+           font-family: var(--font); box-shadow: 0 0 0 8px #1D1E20, 0 18px 40px rgba(0,0,0,.25); margin: 8px; }
+  .status { height: 26px; display: flex; justify-content: space-between; align-items: center; padding: 0 18px;
+            font: 600 12px/1 system-ui, sans-serif; color: var(--onChrome); background: var(--chrome); direction: ltr; }
+  .money { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; white-space: nowrap; }
+  .cur { font-weight: 500; opacity: .8; margin-inline-end: 3px; }
+  .field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .input { height: 52px; border-radius: var(--rInput); border: 1.5px solid var(--borderStrong); background: var(--surfaceRaised);
+           display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 16px; }
+  .input .ph { color: var(--textSecondary); }
+  .input.focus { border: 2px solid var(--action); box-shadow: 0 0 0 3px var(--actionSoft); }
+  .btn { height: 56px; border-radius: var(--rInput); display: grid; place-items: center; font-size: 18px; font-weight: 700;
+         background: var(--action); color: var(--onAction); border: 0; width: 100%; }
+  .link { color: var(--action); font-weight: 600; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+  .muted { color: var(--textSecondary); font-size: 14px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .chip svg { width: 15px; height: 15px; }
+  .chip.paid { color: var(--paid); background: var(--paidTint); }
+  .chip.partial { color: var(--partial); background: var(--partialTint); }
+  .chip.debt { color: var(--debt); background: var(--debtTint); }
+  .chip.return { color: var(--return); background: var(--returnTint); }
+  .chip.voided { color: var(--voided); background: var(--voidedTint); text-decoration: line-through; }
+  .chip.low { color: var(--lowStock); background: var(--lowStockTint); }
+  .chip.pending { color: var(--pending); background: var(--pendingTint); }
+  .nav { height: 68px; display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; text-align: center;
+         font-size: 12px; font-weight: 600; background: var(--navBg); color: var(--navFg); border-top: 1px solid var(--border); }
+  .nav div { display: grid; justify-items: center; gap: 3px; }
+  .nav svg { width: 24px; height: 24px; }
+  .nav .on { color: var(--navOn); }
+  .nav .on .pill { background: var(--navPill); }
+  .nav .pill { width: 56px; height: 30px; border-radius: 15px; display: grid; place-items: center; }
+  .step { display: inline-flex; align-items: center; height: 44px; border-radius: 22px; border: 1.5px solid var(--borderStrong); background: var(--surfaceRaised); }
+  .step b { min-width: 34px; text-align: center; font-size: 17px; }
+  .step i { width: 42px; height: 42px; display: grid; place-items: center; font-style: normal; font-size: 22px; font-weight: 500; color: var(--action); }
+
+  /* ---------- Direction A · Ledger ---------- */
+  .dir-a { --font: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+    --page:#F6F4EE; --surface:#FFFDF8; --surfaceRaised:#FFFFFF; --border:#D9D3C4; --borderStrong:#857E70;
+    --text:#1D1E20; --textSecondary:#5B5A55; --action:#1F6F7A; --onAction:#FFFFFF; --actionSoft:#E3EFF0; --focus:#180D39;
+    --chrome:#F6F4EE; --onChrome:#1D1E20;
+    --paid:#1E6B3F; --paidTint:#E4F1E8; --partial:#7F5800; --partialTint:#F6EDD5; --debt:#3F3593; --debtTint:#E9E7F6;
+    --return:#8A345F; --returnTint:#F5E6EE; --voided:#5F6368; --voidedTint:#ECEDEE; --lowStock:#9A4A00; --lowStockTint:#F8E9DA;
+    --pending:#1B5A94; --pendingTint:#E2ECF6;
+    --rInput: 10px; --navBg:#FFFDF8; --navFg:#5B5A55; --navOn:#1F6F7A; --navPill:#E3EFF0; }
+  .dir-a .rule { border: 0; border-top: 1px solid var(--border); margin: 0; }
+  .dir-a .double { border-top: 3px double var(--text); }
+  .dir-a .wordmark { width: 168px; mix-blend-mode: multiply; display: block; margin: 0 auto; }
+  .dir-a .appbar { height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: var(--chrome); border-bottom: 1px solid var(--border); }
+  .dir-a .appbar h4 { margin: 0; font-size: 20px; font-weight: 700; flex: 1; }
+  .dir-a .scan { margin: 14px 16px 6px; height: 64px; border-radius: 14px; border: 1.5px solid var(--action); background: var(--actionSoft);
+                 color: var(--action); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 18px; font-weight: 700; }
+  .dir-a .lines { flex: 1; margin: 6px 16px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 0 14px; overflow: hidden; }
+  .dir-a .line { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--border); align-items: center; }
+  .dir-a .line:last-child { border-bottom: 0; }
+  .dir-a .line .name { font-size: 16px; font-weight: 600; }
+  .dir-a .line .sum { font-size: 18px; font-weight: 700; text-align: end; }
+  .dir-a .line .unit { font-size: 13px; color: var(--textSecondary); }
+  .dir-a .totalbar { background: var(--surface); border-top: 1px solid var(--border); padding: 12px 16px 14px; }
+  .dir-a .totalrow { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 8px; margin-bottom: 10px; }
+  .dir-a .total { font-size: 34px; font-weight: 700; }
+
+  /* ---------- Direction B · Counter ---------- */
+  .dir-b { --font: "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+    --page:#EEF1F5; --surface:#FFFFFF; --surfaceRaised:#FFFFFF; --border:#C5CCD6; --borderStrong:#737B87;
+    --text:#0F1115; --textSecondary:#474D57; --action:#0E6E7A; --onAction:#FFFFFF; --actionSoft:#DDEFF1; --focus:#180D39;
+    --chrome:#180D39; --onChrome:#FFFFFF;
+    --paid:#14703A; --paidTint:#DFF3E6; --partial:#7A5300; --partialTint:#FBEFCF; --debt:#3A2E9C; --debtTint:#E6E3FA;
+    --return:#93285D; --returnTint:#F8E2EE; --voided:#555A61; --voidedTint:#E8EAED; --lowStock:#9C4300; --lowStockTint:#FCE6D3;
+    --pending:#1557A0; --pendingTint:#DEEAF8;
+    --rInput: 12px; --navBg:#FFFFFF; --navFg:#474D57; --navOn:#180D39; --navPill:#E6E3FA; }
+  .dir-b .appbar { height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: var(--chrome); color: var(--onChrome); }
+  .dir-b .appbar h4 { margin: 0; font-size: 20px; font-weight: 800; flex: 1; }
+  .dir-b .appbar .who { font-size: 13px; opacity: .85; }
+  .dir-b .scan { margin: 14px 16px 8px; height: 76px; border-radius: 16px; background: var(--action); color: #fff;
+                 display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 20px; font-weight: 800; }
+  .dir-b .search { margin: 0 16px; height: 48px; border-radius: 24px; background: var(--surface); border: 1.5px solid var(--borderStrong);
+                   display: flex; align-items: center; gap: 8px; padding: 0 16px; color: var(--textSecondary); font-size: 15px; }
+  .dir-b .lines { flex: 1; margin: 10px 16px 0; display: grid; gap: 8px; align-content: start; overflow: hidden; }
+  .dir-b .line { background: var(--surface); border-radius: 14px; padding: 12px 14px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; border: 1px solid var(--border); }
+  .dir-b .line .name { font-size: 16px; font-weight: 700; }
+  .dir-b .line .sum { font-size: 19px; font-weight: 800; text-align: end; }
+  .dir-b .line .unit { font-size: 13px; color: var(--textSecondary); }
+  .dir-b .line.hit { border: 2px solid var(--action); }
+  .dir-b .totalbar { background: var(--chrome); color: var(--onChrome); padding: 12px 16px 14px; border-radius: 20px 20px 0 0; margin-top: 10px; }
+  .dir-b .totalrow { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .dir-b .total { font-size: 38px; font-weight: 800; }
+  .dir-b .totalbar .btn { background: #FFFFFF; color: var(--chrome); font-weight: 800; }
+  .dir-b .login-top { background: var(--chrome); color: var(--onChrome); padding: 22px 24px 30px; border-radius: 0 0 28px 28px; text-align: center; }
+  .dir-b .login-top img { width: 72px; height: 72px; border-radius: 18px; display: block; margin: 6px auto 12px; }
+  .dir-b .wordmark-inv { width: 140px; filter: invert(1); mix-blend-mode: screen; display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 8v8M11 8v8M14 8v8M17 8v8"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-pos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 4h14v9H5zM3 13h18v7H3zM8 8h8M7 17h2M11 17h2M15 17h2"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2 .7 3 3 3 6"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="c-paid" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="m4.8 8.2 2.2 2.1 4.2-4.4" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></symbol>
+  <symbol id="c-partial" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></symbol>
+  <symbol id="c-debt" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.5V8l2.4 1.6"/></symbol>
+  <symbol id="c-return" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4 2.5 7l3 3"/><path d="M2.8 7H10a3.5 3.5 0 0 1 0 7H8"/></symbol>
+  <symbol id="c-void" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6.2"/><path d="m3.6 12.4 8.8-8.8"/></symbol>
+  <symbol id="c-low" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M8 2 15 14H1z"/><path d="M8 6.5v3.5M8 12v.2" stroke-linecap="round"/></symbol>
+  <symbol id="c-pending" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.7 0 3.2.8 4.2 2M12.5 1.8v2.9H9.6"/></symbol>
+</svg>
+
+<div class="sheet">
+<header>
+  <h1>Hisbah — two visual directions</h1>
+  <p><span class="tag">PROPOSAL — DR-2 part 1</span> &nbsp;US-1506. The same two screens (login and the POS cart) in two directions, built from the same structure as the approved-for-review low-fi and the same tokens structure. Pick one direction, or ask for a revision. Nothing here is implemented in the app until DR-2 sign-off.</p>
+  <p>Shared and fixed in both: RTL Arabic first; money in Western digits (UI-D1), tabular, ₪ + 2 decimals, isolated LTR; status = colour + icon + label; touch targets ≥ 48 dp; one primary action per screen; AA contrast on every pair (<a href="../contrast-report.md">contrast report</a>). The typeface is <b>independent</b> of the direction (UI-D2): each direction shows one candidate.</p>
+</header>
+
+<!-- ========================= A ========================= -->
+<section class="direction dir-a">
+  <h2>A · دفتر — Ledger</h2>
+  <p class="lede">Warm paper, ink and the brand teal. It borrows the shopkeeper's debt notebook: hairline ledger rules, the calligraphic wordmark, and the accountant's double rule above the total. Calm and trustworthy; it reads like a record.</p>
+  <div class="row">
+
+    <div class="phone" aria-label="Direction A login">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;padding:28px 24px 20px;gap:16px">
+        <div style="margin-top:28px"><img class="wordmark" src="../assets/wordmark.png" alt="حسبة"></div>
+        <div style="text-align:center;margin-top:-18px" class="muted">دفتر متجرك، مرتب ودقيق</div>
+        <hr class="rule" style="margin:8px 0">
+        <div style="font-size:22px;font-weight:700">تسجيل الدخول</div>
+        <div class="field"><label>البريد الإلكتروني</label><div class="input focus"><span class="money" style="font-variant-numeric:normal">owner@shop.ps</span></div></div>
+        <div class="field"><label>كلمة المرور</label><div class="input"><span style="letter-spacing:3px">••••••••</span><svg width="22" height="22" style="color:var(--textSecondary)"><use href="#i-eye"/></svg></div></div>
+        <div class="btn" style="margin-top:6px">دخول</div>
+        <div style="flex:1"></div>
+        <div class="muted" style="text-align:center">إنشاء متجر جديد يتم من موقع الويب</div>
+      </div>
+    </div>
+
+    <div class="phone" aria-label="Direction A POS cart">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="appbar"><h4>بيع</h4><span class="muted">بقالة أبو سالم</span></div>
+      <div class="scan"><svg width="26" height="26"><use href="#i-scan"/></svg>مسح الباركود</div>
+      <div style="margin:0 16px;display:flex;align-items:center;gap:8px;color:var(--textSecondary);font-size:15px;padding:6px 4px"><svg width="20" height="20"><use href="#i-search"/></svg>ابحث باسم المنتج…</div>
+      <div class="lines">
+        <div class="line"><span class="name">حليب كامل الدسم 1 لتر</span><span class="sum money"><span class="cur">₪</span>9.00</span>
+          <span class="unit money" style="text-align:start"><span class="cur">₪</span>4.50 × 2</span><span class="step"><i>−</i><b class="money">2</b><i>+</i></span></div>
+        <div class="line"><span class="name">خبز عربي — كيس</span><span class="sum money"><span class="cur">₪</span>6.00</span>
+          <span class="unit money" style="text-align:start"><span class="cur">₪</span>6.00 × 1</span><span class="step"><i>−</i><b class="money">1</b><i>+</i></span></div>
+        <div class="line"><span class="name">أرز بسمتي 1 كغ</span><span class="sum money"><span class="cur">₪</span>12.50</span>
+          <span class="unit money" style="text-align:start"><span class="cur">₪</span>12.50 × 1</span><span class="step"><i>−</i><b class="money">1</b><i>+</i></span></div>
+      </div>
+      <div class="totalbar">
+        <div class="totalrow double" style="border-top:0;border-bottom:3px double var(--text)"><span class="muted">4 قطع · الإجمالي</span><span class="total money"><span class="cur">₪</span>27.50</span></div>
+        <div class="btn">الدفع</div>
+      </div>
+      <div class="nav">
+        <div><span class="pill"><svg><use href="#i-home"/></svg></span>الرئيسية</div>
+        <div class="on"><span class="pill"><svg><use href="#i-pos"/></svg></span>بيع</div>
+        <div><span class="pill"><svg><use href="#i-people"/></svg></span>الزبائن</div>
+        <div><span class="pill"><svg><use href="#i-box"/></svg></span>المنتجات</div>
+        <div><span class="pill"><svg><use href="#i-more"/></svg></span>المزيد</div>
+      </div>
+    </div>
+
+    <div class="why">
+      <h3>Against the design principles (14 §5.2)</h3>
+      <ul>
+        <li><b>Speed:</b> scan is a wide target at the top; the checkout button is in the thumb zone.</li>
+        <li><b>Money is the hero:</b> 34 sp total above a double rule, the accounting sign for "final amount".</li>
+        <li><b>Meaning, not decoration:</b> colour appears only on the primary action and status chips; structure comes from rules, not cards or shadows.</li>
+        <li><b>Brand:</b> the calligraphic wordmark leads the login; teal from the app icon, darkened to <span class="money">#1F6F7A</span> to pass AA with white text.</li>
+      </ul>
+      <h3>Trade-offs</h3>
+      <ul>
+        <li>Lower visual punch under strong sunlight than B.</li>
+        <li>Warm paper must not drift into "beige app"; it stays very light.</li>
+      </ul>
+      <h3>Status chips</h3>
+      <div class="chips-rtl" style="display:flex;flex-wrap:wrap;gap:6px">
+        <span class="chip paid"><svg><use href="#c-paid"/></svg>مدفوع</span><span class="chip partial"><svg><use href="#c-partial"/></svg>جزئي</span><span class="chip debt"><svg><use href="#c-debt"/></svg>دين</span><span class="chip return"><svg><use href="#c-return"/></svg>مرتجع</span><span class="chip voided"><svg><use href="#c-void"/></svg>ملغى</span><span class="chip low"><svg><use href="#c-low"/></svg>مخزون منخفض</span><span class="chip pending"><svg><use href="#c-pending"/></svg>بانتظار المزامنة</span>
+      </div>
+      <div class="swatches">
+        <div class="sw" style="--c:#F6F4EE"><span>page #F6F4EE</span></div><div class="sw" style="--c:#1D1E20"><span>text #1D1E20</span></div><div class="sw" style="--c:#1F6F7A"><span>action #1F6F7A</span></div><div class="sw" style="--c:#857E70"><span>borderStrong</span></div><div class="sw" style="--c:#3F3593"><span>debt #3F3593</span></div><div class="sw" style="--c:#B3261E"><span>error #B3261E</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= B ========================= -->
+<section class="direction dir-b">
+  <h2>B · كاونتر — Counter</h2>
+  <p class="lede">A till display. The brand navy frames the screen top and bottom; the total sits in a dark bar in large white figures, readable at arm's length and in glare. Bright white rows on a cool grey. Fast and assertive.</p>
+  <div class="row">
+
+    <div class="phone" aria-label="Direction B login">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="login-top">
+        <img src="../assets/app-icon.png" alt="">
+        <img class="wordmark-inv" src="../assets/wordmark.png" alt="حسبة">
+        <div style="font-size:14px;opacity:.85;margin-top:-6px">نقطة البيع لمتجرك</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;padding:24px;gap:16px">
+        <div style="font-size:22px;font-weight:800">تسجيل الدخول</div>
+        <div class="field"><label>البريد الإلكتروني</label><div class="input" style="border:2px solid var(--focus);box-shadow:0 0 0 3px #E6E3FA"><span class="money" style="font-variant-numeric:normal">owner@shop.ps</span></div></div>
+        <div class="field"><label>كلمة المرور</label><div class="input"><span style="letter-spacing:3px">••••••••</span><svg width="22" height="22" style="color:var(--textSecondary)"><use href="#i-eye"/></svg></div></div>
+        <div class="btn" style="margin-top:6px">دخول</div>
+        <div style="flex:1"></div>
+        <div class="muted" style="text-align:center">إنشاء متجر جديد يتم من موقع الويب</div>
+      </div>
+    </div>
+
+    <div class="phone" aria-label="Direction B POS cart">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="appbar"><h4>بيع</h4><span class="who">أحمد · موظف</span></div>
+      <div class="scan"><svg width="30" height="30"><use href="#i-scan"/></svg>مسح الباركود</div>
+      <div class="search"><svg width="20" height="20"><use href="#i-search"/></svg>ابحث باسم المنتج…</div>
+      <div class="lines">
+        <div class="line hit"><span class="name">حليب كامل الدسم 1 لتر</span><span class="sum money"><span class="cur">₪</span>9.00</span>
+          <span class="unit money" style="text-align:start"><span class="cur">₪</span>4.50 × 2</span><span class="step"><i>−</i><b class="money">2</b><i>+</i></span></div>
+        <div class="line"><span class="name">خبز عربي — كيس</span><span class="sum money"><span class="cur">₪</span>6.00</span>
+          <span class="unit money" style="text-align:start"><span class="cur">₪</span>6.00 × 1</span><span class="step"><i>−</i><b class="money">1</b><i>+</i></span></div>
+        <div class="line"><span class="name">أرز بسمتي 1 كغ</span><span class="sum money"><span class="cur">₪</span>12.50</span>
+          <span class="unit money" style="text-align:start"><span class="cur">₪</span>12.50 × 1</span><span class="step"><i>−</i><b class="money">1</b><i>+</i></span></div>
+      </div>
+      <div class="totalbar">
+        <div class="totalrow"><span style="font-size:14px;opacity:.85">4 قطع · الإجمالي</span><span class="total money"><span class="cur">₪</span>27.50</span></div>
+        <div class="btn">الدفع</div>
+      </div>
+      <div class="nav">
+        <div><span class="pill"><svg><use href="#i-home"/></svg></span>الرئيسية</div>
+        <div class="on"><span class="pill"><svg><use href="#i-pos"/></svg></span>بيع</div>
+        <div><span class="pill"><svg><use href="#i-people"/></svg></span>الزبائن</div>
+        <div><span class="pill"><svg><use href="#i-box"/></svg></span>المنتجات</div>
+        <div><span class="pill"><svg><use href="#i-more"/></svg></span>المزيد</div>
+      </div>
+    </div>
+
+    <div class="why">
+      <h3>Against the design principles (14 §5.2)</h3>
+      <ul>
+        <li><b>Speed:</b> the largest scan target of the two (76 dp); the last-scanned line is outlined so repeat scans are visible at a glance.</li>
+        <li><b>Money is the hero:</b> 38 sp white total on navy, the strongest contrast on the screen, like a till display.</li>
+        <li><b>Meaning, not decoration:</b> navy is structure (top and bottom chrome), teal is action, colours are only for status.</li>
+        <li><b>Brand:</b> the app icon and the inverted wordmark on the brand navy <span class="money">#180D39</span>.</li>
+      </ul>
+      <h3>Trade-offs</h3>
+      <ul>
+        <li>Heavier; two dark bars reduce the visible list height by about one row.</li>
+        <li>Cards per line are allowed here (one per cart line), but the dashboards must not become card grids (anti-pattern).</li>
+      </ul>
+      <h3>Status chips</h3>
+      <div class="chips-rtl" style="display:flex;flex-wrap:wrap;gap:6px">
+        <span class="chip paid"><svg><use href="#c-paid"/></svg>مدفوع</span><span class="chip partial"><svg><use href="#c-partial"/></svg>جزئي</span><span class="chip debt"><svg><use href="#c-debt"/></svg>دين</span><span class="chip return"><svg><use href="#c-return"/></svg>مرتجع</span><span class="chip voided"><svg><use href="#c-void"/></svg>ملغى</span><span class="chip low"><svg><use href="#c-low"/></svg>مخزون منخفض</span><span class="chip pending"><svg><use href="#c-pending"/></svg>بانتظار المزامنة</span>
+      </div>
+      <div class="swatches">
+        <div class="sw" style="--c:#180D39"><span>chrome #180D39</span></div><div class="sw" style="--c:#EEF1F5"><span>page #EEF1F5</span></div><div class="sw" style="--c:#0E6E7A"><span>action #0E6E7A</span></div><div class="sw" style="--c:#737B87"><span>borderStrong</span></div><div class="sw" style="--c:#3A2E9C"><span>debt #3A2E9C</span></div><div class="sw" style="--c:#B11F1F"><span>error #B11F1F</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+</body>
+</html>

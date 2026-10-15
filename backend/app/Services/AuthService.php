@@ -3,15 +3,71 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Exceptions\ApiException;
 use App\Models\Store;
 use App\Models\StoreInvitation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
+    public const MAX_LOGIN_ATTEMPTS = 5;
+
+    public const LOGIN_DECAY_SECONDS = 60;
+
+    /**
+     * Stateless credential check (no session), throttled per email + IP
+     * on failed attempts only (US-0104), and refused for inactive staff (US-0105).
+     */
+    public function login(string $email, string $password, string $ip): User
+    {
+        $key = 'login:' . sha1(Str::lower($email) . '|' . $ip);
+
+        if (RateLimiter::tooManyAttempts($key, self::MAX_LOGIN_ATTEMPTS)) {
+            $seconds = RateLimiter::availableIn($key);
+
+            throw new ApiException(
+                429,
+                'TOO_MANY_REQUESTS',
+                "محاولات دخول كثيرة. حاول مجدداً بعد {$seconds} ثانية.",
+                ['retry_after' => [$seconds]],
+                ['Retry-After' => (string) $seconds],
+            );
+        }
+
+        $user = User::where('email', $email)->first();
+
+        if (!$user || !Hash::check($password, $user->password)) {
+            RateLimiter::hit($key, self::LOGIN_DECAY_SECONDS);
+
+            throw new ApiException(401, 'INVALID_CREDENTIALS', 'البيانات المدخلة غير صحيحة');
+        }
+
+        RateLimiter::clear($key);
+
+        if (!$user->isActive()) {
+            throw new ApiException(403, 'USER_INACTIVE', 'تم إيقاف هذا الحساب. تواصل مع صاحب المتجر.');
+        }
+
+        return $user;
+    }
+
+    /** Sanctum token that expires with sanctum.expiration (30 days by default). */
+    public function issueToken(User $user): string
+    {
+        $minutes = (int) config('sanctum.expiration');
+
+        return $user->createToken(
+            'api-token',
+            ['*'],
+            $minutes > 0 ? now()->addMinutes($minutes) : null,
+        )->plainTextToken;
+    }
+
     public function registerStore(array $data): User
     {
         return DB::transaction(function () use ($data) {
@@ -19,6 +75,7 @@ class AuthService
                 'name' => $data['store_name'],
                 'phone' => $data['phone'] ?? null,
                 'address' => $data['address'] ?? null,
+                'timezone' => $data['timezone'] ?? Store::DEFAULT_TIMEZONE,
             ]);
 
             $owner = new User([

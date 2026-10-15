@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AcceptInvitationRequest;
 use App\Http\Requests\RegisterStoreRequest;
+use App\Models\User;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -16,7 +16,7 @@ class AuthController extends Controller
     public function register(RegisterStoreRequest $request)
     {
         $user = $this->authService->registerStore($request->validated());
-        $token = $user->createToken('api-token')->plainTextToken;
+        $token = $this->authService->issueToken($user);
 
         return $this->authenticatedResponse($user, 'تم إنشاء المتجر والمالك بنجاح', 201, $token);
     }
@@ -24,7 +24,7 @@ class AuthController extends Controller
     public function acceptInvitation(AcceptInvitationRequest $request)
     {
         $user = $this->authService->acceptInvitation($request->validated());
-        $token = $user->createToken('api-token')->plainTextToken;
+        $token = $this->authService->issueToken($user);
 
         return $this->authenticatedResponse($user, 'تم إنشاء الحساب والانضمام إلى المتجر بنجاح', 201, $token);
     }
@@ -33,20 +33,13 @@ class AuthController extends Controller
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
-            'password' => ['required'],
+            'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt($credentials)) {
-            return response()->json([
-                'message' => 'البيانات المدخلة غير صحيحة'
-            ], 401);
-        }
+        $user = $this->authService->login($credentials['email'], $credentials['password'], (string) $request->ip());
+        $token = $this->authService->issueToken($user);
 
-        $user = Auth::user();
-
-        $token = $user->createToken('api-token')->plainTextToken;
-
-        return $this->authenticatedResponse($user, 'تم تسجيل دخولك بنجاح', 200, $token);
+        return $this->authenticatedResponse($user->load('store'), 'تم تسجيل دخولك بنجاح', 200, $token);
     }
 
     public function logout(Request $request)
@@ -65,7 +58,7 @@ class AuthController extends Controller
         return response()->json(['user' => $request->user()->load('store')]);
     }
 
-    private function authenticatedResponse($user, string $message, int $status, ?string $token = null)
+    private function authenticatedResponse(User $user, string $message, int $status, ?string $token = null)
     {
         return response()->json(array_filter([
             'message' => $message,
