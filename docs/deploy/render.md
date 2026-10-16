@@ -13,6 +13,8 @@ Health check: `/up` (Laravel boots). It does **not** touch the database; see the
 
 ## Database requirement
 
+Moving the data from Railway: [mysql-migration.md](mysql-migration.md).
+
 The service needs the existing MySQL database, reachable **over the internet** from Render:
 
 - A Railway `*.railway.internal` host only works inside Railway's private network. Render cannot reach it.
