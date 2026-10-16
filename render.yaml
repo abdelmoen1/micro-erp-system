@@ -1,0 +1,53 @@
+# Render Blueprint: Laravel API (backend/) as a Docker web service. Runbook: docs/deploy/render.md
+# Secret values are never stored here: entries with `sync: false` are filled in the Render dashboard.
+services:
+  - type: web
+    name: hisbah-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: frankfurt
+    branch: main
+    # CI on main has known unrelated failures (web build, MySQL tests), so deploys follow commits.
+    autoDeployTrigger: commit
+    healthCheckPath: /up
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      # The existing application key (same app, same data). Never generate a new one casually.
+      - key: APP_KEY
+        sync: false
+      # Optional: defaults to the URL Render assigns (RENDER_EXTERNAL_URL, docker/entrypoint.sh).
+      - key: APP_URL
+        sync: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_CONNECTION
+        value: mysql
+      # Must be reachable from Render over the internet (not a *.railway.internal host).
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      # Same drivers as before (tables already exist in the database).
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
