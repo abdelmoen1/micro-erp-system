@@ -1,0 +1,126 @@
+# Full Android release of the Flutter app through Shorebird (the baseline for OTA patches).
+# Manual only, from main. Needed for the first install and whenever a change cannot ship as a
+# patch (native/Gradle changes, native plugins, packaged assets, Flutter version, signing keys).
+# Runbook: docs/mobile/ota-updates.md
+name: Mobile release (Shorebird, Android)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Shared with mobile-patch.yml: never publish a release and a patch at the same time.
+concurrency:
+  group: shorebird-android
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: '3.47.7'
+
+jobs:
+  checks:
+    name: Analyze and test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  release:
+    name: Shorebird release (AAB + APK)
+    needs: checks
+    runs-on: ubuntu-latest
+    environment: mobile-production
+    defaults:
+      run:
+        shell: bash
+        working-directory: mobile
+    env:
+      SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+      API_BASE_URL: ${{ vars.MOBILE_API_BASE_URL }}
+      APK_DISTRIBUTION: ${{ vars.MOBILE_APK_DISTRIBUTION }}
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      APK_PASSPHRASE: ${{ secrets.MOBILE_APK_PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Before anything is published: a release without a way to install it would burn its version.
+      - name: Preflight
+        run: bash tool/ci/preflight.sh release
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+
+      - name: Write signing config and production env (runner only, git-ignored)
+        run: bash tool/ci/write_build_config.sh
+
+      - name: Shorebird release
+        id: release
+        uses: shorebirdtech/shorebird-release@v1
+        with:
+          platform: android
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          working-directory: mobile
+          args: --artifact apk --public-key-path shorebird-patch-public.pem -- --dart-define-from-file=env/production.json
+
+      - name: Inspect APK (application ID, version, signing certificate)
+        id: apk
+        run: bash tool/ci/inspect_apk.sh build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Package APK for download
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
+        run: bash tool/ci/package_apk.sh build/app/outputs/flutter-apk/app-release.apk "$RUNNER_TEMP/apk-out" "hisbah-$RELEASE_VERSION"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hisbah-android-${{ steps.release.outputs.release-version }}
+          path: ${{ runner.temp }}/apk-out/
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Summary
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
+          APP_ID: ${{ steps.apk.outputs.package }}
+          VERSION_CODE: ${{ steps.apk.outputs.version_code }}
+          CERT_SHA256: ${{ steps.apk.outputs.cert_sha256 }}
+        run: |
+          {
+            echo "### Shorebird release published"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Platform | android (aab + apk) |"
+            echo "| Release version | \`$RELEASE_VERSION\` |"
+            echo "| Application ID | \`$APP_ID\` (versionCode $VERSION_CODE) |"
+            echo "| Signing cert SHA-256 | \`$CERT_SHA256\` |"
+            echo "| API base URL | \`$API_BASE_URL\` |"
+            echo "| Patch signing | on (shorebird-patch-public.pem) |"
+            echo "| APK download | artifact, $APK_DISTRIBUTION, kept 7 days |"
+            echo
+            echo "After installing and checking this build on the phone: set MOBILE_OTA_RELEASE_VERSION=$RELEASE_VERSION, then MOBILE_OTA_ENABLED=true."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f android/key.properties android/app/upload-keystore.jks env/production.json

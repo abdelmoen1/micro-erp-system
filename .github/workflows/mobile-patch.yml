@@ -1,0 +1,131 @@
+# OTA patch of the Flutter app (Dart code) through Shorebird, for pushes to main.
+# Automatic (push) patches are off until the repository variable MOBILE_OTA_ENABLED is 'true',
+# set only after the baseline release is installed and checked on the phone. A manual run from
+# main (workflow_dispatch) always works: that is how the device acceptance test is published.
+# Patches target exactly the release in MOBILE_OTA_RELEASE_VERSION (it must equal `version:` in
+# mobile/pubspec.yaml) and are signed.
+# Changes that need a full APK stop this workflow: run "Mobile release (Shorebird, Android)".
+# Runbook: docs/mobile/ota-updates.md
+name: Mobile patch (Shorebird, Android)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/lib/**'
+      - 'mobile/l10n.yaml'
+      - 'mobile/pubspec.yaml'
+      - 'mobile/pubspec.lock'
+      - 'mobile/shorebird.yaml'
+      - 'mobile/shorebird-patch-public.pem'
+      - 'mobile/assets/**'
+      - 'mobile/android/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Shared with mobile-release.yml; queued, never cancelled mid-publish.
+concurrency:
+  group: shorebird-android
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: '3.47.7'
+
+jobs:
+  checks:
+    name: Analyze and test
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.MOBILE_OTA_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  patch:
+    name: Shorebird patch
+    needs: checks
+    runs-on: ubuntu-latest
+    environment: mobile-production
+    defaults:
+      run:
+        shell: bash
+        working-directory: mobile
+    env:
+      SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+      API_BASE_URL: ${{ vars.MOBILE_API_BASE_URL }}
+      OTA_RELEASE_VERSION: ${{ vars.MOBILE_OTA_RELEASE_VERSION }}
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      PATCH_PRIVATE_KEY: ${{ secrets.SHOREBIRD_PATCH_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Changes that need a full release
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: bash tool/ci/check_patchable.sh "$BEFORE" "$GITHUB_SHA"
+
+      - name: Preflight
+        run: bash tool/ci/preflight.sh patch
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+
+      - name: Write signing config and production env (runner only, git-ignored)
+        run: bash tool/ci/write_build_config.sh
+
+      # Shorebird's native-code and asset-difference checks stay on: no --allow-* flags.
+      - name: Shorebird patch
+        id: patch
+        uses: shorebirdtech/shorebird-patch@v1
+        with:
+          platform: android
+          release-version: ${{ vars.MOBILE_OTA_RELEASE_VERSION }}
+          working-directory: mobile
+          args: --public-key-path shorebird-patch-public.pem --private-key-path ${{ runner.temp }}/shorebird-patch-private.pem -- --dart-define-from-file=env/production.json
+
+      - name: Summary
+        if: always()
+        env:
+          PATCH_NUMBER: ${{ steps.patch.outputs.patch-number }}
+          OUTCOME: ${{ steps.patch.outcome }}
+        run: |
+          {
+            echo "### Shorebird patch: ${OUTCOME:-not run}"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Platform | android |"
+            echo "| Release version | \`$OTA_RELEASE_VERSION\` |"
+            echo "| Patch number | ${PATCH_NUMBER:-none} |"
+            echo "| Commit | \`$GITHUB_SHA\` |"
+            if [ "$OUTCOME" != "success" ]; then
+              echo
+              echo "No patch was published. If a step reported native or asset differences, a version"
+              echo "mismatch or a missing release, run **Mobile release (Shorebird, Android)** (full APK)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f android/key.properties android/app/upload-keystore.jks env/production.json "$RUNNER_TEMP/shorebird-patch-private.pem"

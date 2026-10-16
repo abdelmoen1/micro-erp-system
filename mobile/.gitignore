@@ -50,3 +50,9 @@ app.*.map.json
 # Local API hosts (US-1303). Only the example is committed.
 /env/*.json
 !/env/example.json
+
+# Release signing material never enters Git (docs/mobile/ota-updates.md).
+*.jks
+*.keystore
+key.properties
+*private*.pem
