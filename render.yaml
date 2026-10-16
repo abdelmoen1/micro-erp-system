@@ -44,6 +44,9 @@ services:
         sync: false
       - key: DB_PASSWORD
         sync: false
+      # TLS: the database provider's CA certificate in PEM form (e.g. Aiven: service Overview → CA certificate).
+      - key: DB_SSL_CA_PEM
+        sync: false
       # Same drivers as before (tables already exist in the database).
       - key: SESSION_DRIVER
         value: database

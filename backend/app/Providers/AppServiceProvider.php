@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use App\Support\ProductionSafety;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -27,5 +30,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Account creation endpoints: 5 per minute per IP (US-0104).
         RateLimiter::for('register', fn(Request $request) => Limit::perMinute(5)->by($request->ip()));
+
+        // /up (hosting health check) fails when the database is unreachable, so a deploy
+        // without a working database is never reported healthy.
+        Event::listen(DiagnosingHealth::class, fn() => DB::connection()->getPdo());
     }
 }
