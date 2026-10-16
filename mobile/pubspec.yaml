@@ -68,6 +68,7 @@ flutter:
 
   assets:
     - assets/images/hisbah-logo-primary.png
+    - shorebird.yaml
 
   # IBM Plex Sans Arabic (SIL OFL 1.1, assets/fonts/OFL.txt) from github.com/google/fonts.
   # The family has no 800 weight; w800 in the design renders as 700.
