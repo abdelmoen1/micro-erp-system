@@ -1,0 +1,72 @@
+# Hisbah Smart Shop — API v1 product catalog (US-0401)
+#
+# Reads: every role. Writes (create, update, deactivate): owner and manager; employee → 403 FORBIDDEN.
+# Another store's product → 404 NOT_FOUND. There is no DELETE (BR-04): DELETE → 405 METHOD_NOT_ALLOWED.
+# Money is a 2-decimal string (D-09). Quantities are integers (CR-13).
+# Behaviour is covered by tests/Feature/ProductCatalogTest.php. Use a disposable local database only.
+
+@base = http://127.0.0.1:8000/api/v1
+@token = <sanctum token from POST /login>
+
+### 1. Create — 201 (also records an `opening` stock movement of `current_stock`)
+POST {{base}}/products
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{
+  "name": "Milk 1L",
+  "barcode": "7290000000017",
+  "selling_price": "6.50",
+  "cost_price": "5.00",
+  "current_stock": 12,
+  "minimum_stock": 5
+}
+
+# Required: name, selling_price (> 0, max 2 decimals), current_stock (integer ≥ 0).
+# Optional: barcode (unique in the store, max 64; "" = none), cost_price (≥ 0), minimum_stock (default 5).
+# Response:
+# {
+#   "message": "تم إنشاء المنتج بنجاح",
+#   "product": {
+#     "id": 1, "name": "Milk 1L", "barcode": "7290000000017",
+#     "selling_price": "6.50", "cost_price": "5.00",
+#     "current_stock": 12, "minimum_stock": 5, "is_low_stock": false,
+#     "status": "active", "created_at": "…", "updated_at": "…"
+#   },
+#   "meta": { "currency": "ILS" }
+# }
+# Duplicate barcode in the same store → 422 VALIDATION_FAILED, errors.barcode.
+
+### 2. List — 200 (active products, by name, 20 per page)
+# ?search= matches the name (substring) or the exact barcode.
+# ?status=active (default) | inactive | all
+GET {{base}}/products?search=milk
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 3. Barcode lookup — 200 with { "data": { …product } }, or 404 when no ACTIVE product has it
+GET {{base}}/products/lookup?barcode=7290000000017
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 4. Show — 200 { "data": { …product } }
+GET {{base}}/products/1
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 5. Update — 200 { "data": { …product } }
+# Any of: name, barcode, selling_price, cost_price, minimum_stock, status (active | inactive).
+# current_stock is refused (422): stock changes only through stock movements (adjustments: US-0402).
+PATCH {{base}}/products/1
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{ "selling_price": "6.90" }
+
+### 6. Deactivate — 200 { "message": "تم إيقاف المنتج", "product": { …, "status": "inactive" } }
+# Hidden from the default list and from lookup. Reactivate with PATCH { "status": "active" }.
+POST {{base}}/products/1/deactivate
+Authorization: Bearer {{token}}
+Accept: application/json
