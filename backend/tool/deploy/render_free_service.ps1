@@ -10,7 +10,14 @@ param(
     [string]$AivenService = 'hisbah-mysql'
 )
 $ErrorActionPreference = 'Stop'
-$renderKey = & "$PSScriptRoot\read_local_secret.ps1" -Name render-api-key
+# Render API token: the official CLI's login (`render login`, browser authorization) or a saved API key.
+$cliConfig = Join-Path $env:USERPROFILE '.render\cli.yaml'
+$renderKey = $null
+if (Test-Path $cliConfig) {
+    $line = Get-Content $cliConfig | Where-Object { $_ -match '^\s*key:\s*(\S+)' } | Select-Object -First 1
+    if ($line -match '^\s*key:\s*(\S+)') { $renderKey = $Matches[1].Trim('"', "'") }
+}
+if (-not $renderKey) { $renderKey = & "$PSScriptRoot\read_local_secret.ps1" -Name render-api-key }
 $rh = @{ Authorization = "Bearer $renderKey"; Accept = 'application/json' }
 $rapi = 'https://api.render.com/v1'
 
