@@ -7,7 +7,8 @@ param(
     [switch]$Create,
     [string]$ServiceName = 'hisbah-api',
     [string]$Branch = 'infra/render-backend',
-    [string]$AivenService = 'hisbah-mysql'
+    [string]$AivenService = 'mysql-1f5745b1',
+    [string]$AppUser = 'hisbah_app'
 )
 $ErrorActionPreference = 'Stop'
 # Render API token: the official CLI's login (`render login`, browser authorization) or a saved API key.
@@ -48,10 +49,12 @@ if ($existing) {
 $aivenToken = & "$PSScriptRoot\read_local_secret.ps1" -Name aiven-api-token
 $ah = @{ Authorization = "aivenv1 $aivenToken" }
 $project = @((Invoke-RestMethod -Uri 'https://api.aiven.io/v1/project' -Headers $ah).projects)[0].project_name
-$db = (Invoke-RestMethod -Uri "https://api.aiven.io/v1/project/$project/service/$AivenService" -Headers $ah).service
+$db = (Invoke-RestMethod -Uri "https://api.aiven.io/v1/project/$project/service/${AivenService}?include_secrets=true" -Headers $ah).service
 if ($db.plan -notlike 'free-*') { throw "Aiven service plan is $($db.plan), not free. Stopping." }
 $ca = (Invoke-RestMethod -Uri "https://api.aiven.io/v1/project/$project/kms/ca" -Headers $ah).certificate
 $p = $db.service_uri_params
+$dbUser = @($db.users | Where-Object { $_.username -eq $AppUser })[0]
+if (-not $dbUser -or $dbUser.password.Length -lt 16) { throw "Database user $AppUser or its password is not available. Stopping." }
 
 $railway = Join-Path $env:APPDATA 'npm\railway.cmd'
 $vars = & $railway variables -s micro-erp-system -p cea4f7e1-c87f-4075-a45d-136f7c51dcf9 -e production --json | ConvertFrom-Json
@@ -85,8 +88,8 @@ $body = @{
         @{ key = 'DB_HOST'; value = $p.host }
         @{ key = 'DB_PORT'; value = "$($p.port)" }
         @{ key = 'DB_DATABASE'; value = $p.dbname }
-        @{ key = 'DB_USERNAME'; value = $p.user }
-        @{ key = 'DB_PASSWORD'; value = $p.password }
+        @{ key = 'DB_USERNAME'; value = $dbUser.username }
+        @{ key = 'DB_PASSWORD'; value = $dbUser.password }
         @{ key = 'DB_SSL_CA_PEM'; value = $ca }
         @{ key = 'SESSION_DRIVER'; value = 'database' }
         @{ key = 'CACHE_STORE'; value = 'database' }
