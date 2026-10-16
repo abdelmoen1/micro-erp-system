@@ -26,10 +26,17 @@ to **free-1-1gb** through the API before any use (balance $0.00).
 | `POST /api/v1/login` unknown `@example.invalid` user | 401 `INVALID_CREDENTIALS`: a real query on `users` in Aiven |
 | `GET /api/v1/<unknown>` | 404 `NOT_FOUND` JSON |
 | `POST /` | 405, no stack trace |
-| `GET /api/v1/me` **without** an `Accept: application/json` header | 500 `SERVER_ERROR` JSON (no trace). Existing app behaviour: the guest redirect targets a missing `login` route. Clients send the JSON header; a fix is tracked separately |
+| `GET /api/v1/me` without an `Accept: application/json` header | 401 (was 500 before commit 6080a26: guest redirect to a missing `login` route) |
 
 Not yet verified: a real login and `GET /api/v1/me` with a token. There are no accounts yet (fresh database);
 the first owner registers through `POST /api/v1/register`.
+
+## Deploys
+
+Render auto-deploy does not fire for this service (Render's GitHub app has no access to this repository), so deploys
+are triggered through the API or CLI: `render deploys create srv-db94et7t5n8s73auto80` (after `render login`).
+Giving the Render GitHub app access to `abdelmoen1/micro-erp-system` (GitHub → Settings → Applications → Render) would
+enable deploy-on-push. Last deploy: `ceb4586`, live.
 
 ## Data
 
@@ -46,10 +53,18 @@ backup of it exists on the release PC (searched; the only `.sql` dump found belo
 - No files are stored by the API, so Render's temporary disk is fine. The daily `idempotency:prune` schedule
   does not run on the free plan (harmless at current volumes).
 
-## Mobile
+## Mobile (OTA baseline)
 
-GitHub variable `MOBILE_API_BASE_URL` = `https://hisbah-api-alur.onrender.com/api/v1` (used by the release and
-patch workflows). Local development keeps `env/dev.json`.
+- GitHub variable `MOBILE_API_BASE_URL` = `https://hisbah-api-alur.onrender.com/api/v1` (release and patch
+  workflows). Local development keeps `env/dev.json`.
+- Shorebird release **1.0.0+1** (Flutter 3.47.7), status active, built by run 38929200113 (an earlier run failed
+  because secrets uploaded through a Windows PowerShell pipe carried a UTF-8 BOM; secrets re-uploaded cleanly,
+  scripts fixed on `fix/secret-upload-bom`).
+- APK `hisbah-1.0.0_1.apk` (56 MB, all ABIs incl. armeabi-v7a) in the **draft** GitHub release `android-1.0.0_1`
+  (anonymous access 404). Verified locally: checksum, `com.hisbah.smartshop` 1.0.0 (1), certificate
+  `CN=Hisbah Smart Shop` SHA-256 `d4c70c9b…2bc6`, Render API URL compiled in, no Railway/localhost URL.
+- Not yet done: install on the phone (replaces the USB debug build: uninstall first), then set
+  `MOBILE_OTA_RELEASE_VERSION=1.0.0+1`, run the patch acceptance test, then `MOBILE_OTA_ENABLED=true`.
 
 ## Local secrets (release PC only, `%USERPROFILE%\hisbah-release`, user-only ACL)
 
