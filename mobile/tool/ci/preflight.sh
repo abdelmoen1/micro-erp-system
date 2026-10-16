@@ -26,7 +26,11 @@ check_secret KEY_PASSWORD ANDROID_KEY_PASSWORD
 case $mode in
   release)
     case ${APK_DISTRIBUTION:-} in
-      encrypted) check_secret APK_PASSPHRASE MOBILE_APK_PASSPHRASE ;;
+      encrypted)
+        if ! grep -q 'BEGIN PUBLIC KEY' tool/release/apk-delivery-public.pem 2>/dev/null; then
+          err "mobile/tool/release/apk-delivery-public.pem (APK delivery public key) is missing."
+        fi
+        ;;
       artifact) echo "::warning::MOBILE_APK_DISTRIBUTION=artifact: the APK is uploaded unencrypted; on a public repository any signed-in GitHub user can download it." ;;
       *) err "Repository variable MOBILE_APK_DISTRIBUTION must be 'encrypted' or 'artifact' (how the APK leaves CI; see docs/mobile/ota-updates.md). Without it the release would be published with no way to install it." ;;
     esac

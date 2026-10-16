@@ -54,7 +54,6 @@ jobs:
       KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-      APK_PASSPHRASE: ${{ secrets.MOBILE_APK_PASSPHRASE }}
     steps:
       - uses: actions/checkout@v4
 

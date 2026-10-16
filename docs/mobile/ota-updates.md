@@ -75,7 +75,6 @@ Automatic update checks stay on (no `auto_update: false`).
 | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | secrets | `setup_signing.ps1` |
 | `SHOREBIRD_PATCH_PRIVATE_KEY` | secret | `setup_signing.ps1` |
 | `SHOREBIRD_TOKEN` | secret | `gh secret set` (2.2) |
-| `MOBILE_APK_PASSPHRASE` | secret | only with `MOBILE_APK_DISTRIBUTION=encrypted` (2.4) |
 | `MOBILE_API_BASE_URL` | variable | `https://micro-erp-system-production.up.railway.app/api/v1` |
 | `MOBILE_APK_DISTRIBUTION` | variable | `encrypted` or `artifact` (2.4) |
 | `MOBILE_OTA_ENABLED` | variable | `false` until the device acceptance test passes (3.3) |
@@ -84,17 +83,21 @@ Automatic update checks stay on (no `auto_update: false`).
 Both workflows run in the `mobile-production` environment. Recommended: Settings → Environments →
 `mobile-production` → deployment branches: `main` only.
 
-### 2.4 How the APK leaves CI (decision)
+### 2.4 How the APK leaves CI
 
 The repository is **public**: workflow artifacts can be downloaded by any signed-in GitHub user. The release
-workflow refuses to run until `MOBILE_APK_DISTRIBUTION` is chosen:
+workflow refuses to run until `MOBILE_APK_DISTRIBUTION` is set:
 
-| Mode | Artifact contains | Getting it onto the phone |
+| Mode | Artifact contains | Who can use it |
 |---|---|---|
-| `encrypted` (recommended) | `hisbah-<version>.apk.enc` (AES-256, passphrase in `MOBILE_APK_PASSPHRASE`) + checksum | Download on the PC, `bash mobile/tool/release/decrypt_apk.sh hisbah-<version>.apk.enc` (hidden prompt, checks the SHA-256), then send the APK to the phone privately: Google Drive / email to yourself, opened on the phone |
-| `artifact` | the plain APK + checksum | Download directly on the phone (signed in to github.com) |
+| `encrypted` (configured) | `hisbah-<version>.apk.enc` (AES-256, random one-time key) + `hisbah-<version>.key.enc` (that key, RSA-OAEP-encrypted to `mobile/tool/release/apk-delivery-public.pem`) + checksum | Only the holder of `%USERPROFILE%\hisbah-release\apk-delivery-private.pem` (never leaves the release PC; no secret in GitHub, no passphrase) |
+| `artifact` | the plain APK + checksum | Any signed-in GitHub user |
 
-The APK contains no credentials, only the public API URL. The plain mode still exposes the app binary to anyone.
+Neither mode puts signing keys or credentials in the artifact; the APK holds only the public API URL.
+Opening an encrypted artifact on the PC (Git Bash, in the unzipped artifact folder):
+`bash mobile/tool/release/decrypt_apk.sh hisbah-<version>.apk.enc` (checks the SHA-256). Then move the APK to
+the phone privately, e.g. Google Drive or an email to yourself, opened on the phone.
+Losing the delivery private key is harmless: generate a new pair and commit the new public key.
 
 ### 2.5 Baseline release and install
 
