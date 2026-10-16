@@ -27,6 +27,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PROTO,
         );
 
+        // There is no `login` web route: API guests get the 401 JSON envelope even without an
+        // `Accept: application/json` header, instead of a failed redirect (500).
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : '/');
+
         $middleware->prepend(\App\Http\Middleware\AssignCorrelationId::class);
 
         $middleware->api(append: [
