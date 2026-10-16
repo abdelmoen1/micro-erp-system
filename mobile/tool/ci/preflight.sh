@@ -31,8 +31,9 @@ case $mode in
           err "mobile/tool/release/apk-delivery-public.pem (APK delivery public key) is missing."
         fi
         ;;
+      draft-release) ;;
       artifact) echo "::warning::MOBILE_APK_DISTRIBUTION=artifact: the APK is uploaded unencrypted; on a public repository any signed-in GitHub user can download it." ;;
-      *) err "Repository variable MOBILE_APK_DISTRIBUTION must be 'encrypted' or 'artifact' (how the APK leaves CI; see docs/mobile/ota-updates.md). Without it the release would be published with no way to install it." ;;
+      *) err "Repository variable MOBILE_APK_DISTRIBUTION must be 'draft-release', 'encrypted' or 'artifact' (how the APK leaves CI; see docs/mobile/ota-updates.md). Without it the release would be published with no way to install it." ;;
     esac
     ;;
   patch)

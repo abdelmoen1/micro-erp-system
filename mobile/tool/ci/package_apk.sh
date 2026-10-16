@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 # Usage: package_apk.sh <apk> <out-dir> <base-name>   (run from mobile/)
-# Prepares the release APK for the workflow artifact according to MOBILE_APK_DISTRIBUTION:
-#   encrypted: AES-256 with a random one-time key; that key is encrypted (RSA-OAEP) to
+# Prepares the release APK for download according to MOBILE_APK_DISTRIBUTION:
+#   draft-release: the plain APK, attached by the workflow to a draft GitHub release. Drafts are visible
+#              only to users with write access (checked: 404 for anyone else), so the phone downloads it
+#              from github.com while signed in.
+#   encrypted: workflow artifact, AES-256 with a random one-time key; that key is encrypted (RSA-OAEP) to
 #              tool/release/apk-delivery-public.pem. Only the matching private key, which never
 #              leaves the release PC, can open it (tool/release/decrypt_apk.sh).
-#   artifact:  the plain APK (on a public repository, any signed-in GitHub user can download it).
-# Both write <base-name>.apk.sha256, the checksum of the plain APK.
+#   artifact:  workflow artifact with the plain APK (on a public repository, any signed-in GitHub user
+#              can download it).
+# All modes write <base-name>.apk.sha256, the checksum of the plain APK.
 set -euo pipefail
 
 apk=$1
@@ -29,12 +33,12 @@ case ${APK_DISTRIBUTION:-} in
       -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in "$key" -out "$out/$name.key.enc"
     echo "Encrypted APK: $name.apk.enc + $name.key.enc (plain SHA-256 $sum)"
     ;;
-  artifact)
+  draft-release | artifact)
     cp "$apk" "$out/$name.apk"
     echo "Plain APK: $name.apk (SHA-256 $sum)"
     ;;
   *)
-    echo "::error::MOBILE_APK_DISTRIBUTION must be 'encrypted' or 'artifact'."
+    echo "::error::MOBILE_APK_DISTRIBUTION must be 'draft-release', 'encrypted' or 'artifact'."
     exit 1
     ;;
 esac

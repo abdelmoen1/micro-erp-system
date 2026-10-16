@@ -32,39 +32,44 @@ Never run `migrate` or seeders against production from a shell.
 
 ### 2.1 Signing keys (permanent, outside the repository)
 
-Two keys live in `%USERPROFILE%\hisbah-release\`. **Losing either is expensive.**
+Everything lives in `%USERPROFILE%\hisbah-release\`, which only the current Windows user can open:
 
-| File | What it protects | If lost |
+| File | What it is | If lost |
 |---|---|---|
-| `hisbah-upload.jks` (+ its password) | Android app signature: every full APK must carry it to install over the previous one | Every phone must uninstall and reinstall |
-| `shorebird-patch-private.pem` | Patch signing: the app only runs patches signed with it (public half: `mobile/shorebird-patch-public.pem`) | No more patches for releases carrying the public key; a new full release is needed |
+| `hisbah-upload.jks` | Android release key (alias `upload`, PKCS12, cert `CN=Hisbah Smart Shop`). Every full APK must carry it to install over the previous one | CI keeps working from the GitHub secrets; only if those are lost too: new key, one uninstall/reinstall per phone |
+| `keystore-password.dpapi` | Its random password, encrypted with Windows DPAPI | Same as above |
+| `shorebird-patch-private.pem` | Patch signing: phones only run patches signed with it (public half: `mobile/shorebird-patch-public.pem`) | No more patches for releases carrying the public key; a new full release is needed |
+| `apk-delivery-private.pem` | Opens encrypted APK artifacts (2.4) | Harmless: make a new pair, commit the new public key |
+| `shorebird-api-key.dpapi` | Shorebird Console API key, DPAPI-encrypted, for local `shorebird` commands | Create a new key in the console |
 
-Create the keystore and store the signing secrets (hidden password prompt; refuses to overwrite a key or
-existing secrets; values go to GitHub over stdin, never in arguments or history):
+`setup_signing.ps1` creates the key without any input: a random 32-byte password that nobody types or sees, the
+keystore, and the GitHub secrets (over stdin, never in arguments or history). It is resumable and never
+overwrites an existing key or secret. It prints the certificate SHA-256 fingerprint, the same one shown in every
+release run summary (`D4:C7:0C:9B:…:2B:C6` for the current key).
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File mobile\tool\release\setup_signing.ps1
 ```
 
-It prints the certificate SHA-256 fingerprint. The same fingerprint appears in every release run summary.
-
-**Backup** (do it right after creating the key):
-1. Copy the whole `hisbah-release` folder to storage that is not this laptop: an encrypted USB stick kept
-   elsewhere and/or a password manager's file attachment.
-2. Store the keystore password in the password manager.
-3. Verify the copy: `Get-FileHash <backup>\hisbah-upload.jks, <backup>\shorebird-patch-private.pem` must
-   match `Get-FileHash` of the originals; on another machine, `keytool -list -v -keystore hisbah-upload.jks`
-   with the password must show the same SHA-256 fingerprint.
+**Recovery and backup.** DPAPI files can be decrypted only by this Windows account on this PC; copying them
+elsewhere does not carry the password. What survives losing the laptop:
+- The GitHub secrets hold the keystore, its password and the patch key. Releases and patches are built in CI,
+  so delivery keeps working without this PC. GitHub never shows secret values again, so they cannot be copied out.
+- A copy of the `hisbah-release` folder on a USB stick or OneDrive restores everything for this same Windows
+  account on this PC (for example after deleting the folder by mistake).
+- A fully portable backup of the password needs it written down or kept in a password manager; that is not part
+  of the default setup.
 
 ### 2.2 Shorebird
 
 1. Install the CLI (PowerShell): `iwr -UseBasicParsing 'https://raw.githubusercontent.com/shorebirdtech/install/main/install.ps1' | iex`
-2. `shorebird login`, then in `mobile/`: `shorebird init` (once). It keeps `com.hisbah.smartshop`, creates
-   `mobile/shorebird.yaml` (the `app_id`, not secret) and adds it to the `assets` in `pubspec.yaml`. Commit both.
+2. Shorebird Console → **Account → API Keys → Create API Key** (Full access; default expiry 1 year: renew it
+   before then). Store it with `set_shorebird_token.ps1`: hidden prompt, sets the `SHOREBIRD_TOKEN` secret and a
+   DPAPI copy for local use. `shorebird login:ci` tokens stopped working on 2026-10-01.
+3. Local commands use that key: `. mobile\tool\release\shorebird_env.ps1`, then e.g. `shorebird releases list`.
+4. `shorebird init --display-name Hisbah` in `mobile/` (once). It keeps `com.hisbah.smartshop`, creates
+   `mobile/shorebird.yaml` (the `app_id`, not secret) and adds it to the `assets` in `pubspec.yaml`.
    Never `init --force`: it creates a different app and orphans existing releases.
-3. Shorebird Console → Account → API Keys → create a key, then store it without displaying it:
-   `gh secret set SHOREBIRD_TOKEN --repo abdelmoen1/micro-erp-system` (hidden "Paste your secret" prompt).
-   `shorebird login:ci` tokens stopped working on 2026-10-01.
 
 Automatic update checks stay on (no `auto_update: false`).
 
@@ -74,9 +79,9 @@ Automatic update checks stay on (no `auto_update: false`).
 |---|---|---|
 | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | secrets | `setup_signing.ps1` |
 | `SHOREBIRD_PATCH_PRIVATE_KEY` | secret | `setup_signing.ps1` |
-| `SHOREBIRD_TOKEN` | secret | `gh secret set` (2.2) |
+| `SHOREBIRD_TOKEN` | secret | `set_shorebird_token.ps1` (2.2) |
 | `MOBILE_API_BASE_URL` | variable | `https://micro-erp-system-production.up.railway.app/api/v1` |
-| `MOBILE_APK_DISTRIBUTION` | variable | `encrypted` or `artifact` (2.4) |
+| `MOBILE_APK_DISTRIBUTION` | variable | `draft-release` (2.4) |
 | `MOBILE_OTA_ENABLED` | variable | `false` until the device acceptance test passes (3.3) |
 | `MOBILE_OTA_RELEASE_VERSION` | variable | the release version installed and verified on the phone |
 
@@ -88,12 +93,13 @@ Both workflows run in the `mobile-production` environment. Recommended: Settings
 The repository is **public**: workflow artifacts can be downloaded by any signed-in GitHub user. The release
 workflow refuses to run until `MOBILE_APK_DISTRIBUTION` is set:
 
-| Mode | Artifact contains | Who can use it |
+| Mode | APK goes to | Who can use it |
 |---|---|---|
-| `encrypted` (configured) | `hisbah-<version>.apk.enc` (AES-256, random one-time key) + `hisbah-<version>.key.enc` (that key, RSA-OAEP-encrypted to `mobile/tool/release/apk-delivery-public.pem`) + checksum | Only the holder of `%USERPROFILE%\hisbah-release\apk-delivery-private.pem` (never leaves the release PC; no secret in GitHub, no passphrase) |
+| `draft-release` (configured) | a **draft** GitHub release `android-<version>` with the APK + checksum | Only accounts with write access (drafts answer 404 to everyone else, checked on this repository). On the phone: github.com → sign in → repository → Releases → the draft → tap the `.apk` |
+| `encrypted` | `hisbah-<version>.apk.enc` (AES-256, random one-time key) + `hisbah-<version>.key.enc` (that key, RSA-OAEP-encrypted to `mobile/tool/release/apk-delivery-public.pem`) + checksum | Only the holder of `%USERPROFILE%\hisbah-release\apk-delivery-private.pem` (never leaves the release PC; no secret in GitHub, no passphrase) |
 | `artifact` | the plain APK + checksum | Any signed-in GitHub user |
 
-Neither mode puts signing keys or credentials in the artifact; the APK holds only the public API URL.
+No mode puts signing keys or credentials anywhere downloadable; the APK holds only the public API URL.
 Opening an encrypted artifact on the PC (Git Bash, in the unzipped artifact folder):
 `bash mobile/tool/release/decrypt_apk.sh hisbah-<version>.apk.enc` (checks the SHA-256). Then move the APK to
 the phone privately, e.g. Google Drive or an email to yourself, opened on the phone.

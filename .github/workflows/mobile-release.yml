@@ -42,6 +42,8 @@ jobs:
     needs: checks
     runs-on: ubuntu-latest
     environment: mobile-production
+    permissions:
+      contents: write # draft GitHub release for the APK (MOBILE_APK_DISTRIBUTION=draft-release)
     defaults:
       run:
         shell: bash
@@ -87,11 +89,29 @@ jobs:
         run: bash tool/ci/inspect_apk.sh build/app/outputs/flutter-apk/app-release.apk
 
       - name: Package APK for download
+        id: package
         env:
           RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
-        run: bash tool/ci/package_apk.sh build/app/outputs/flutter-apk/app-release.apk "$RUNNER_TEMP/apk-out" "hisbah-$RELEASE_VERSION"
+        run: |
+          name="hisbah-${RELEASE_VERSION//+/_}"
+          bash tool/ci/package_apk.sh build/app/outputs/flutter-apk/app-release.apk "$RUNNER_TEMP/apk-out" "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      # Drafts are visible only to users with write access to the repository.
+      - name: Attach APK to a private draft release
+        if: vars.MOBILE_APK_DISTRIBUTION == 'draft-release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
+          NAME: ${{ steps.package.outputs.name }}
+        run: |
+          gh release create "android-${RELEASE_VERSION//+/_}" --draft --target "$GITHUB_SHA" \
+            --title "Hisbah Android $RELEASE_VERSION (draft: not public)" \
+            --notes "Shorebird release $RELEASE_VERSION. Install on the phone from this page while signed in to GitHub. Keep it a draft: publishing makes the APK public." \
+            "$RUNNER_TEMP/apk-out/$NAME.apk" "$RUNNER_TEMP/apk-out/$NAME.apk.sha256"
 
       - uses: actions/upload-artifact@v4
+        if: vars.MOBILE_APK_DISTRIBUTION != 'draft-release'
         with:
           name: hisbah-android-${{ steps.release.outputs.release-version }}
           path: ${{ runner.temp }}/apk-out/
@@ -115,7 +135,11 @@ jobs:
             echo "| Signing cert SHA-256 | \`$CERT_SHA256\` |"
             echo "| API base URL | \`$API_BASE_URL\` |"
             echo "| Patch signing | on (shorebird-patch-public.pem) |"
-            echo "| APK download | artifact, $APK_DISTRIBUTION, kept 7 days |"
+            if [ "$APK_DISTRIBUTION" = draft-release ]; then
+              echo "| APK download | private draft release \`android-${RELEASE_VERSION//+/_}\` (Releases page, signed in) |"
+            else
+              echo "| APK download | workflow artifact ($APK_DISTRIBUTION), kept 7 days |"
+            fi
             echo
             echo "After installing and checking this build on the phone: set MOBILE_OTA_RELEASE_VERSION=$RELEASE_VERSION, then MOBILE_OTA_ENABLED=true."
           } >> "$GITHUB_STEP_SUMMARY"
