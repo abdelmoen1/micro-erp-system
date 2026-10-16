@@ -62,7 +62,7 @@ class AuditLogTest extends TestCase
             ->assertOk();
 
         $log = AuditLog::where('action', 'user.role_changed')->sole();
-        $this->assertSame(['old_role' => 'employee', 'new_role' => 'manager'], $log->metadata);
+        $this->assertSameMetadata(['old_role' => 'employee', 'new_role' => 'manager'], $log->metadata);
         $this->assertSame($owner->id, $log->user_id);
     }
 
@@ -84,7 +84,7 @@ class AuditLogTest extends TestCase
             ['opening_debt.created', 'opening_debt.updated', 'invitation.created', 'user.deactivated', 'opening_debt.deleted'],
             AuditLog::orderBy('id')->pluck('action')->all(),
         );
-        $this->assertSame(['old_amount' => '50.00', 'new_amount' => '55.00'], AuditLog::where('action', 'opening_debt.updated')->sole()->metadata);
+        $this->assertSameMetadata(['old_amount' => '50.00', 'new_amount' => '55.00'], AuditLog::where('action', 'opening_debt.updated')->sole()->metadata);
     }
 
     /** TC-0103-03: when the action's transaction rolls back, no audit row exists. */
@@ -130,5 +130,16 @@ class AuditLogTest extends TestCase
         }
 
         $this->assertDatabaseHas('audit_logs', ['id' => $log->id, 'action' => 'user.role_changed']);
+    }
+
+    /**
+     * Same keys, values and types; key order ignored (MySQL JSON columns do not keep it).
+     */
+    private function assertSameMetadata(array $expected, ?array $actual): void
+    {
+        $this->assertNotNull($actual);
+        ksort($expected);
+        ksort($actual);
+        $this->assertSame($expected, $actual);
     }
 }
