@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\InvitationController;
 use App\Http\Controllers\Api\StoreSettingsController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ProductController;
 
 // All routes are served under /api/v1 (bootstrap/app.php, D-22).
 
@@ -48,6 +49,14 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     Route::get('/my-store', [StoreSettingsController::class, 'show']);
     Route::patch('/my-store', [StoreSettingsController::class, 'update']);
 
+
+    // Products (US-0401). No DELETE: products are deactivated (BR-04). `lookup` precedes {product}.
+    Route::get('products/lookup', [ProductController::class, 'lookup']);
+    Route::get('products', [ProductController::class, 'index']);
+    Route::post('products', [ProductController::class, 'store']);
+    Route::get('products/{product}', [ProductController::class, 'show']);
+    Route::patch('products/{product}', [ProductController::class, 'update']);
+    Route::post('products/{product}/deactivate', [ProductController::class, 'deactivate']);
 
     // Customers
     Route::apiResource('customers', CustomerController::class);
