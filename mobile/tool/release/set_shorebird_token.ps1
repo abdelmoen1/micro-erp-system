@@ -10,7 +10,7 @@ param(
     [string]$Gh = 'C:\Program Files\GitHub CLI\gh.exe'
 )
 $ErrorActionPreference = 'Stop'
-$OutputEncoding = New-Object System.Text.UTF8Encoding $false
+. "$PSScriptRoot\send_stdin.ps1"
 $keyFile = Join-Path $Dir 'shorebird-api-key.dpapi'
 
 function Use-GitCredentialForGh {
@@ -50,8 +50,8 @@ try {
         Write-Host 'GitHub secret SHOREBIRD_TOKEN already exists: left untouched.'
     } else {
         for ($i = 1; $i -le 5; $i++) {
-            $plain | & $Gh secret set SHOREBIRD_TOKEN --repo $Repo | Out-Null
-            if ($LASTEXITCODE -eq 0) { break }
+            # Exact bytes: a PowerShell pipe would prefix the key with a UTF-8 BOM.
+            if ((Send-Stdin -FilePath $Gh -ArgumentList @('secret', 'set', 'SHOREBIRD_TOKEN', '--repo', $Repo) -Text $plain) -eq 0) { break }
             if ($i -eq 5) { throw 'Could not set SHOREBIRD_TOKEN (network). Run this script again.' }
             Start-Sleep -Seconds (3 * $i)
         }
