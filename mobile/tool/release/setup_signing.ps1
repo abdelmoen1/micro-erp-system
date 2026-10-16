@@ -20,14 +20,19 @@ $keystore = Join-Path $Dir 'hisbah-upload.jks'
 $passwordFile = Join-Path $Dir 'keystore-password.dpapi'
 $patchKey = Join-Path $Dir 'shorebird-patch-private.pem'
 $alias = 'upload'
-$OutputEncoding = New-Object System.Text.UTF8Encoding $false
+. "$PSScriptRoot\send_stdin.ps1"
 
 function Invoke-Gh {
-    # Retries: the connection drops requests intermittently.
+    # Retries: the connection drops requests intermittently. Values go through Send-Stdin:
+    # piping text would prefix it with a UTF-8 BOM in Windows PowerShell and corrupt the secret.
     param([string[]]$GhArgs, [string]$InputText)
     for ($i = 1; $i -le 5; $i++) {
-        if ($InputText) { $out = $InputText | & $Gh @GhArgs } else { $out = & $Gh @GhArgs }
-        if ($LASTEXITCODE -eq 0) { return $out }
+        if ($InputText) {
+            if ((Send-Stdin -FilePath $Gh -ArgumentList $GhArgs -Text $InputText) -eq 0) { return }
+        } else {
+            $out = & $Gh @GhArgs
+            if ($LASTEXITCODE -eq 0) { return $out }
+        }
         Start-Sleep -Seconds (3 * $i)
     }
     throw "gh $($GhArgs[0..1] -join ' ') failed after 5 attempts (network?). Re-run this script: it resumes."
