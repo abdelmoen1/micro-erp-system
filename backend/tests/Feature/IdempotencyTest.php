@@ -6,6 +6,8 @@ use App\Models\Debt;
 use App\Models\IdempotencyKey;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\IdempotencyService;
@@ -32,6 +34,7 @@ class IdempotencyTest extends TestCase
         'POST api/v1/customers/{customer}/debts/pay-all',
         'POST api/v1/debts',
         'POST api/v1/invoices',
+        'POST api/v1/stock-adjustments',
     ];
 
     private Store $store;
@@ -226,6 +229,7 @@ class IdempotencyTest extends TestCase
             'pay all' => ['pay-all'],
             'opening debt' => ['opening-debt'],
             'legacy invoice create' => ['invoice'],
+            'stock adjustment' => ['stock-adjustment'],
         ];
     }
 
@@ -243,6 +247,8 @@ class IdempotencyTest extends TestCase
             'debts' => Debt::count(),
             'invoices' => Invoice::count(),
             'remaining' => Debt::orderBy('id')->pluck('remaining_amount')->map(fn($v) => (string) $v)->all(),
+            'movements' => StockMovement::count(),
+            'stock' => Product::orderBy('id')->pluck('current_stock')->all(),
         ]);
 
         return match ($name) {
@@ -267,6 +273,11 @@ class IdempotencyTest extends TestCase
                 'has_debt' => false,
                 'payment_method' => 'cash',
                 'items' => [['item_name' => 'Tea', 'quantity' => 2, 'unit_price' => '3.50']],
+            ], $state],
+            'stock-adjustment' => ['POST', '/api/v1/stock-adjustments', [
+                'product_id' => $this->makeProduct($this->store)->id,
+                'quantity' => -3,
+                'reason' => 'Shelf count',
             ], $state],
         };
     }

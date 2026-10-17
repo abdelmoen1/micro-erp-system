@@ -19,6 +19,10 @@ class StockMovement extends Model
 
     public const TYPE_OPENING = 'opening';
 
+    public const TYPE_ADJUSTMENT_IN = 'adjustment_in';
+
+    public const TYPE_ADJUSTMENT_OUT = 'adjustment_out';
+
     protected $fillable = [
         'store_id',
         'product_id',
