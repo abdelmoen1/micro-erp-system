@@ -21,7 +21,7 @@ USB alternative (no firewall / Wi-Fi setup): `adb reverse tcp:8000 tcp:8000` and
 Run the API so phones can reach it: `php artisan serve --host=0.0.0.0 --port=8000` (debug builds allow plain HTTP; release builds are HTTPS only).
 Without a define, `API_BASE_URL` defaults to `http://10.0.2.2:8000/api/v1` (Android emulator → host) in debug and
 profile builds. Release builds have no default URL and need the Hisbah release key (`android/key.properties`):
-CI builds them against the Railway API.
+CI builds them against the live Render API (`MOBILE_API_BASE_URL`).
 
 Phone builds over the internet (no USB): Shorebird release + OTA patches from `main`, see
 [docs/mobile/ota-updates.md](../docs/mobile/ota-updates.md).
