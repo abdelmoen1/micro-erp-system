@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
+use App\Http\Resources\StockMovementResource;
 use App\Models\Product;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
@@ -75,6 +76,28 @@ class ProductController extends Controller
             'message' => 'تم إيقاف المنتج',
             'product' => new ProductResource($product),
         ]);
+    }
+
+    /** US-0403 (FR-22, BR-11): active products at or below their threshold, lowest stock first. */
+    public function lowStock(Request $request)
+    {
+        $products = Product::query()
+            ->forStore($request->user()->store_id)
+            ->active()
+            ->whereColumn('current_stock', '<=', 'minimum_stock')
+            ->orderBy('current_stock')
+            ->orderBy('name')
+            ->paginate(20);
+
+        return ProductResource::collection($products);
+    }
+
+    /** US-0402: the stock ledger of one product, newest first (readable by every role). */
+    public function movements(Product $product)
+    {
+        return StockMovementResource::collection(
+            $product->movements()->orderByDesc('id')->paginate(20)
+        );
     }
 
     /** US-0401 AC3 (FR-17): the active product with this barcode in my store, or 404. */

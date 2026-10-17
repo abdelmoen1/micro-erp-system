@@ -70,3 +70,26 @@ Content-Type: application/json
 POST {{base}}/products/1/deactivate
 Authorization: Bearer {{token}}
 Accept: application/json
+
+### 7. Low stock (US-0403) — 200, paginated { "data": [ …products ] }
+# Active products with current_stock <= minimum_stock (default 5), lowest stock first. All roles.
+GET {{base}}/products/low-stock
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 8. Stock adjustment (US-0402) — 201 { "message", "movement": { type: adjustment_in | adjustment_out, quantity, balance_after, … }, "product": { … } }
+# Owner / Manager (employee 403). quantity: signed non-zero integer; reason required.
+# Would go below zero: 422 INSUFFICIENT_STOCK. Idempotency-Key required (428 without it).
+POST {{base}}/stock-adjustments
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+Idempotency-Key: 6f1c2f1e-8a43-4d43-9a3f-2f7f0f6b3c11
+
+{ "product_id": 1, "quantity": -2, "reason": "Shelf count: 2 broken" }
+
+### 9. Movement history (US-0402) — 200, paginated, newest first { "data": [ …movements ] }
+# Types: opening, adjustment_in, adjustment_out (sale, sale_void, return come with US-0501 / US-0503 / US-0601).
+GET {{base}}/products/1/movements
+Authorization: Bearer {{token}}
+Accept: application/json

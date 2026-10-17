@@ -20,4 +20,10 @@ class ProductPolicy
     {
         return $this->isOwnerOrManager($user) && $this->sameStore($user, $product);
     }
+
+    /** US-0402 AC4 (05 §6: stock adjustment is Owner / Manager). */
+    public function adjustStock(User $user): bool
+    {
+        return $this->isOwnerOrManager($user);
+    }
 }
