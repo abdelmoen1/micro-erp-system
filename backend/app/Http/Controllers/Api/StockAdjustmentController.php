@@ -30,7 +30,6 @@ class StockAdjustmentController extends Controller
 
         [$movement, $product] = DB::transaction(function () use ($request, $data, $quantity) {
             $product = Product::query()->forStore($request->user()->store_id)->findOrFail($data['product_id']);
-            $before = $product->current_stock;
 
             $movement = $this->stock->move(
                 $product,
@@ -43,7 +42,8 @@ class StockAdjustmentController extends Controller
             $this->audit->record('stock.adjusted', $product, [
                 'movement_id' => $movement->id,
                 'quantity' => $quantity,
-                'balance_before' => $before,
+                // From the locked row inside move(), not a read taken before the lock.
+                'balance_before' => $movement->balance_after - $quantity,
                 'balance_after' => $movement->balance_after,
                 'reason' => $data['reason'],
             ]);
