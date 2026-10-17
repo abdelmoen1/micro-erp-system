@@ -1,6 +1,6 @@
 # Deployment status (checkpoint)
 
-Last verified: 2026-10-16. Everything below was checked with real requests or provider APIs; nothing secret is recorded.
+Last verified: 2026-10-17. Everything below was checked with real requests or provider APIs; nothing secret is recorded.
 
 ## Live environment ($0)
 
@@ -28,15 +28,22 @@ to **free-1-1gb** through the API before any use (balance $0.00).
 | `POST /` | 405, no stack trace |
 | `GET /api/v1/me` without an `Accept: application/json` header | 401 (was 500 before commit 6080a26: guest redirect to a missing `login` route) |
 
-Not yet verified: a real login and `GET /api/v1/me` with a token. There are no accounts yet (fresh database);
-the first owner registers through `POST /api/v1/register`.
+**Authenticated flow, verified 2026-10-17** with a temporary probe account (`deploy-probe-…@example.invalid`, random
+password held only in memory): `POST /register` 201 → wrong password 401 → `POST /login` 200 with a token →
+`GET /me` 200 (role `owner`, status `active`, store timezone `Asia/Gaza`) → `GET /my-store`, `/dashboard`,
+`/customers`, `/debts`, `/payments`, `/users` all 200 → `POST /logout` 200 → the same token gets 401. The probe's
+user and store rows were then deleted (it had no tokens or audit rows left), and every business table is back to 0 rows.
+The only trace is that the auto-increment ids start at 2.
+
+There are still no real accounts. The first owner registers with `backend/tool/deploy/register_owner.ps1`, which
+prompts for the password hidden.
 
 ## Deploys
 
 Render auto-deploy does not fire for this service (Render's GitHub app has no access to this repository), so deploys
 are triggered through the API or CLI: `render deploys create srv-db94et7t5n8s73auto80` (after `render login`).
 Giving the Render GitHub app access to `abdelmoen1/micro-erp-system` (GitHub → Settings → Applications → Render) would
-enable deploy-on-push. Last deploy: `ceb4586`, live.
+enable deploy-on-push. Last deploy: `ceb4586`, live (later commits on the branch change docs only).
 
 ## Data
 
