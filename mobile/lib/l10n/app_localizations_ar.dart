@@ -105,7 +105,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get forbidden => 'ليس لديك صلاحية لهذا الإجراء.';
 
   @override
-  String get tabHome => 'الرئيسية';
+  String get tabHome => 'الرئيسية ✓';
 
   @override
   String get tabPos => 'بيع';
