@@ -1,4 +1,4 @@
-# Mobile delivery: Railway API + Shorebird OTA updates
+# Mobile delivery: Render API + Shorebird OTA updates
 
 How the Android app reaches phones without a USB cable, and how Dart/UI changes reach installed apps
 over the internet. Workflows: [mobile-release.yml](../../.github/workflows/mobile-release.yml) (full release,
@@ -14,8 +14,8 @@ push to main (mobile/lib/**) ─► Mobile patch: analyze + test ─► signed s
 
 | | |
 |---|---|
-| Backend | Laravel on Railway, `https://micro-erp-system-production.up.railway.app` |
-| API base URL in releases and patches | `https://micro-erp-system-production.up.railway.app/api/v1` (variable `MOBILE_API_BASE_URL`) |
+| Backend | Laravel on Render (free web service `hisbah-api`), `https://hisbah-api-alur.onrender.com` ([deploy status](../deploy/STATUS.md)) |
+| API base URL in releases and patches | `https://hisbah-api-alur.onrender.com/api/v1` (variable `MOBILE_API_BASE_URL`) |
 
 - Release builds get the URL only from `--dart-define-from-file=env/production.json`, which CI writes from
   `MOBILE_API_BASE_URL` after `tool/ci/check_api_url.sh` checks it (HTTPS, public host, `/api/v1`, no trailing slash).
@@ -24,9 +24,10 @@ push to main (mobile/lib/**) ─► Mobile patch: analyze + test ─► signed s
   emulator default and `env/dev.json` (README).
 - Releases and patches read the same variable, so a patch cannot switch the phone to another API.
 
-Railway settings (source repo/branch/root directory, `APP_DEBUG=false`, database variables) are managed in the
-Railway dashboard. Read-only checks from the service shell: `php artisan db:show`, `php artisan migrate:status`.
-Never run `migrate` or seeders against production from a shell.
+Render settings (branch, root directory, `APP_DEBUG=false`, database variables) are described in
+[docs/deploy/render.md](../deploy/render.md). The free instance sleeps after 15 minutes without traffic, so the
+first request after a pause can take about a minute: the app shows its normal network error and a retry works.
+Never run `migrate` or seeders against production from a shell (the one-time migration script is the exception).
 
 ## 2. One-time setup
 
@@ -80,7 +81,7 @@ Automatic update checks stay on (no `auto_update: false`).
 | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | secrets | `setup_signing.ps1` |
 | `SHOREBIRD_PATCH_PRIVATE_KEY` | secret | `setup_signing.ps1` |
 | `SHOREBIRD_TOKEN` | secret | `set_shorebird_token.ps1` (2.2) |
-| `MOBILE_API_BASE_URL` | variable | `https://micro-erp-system-production.up.railway.app/api/v1` |
+| `MOBILE_API_BASE_URL` | variable | `https://hisbah-api-alur.onrender.com/api/v1` |
 | `MOBILE_APK_DISTRIBUTION` | variable | `draft-release` (2.4) |
 | `MOBILE_OTA_ENABLED` | variable | `false` until the device acceptance test passes (3.3) |
 | `MOBILE_OTA_RELEASE_VERSION` | variable | the release version installed and verified on the phone |
@@ -119,7 +120,8 @@ PC's debug key and is not a Shorebird release. Android refuses to update it with
 installed"), so it has to be **uninstalled once** (long-press حسبة → Uninstall), and only once the release
 APK is downloaded and verified. That loses only data on the phone (the saved login): accounts and shop data
 live on the server. Later full releases signed with the same key install over the top and keep the login.
-The test accounts from the local SQLite dev API do not exist on Railway; sign in with a production account.
+The test accounts from the local SQLite dev API do not exist on the live API (fresh database); sign in with the
+owner account created by `backend/tool/deploy/register_owner.ps1`.
 
 ## 3. Day to day
 
