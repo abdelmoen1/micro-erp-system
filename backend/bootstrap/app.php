@@ -16,6 +16,17 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api/v1',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Railway (and similar hosts) terminate HTTPS at their edge and forward plain HTTP.
+        // Trust the forwarded scheme/host/port so generated URLs (e.g. Vite assets) are https.
+        // X-Forwarded-For is deliberately NOT trusted: the login throttle keys on the client IP,
+        // and trusting it from any proxy would let a client spoof it.
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO,
+        );
+
         $middleware->prepend(\App\Http\Middleware\AssignCorrelationId::class);
 
         $middleware->api(append: [
