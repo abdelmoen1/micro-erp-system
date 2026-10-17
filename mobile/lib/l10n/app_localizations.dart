@@ -275,7 +275,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabHome.
   ///
   /// In ar, this message translates to:
-  /// **'الرئيسية'**
+  /// **'الرئيسية ✓'**
   String get tabHome;
 
   /// No description provided for @tabPos.
