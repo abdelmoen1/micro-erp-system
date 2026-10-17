@@ -178,4 +178,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stay => 'Stay';
+
+  @override
+  String homeGreeting(String name) {
+    return 'Hello, $name';
+  }
+
+  @override
+  String get homeTodaySales => 'Today\'s sales';
+
+  @override
+  String homeInvoicesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count invoices',
+      one: '1 invoice',
+      zero: 'No invoices yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeCash => 'Cash';
+
+  @override
+  String get homeCredit => 'On credit';
+
+  @override
+  String get homeCollectedToday => 'Collected today';
+
+  @override
+  String get homeOutstandingDebts => 'Outstanding debts';
+
+  @override
+  String homeCustomersWithDebt(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count customers owe',
+      one: '1 customer owes',
+      zero: 'No customers owe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeShortcuts => 'Shortcuts';
+
+  @override
+  String get homeNewSale => 'New sale';
+
+  @override
+  String get homeRecentInvoices => 'Today\'s latest invoices';
+
+  @override
+  String get homeNoInvoices => 'No invoices yet today';
+
+  @override
+  String get homeNoInvoicesBody =>
+      'Start the first sale from the Sell button below.';
+
+  @override
+  String get homeWalkIn => 'Walk-in customer';
+
+  @override
+  String get homeLoadError => 'Couldn\'t load today\'s dashboard.';
+
+  @override
+  String get currencySymbol => '₪';
 }

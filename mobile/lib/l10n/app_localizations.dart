@@ -275,7 +275,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabHome.
   ///
   /// In ar, this message translates to:
-  /// **'الرئيسية ✓'**
+  /// **'الرئيسية'**
   String get tabHome;
 
   /// No description provided for @tabPos.
@@ -415,6 +415,102 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'البقاء'**
   String get stay;
+
+  /// No description provided for @homeGreeting.
+  ///
+  /// In ar, this message translates to:
+  /// **'أهلاً، {name}'**
+  String homeGreeting(String name);
+
+  /// No description provided for @homeTodaySales.
+  ///
+  /// In ar, this message translates to:
+  /// **'مبيعات اليوم'**
+  String get homeTodaySales;
+
+  /// No description provided for @homeInvoicesCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count, plural, =0{لا فواتير بعد} =1{فاتورة واحدة} =2{فاتورتان} few{{count} فواتير} other{{count} فاتورة}}'**
+  String homeInvoicesCount(int count);
+
+  /// No description provided for @homeCash.
+  ///
+  /// In ar, this message translates to:
+  /// **'نقدي'**
+  String get homeCash;
+
+  /// No description provided for @homeCredit.
+  ///
+  /// In ar, this message translates to:
+  /// **'آجل (دين)'**
+  String get homeCredit;
+
+  /// No description provided for @homeCollectedToday.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحصيل اليوم'**
+  String get homeCollectedToday;
+
+  /// No description provided for @homeOutstandingDebts.
+  ///
+  /// In ar, this message translates to:
+  /// **'ديون مستحقة'**
+  String get homeOutstandingDebts;
+
+  /// No description provided for @homeCustomersWithDebt.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count, plural, =0{لا زبائن مدينون} =1{زبون واحد مدين} =2{زبونان مدينان} few{{count} زبائن مدينون} other{{count} زبون مدين}}'**
+  String homeCustomersWithDebt(int count);
+
+  /// No description provided for @homeShortcuts.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختصارات'**
+  String get homeShortcuts;
+
+  /// No description provided for @homeNewSale.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيع جديد'**
+  String get homeNewSale;
+
+  /// No description provided for @homeRecentInvoices.
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر فواتير اليوم'**
+  String get homeRecentInvoices;
+
+  /// No description provided for @homeNoInvoices.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد فواتير اليوم بعد'**
+  String get homeNoInvoices;
+
+  /// No description provided for @homeNoInvoicesBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ أول عملية بيع من زر «بيع» في الأسفل.'**
+  String get homeNoInvoicesBody;
+
+  /// No description provided for @homeWalkIn.
+  ///
+  /// In ar, this message translates to:
+  /// **'زبون نقدي'**
+  String get homeWalkIn;
+
+  /// No description provided for @homeLoadError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تحميل لوحة اليوم.'**
+  String get homeLoadError;
+
+  /// No description provided for @currencySymbol.
+  ///
+  /// In ar, this message translates to:
+  /// **'₪'**
+  String get currencySymbol;
 }
 
 class _AppLocalizationsDelegate

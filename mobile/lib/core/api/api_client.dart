@@ -41,8 +41,10 @@ class ApiClient {
   /// Called when an authenticated call returns 401 or USER_INACTIVE.
   final void Function(ApiFailure failure)? onSessionFailure;
 
-  Future<Map<String, dynamic>> get(String path, {bool auth = true}) =>
-      _send(() => dio.get<dynamic>(path, options: Options(extra: {'auth': auth})), auth);
+  Future<Map<String, dynamic>> get(String path, {bool auth = true, Map<String, dynamic>? query}) => _send(
+    () => dio.get<dynamic>(path, queryParameters: query, options: Options(extra: {'auth': auth})),
+    auth,
+  );
 
   Future<Map<String, dynamic>> post(String path, {Object? body, bool auth = true, String? idempotencyKey}) => _send(
     () => dio.post<dynamic>(
