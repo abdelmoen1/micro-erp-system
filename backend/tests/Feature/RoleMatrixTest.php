@@ -30,6 +30,7 @@ class RoleMatrixTest extends TestCase
         'list customers, sales, debts, payments' => self::ALL,
         'create customer' => self::ALL,
         'update customer' => self::ALL,
+        'set customer credit limit (US-0305)' => self::OWNER_MANAGER,
         'delete customer without history' => self::OWNER_MANAGER,
         'create sale' => self::ALL,
         'update sale (DEF-05 containment)' => self::OWNER_MANAGER,
@@ -181,6 +182,7 @@ class RoleMatrixTest extends TestCase
             'list customers, sales, debts, payments' => ['GET', '/api/v1/payments', [], []],
             'create customer' => ['POST', '/api/v1/customers', ['name' => 'New', 'phone' => '0599999999'], []],
             'update customer' => ['PUT', "/api/v1/customers/{$customer->id}", ['name' => 'Renamed'], []],
+            'set customer credit limit (US-0305)' => ['PATCH', "/api/v1/customers/{$customer->id}", ['credit_limit' => '300.00'], []],
             'delete customer without history' => ['DELETE', '/api/v1/customers/' . $this->makeCustomer($store)->id, [], []],
             'create sale' => ['POST', '/api/v1/invoices', [
                 'customer_id' => $customer->id, 'has_debt' => false, 'payment_method' => 'cash',
