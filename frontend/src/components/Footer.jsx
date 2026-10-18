@@ -1,5 +1,5 @@
 import lightfavicon from "../assets/lightfavicon.png";
-import blackHesba from "../assets/blackHesba.png";
+import blackHesba from "../assets/blackhesba.png";
 function Footer({ t, lang, setLang }) {
   return (
     <div className="container">

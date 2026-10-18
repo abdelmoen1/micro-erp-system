@@ -179,4 +179,76 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get stay => 'البقاء';
+
+  @override
+  String homeGreeting(String name) {
+    return 'أهلاً، $name';
+  }
+
+  @override
+  String get homeTodaySales => 'مبيعات اليوم';
+
+  @override
+  String homeInvoicesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count فاتورة',
+      few: '$count فواتير',
+      two: 'فاتورتان',
+      one: 'فاتورة واحدة',
+      zero: 'لا فواتير بعد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeCash => 'نقدي';
+
+  @override
+  String get homeCredit => 'آجل (دين)';
+
+  @override
+  String get homeCollectedToday => 'تحصيل اليوم';
+
+  @override
+  String get homeOutstandingDebts => 'ديون مستحقة';
+
+  @override
+  String homeCustomersWithDebt(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count زبون مدين',
+      few: '$count زبائن مدينون',
+      two: 'زبونان مدينان',
+      one: 'زبون واحد مدين',
+      zero: 'لا زبائن مدينون',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeShortcuts => 'اختصارات';
+
+  @override
+  String get homeNewSale => 'بيع جديد';
+
+  @override
+  String get homeRecentInvoices => 'آخر فواتير اليوم';
+
+  @override
+  String get homeNoInvoices => 'لا توجد فواتير اليوم بعد';
+
+  @override
+  String get homeNoInvoicesBody => 'ابدأ أول عملية بيع من زر «بيع» في الأسفل.';
+
+  @override
+  String get homeWalkIn => 'زبون نقدي';
+
+  @override
+  String get homeLoadError => 'تعذّر تحميل لوحة اليوم.';
+
+  @override
+  String get currencySymbol => '₪';
 }
