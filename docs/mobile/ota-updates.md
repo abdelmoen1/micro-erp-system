@@ -133,11 +133,21 @@ The test accounts from the local SQLite dev API do not exist on Railway; sign in
 | New or upgraded plugin with native code | **Full APK** (Shorebird rejects the patch) |
 | `mobile/assets/**` (fonts, images), `shorebird.yaml`, `shorebird-patch-public.pem` | **Full APK** |
 | Flutter version, `version:` in pubspec | **Full APK** |
+| A Material icon (`Icons.*`) the release does not already use | **Full APK** (see Icons below) |
 
 The patch workflow stops with "Full release required" for pushes touching `android/`, `assets/`, `shorebird.yaml`
 or the patch public key (`tool/ci/check_patchable.sh`), and when `version:` differs from
 `MOBILE_OTA_RELEASE_VERSION`. Shorebird's own native/asset checks then cover the rest. The workflows never
 pass `--allow-native-diffs` or `--allow-asset-diffs`.
+
+**Icons.** Release builds tree-shake `MaterialIcons-Regular.otf` down to the icons the code uses, so the font
+is an asset whose bytes depend on the set of `Icons.*` in `mobile/lib/`. A patch that uses an icon the release
+does not ship changes that asset, and Shorebird refuses it ("Your app contains asset changes … Not publishing",
+run 39128334615). With `--allow-asset-diffs` the new icons would render as empty boxes on the phone. Until the
+next full release, patches must keep exactly the release's icon set
+(`git grep -ho "Icons\.[a-zA-Z0-9_]*" -- mobile/lib | sort -u`). The next full release should pass
+`--no-tree-shake-icons` in both `mobile-release.yml` and `mobile-patch.yml` (same commit, about +1.6 MB), so
+later patches can use any Material icon.
 
 ### 3.2 Patch timing on the phone
 
