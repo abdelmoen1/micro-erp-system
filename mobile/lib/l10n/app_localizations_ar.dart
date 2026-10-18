@@ -251,4 +251,125 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get currencySymbol => '₪';
+
+  @override
+  String get scanEntryTitle => 'عرض بيانات منتج';
+
+  @override
+  String get scanEntryBody =>
+      'الاسم والسعر والمخزون. للعرض فقط، لا يُضاف إلى بيع.';
+
+  @override
+  String get scanBarcode => 'مسح باركود';
+
+  @override
+  String get scanCloseA11y => 'إغلاق الماسح والرجوع إلى البيع';
+
+  @override
+  String get scanTorchOnA11y => 'تشغيل الإضاءة';
+
+  @override
+  String get scanTorchOffA11y => 'إطفاء الإضاءة';
+
+  @override
+  String get scanInstruction => 'وجّه الباركود داخل الإطار';
+
+  @override
+  String get scanRead => 'تمت القراءة';
+
+  @override
+  String get scanPaused => 'المسح متوقف';
+
+  @override
+  String get scanSearchingCode => 'جارٍ البحث عن باركود…';
+
+  @override
+  String get scanSearchingProduct => 'جارٍ البحث عن المنتج…';
+
+  @override
+  String get scanHintTitle => 'صعب القراءة؟';
+
+  @override
+  String get scanHintBody =>
+      'قرّب الباركود ببطء، أمِل المنتج لتجنب اللمعان، وشغّل الإضاءة. أو أدخله يدويًا.';
+
+  @override
+  String get scanManual => 'إدخال الباركود يدويًا';
+
+  @override
+  String get scanFound => 'تم العثور على المنتج';
+
+  @override
+  String get scanPrice => 'سعر البيع';
+
+  @override
+  String get scanStock => 'المخزون الحالي';
+
+  @override
+  String get scanBarcodeLabel => 'الباركود';
+
+  @override
+  String get scanAnother => 'مسح منتج آخر';
+
+  @override
+  String get scanBackToSale => 'الرجوع إلى البيع';
+
+  @override
+  String get scanNotFoundTitle => 'لا يوجد منتج بهذا الباركود';
+
+  @override
+  String get scanNotFoundBody => 'تأكد من الرقم أو امسحه مرة أخرى.';
+
+  @override
+  String get scanAgain => 'مسح مرة أخرى';
+
+  @override
+  String get scanDeniedTitle => 'لا يمكن المسح بدون الكاميرا';
+
+  @override
+  String get scanDeniedBody =>
+      'تحتاج حِسبة إلى الكاميرا لقراءة الباركود فقط أثناء المسح. يمكنك السماح الآن أو إدخال الرقم يدويًا.';
+
+  @override
+  String get scanAllowCamera => 'السماح بالكاميرا';
+
+  @override
+  String get scanBlockedBody =>
+      'إذن الكاميرا مرفوض. فعّله من إعدادات الهاتف لقراءة الباركود، أو أدخل الرقم يدويًا.';
+
+  @override
+  String get scanBlockedPath => 'الإعدادات ← التطبيقات ← حِسبة ← الأذونات ←';
+
+  @override
+  String get scanBlockedPathCamera => 'الكاميرا';
+
+  @override
+  String get scanBlockedPathAllow => '← السماح أثناء استخدام التطبيق';
+
+  @override
+  String get scanOpenSettings => 'فتح الإعدادات';
+
+  @override
+  String get manualLabel => 'رقم الباركود';
+
+  @override
+  String get manualHint => 'الأرقام أسفل الخطوط';
+
+  @override
+  String get manualHelper => 'اكتب الأرقام كما تظهر تحت خطوط الباركود.';
+
+  @override
+  String get manualEmpty => 'أدخل رقم الباركود';
+
+  @override
+  String get manualSubmit => 'عرض المنتج';
+
+  @override
+  String get manualCancelA11y => 'إلغاء الإدخال اليدوي';
+
+  @override
+  String get lookupFailedTitle => 'تعذّر عرض المنتج';
+
+  @override
+  String get lookupSavedForRetry => 'محفوظ لإعادة المحاولة.';
 }

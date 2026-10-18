@@ -133,7 +133,7 @@ The test accounts from the local SQLite dev API do not exist on Railway; sign in
 | New or upgraded plugin with native code | **Full APK** (Shorebird rejects the patch) |
 | `mobile/assets/**` (fonts, images), `shorebird.yaml`, `shorebird-patch-public.pem` | **Full APK** |
 | Flutter version, `version:` in pubspec | **Full APK** |
-| A Material icon (`Icons.*`) the release does not already use | **Full APK** (see Icons below) |
+| A Material icon (`Icons.*`) the release does not already use | **Full APK** for 1.0.0+1 only (see Icons below) |
 
 The patch workflow stops with "Full release required" for pushes touching `android/`, `assets/`, `shorebird.yaml`
 or the patch public key (`tool/ci/check_patchable.sh`), and when `version:` differs from
@@ -143,11 +143,11 @@ pass `--allow-native-diffs` or `--allow-asset-diffs`.
 **Icons.** Release builds tree-shake `MaterialIcons-Regular.otf` down to the icons the code uses, so the font
 is an asset whose bytes depend on the set of `Icons.*` in `mobile/lib/`. A patch that uses an icon the release
 does not ship changes that asset, and Shorebird refuses it ("Your app contains asset changes … Not publishing",
-run 39128334615). With `--allow-asset-diffs` the new icons would render as empty boxes on the phone. Until the
-next full release, patches must keep exactly the release's icon set
-(`git grep -ho "Icons\.[a-zA-Z0-9_]*" -- mobile/lib | sort -u`). The next full release should pass
-`--no-tree-shake-icons` in both `mobile-release.yml` and `mobile-patch.yml` (same commit, about +1.6 MB), so
-later patches can use any Material icon.
+run 39128334615). With `--allow-asset-diffs` the new icons would render as empty boxes on the phone. Patches
+for release 1.0.0+1 must keep exactly its icon set (`git grep -ho "Icons\.[a-zA-Z0-9_]*" -- mobile/lib | sort -u`).
+From release 1.0.0+2 on, both `mobile-release.yml` and `mobile-patch.yml` pass `--no-tree-shake-icons` (the whole
+font ships, about +1.6 MB), so patches can use any Material icon. Keep the flag identical in both workflows: a
+release and its patches must build the font the same way.
 
 ### 3.2 Patch timing on the phone
 

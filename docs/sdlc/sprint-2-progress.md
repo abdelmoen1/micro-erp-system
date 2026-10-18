@@ -14,7 +14,7 @@ Legend: **Done (PR)** means the code and tests exist and pass locally and in CI,
 | US-0401 Product catalog + barcode lookup | Done (PR #5) | `ProductCatalogTest` TC-0401-01…06; isolation sweep covers `{product}` |
 | US-0402 Stock movements + adjustments | Done (PR #6, stacked on #5) | `StockAdjustmentTest` TC-0402-01…04, invariant over a sequence, `hisbah:verify-stock`; idempotency replay matrix includes `POST /stock-adjustments` |
 | US-0403 Low-stock detection | Done (PR #6) | `LowStockTest` TC-0403-01…03 |
-| US-1301 remainder T-1301-7 (scan → lookup) | Partial (PR #6) | Dart data layer only: `ProductRepository.lookupByBarcode` / `lowStock`, `test/features/products_test.dart`. The camera scanner waits for US-1305 (devices and real barcodes) and DR-2 styling |
+| US-1301 remainder T-1301-7 (scan → lookup) | Done (branch `feat/t-1301-7-scanner`), pending device test and design approval | Data layer (PR #6) plus S2 hi-fi states A–H ([docs/design/s2-scanner](../design/s2-scanner/README.md)) on mobile_scanner + permission_handler behind `BarcodeCamera`; `test/features/scanner_test.dart` (D, E, F, G, H, 130% text). Needs a full release (native plugins, version 1.0.0+2). Open: U-1…U-10, camera tokens pending approval, US-1305 spike |
 | US-0305 Customer credit limit | Done (PR #7): storage and role gate only | `CustomerCreditLimitTest` TC-0305-01/02; role matrix row. Enforcement is US-0502 |
 | US-0701 Debt schema extension | **Blocked**: D-10 open | It changes and backfills the production schema, so it waits for approval |
 | US-0501 Cash sale with stock deduction | **Blocked**: D-06, D-07, D-27 open | Needs immutability (D-06), walk-in (D-07) and stock policy (D-27) decisions |

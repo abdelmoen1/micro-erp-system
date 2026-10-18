@@ -32,7 +32,12 @@ enum StatusTone {
   info(Color(0xFF1E5A8A), Color(0xFFE4F0FA), Color(0xFFC5DDF1)),
   offline(Color(0xFF14262E), Color(0xFFF3D9A4), Color(0xFFE5C27C)),
   pending(Color(0xFF14262E), Color(0xFFECEFF3), Color(0xFFD5DAE1)),
-  voided(Color(0xFF3B4146), Color(0xFFECEDEE), Color(0xFFD3D5D8));
+  voided(Color(0xFF3B4146), Color(0xFFECEDEE), Color(0xFFD3D5D8)),
+
+  // Design System 0.2 status roles used by the S2 scanner (found / not found). DS 0.2 gives no
+  // border colour for these two, so [line] repeats [bg].
+  paid(Color(0xFF1F6B3A), Color(0xFFE2F0E6), Color(0xFFE2F0E6)),
+  debt(Color(0xFFA2381F), Color(0xFFF9E6E0), Color(0xFFF9E6E0));
 
   const StatusTone(this.fg, this.bg, this.line);
 
