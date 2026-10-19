@@ -1,0 +1,33 @@
+{
+    // Local Laravel API for the Flutter app (http://127.0.0.1:8000/api/v1).
+    // Runs on the disposable SQLite file backend/database/dev.sqlite (git-ignored),
+    // never on the MySQL database configured in backend/.env.
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "API: local (SQLite)",
+            "type": "shell",
+            "command": "php artisan serve --host=127.0.0.1 --port=8000 --no-reload",
+            "options": {
+                "cwd": "${workspaceFolder}/backend",
+                "env": {
+                    "APP_ENV": "local",
+                    "APP_DEBUG": "true",
+                    "DB_CONNECTION": "sqlite",
+                    "DB_DATABASE": "${workspaceFolder}/backend/database/dev.sqlite"
+                }
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "laravel-serve",
+                "pattern": { "regexp": "^__never__$" },
+                "background": {
+                    "activesBegin": true,
+                    "beginsPattern": "Starting Laravel development server|INFO",
+                    "endsPattern": "Server running on|Failed to listen"
+                }
+            },
+            "presentation": { "reveal": "silent", "panel": "dedicated" }
+        }
+    ]
+}

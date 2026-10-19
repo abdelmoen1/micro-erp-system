@@ -13,6 +13,7 @@
 | # | Document | Purpose | Status |
 |---|---|---|---|
 | **13** | [**Final review and decision pack**](13-final-review-and-decision-pack.md) (Arabic) | **Start here.** Pre-Sprint-1 review: arithmetic audit, SRS items not in R1, defect closure, Flutter readiness, SRS pinning, classified decision list (A safe / B business / C evidence), revised executive summary | **Needs TL decisions** |
+| **15** | [**Compressed delivery plan**](15-compressed-delivery-plan.md) | S2 close → S10 in 10 days (20–31 Oct 2026): calendar, tasks per role (BE / FE / FL / UX), weighted goods spec, UX delivery schedule, TL actions, pilot plan, cut-lines | **Approved direction (2026-10-19)** |
 | **14** | [**Sprint 1 execution plan**](14-sprint-1-execution-plan.md) | Proposed Sprint 1 re-scope: backend foundations + Flutter app from scratch + mobile UI/UX, task tables, design reviews DR-1/DR-2, React kept working on `/api/v1`, 12.75 dd estimate, approval checklist | **Needs TL approval** |
 | — | [CHANGELOG](CHANGELOG.md) | v0.1 → v0.2 corrections and additions | — |
 | 00 | [Project baseline](00-project-baseline.md) | Verified current state: repos, toolchain, **test run (15/15 pass)**, defects DEF-01–18 with closure status (**18 open**), assumptions | Proposed |
