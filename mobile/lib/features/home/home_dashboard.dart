@@ -12,6 +12,8 @@ import '../shell/app_shell.dart';
 import 'dashboard.dart';
 
 /// Home tab (owner / manager landing): today's sales, debts, shortcuts and latest invoices.
+/// Icons are limited to the ones the Shorebird release 1.0.0+1 already ships: icon fonts are
+/// tree-shaken into the APK, and a patch cannot add glyphs (docs/mobile/ota-updates.md §Icons).
 class HomeDashboard extends ConsumerWidget {
   const HomeDashboard({super.key});
 
@@ -32,9 +34,9 @@ class HomeDashboard extends ConsumerWidget {
           _TodayCard(today: today),
           const SizedBox(height: 14),
           _StatRow(
-            first: _StatTile(icon: Icons.payments_outlined, label: t.homeCash, amount: today.cashSales),
+            first: _StatTile(icon: Icons.check_rounded, label: t.homeCash, amount: today.cashSales),
             second: _StatTile(
-              icon: Icons.schedule_rounded,
+              icon: Icons.schedule,
               label: t.homeCredit,
               amount: today.creditSales,
               tone: StatusTone.info,
@@ -42,10 +44,10 @@ class HomeDashboard extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           _StatRow(
-            first: _StatTile(icon: Icons.savings_outlined, label: t.homeCollectedToday, amount: today.collectedToday),
+            first: _StatTile(icon: Icons.check_rounded, label: t.homeCollectedToday, amount: today.collectedToday),
             second: _StatTile(
               key: const Key('home.outstanding'),
-              icon: Icons.account_balance_wallet_outlined,
+              icon: Icons.group_outlined,
               label: t.homeOutstandingDebts,
               amount: today.outstandingDebt,
               note: t.homeCustomersWithDebt(today.customersWithDebt),
@@ -147,7 +149,7 @@ class _TodayCard extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.receipt_long_outlined, size: 16, color: onTeal),
+                      const Icon(Icons.short_text_rounded, size: 16, color: onTeal),
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
@@ -277,7 +279,7 @@ class _Shortcuts extends StatelessWidget {
         Expanded(
           child: _Shortcut(
             key: const Key('home.shortcut.pos'),
-            icon: Icons.add_shopping_cart_rounded,
+            icon: Icons.add,
             label: t.homeNewSale,
             filled: true,
             onTap: () => open(AppTab.pos),
@@ -379,7 +381,7 @@ class _RecentInvoices extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 26),
               child: Column(
                 children: [
-                  const Icon(Icons.receipt_long_outlined, size: 36, color: HisbahColors.inkSubtle),
+                  const Icon(Icons.short_text_rounded, size: 36, color: HisbahColors.inkSubtle),
                   const SizedBox(height: 10),
                   Text(
                     t.homeNoInvoices,
@@ -427,7 +429,7 @@ class _InvoiceRow extends StatelessWidget {
           CircleAvatar(
             radius: 20,
             backgroundColor: bg,
-            child: Icon(invoice.onCredit ? Icons.schedule_rounded : Icons.payments_outlined, size: 20, color: fg),
+            child: Icon(invoice.onCredit ? Icons.schedule : Icons.check_rounded, size: 20, color: fg),
           ),
           const SizedBox(width: 12),
           Expanded(
