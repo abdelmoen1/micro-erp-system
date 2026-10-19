@@ -1,4 +1,4 @@
-# 03 — Decision Log and Change Requests
+☑ **Modified**: integer **and** weighted quantities (unit `piece` or `kg`, 3 decimals for kg, price per unit); +1.0–1.5 dd in S2 — see doc 15 §4 | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved (D-08) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved (D-05) | 2026-10-19 |☑ Approved (D-07) | 2026-10-19 |☑ Approved (D-06) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved: survey the pilot shops (doc 15 §7) | 2026-10-19 |☑ Team of four roles (BE, FE, FL, UX) + AI assistance; calendar in doc 15 | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved: Playwright proof | 2026-10-19 |☑ Approved: option 1 (1.5 s per-code cooldown + haptic) as default; confirm on device | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved — **alternative**: allow the sale with a warning, `NEGATIVE_STOCK` flag and a manager review list | 2026-10-19 |☑ Approved, with "allow with warning": over the limit, Owner/Manager may override with a confirmed warning (audited); Employee is refused | 2026-10-19 |☑ Approved: choose by S4 against doc 12 checklist; **free tier (Render + Aiven) is not acceptable for the pilot** — see doc 15 | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved (adapter + evaluation spike + data minimization); **provider API key still needed** | 2026-10-19 |☑ Approved (interface + `log` driver, identity option a); **production provider account still needed** | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved | 2026-10-19 |☑ Approved — option 1, `invoices.paid_amount` | 2026-10-19 |☑ Approved — option 1, customer optional when fully paid | 2026-10-19 |☑ Approved — option 1, final at creation; void or return only | 2026-10-19 |☑ Approved — option 1, debt-first then cash refund | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |☑ Approved as recommended; revisit with D-35 after the pilot survey | 2026-10-19 |☑ Approved as recommended (blanket approval) | 2026-10-19 |# 03 — Decision Log and Change Requests
 
 > **Status: PROPOSED — AWAITING TEAM LEADER APPROVAL**
 > Every recommendation below is a proposal. Nothing here changes the approved SRS v1.1. Requirement changes are listed separately as **Change Requests (CR)** for the Team Leader (TL) to accept or reject.
@@ -10,6 +10,8 @@
 > - **No decision is approved by default.**
 >
 > The classified approval list is in [13 §6](13-final-review-and-decision-pack.md).
+>
+> **v0.5 (2026-10-19) — TL approval of all remaining decisions:** the TL approved D-05, D-06, D-07, D-08 and D-10 explicitly, chose the "allow with warning" alternative for D-27 (also applied to D-26 overrides), modified CR-13 to support **weighted goods**, and approved every other recommendation in this document. D-28: the SRS v1.1 file is committed (`docs/Hisbah_Smart_Shop_SRS_v1.1.pdf`); the US-0109 check of doc 01 against it follows. External inputs still needed: OTP provider (D-14), AI key (D-15), paid hosting (D-25), pilot-shop survey (D-35). Delivery calendar: [15](15-compressed-delivery-plan.md).
 >
 > **v0.4 (2026-10-13) — TL approval of Sprint 1:** the TL approved D-04, D-09, D-12, D-13, D-20, D-22, D-23 / CR-14 (value `Asia/Gaza`), D-24, D-36, D-37 (`com.hisbah.smartshop`) and D-38. They are recorded in Part 3 with their exact wording. All other decisions remain open.
 
@@ -569,60 +571,60 @@
 
 | Decision | Category | Approval type | Blocks (first sprint needing it) | Blocks S1? | TL decision | Date |
 |---|---|---|---|---|---|---|
-| D-01 | B | Required | S5–S6 release planning | No | ☐ | |
-| D-02 | B | Required | End of S4 (with D-35) | No | ☐ | |
-| D-03 | B | Required | R2 | No | ☐ | |
+| D-01 | B | Required | S5–S6 release planning | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| D-02 | B | Required | End of S4 (with D-35) | No | ☑ Approved as recommended; revisit with D-35 after the pilot survey | 2026-10-19 |
+| D-03 | B | Required | R2 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
 | D-04 | A | Required | S1 | **Yes** | ☑ Approved | 2026-10-13 |
-| D-05 | B | Required | S3 | No | ☐ | |
-| D-06 | B | Required | S2 (employee containment in S1 via D-12) | No | ☐ | |
-| D-07 | B | Required | S2 | No | ☐ | |
-| D-08 | B | Advisory | S2 (column), S3 (reports) | No | ☐ | |
+| D-05 | B | Required | S3 | No | ☑ Approved — option 1, debt-first then cash refund | 2026-10-19 |
+| D-06 | B | Required | S2 (employee containment in S1 via D-12) | No | ☑ Approved — option 1, final at creation; void or return only | 2026-10-19 |
+| D-07 | B | Required | S2 | No | ☑ Approved — option 1, customer optional when fully paid | 2026-10-19 |
+| D-08 | B | Advisory | S2 (column), S3 (reports) | No | ☑ Approved — option 1, `invoices.paid_amount` | 2026-10-19 |
 | D-09 | A | Required | S1 | **Yes** | ☑ Approved | 2026-10-13 |
-| D-10 | A | Advisory | S2 | No | ☐ | |
-| D-11 | A | Advisory | S3 | No | ☐ | |
+| D-10 | A | Advisory | S2 | No | ☑ Approved | 2026-10-19 |
+| D-11 | A | Advisory | S3 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
 | D-12 | B | Required | S1 | **Yes** | ☑ Approved (incl. employee pay-all; write-offs separate) | 2026-10-13 |
 | D-13 | A | Advisory | S1 | **Yes** | ☑ Approved | 2026-10-13 |
-| D-14 | C | Required | S6. **Open the provider account now.** | No | ☐ | |
-| D-15 | C | Required | S7 | No | ☐ | |
-| D-16 | C | Advisory | S8 | No | ☐ | |
-| D-17 | A | Advisory | S8 | No | ☐ | |
-| D-18 | B | Required | R2 | No | ☐ | |
-| D-19 | C | Required | R2 | No | ☐ | |
+| D-14 | C | Required | S6. **Open the provider account now.** | No | ☑ Approved (interface + `log` driver, identity option a); **production provider account still needed** | 2026-10-19 |
+| D-15 | C | Required | S7 | No | ☑ Approved (adapter + evaluation spike + data minimization); **provider API key still needed** | 2026-10-19 |
+| D-16 | C | Advisory | S8 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| D-17 | A | Advisory | S8 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| D-18 | B | Required | R2 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| D-19 | C | Required | R2 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
 | D-20 | C | Advisory | S2 (evidence from SP-01 – SP-04; SP-01 runs in S1) | No | ☑ Approved (provisional; validated at G-FL, end of S1) | 2026-10-13 |
-| D-21 | A | Required | S3 | No | ☐ | |
+| D-21 | A | Required | S3 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
 | D-22 | A | Required | S1 | **Yes** | ☑ Approved | 2026-10-13 |
 | D-23 | B | Required (value) | S1 | **Yes** | ☑ Approved (`Asia/Gaza` default, per-store) | 2026-10-13 |
 | D-24 | A | Required | S1 | **Yes** | ☑ Approved | 2026-10-13 |
-| D-25 | B | Required | S6 (choose by end of S4) | No | ☐ | |
-| D-26 | B | Advisory | S2 | No | ☐ | |
-| D-27 | B | Advisory | S2 | No | ☐ | |
-| D-28 | B (TL action) | Required | US-0109 only (v0.4 clarification) | No (blocks only US-0109) | ☐ Open — PDF not yet committed | |
-| D-29 | A | Advisory | S7 | No | ☐ | |
-| D-30 | B | Advisory | S4 | No | ☐ | |
-| D-31 | C | Required | S5 (evidence in S2) | No | ☐ | |
-| D-32 | C | Required | S3 | No | ☐ | |
-| D-33 | A | Advisory | S4 | No | ☐ | |
-| D-34 | B | Required (calendar) | Calendar planning | No | ☐ | |
-| D-35 | B | Required | R1 scope, by end of S4 | No | ☐ | |
+| D-25 | B | Required | S6 (choose by end of S4) | No | ☑ Approved: choose by S4 against doc 12 checklist; **free tier (Render + Aiven) is not acceptable for the pilot** — see doc 15 | 2026-10-19 |
+| D-26 | B | Advisory | S2 | No | ☑ Approved, with "allow with warning": over the limit, Owner/Manager may override with a confirmed warning (audited); Employee is refused | 2026-10-19 |
+| D-27 | B | Advisory | S2 | No | ☑ Approved — **alternative**: allow the sale with a warning, `NEGATIVE_STOCK` flag and a manager review list | 2026-10-19 |
+| D-28 | B (TL action) | Required | US-0109 only (v0.4 clarification) | No (blocks only US-0109) | ☑ Committed: `docs/Hisbah_Smart_Shop_SRS_v1.1.pdf`, SHA-256 `368543e2fd5fc3c50e0a2d91f6a822230aacc8f63cd81888d57d5df1c049749f` (text PDF). US-0109 verification of doc 01 follows in S2 | 2026-10-19 |
+| D-29 | A | Advisory | S7 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| D-30 | B | Advisory | S4 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| D-31 | C | Required | S5 (evidence in S2) | No | ☑ Approved: option 1 (1.5 s per-code cooldown + haptic) as default; confirm on device | 2026-10-19 |
+| D-32 | C | Required | S3 | No | ☑ Approved: Playwright proof | 2026-10-19 |
+| D-33 | A | Advisory | S4 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| D-34 | B | Required (calendar) | Calendar planning | No | ☑ Team of four roles (BE, FE, FL, UX) + AI assistance; calendar in doc 15 | 2026-10-19 |
+| D-35 | B | Required | R1 scope, by end of S4 | No | ☑ Approved: survey the pilot shops (doc 15 §7) | 2026-10-19 |
 | D-36 | A | Required | S1 | Yes | ☑ Approved (`mobile/`) | 2026-10-13 |
 | D-37 | B | Required | S1 (before project creation) | Yes | ☑ Approved (`com.hisbah.smartshop`) | 2026-10-13 |
 | D-38 | B | Required | S1 | Yes | ☑ Approved (no OTP in S1) | 2026-10-13 |
 
 | Change request | Category | Blocks | Blocks S1? | TL decision | Date |
 |---|---|---|---|---|---|
-| CR-01 | B (+ SRS amendment if R1 is to be called "MVP") | S5–S6 release planning | No | ☐ | |
-| CR-02 | B (permanent reduction of FR-64) | R2 | No | ☐ | |
-| CR-03 | B | S2 | No | ☐ | |
-| CR-04 | B | S2 | No | ☐ | |
-| CR-05 | B | S3 | No | ☐ | |
-| CR-06 | A | — (documentation) | No | ☐ | |
-| CR-07 | A | S8 | No | ☐ | |
-| CR-08 | B | S6 | No | ☐ | |
-| CR-09 | B | S2/S3 | No | ☐ | |
-| CR-10 | B | S1 (with D-12) | **Yes** | ☐ Open — D-12 approved; the SRS wording change itself is not yet decided | |
-| CR-11 | C (conditional) | R2 | No | ☐ | |
-| CR-12 | B | R1.1/R2 | No | ☐ | |
-| CR-13 | B | S2 (product schema) | No | ☐ | |
+| CR-01 | B (+ SRS amendment if R1 is to be called "MVP") | S5–S6 release planning | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| CR-02 | B (permanent reduction of FR-64) | R2 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| CR-03 | B | S2 | No | ☑ Approved (D-06) | 2026-10-19 |
+| CR-04 | B | S2 | No | ☑ Approved (D-07) | 2026-10-19 |
+| CR-05 | B | S3 | No | ☑ Approved (D-05) | 2026-10-19 |
+| CR-06 | A | — (documentation) | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| CR-07 | A | S8 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| CR-08 | B | S6 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| CR-09 | B | S2/S3 | No | ☑ Approved (D-08) | 2026-10-19 |
+| CR-10 | B | S1 (with D-12) | **Yes** | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| CR-11 | C (conditional) | R2 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| CR-12 | B | R1.1/R2 | No | ☑ Approved as recommended (blanket approval) | 2026-10-19 |
+| CR-13 | B | S2 (product schema) | No | ☑ **Modified**: integer **and** weighted quantities (unit `piece` or `kg`, 3 decimals for kg, price per unit); +1.0–1.5 dd in S2 — see doc 15 §4 | 2026-10-19 |
 | CR-14 | A | S1 (with D-23) | **Yes** | ☑ Approved | 2026-10-13 |
 
 **Sprint 1 blockers (v0.2):** D-04, D-09, D-12/CR-10, D-13, D-22, D-23, D-24, CR-14, D-28.

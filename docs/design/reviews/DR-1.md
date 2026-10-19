@@ -41,9 +41,9 @@
 
 | Field | Value |
 |---|---|
-| Date | |
-| Outcome | ☐ Approve ☐ Revise |
-| Answers to Q1–Q4 | |
-| Notes / required changes | |
+| Date | 2026-10-19 |
+| Outcome | ☑ Approve (blanket approval of the recommendations) ☐ Revise |
+| Answers to Q1–Q4 | Q1 POS in the centre tab: yes. Q2 re-login sheet that keeps the cart: yes. Q3 confirm logout with a non-empty cart: yes. Q4 due date optional, with quick chips (+7 / +30 days) |
+| Notes / required changes | Weighted goods (CR-13 modified): the cart needs a weight / amount entry sheet; repeat scan of a `kg` product opens that sheet instead of +1 |
 
 A "revise" outcome uses the 0.125 dd P1 revision allowance (14 §5.7). DR-1 approval unblocks the US-1303 navigation skeleton being treated as final.

@@ -18,7 +18,7 @@ DR-2 is one review in two touchpoints (14 §5.8).
 | **Typeface (UI-D2)** — independent of the direction | ☐ IBM Plex Sans Arabic (same as the web) ☐ Noto Sans Arabic |
 | **Digits (UI-D1)** | ☐ Western `27.50` (proposed) ☐ Arabic-Indic `٢٧٫٥٠` |
 
-TL decision — date: ______ · notes: ______
+TL decision — date: 2026-10-15 (direction) and 2026-10-19 (typeface, digits) · notes: **Direction A · دفتر Ledger**; typeface **IBM Plex Sans Arabic** (same as the web); digits **Western** `27.50` (blanket approval of the recommendations).
 
 ## Part 2 — sign-off (after part 1)
 
