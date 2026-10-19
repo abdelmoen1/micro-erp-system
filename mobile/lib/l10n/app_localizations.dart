@@ -511,6 +511,240 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'₪'**
   String get currencySymbol;
+
+  /// No description provided for @scanEntryTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض بيانات منتج'**
+  String get scanEntryTitle;
+
+  /// No description provided for @scanEntryBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم والسعر والمخزون. للعرض فقط، لا يُضاف إلى بيع.'**
+  String get scanEntryBody;
+
+  /// No description provided for @scanBarcode.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح باركود'**
+  String get scanBarcode;
+
+  /// No description provided for @scanCloseA11y.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق الماسح والرجوع إلى البيع'**
+  String get scanCloseA11y;
+
+  /// No description provided for @scanTorchOnA11y.
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل الإضاءة'**
+  String get scanTorchOnA11y;
+
+  /// No description provided for @scanTorchOffA11y.
+  ///
+  /// In ar, this message translates to:
+  /// **'إطفاء الإضاءة'**
+  String get scanTorchOffA11y;
+
+  /// No description provided for @scanInstruction.
+  ///
+  /// In ar, this message translates to:
+  /// **'وجّه الباركود داخل الإطار'**
+  String get scanInstruction;
+
+  /// No description provided for @scanRead.
+  ///
+  /// In ar, this message translates to:
+  /// **'تمت القراءة'**
+  String get scanRead;
+
+  /// No description provided for @scanPaused.
+  ///
+  /// In ar, this message translates to:
+  /// **'المسح متوقف'**
+  String get scanPaused;
+
+  /// No description provided for @scanSearchingCode.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ البحث عن باركود…'**
+  String get scanSearchingCode;
+
+  /// No description provided for @scanSearchingProduct.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ البحث عن المنتج…'**
+  String get scanSearchingProduct;
+
+  /// No description provided for @scanHintTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'صعب القراءة؟'**
+  String get scanHintTitle;
+
+  /// No description provided for @scanHintBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'قرّب الباركود ببطء، أمِل المنتج لتجنب اللمعان، وشغّل الإضاءة. أو أدخله يدويًا.'**
+  String get scanHintBody;
+
+  /// No description provided for @scanManual.
+  ///
+  /// In ar, this message translates to:
+  /// **'إدخال الباركود يدويًا'**
+  String get scanManual;
+
+  /// No description provided for @scanFound.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم العثور على المنتج'**
+  String get scanFound;
+
+  /// No description provided for @scanPrice.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر البيع'**
+  String get scanPrice;
+
+  /// No description provided for @scanStock.
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون الحالي'**
+  String get scanStock;
+
+  /// No description provided for @scanBarcodeLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الباركود'**
+  String get scanBarcodeLabel;
+
+  /// No description provided for @scanAnother.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح منتج آخر'**
+  String get scanAnother;
+
+  /// No description provided for @scanBackToSale.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرجوع إلى البيع'**
+  String get scanBackToSale;
+
+  /// No description provided for @scanNotFoundTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد منتج بهذا الباركود'**
+  String get scanNotFoundTitle;
+
+  /// No description provided for @scanNotFoundBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكد من الرقم أو امسحه مرة أخرى.'**
+  String get scanNotFoundBody;
+
+  /// No description provided for @scanAgain.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح مرة أخرى'**
+  String get scanAgain;
+
+  /// No description provided for @scanDeniedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن المسح بدون الكاميرا'**
+  String get scanDeniedTitle;
+
+  /// No description provided for @scanDeniedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحتاج حِسبة إلى الكاميرا لقراءة الباركود فقط أثناء المسح. يمكنك السماح الآن أو إدخال الرقم يدويًا.'**
+  String get scanDeniedBody;
+
+  /// No description provided for @scanAllowCamera.
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح بالكاميرا'**
+  String get scanAllowCamera;
+
+  /// No description provided for @scanBlockedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'إذن الكاميرا مرفوض. فعّله من إعدادات الهاتف لقراءة الباركود، أو أدخل الرقم يدويًا.'**
+  String get scanBlockedBody;
+
+  /// No description provided for @scanBlockedPath.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإعدادات ← التطبيقات ← حِسبة ← الأذونات ←'**
+  String get scanBlockedPath;
+
+  /// No description provided for @scanBlockedPathCamera.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكاميرا'**
+  String get scanBlockedPathCamera;
+
+  /// No description provided for @scanBlockedPathAllow.
+  ///
+  /// In ar, this message translates to:
+  /// **'← السماح أثناء استخدام التطبيق'**
+  String get scanBlockedPathAllow;
+
+  /// No description provided for @scanOpenSettings.
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح الإعدادات'**
+  String get scanOpenSettings;
+
+  /// No description provided for @manualLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الباركود'**
+  String get manualLabel;
+
+  /// No description provided for @manualHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأرقام أسفل الخطوط'**
+  String get manualHint;
+
+  /// No description provided for @manualHelper.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب الأرقام كما تظهر تحت خطوط الباركود.'**
+  String get manualHelper;
+
+  /// No description provided for @manualEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رقم الباركود'**
+  String get manualEmpty;
+
+  /// No description provided for @manualSubmit.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض المنتج'**
+  String get manualSubmit;
+
+  /// No description provided for @manualCancelA11y.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء الإدخال اليدوي'**
+  String get manualCancelA11y;
+
+  /// No description provided for @lookupFailedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر عرض المنتج'**
+  String get lookupFailedTitle;
+
+  /// No description provided for @lookupSavedForRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'محفوظ لإعادة المحاولة.'**
+  String get lookupSavedForRetry;
 }
 
 class _AppLocalizationsDelegate

@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- The app talks to the Hisbah API (US-1304). -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Barcode scanning (T-1301-7). Asked only when «مسح باركود» is tapped; manual entry works without it. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application
         android:label="حسبة"
         android:name="${applicationName}"

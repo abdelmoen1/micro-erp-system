@@ -247,4 +247,126 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currencySymbol => '₪';
+
+  @override
+  String get scanEntryTitle => 'View product details';
+
+  @override
+  String get scanEntryBody =>
+      'Name, price and stock. View only, nothing is added to a sale.';
+
+  @override
+  String get scanBarcode => 'Scan barcode';
+
+  @override
+  String get scanCloseA11y => 'Close the scanner and return to the sale';
+
+  @override
+  String get scanTorchOnA11y => 'Turn the light on';
+
+  @override
+  String get scanTorchOffA11y => 'Turn the light off';
+
+  @override
+  String get scanInstruction => 'Point the barcode inside the frame';
+
+  @override
+  String get scanRead => 'Code read';
+
+  @override
+  String get scanPaused => 'Scanning paused';
+
+  @override
+  String get scanSearchingCode => 'Looking for a barcode…';
+
+  @override
+  String get scanSearchingProduct => 'Looking up the product…';
+
+  @override
+  String get scanHintTitle => 'Hard to read?';
+
+  @override
+  String get scanHintBody =>
+      'Move the barcode closer slowly, tilt the product to avoid glare, and turn on the light. Or type it in.';
+
+  @override
+  String get scanManual => 'Enter barcode manually';
+
+  @override
+  String get scanFound => 'Product found';
+
+  @override
+  String get scanPrice => 'Selling price';
+
+  @override
+  String get scanStock => 'Current stock';
+
+  @override
+  String get scanBarcodeLabel => 'Barcode';
+
+  @override
+  String get scanAnother => 'Scan another product';
+
+  @override
+  String get scanBackToSale => 'Back to the sale';
+
+  @override
+  String get scanNotFoundTitle => 'No product has this barcode';
+
+  @override
+  String get scanNotFoundBody => 'Check the number or scan it again.';
+
+  @override
+  String get scanAgain => 'Scan again';
+
+  @override
+  String get scanDeniedTitle => 'Scanning needs the camera';
+
+  @override
+  String get scanDeniedBody =>
+      'Hisbah uses the camera only to read barcodes while scanning. Allow it now or type the number.';
+
+  @override
+  String get scanAllowCamera => 'Allow camera';
+
+  @override
+  String get scanBlockedBody =>
+      'Camera permission is denied. Turn it on in the phone settings to read barcodes, or type the number.';
+
+  @override
+  String get scanBlockedPath => 'Settings → Apps → Hisbah → Permissions →';
+
+  @override
+  String get scanBlockedPathCamera => 'Camera';
+
+  @override
+  String get scanBlockedPathAllow => '→ Allow only while using the app';
+
+  @override
+  String get scanOpenSettings => 'Open settings';
+
+  @override
+  String get manualLabel => 'Barcode number';
+
+  @override
+  String get manualHint => 'The digits under the bars';
+
+  @override
+  String get manualHelper =>
+      'Type the digits as they appear under the barcode lines.';
+
+  @override
+  String get manualEmpty => 'Enter the barcode number';
+
+  @override
+  String get manualSubmit => 'Show product';
+
+  @override
+  String get manualCancelA11y => 'Cancel manual entry';
+
+  @override
+  String get lookupFailedTitle => 'Couldn\'t show the product';
+
+  @override
+  String get lookupSavedForRetry => 'saved for retry.';
 }

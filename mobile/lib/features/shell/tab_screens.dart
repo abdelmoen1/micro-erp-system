@@ -9,6 +9,7 @@ import '../auth/application/session_controller.dart';
 import '../auth/domain/app_user.dart';
 import '../home/dashboard.dart';
 import '../home/home_dashboard.dart';
+import '../scanner/presentation/scan_entry_card.dart';
 import 'app_shell.dart';
 
 /// Root screen of each tab: header (title, store, connection) and the tab content.
@@ -35,6 +36,14 @@ class TabRootScreen extends ConsumerWidget {
         switch (tab) {
           AppTab.home => const HomeDashboard(),
           AppTab.more => const _MoreTab(),
+          AppTab.pos => const Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _Placeholder(tab: AppTab.pos),
+              SizedBox(height: 14),
+              ScanEntryCard(),
+            ],
+          ),
           _ => _Placeholder(tab: tab),
         },
       ],
@@ -119,7 +128,9 @@ class _Placeholder extends StatelessWidget {
       AppTab.pos || AppTab.more => ('SCR-M-02', t.placeholderPos, t.placeholderPosBody),
     };
     return ConstrainedBox(
-      constraints: BoxConstraints(minHeight: MediaQuery.sizeOf(context).height * 0.5),
+      // On بيع the scan card (T-1301-7) sits below, so the frame is shorter there and the card
+      // stays above the bottom bar at 360 × 760 (S2 hi-fi A).
+      constraints: BoxConstraints(minHeight: MediaQuery.sizeOf(context).height * (tab == AppTab.pos ? 0.36 : 0.5)),
       child: DashedCard(
         child: Center(
           child: Column(

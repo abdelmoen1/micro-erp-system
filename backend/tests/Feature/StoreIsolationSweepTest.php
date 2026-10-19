@@ -71,6 +71,7 @@ class StoreIsolationSweepTest extends TestCase
             'payment' => $payment->id,
             'paymentGroupId' => $group,
             'user' => $theirStaff->id,
+            'product' => $this->makeProduct($theirs)->id,
         ];
     }
 

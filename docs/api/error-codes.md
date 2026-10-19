@@ -55,7 +55,7 @@ Login throttling: after 5 failed attempts per email + IP within 60 s, `POST /log
 
 ### Financial writes (idempotency, US-0101)
 
-Endpoints: `POST /payments`, `POST /customers/{id}/debts/pay-all`, `POST /debts`, `POST /invoices`, `POST /payments/{id}/reverse`, `POST /payment-groups/{id}/reverse`.
+Endpoints: `POST /payments`, `POST /customers/{id}/debts/pay-all`, `POST /debts`, `POST /invoices`, `POST /payments/{id}/reverse`, `POST /payment-groups/{id}/reverse`, `POST /stock-adjustments`.
 
 | HTTP | `code` | Meaning | Client behaviour |
 |---|---|---|---|
@@ -73,3 +73,9 @@ A repeated request with the same key and body returns the **original** status an
 | 422 | `PAYMENT_EXCEEDS_REMAINING` | Amount is larger than the remaining debt (`errors.amount`) |
 | 422 | `NOTHING_TO_PAY` | Pay-all on a customer with nothing outstanding |
 | 422 | `PAYMENT_ALREADY_REVERSED` | The payment or payment group is already reversed |
+
+### Products and stock
+
+| HTTP | `code` | Meaning |
+|---|---|---|
+| 422 | `INSUFFICIENT_STOCK` | The change would make the product's stock negative (`errors.quantity` gives the current stock). Nothing is written |

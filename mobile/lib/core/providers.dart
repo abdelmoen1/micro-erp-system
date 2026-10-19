@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/auth/application/session_controller.dart';
 import '../features/auth/data/auth_repository.dart';
+import '../features/products/data/product_repository.dart';
 import 'api/api_client.dart';
 import 'api/idempotency_key_store.dart';
 import 'config/env.dart';
@@ -54,6 +55,8 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(ref.watch(apiClientProvider), ref.watch(keyValueStoreProvider)),
 );
+
+final productRepositoryProvider = Provider<ProductRepository>((ref) => ProductRepository(ref.watch(apiClientProvider)));
 
 final idempotencyKeyStoreProvider = Provider<IdempotencyKeyStore>(
   (ref) => IdempotencyKeyStore(ref.watch(keyValueStoreProvider)),

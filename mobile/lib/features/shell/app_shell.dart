@@ -45,7 +45,11 @@ class AppShell extends ConsumerWidget {
         children: [
           if (!online) const OfflineBanner(),
           Expanded(
-            child: MediaQuery.removePadding(context: context, removeTop: !online, child: shell),
+            // The body's own context: its MediaQuery bottom padding includes the bar height
+            // (extendBody), so the end of every tab can scroll clear of the bar.
+            child: Builder(
+              builder: (body) => MediaQuery.removePadding(context: body, removeTop: !online, child: shell),
+            ),
           ),
         ],
       ),

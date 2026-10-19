@@ -5,6 +5,7 @@ namespace Tests\Support;
 use App\Models\Customer;
 use App\Models\Debt;
 use App\Models\Invoice;
+use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -57,5 +58,21 @@ trait BuildsShopData
         ]);
 
         return $invoice->fresh('debt');
+    }
+
+    protected function makeProduct(Store $store, array $attributes = []): Product
+    {
+        static $sequence = 0;
+        $sequence++;
+
+        return Product::create($attributes + [
+            'store_id' => $store->id,
+            'name' => 'Product ' . $sequence,
+            'barcode' => sprintf('729%010d', $sequence),
+            'selling_price' => '10.00',
+            'current_stock' => 10,
+            'minimum_stock' => 5,
+            'status' => Product::STATUS_ACTIVE,
+        ]);
     }
 }
