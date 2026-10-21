@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Customer;
+use App\Support\Money;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -10,7 +12,8 @@ class UpdateCustomerRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        // US-0305 AC1: every role edits customers; only Owner / Manager change the credit limit.
+        return !$this->has('credit_limit') || $this->user()->can('setCreditLimit', Customer::class);
     }
 
     public function rules(): array
@@ -27,6 +30,8 @@ class UpdateCustomerRequest extends FormRequest
             ],
             'address' => 'sometimes|nullable|string|max:500',
             'notes' => 'sometimes|nullable|string',
+            // null removes the limit (AC2).
+            'credit_limit' => ['sometimes', 'nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:' . Money::MAX],
         ];
     }
 
@@ -38,6 +43,7 @@ class UpdateCustomerRequest extends FormRequest
             'phone.max' => 'رقم الهاتف طويل جدًا',
             'phone.unique' => 'رقم الهاتف مستخدم مسبقًا لعميل آخر',
             'address.string' => 'العنوان يجب أن يكون نصًا',
+            ...CustomerCreditLimitMessages::all(),
         ];
     }
 }

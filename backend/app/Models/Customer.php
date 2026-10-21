@@ -15,8 +15,17 @@ class Customer extends Model
         'phone',
         'address',
         'notes',
+        'credit_limit',
         'store_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            // US-0305: NULL = no limit (BR-01, D-26).
+            'credit_limit' => 'decimal:2',
+        ];
+    }
 
     public function store()
     {
