@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/application/session_controller.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/products/data/product_repository.dart';
+import '../features/sale/data/sale_repository.dart';
 import 'api/api_client.dart';
 import 'api/idempotency_key_store.dart';
 import 'config/env.dart';
@@ -60,6 +61,10 @@ final productRepositoryProvider = Provider<ProductRepository>((ref) => ProductRe
 
 final idempotencyKeyStoreProvider = Provider<IdempotencyKeyStore>(
   (ref) => IdempotencyKeyStore(ref.watch(keyValueStoreProvider)),
+);
+
+final saleRepositoryProvider = Provider<SaleRepository>(
+  (ref) => SaleRepository(ref.watch(apiClientProvider), ref.watch(idempotencyKeyStoreProvider)),
 );
 
 final sessionProvider = NotifierProvider<SessionController, SessionState>(SessionController.new);

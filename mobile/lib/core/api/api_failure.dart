@@ -74,12 +74,22 @@ final class IdempotencyKeyReused extends ApiFailure {
   const IdempotencyKeyReused({super.message, super.correlationId});
 }
 
-/// 422 with a business code (DEBT_ALREADY_PAID, PAYMENT_EXCEEDS_REMAINING, ...).
+/// 422 with a business code (DEBT_ALREADY_PAID, PAYMENT_EXCEEDS_REMAINING, CREDIT_LIMIT_EXCEEDED, ...).
 final class BusinessRuleViolation extends ApiFailure {
-  const BusinessRuleViolation({required this.code, this.fieldErrors = const {}, super.message, super.correlationId});
+  const BusinessRuleViolation({
+    required this.code,
+    this.fieldErrors = const {},
+    this.details = const {},
+    super.message,
+    super.correlationId,
+  });
 
   final String code;
   final Map<String, List<String>> fieldErrors;
+
+  /// The envelope's optional `details` (credit-limit codes: credit_limit, outstanding, new_debt,
+  /// balance_after, can_override). Empty for codes without it.
+  final Map<String, Object?> details;
 }
 
 /// 5xx SERVER_ERROR: show a generic message with [reference].

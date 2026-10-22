@@ -1,27 +1,33 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshop/core/api/api_client.dart';
 import 'package:smartshop/core/api/api_failure.dart';
+import 'package:smartshop/core/money/fixed_point.dart';
 import 'package:smartshop/features/products/data/product_repository.dart';
+import 'package:smartshop/features/products/domain/product.dart';
 
 import '../support/fake_api.dart';
 
-/// Product JSON exactly as ProductResource renders it (docs/api/products.http).
+/// Product JSON exactly as ProductResource renders it (docs/api/products.http). Since CR-13
+/// (modified) quantities are strings in the product's unit: "12" pieces, "2.500" kg.
 Map<String, dynamic> productJson({
   int id = 1,
   String name = 'Milk 1L',
   String? barcode = '7290000000017',
-  int stock = 12,
-  int minimum = 5,
+  String unit = 'piece',
+  String price = '6.50',
+  String stock = '12',
+  String minimum = '5',
   String status = 'active',
 }) => {
   'id': id,
   'name': name,
   'barcode': barcode,
-  'selling_price': '6.50',
+  'unit': unit,
+  'selling_price': price,
   'cost_price': null,
   'current_stock': stock,
   'minimum_stock': minimum,
-  'is_low_stock': stock <= minimum,
+  'is_low_stock': double.parse(stock) <= double.parse(minimum),
   'status': status,
   'created_at': '2026-10-17T08:00:00.000000Z',
   'updated_at': '2026-10-17T08:00:00.000000Z',
@@ -56,12 +62,37 @@ void main() {
       expect(product.name, 'Milk 1L');
       expect(product.sellingPrice, '6.50');
       expect(product.costPrice, isNull);
-      expect(product.currentStock, 12);
+      expect(product.unit, ProductUnit.piece);
+      expect(product.currentStock, Quantity.whole(12));
+      expect(product.currentStock.format(product.unit), '12');
       expect(product.isLowStock, isFalse);
       expect(product.isActive, isTrue);
       final request = api.requestsTo('GET /products/lookup').single;
       expect(request.queryParameters, {'barcode': '7290000000017'});
       expect(request.headers['Authorization'], 'Bearer tok');
+    });
+
+    test('CR-13: a kg product keeps its stock to the gram', () async {
+      api.on(
+        'GET /products/lookup',
+        FakeResponse(200, {'data': productJson(unit: 'kg', price: '60.00', stock: '2.500', minimum: '0.750')}),
+      );
+
+      final product = (await products.lookupByBarcode('2000000000017'))!;
+
+      expect(product.unit, ProductUnit.kg);
+      expect(product.isWeighed, isTrue);
+      expect(product.currentStock, const Quantity.milli(2500));
+      expect(product.currentStock.format(product.unit), '2.500');
+      expect(product.minimumStock, const Quantity.milli(750));
+    });
+
+    test('a server from before the contract change (integer stock, no unit) still parses', () {
+      final legacy = Product.fromJson({...productJson(), 'current_stock': 12, 'minimum_stock': 5}..remove('unit'));
+
+      expect(legacy.unit, ProductUnit.piece);
+      expect(legacy.currentStock, Quantity.whole(12));
+      expect(legacy.minimumStock, Quantity.whole(5));
     });
 
     test('404 (unknown or inactive barcode) is null, not an error', () async {
@@ -96,7 +127,7 @@ void main() {
       api.on(
         'GET /products/low-stock',
         FakeResponse(200, {
-          'data': [productJson(id: 2, name: 'Zero', stock: 0), productJson(id: 3, name: 'Three', stock: 3)],
+          'data': [productJson(id: 2, name: 'Zero', stock: '0'), productJson(id: 3, name: 'Three', stock: '3')],
           'links': <String, dynamic>{},
           'meta': {'current_page': 1, 'per_page': 20, 'total': 2},
         }),
@@ -105,7 +136,7 @@ void main() {
       final list = await products.lowStock();
 
       expect(list.map((p) => p.name), ['Zero', 'Three']);
-      expect(list.map((p) => p.currentStock), [0, 3]);
+      expect(list.map((p) => p.currentStock), [Quantity.zero, Quantity.whole(3)]);
       expect(list.every((p) => p.isLowStock), isTrue);
     });
 

@@ -51,7 +51,14 @@ ApiFailure mapDioException(DioException e) {
   }
 
   if (status == 422 && code != null) {
-    return BusinessRuleViolation(code: code, fieldErrors: fieldErrors, message: message, correlationId: correlationId);
+    final details = envelope['details'];
+    return BusinessRuleViolation(
+      code: code,
+      fieldErrors: fieldErrors,
+      details: details is Map ? Map<String, Object?>.from(details) : const {},
+      message: message,
+      correlationId: correlationId,
+    );
   }
   if (status >= 500) {
     return ServerError(statusCode: status, message: message, correlationId: correlationId);

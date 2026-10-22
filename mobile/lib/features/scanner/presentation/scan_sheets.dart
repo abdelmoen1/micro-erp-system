@@ -173,7 +173,7 @@ class ProductFoundSheet extends StatelessWidget {
                       // TODO(U-6): stock display rules (0 shown as-is; no low-stock badge yet,
                       // although the lookup does return `is_low_stock`).
                       value: LtrValue(
-                        '${product.currentStock}',
+                        product.currentStock.format(product.unit),
                         key: const Key('scan.product.stock'),
                         style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: HisbahColors.ink),
                       ),
