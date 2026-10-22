@@ -137,7 +137,7 @@ class SaleService
             }
 
             return [
-                'invoice' => $invoice->load(['customer', 'items', 'debt.payments']),
+                'invoice' => $invoice->load(['customer', 'items', 'debt.payments', 'creator', 'voider']),
                 'warnings' => $warnings,
             ];
         });
@@ -203,7 +203,7 @@ class SaleService
                 'stock_restored' => $restored,
             ], $actor);
 
-            return $locked->load(['customer', 'items', 'debt.payments']);
+            return $locked->load(['customer', 'items', 'debt.payments', 'creator', 'voider']);
         });
     }
 
@@ -215,11 +215,18 @@ class SaleService
 
         // The request already checked the customer belongs to the store; the lock serializes
         // credit sales of one customer so two tills cannot both pass the limit check.
-        return Customer::query()
+        $customer = Customer::query()
             ->where('store_id', $actor->store_id)
             ->whereKey($customerId)
             ->lockForUpdate()
             ->firstOrFail();
+
+        // US-0301 AC4: an inactive customer is never offered for a new sale.
+        if (!$customer->isActive()) {
+            throw ValidationException::withMessages(['customer_id' => ['هذا العميل موقوف ولا يمكن البيع له. أعد تفعيله أولًا.']]);
+        }
+
+        return $customer;
     }
 
     /** @return Collection<int, Product> keyed by id, locked in id order */

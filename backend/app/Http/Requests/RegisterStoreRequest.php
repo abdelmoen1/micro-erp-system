@@ -17,6 +17,7 @@ class RegisterStoreRequest extends FormRequest
         return [
             'store_name' => ['required', 'string', 'max:255'],
             'owner_name' => ['required', 'string', 'max:255'],
+            'owner_phone' => ['nullable', 'string', 'max:10'],
             'phone' => ['nullable', 'string', 'max:10'],
             'address' => ['nullable', 'string', 'max:255'],
             'timezone' => ['nullable', 'timezone:all'],

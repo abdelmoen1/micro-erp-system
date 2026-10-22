@@ -23,7 +23,18 @@ class CustomerResource extends JsonResource
             'notes' => $this->notes,
             // US-0305: money string, or null = no limit.
             'credit_limit' => $this->credit_limit === null ? null : Money::of($this->credit_limit),
+            'status' => $this->status ?? 'active',
             'debts_count' => $this->debts_count,
+            // Open balance (Σ remaining of the customer's debts), when the query summed it.
+            'balance' => $this->when(
+                array_key_exists('balance', $this->resource->getAttributes()),
+                fn() => Money::of($this->balance),
+            ),
+            // Σ remaining past its due date (store timezone), when the query summed it.
+            'overdue' => $this->when(
+                array_key_exists('overdue', $this->resource->getAttributes()),
+                fn() => Money::of($this->overdue),
+            ),
         ];
     }
 }

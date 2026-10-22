@@ -29,4 +29,10 @@ class InvoicePolicy
     {
         return $this->isOwnerOrManager($user) && $this->sameStore($user, $invoice);
     }
+
+    /** US-0601 AC6: returns are Owner / Manager only. */
+    public function return(User $user, Invoice $invoice): bool
+    {
+        return $this->isOwnerOrManager($user) && $this->sameStore($user, $invoice);
+    }
 }

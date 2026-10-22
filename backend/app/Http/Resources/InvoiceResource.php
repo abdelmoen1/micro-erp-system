@@ -30,10 +30,15 @@ class InvoiceResource extends JsonResource
             'customer' => new CustomerResource($this->whenLoaded('customer')),
             'debt' => new DebtResource($this->whenLoaded('debt')),
             'created_by' => $this->created_by,
+            'seller' => $this->whenLoaded('creator', fn() => $this->creator ? ['id' => $this->creator->id, 'name' => $this->creator->name] : null),
+            'voided_by_name' => $this->whenLoaded('voider', fn() => $this->voider?->name),
             'created_at' => $this->created_at,
             'voided_at' => $this->voided_at,
             'voided_by' => $this->voided_by,
             'void_reason' => $this->void_reason,
+            // US-0602: returns against the sale and their total value.
+            'returns' => SaleReturnResource::collection($this->whenLoaded('returns')),
+            'returned_amount' => $this->whenLoaded('returns', fn() => Money::sum($this->returns->pluck('total_amount'))),
         ];
     }
 }

@@ -20,4 +20,10 @@ class CustomerPolicy
     {
         return $this->isOwnerOrManager($user) && $this->sameStore($user, $customer);
     }
+
+    /** US-0301 AC4: deactivate / reactivate (Owner / Manager). */
+    public function changeStatus(User $user, Customer $customer): bool
+    {
+        return $this->isOwnerOrManager($user) && $this->sameStore($user, $customer);
+    }
 }
