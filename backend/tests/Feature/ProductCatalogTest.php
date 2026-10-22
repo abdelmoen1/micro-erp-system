@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Support\Quantity;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use LogicException;
 use Tests\Support\BuildsShopData;
@@ -36,17 +37,17 @@ class ProductCatalogTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('product.selling_price', '6.50')
             ->assertJsonPath('product.cost_price', '5.00')
-            ->assertJsonPath('product.current_stock', 12)
-            ->assertJsonPath('product.minimum_stock', 5)
+            ->assertJsonPath('product.current_stock', '12')
+            ->assertJsonPath('product.minimum_stock', '5')
             ->assertJsonPath('product.status', 'active');
 
         $product = Product::findOrFail($response->json('product.id'));
         $movement = $product->movements()->sole();
         $this->assertSame(StockMovement::TYPE_OPENING, $movement->type);
-        $this->assertSame(12, $movement->quantity);
-        $this->assertSame(12, $movement->balance_after);
+        $this->assertSame('12.000', $movement->quantity);
+        $this->assertSame('12.000', $movement->balance_after);
         $this->assertSame($owner->id, (int) $movement->created_by);
-        $this->assertSame($product->current_stock, (int) $product->movements()->sum('quantity'));
+        $this->assertSame($product->current_stock, Quantity::of($product->movements()->sum('quantity')));
     }
 
     public function test_zero_opening_stock_still_records_the_opening_movement(): void
@@ -57,7 +58,7 @@ class ProductCatalogTest extends TestCase
             ->postJson('/api/v1/products', $this->validProduct(['current_stock' => 0, 'barcode' => null]))
             ->assertCreated()->json('product.id');
 
-        $this->assertSame(0, Product::findOrFail($id)->movements()->sole()->quantity);
+        $this->assertSame('0.000', Product::findOrFail($id)->movements()->sole()->quantity);
     }
 
     /** TC-0401-01: validation (price > 0 with 2 decimals, integer stock ≥ 0, required name). */
@@ -124,7 +125,7 @@ class ProductCatalogTest extends TestCase
             ->patchJson("/api/v1/products/{$product->id}", ['current_stock' => 100])
             ->assertUnprocessable()->assertJsonValidationErrors('current_stock');
 
-        $this->assertSame(3, $product->fresh()->current_stock);
+        $this->assertSame('3.000', $product->fresh()->current_stock);
     }
 
     /** TC-0401-03 + AC3: lookup returns the active product of my store, otherwise 404. */

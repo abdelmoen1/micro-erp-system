@@ -34,9 +34,13 @@ class DebtController extends Controller
                 'id',
                 'store_id',
                 'invoice_id',
+                'customer_id',
                 'amount',
+                'return_credit',
                 'remaining_amount',
+                'due_date',
                 'status',
+                'created_at',
             )
             ->latest()
             ->paginate(10);
@@ -59,6 +63,7 @@ class DebtController extends Controller
                 'store_id' => $storeId,
                 'customer_id' => $validated['customer_id'],
                 'total_amount' => $amount,
+                'paid_amount' => '0.00',
                 'has_debt' => true,
                 'payment_method' => null,
                 'source' => InvoiceSource::OPENING_DEBT,
@@ -74,6 +79,9 @@ class DebtController extends Controller
             $debt = Debt::create([
                 'invoice_id' => $invoice->id,
                 'store_id' => $storeId,
+                'customer_id' => $invoice->customer_id,
+                // US-0701 AC2: a past date is allowed for a legacy debt; it is overdue at once.
+                'due_date' => $validated['due_date'] ?? null,
                 'amount' => $amount,
                 'remaining_amount' => $amount,
                 'status' => 'unpaid',
@@ -108,7 +116,7 @@ class DebtController extends Controller
             404
         );
 
-        $debt->load('invoice.customer');
+        $debt->load(['invoice.customer', 'customer', 'payments']);
 
         return new DebtResource($debt);
     }

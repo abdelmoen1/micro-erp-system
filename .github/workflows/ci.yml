@@ -77,6 +77,15 @@ jobs:
       # no-undef is an error in .oxlintrc.json (regression guard for DEF-12).
       - run: npx oxlint -D no-undef
       - run: npm run build
+      # D-32 Playwright proof: login + DEF-13 registration regression against a mocked API.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7
 
   mobile:
     name: Mobile analyze and test

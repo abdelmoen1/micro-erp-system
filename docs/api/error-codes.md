@@ -55,7 +55,7 @@ Login throttling: after 5 failed attempts per email + IP within 60 s, `POST /log
 
 ### Financial writes (idempotency, US-0101)
 
-Endpoints: `POST /payments`, `POST /customers/{id}/debts/pay-all`, `POST /debts`, `POST /invoices`, `POST /payments/{id}/reverse`, `POST /payment-groups/{id}/reverse`, `POST /stock-adjustments`.
+Endpoints: `POST /payments`, `POST /customers/{id}/debts/pay-all`, `POST /debts`, `POST /sales`, `POST /sales/{id}/void` (alias `POST /invoices/{id}/void`), `POST /payments/{id}/reverse`, `POST /payment-groups/{id}/reverse`, `POST /stock-adjustments`. The legacy `POST /invoices` is removed (US-0501).
 
 | HTTP | `code` | Meaning | Client behaviour |
 |---|---|---|---|
@@ -78,4 +78,30 @@ A repeated request with the same key and body returns the **original** status an
 
 | HTTP | `code` | Meaning |
 |---|---|---|
-| 422 | `INSUFFICIENT_STOCK` | The change would make the product's stock negative (`errors.quantity` gives the current stock). Nothing is written |
+| 422 | `INSUFFICIENT_STOCK` | A stock **adjustment** would make the product's stock negative (`errors.quantity` gives the current stock). Nothing is written. A **sale** never returns this code (D-27: see the `NEGATIVE_STOCK` warning below) |
+
+### Sales (US-0501 – US-0503, [`sales.http`](sales.http))
+
+| HTTP | `code` | Meaning | Client behaviour |
+|---|---|---|---|
+| 422 | `CREDIT_LIMIT_EXCEEDED` | An **Employee**'s credit or partial sale would take the customer above the credit limit. Nothing is written. `details` = `{credit_limit, outstanding, new_debt, balance_after, can_override: false}` | Show the amounts; ask an Owner / Manager, or take more payment |
+| 422 | `CREDIT_LIMIT_CONFIRMATION_REQUIRED` | An **Owner / Manager**'s sale would exceed the limit. Nothing is written. Same `details`, with `can_override: true` | Show the warning; if confirmed, resend the same sale with `confirm_over_limit: true` and a **new** `Idempotency-Key` (the body changed). The override is audited |
+| 422 | `INVOICE_IMMUTABLE` | `PATCH /sales/{id}` tried to change a financial field (items, totals, customer, payment). Only `notes` are editable (D-06) | Offer void or return instead |
+| 409 | `INVOICE_ALREADY_VOIDED` | The sale is already voided; nothing is reversed twice | Refresh the sale |
+| 409 | `INVOICE_HAS_PAYMENTS` | The sale's debt has live (non-reversed) payments | Reverse the payments first, then void |
+| 409 | `INVOICE_HAS_RETURNS` | Goods were returned against the sale | Voiding is not possible; use returns |
+| 409 | `INVOICE_NOT_VOIDABLE` | The record is an opening debt, not a sale | Manage it from the debts screens |
+
+Field rules on `POST /sales` come back as `VALIDATION_FAILED` with these `errors` keys: `items.N.product_id` (unknown, other store's or inactive product), `items.N.quantity` (a fraction for a `piece` product, more than 3 decimals, or ≤ 0), `paid_amount` (above the total, more than 2 decimals), `payment_method` (missing while `paid_amount > 0`), `customer_id` (missing while something stays unpaid, D-07), `due_date` (in the past in the store timezone, or sent for a fully paid sale).
+
+#### Warning flags (successful responses)
+
+A `201` from `POST /sales` carries `flags` (a list of codes) and `warnings` (one object per affected line). Flags never block the sale.
+
+| Flag | Meaning | Client behaviour |
+|---|---|---|
+| `NEGATIVE_STOCK` | The sale took a product below zero (D-27). Each warning has `product_id`, `name` and `balance_after` | Show a non-blocking notice on the receipt; managers review negative stock later |
+
+### Optional `details`
+
+A few codes add a `details` object to the envelope with machine-readable facts (today only the two credit-limit codes). Clients that do not need it can ignore it.

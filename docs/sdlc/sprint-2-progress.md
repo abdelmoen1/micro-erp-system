@@ -1,7 +1,7 @@
 # Sprint 2 — Progress report
 
 Scope: [07 §S2](proposed/07-milestones-and-sprints.md) (M2 Catalog & Sales Core). Stories: [08](proposed/08-user-stories-and-technical-tasks.md).
-Last updated: 2026-10-17. Requirements baseline: SRS v1.1 is still **not in the repository** (D-28; `documemtation/SRS.pdf`
+Last updated: 2026-10-22 (S2 close work on branch `feat/s2-sales-core`). Requirements baseline: SRS v1.1 is still **not in the repository** (D-28; `documemtation/SRS.pdf`
 is the older version), so traceability stays provisional, as in Sprint 1.
 
 Legend: **Done (PR)** means the code and tests exist and pass locally and in CI, and are waiting for review and merge.
@@ -16,11 +16,23 @@ Legend: **Done (PR)** means the code and tests exist and pass locally and in CI,
 | US-0403 Low-stock detection | Done (PR #6) | `LowStockTest` TC-0403-01…03 |
 | US-1301 remainder T-1301-7 (scan → lookup) | Done (branch `feat/t-1301-7-scanner`), pending device test and design approval | Data layer (PR #6) plus S2 hi-fi states A–H ([docs/design/s2-scanner](../design/s2-scanner/README.md)) on mobile_scanner + permission_handler behind `BarcodeCamera`; `test/features/scanner_test.dart` (D, E, F, G, H, 130% text). Needs a full release (native plugins, version 1.0.0+2). Open: U-1…U-10, camera tokens pending approval, US-1305 spike |
 | US-0305 Customer credit limit | Done (PR #7): storage and role gate only | `CustomerCreditLimitTest` TC-0305-01/02; role matrix row. Enforcement is US-0502 |
-| US-0701 Debt schema extension | **Blocked**: D-10 open | It changes and backfills the production schema, so it waits for approval |
-| US-0501 Cash sale with stock deduction | **Blocked**: D-06, D-07, D-27 open | Needs immutability (D-06), walk-in (D-07) and stock policy (D-27) decisions |
-| US-0502 Credit / partial sale | **Blocked**: D-08, D-26, D-27 open, plus US-0701 | |
-| US-0503 Invoice immutability and void | **Blocked**: D-06 open | |
+| CR-13 (modified) weighed goods | Done (branch `feat/s2-sales-core`, not yet a PR) | `products.unit` piece/kg, DECIMAL(12,3) quantities, quantity strings in the API; `WeighedProductTest`; Flutter `Product` parses both the new strings and the old integers |
+| US-0701 Debt schema extension | Done (branch `feat/s2-sales-core`) | `customer_id` backfilled from the invoice (the migration stops and names any debt it cannot resolve), `due_date`, `return_credit`; `DebtSchemaExtensionTest` (backfill 3/3, refusal, rollback, fields); `php artisan hisbah:verify-debts` reports coverage on real data |
+| US-0501 Cash sale with stock deduction | Done (branch `feat/s2-sales-core`) | `POST /sales`, `SaleService`; D-27 as approved: shortfall sold with `NEGATIVE_STOCK` (AC2 of the story is superseded); `SaleTest` TC-0501-01…06 |
+| US-0502 Credit / partial sale | Done (branch `feat/s2-sales-core`) | D-26 as approved: employee 422 `CREDIT_LIMIT_EXCEEDED`; owner/manager 422 `CREDIT_LIMIT_CONFIRMATION_REQUIRED`, then `confirm_over_limit` (audited); `SaleTest` TC-0502-01…06 |
+| US-0503 Invoice immutability and void | Done (branch `feat/s2-sales-core`) | Notes-only PATCH (`INVOICE_IMMUTABLE`), no DELETE route, `POST /sales/{id}/void` (alias `/invoices/{id}/void`), exact stock restore, debt `cancelled`, audit, 409 on a second void; `SaleTest` TC-0503-01…06; old invoice tests rewritten |
+| US-0505 Cart state (start) | Partly done (branch `feat/s2-sales-core`) | Non-visual only: exact money/quantity types, `Cart`, `RepeatScanGuard` (1.5 s from the last sighting), `CartController`, `SaleRepository` with persisted key; `test/features/cart_test.dart`. Screens M-02/M-04/M-05/M-06 wait for approved designs; device timing not run (no phone attached) |
+| US-1201 start (web) | Partly done (branch `feat/s2-sales-core`) | `apiClient.js` (envelope, `ApiError`, 401 handling, `Idempotency-Key` with same-key retries), TanStack Query provider + query keys. RTL shell (W-04) waits for the approved design |
+| DEF-13 register wiring | Fixed (branch `feat/s2-sales-core`) | `Register.jsx` calls `POST /register`, maps field errors; Playwright `e2e/auth.spec.js` (fails on the old code, passes on the fix) |
+| D-32 Playwright proof | Done locally; CI step added | 3 tests (login + 2 DEF-13) pass locally with installed Chrome; CI installs bundled Chromium |
 | US-1502 POS / checkout wireframes | In S1 review (DR-1) | |
+
+Verification on 2026-10-22: backend 204 tests pass on sqlite and on MariaDB 10.4 (local stand-in for the CI MySQL 8 job, which has not run on this branch yet);
+the four new migrations go down and up cleanly on MariaDB; `flutter analyze` clean, `flutter test` 110 passed / 6 skipped; web oxlint 0 errors and `vite build` OK.
+
+**Deployment order:** the API now sends quantities as strings, which the installed app (release 1.0.0+1) cannot parse in barcode lookup.
+The 1.0.0+2 full release has not been run yet (last Mobile release run: 2026-10-16, 1.0.0+1). Build 1.0.0+2 from a `main` that already
+contains this branch's Flutter `Product` change, install it, and only then deploy the backend. The new app also accepts the old integers.
 
 ## CI (GitHub Actions, `CI` workflow)
 

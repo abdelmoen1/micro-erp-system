@@ -33,8 +33,8 @@ class RoleMatrixTest extends TestCase
         'set customer credit limit (US-0305)' => self::OWNER_MANAGER,
         'delete customer without history' => self::OWNER_MANAGER,
         'create sale' => self::ALL,
-        'update sale (DEF-05 containment)' => self::OWNER_MANAGER,
-        'delete sale' => self::OWNER_MANAGER,
+        'update sale notes (DEF-05 containment)' => self::OWNER_MANAGER,
+        'void sale (US-0503)' => self::OWNER_MANAGER,
         'record payment' => self::ALL,
         'pay all (D-12)' => self::ALL,
         'reverse payment' => self::OWNER_MANAGER,
@@ -184,14 +184,12 @@ class RoleMatrixTest extends TestCase
             'update customer' => ['PUT', "/api/v1/customers/{$customer->id}", ['name' => 'Renamed'], []],
             'set customer credit limit (US-0305)' => ['PATCH', "/api/v1/customers/{$customer->id}", ['credit_limit' => '300.00'], []],
             'delete customer without history' => ['DELETE', '/api/v1/customers/' . $this->makeCustomer($store)->id, [], []],
-            'create sale' => ['POST', '/api/v1/invoices', [
-                'customer_id' => $customer->id, 'has_debt' => false, 'payment_method' => 'cash',
-                'items' => [['item_name' => 'Tea', 'quantity' => 1, 'unit_price' => '5.00']],
+            'create sale' => ['POST', '/api/v1/sales', [
+                'customer_id' => $customer->id, 'paid_amount' => '10.00', 'payment_method' => 'cash',
+                'items' => [['product_id' => $this->makeProduct($store)->id, 'quantity' => 1]],
             ], $idem],
-            'update sale (DEF-05 containment)' => ['PUT', "/api/v1/invoices/{$sale->id}", [
-                'items' => [['item_name' => 'Changed', 'quantity' => 1, 'unit_price' => '1.00']],
-            ], []],
-            'delete sale' => ['DELETE', "/api/v1/invoices/{$sale->id}", [], []],
+            'update sale notes (DEF-05 containment)' => ['PATCH', "/api/v1/sales/{$sale->id}", ['notes' => 'Delivered'], []],
+            'void sale (US-0503)' => ['POST', "/api/v1/sales/{$sale->id}/void", ['reason' => 'Rang up twice'], $idem],
             'record payment' => ['POST', '/api/v1/payments', ['debt_id' => $debt->id, 'amount' => '5.00', 'method' => 'cash'], $idem],
             'pay all (D-12)' => ['POST', "/api/v1/customers/{$customer->id}/debts/pay-all", ['method' => 'cash'], $idem],
             'reverse payment' => (function () use ($debt, $idem) {

@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Debt;
 use App\Models\Invoice;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -52,6 +53,7 @@ trait BuildsShopData
         Debt::create([
             'store_id' => $store->id,
             'invoice_id' => $invoice->id,
+            'customer_id' => $customer->id,
             'amount' => $total,
             'remaining_amount' => $total,
             'status' => 'unpaid',
@@ -65,7 +67,7 @@ trait BuildsShopData
         static $sequence = 0;
         $sequence++;
 
-        return Product::create($attributes + [
+        $product = Product::create($attributes + [
             'store_id' => $store->id,
             'name' => 'Product ' . $sequence,
             'barcode' => sprintf('729%010d', $sequence),
@@ -74,5 +76,16 @@ trait BuildsShopData
             'minimum_stock' => 5,
             'status' => Product::STATUS_ACTIVE,
         ]);
+
+        // Like ProductService::create: current_stock = Σ movements from the first row.
+        StockMovement::create([
+            'store_id' => $store->id,
+            'product_id' => $product->id,
+            'type' => StockMovement::TYPE_OPENING,
+            'quantity' => $product->current_stock,
+            'balance_after' => $product->current_stock,
+        ]);
+
+        return $product->refresh();
     }
 }

@@ -95,9 +95,10 @@ class ProductController extends Controller
     /** US-0402: the stock ledger of one product, newest first (readable by every role). */
     public function movements(Product $product)
     {
-        return StockMovementResource::collection(
-            $product->movements()->orderByDesc('id')->paginate(20)
-        );
+        $movements = $product->movements()->orderByDesc('id')->paginate(20);
+        $movements->getCollection()->each->setRelation('product', $product);
+
+        return StockMovementResource::collection($movements);
     }
 
     /** US-0401 AC3 (FR-17): the active product with this barcode in my store, or 404. */

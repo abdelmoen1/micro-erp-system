@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
+use App\Support\Quantity;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\BuildsShopData;
 use Tests\TestCase;
@@ -51,7 +52,7 @@ class StockAdjustmentTest extends TestCase
     private function assertInvariant(Product $product): void
     {
         $product->refresh();
-        $this->assertSame($product->current_stock, (int) $product->movements()->sum('quantity'), 'current_stock = Σ movements');
+        $this->assertSame($product->current_stock, Quantity::of($product->movements()->sum('quantity')), 'current_stock = Σ movements');
         $this->assertSame($product->current_stock, $product->movements()->orderByDesc('id')->first()->balance_after);
     }
 
@@ -63,28 +64,28 @@ class StockAdjustmentTest extends TestCase
         $this->adjust($this->owner, $product, 5, 'Delivery counted')
             ->assertCreated()
             ->assertJsonPath('movement.type', 'adjustment_in')
-            ->assertJsonPath('movement.quantity', 5)
-            ->assertJsonPath('movement.balance_after', 15)
+            ->assertJsonPath('movement.quantity', '5')
+            ->assertJsonPath('movement.balance_after', '15')
             ->assertJsonPath('movement.reason', 'Delivery counted')
             ->assertJsonPath('movement.created_by', $this->owner->id)
-            ->assertJsonPath('product.current_stock', 15);
+            ->assertJsonPath('product.current_stock', '15');
 
         $this->adjust($this->owner, $product, -4, 'Broken bottles')
             ->assertCreated()
             ->assertJsonPath('movement.type', 'adjustment_out')
-            ->assertJsonPath('movement.quantity', -4)
-            ->assertJsonPath('product.current_stock', 11);
+            ->assertJsonPath('movement.quantity', '-4')
+            ->assertJsonPath('product.current_stock', '11');
 
-        $this->assertSame(11, $product->fresh()->current_stock);
+        $this->assertSame('11.000', $product->fresh()->current_stock);
         $this->assertInvariant($product);
 
         $logs = AuditLog::where('action', 'stock.adjusted')->orderBy('id')->get();
         $this->assertCount(2, $logs);
         $this->assertSame('Product', $logs[1]->entity_type);
         $this->assertSame((string) $product->id, $logs[1]->entity_id);
-        $this->assertSame(-4, $logs[1]->metadata['quantity']);
-        $this->assertSame(15, $logs[1]->metadata['balance_before']);
-        $this->assertSame(11, $logs[1]->metadata['balance_after']);
+        $this->assertSame('-4', $logs[1]->metadata['quantity']);
+        $this->assertSame('15', $logs[1]->metadata['balance_before']);
+        $this->assertSame('11', $logs[1]->metadata['balance_after']);
         $this->assertSame('Broken bottles', $logs[1]->metadata['reason']);
     }
 
@@ -116,11 +117,11 @@ class StockAdjustmentTest extends TestCase
             ->assertJsonPath('code', 'INSUFFICIENT_STOCK')
             ->assertJsonStructure(['errors' => ['quantity']]);
 
-        $this->assertSame(3, $product->fresh()->current_stock);
+        $this->assertSame('3.000', $product->fresh()->current_stock);
         $this->assertSame(1, StockMovement::count());
         $this->assertSame(0, AuditLog::count());
 
-        $this->adjust($this->owner, $product, -3)->assertCreated()->assertJsonPath('product.current_stock', 0);
+        $this->adjust($this->owner, $product, -3)->assertCreated()->assertJsonPath('product.current_stock', '0');
         $this->assertInvariant($product);
     }
 
@@ -138,7 +139,7 @@ class StockAdjustmentTest extends TestCase
                 $response->assertCreated();
                 $expected += $quantity;
             }
-            $this->assertSame($expected, $product->fresh()->current_stock);
+            $this->assertSame(Quantity::of($expected), $product->fresh()->current_stock);
             $this->assertInvariant($product);
         }
 
@@ -153,10 +154,10 @@ class StockAdjustmentTest extends TestCase
         $manager = $this->makeUser($this->store, 'manager');
 
         $this->adjust($employee, $product, -1)->assertForbidden()->assertJsonPath('code', 'FORBIDDEN');
-        $this->assertSame(10, $product->fresh()->current_stock);
+        $this->assertSame('10.000', $product->fresh()->current_stock);
 
         $this->adjust($manager, $product, -1)->assertCreated();
-        $this->assertSame(9, $product->fresh()->current_stock);
+        $this->assertSame('9.000', $product->fresh()->current_stock);
     }
 
     /** 05 §2: stock adjustments need an Idempotency-Key. */
@@ -176,7 +177,7 @@ class StockAdjustmentTest extends TestCase
         $theirs = $this->makeProduct($this->makeStore('Theirs'), ['current_stock' => 10]);
 
         $this->adjust($this->owner, $theirs, -1)->assertUnprocessable()->assertJsonValidationErrors('product_id');
-        $this->assertSame(10, $theirs->fresh()->current_stock);
+        $this->assertSame('10.000', $theirs->fresh()->current_stock);
     }
 
     /** GET /products/{id}/movements: the ledger, newest first, readable by every role. */
@@ -193,8 +194,8 @@ class StockAdjustmentTest extends TestCase
             ->json('data');
 
         $this->assertSame(['adjustment_out', 'adjustment_in', 'opening'], array_column($data, 'type'));
-        $this->assertSame([-5, 2, 10], array_column($data, 'quantity'));
-        $this->assertSame([7, 12, 10], array_column($data, 'balance_after'));
+        $this->assertSame(['-5', '2', '10'], array_column($data, 'quantity'));
+        $this->assertSame(['7', '12', '10'], array_column($data, 'balance_after'));
     }
 
     /** T-0402-4: the verify command reports drift and fails. */

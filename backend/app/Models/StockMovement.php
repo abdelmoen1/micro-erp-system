@@ -23,6 +23,10 @@ class StockMovement extends Model
 
     public const TYPE_ADJUSTMENT_OUT = 'adjustment_out';
 
+    public const TYPE_SALE = 'sale';
+
+    public const TYPE_SALE_VOID = 'sale_void';
+
     protected $fillable = [
         'store_id',
         'product_id',
@@ -38,8 +42,8 @@ class StockMovement extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
-            'balance_after' => 'integer',
+            'quantity' => 'decimal:3',
+            'balance_after' => 'decimal:3',
         ];
     }
 

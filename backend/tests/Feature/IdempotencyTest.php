@@ -11,6 +11,7 @@ use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\IdempotencyService;
+use App\Services\SaleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -33,7 +34,9 @@ class IdempotencyTest extends TestCase
         'POST api/v1/payment-groups/{paymentGroupId}/reverse',
         'POST api/v1/customers/{customer}/debts/pay-all',
         'POST api/v1/debts',
-        'POST api/v1/invoices',
+        'POST api/v1/sales',
+        'POST api/v1/sales/{invoice}/void',
+        'POST api/v1/invoices/{invoice}/void',
         'POST api/v1/stock-adjustments',
     ];
 
@@ -228,7 +231,9 @@ class IdempotencyTest extends TestCase
             'reverse payment group' => ['reverse-group'],
             'pay all' => ['pay-all'],
             'opening debt' => ['opening-debt'],
-            'legacy invoice create' => ['invoice'],
+            'sale' => ['sale'],
+            'void sale' => ['void'],
+            'void sale via the invoices alias' => ['void-alias'],
             'stock adjustment' => ['stock-adjustment'],
         ];
     }
@@ -246,6 +251,8 @@ class IdempotencyTest extends TestCase
             'reversed' => Payment::where('is_reversed', true)->count(),
             'debts' => Debt::count(),
             'invoices' => Invoice::count(),
+            'statuses' => Invoice::orderBy('id')->pluck('status')->all(),
+            'debt_statuses' => Debt::orderBy('id')->pluck('status')->all(),
             'remaining' => Debt::orderBy('id')->pluck('remaining_amount')->map(fn($v) => (string) $v)->all(),
             'movements' => StockMovement::count(),
             'stock' => Product::orderBy('id')->pluck('current_stock')->all(),
@@ -268,12 +275,22 @@ class IdempotencyTest extends TestCase
             })(),
             'pay-all' => ['POST', "/api/v1/customers/{$customer->id}/debts/pay-all", ['method' => 'cash'], $state],
             'opening-debt' => ['POST', '/api/v1/debts', ['customer_id' => $customer->id, 'amount' => '75.50'], $state],
-            'invoice' => ['POST', '/api/v1/invoices', [
+            'sale' => ['POST', '/api/v1/sales', [
                 'customer_id' => $customer->id,
-                'has_debt' => false,
+                'paid_amount' => '5.00',
                 'payment_method' => 'cash',
-                'items' => [['item_name' => 'Tea', 'quantity' => 2, 'unit_price' => '3.50']],
+                'items' => [['product_id' => $this->makeProduct($this->store)->id, 'quantity' => 2]],
             ], $state],
+            'void', 'void-alias' => (function () use ($name, $customer, $state) {
+                $sale = app(SaleService::class)->create($this->owner, [
+                    'customer_id' => $customer->id,
+                    'paid_amount' => '0',
+                    'items' => [['product_id' => $this->makeProduct($this->store)->id, 'quantity' => 3]],
+                ])['invoice'];
+                $path = $name === 'void' ? 'sales' : 'invoices';
+
+                return ['POST', "/api/v1/{$path}/{$sale->id}/void", ['reason' => 'Rang up twice'], $state];
+            })(),
             'stock-adjustment' => ['POST', '/api/v1/stock-adjustments', [
                 'product_id' => $this->makeProduct($this->store)->id,
                 'quantity' => -3,

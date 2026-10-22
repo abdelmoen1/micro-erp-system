@@ -82,7 +82,7 @@ class FakeCamera implements BarcodeCamera {
 const rice = '6221007012345';
 const correlationId = '01M4TX2BQ5JA9MSMRA877EFV4Y';
 
-FakeResponse found({String name = 'أرز بسمتي 2 كغ', String price = '13.00', int stock = 24}) => FakeResponse(200, {
+FakeResponse found({String name = 'أرز بسمتي 2 كغ', String price = '13.00', String stock = '24'}) => FakeResponse(200, {
   'data': {...productJson(name: name, barcode: rice, stock: stock), 'selling_price': price, 'cost_price': '9.00'},
   'meta': {'currency': 'ILS'},
 });
@@ -468,7 +468,7 @@ void main() {
     }
 
     testWidgets('scanner, long-name result, manual entry and blocked permission fit without clipping', (tester) async {
-      api.on('GET /products/lookup', found(name: 'حليب طويل الأجل 1 لتر — كرتونة 12 عبوة', price: '72.50', stock: 3));
+      api.on('GET /products/lookup', found(name: 'حليب طويل الأجل 1 لتر — كرتونة 12 عبوة', price: '72.50', stock: '3'));
       await pumpApp(tester, textScale: 1.3);
 
       await openScanner(tester);

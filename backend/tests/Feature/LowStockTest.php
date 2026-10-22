@@ -23,7 +23,7 @@ class LowStockTest extends TestCase
         foreach (['At five' => 5, 'Above' => 6] as $name => $stock) {
             $api->postJson('/api/v1/products', ['name' => $name, 'selling_price' => '1.00', 'current_stock' => $stock])
                 ->assertCreated()
-                ->assertJsonPath('product.minimum_stock', 5)
+                ->assertJsonPath('product.minimum_stock', '5')
                 ->assertJsonPath('product.is_low_stock', $stock <= 5);
         }
 
@@ -60,7 +60,7 @@ class LowStockTest extends TestCase
         $data = $this->actingAs($employee, 'sanctum')->getJson('/api/v1/products/low-stock')->assertOk()->json('data');
 
         $this->assertSame(['Zero', 'Also three', 'Three', 'Five'], array_column($data, 'name'));
-        $this->assertSame([0, 3, 3, 5], array_column($data, 'current_stock'));
+        $this->assertSame(['0', '3', '3', '5'], array_column($data, 'current_stock'));
         $this->assertTrue(collect($data)->every(fn($row) => $row['is_low_stock'] === true));
     }
 }

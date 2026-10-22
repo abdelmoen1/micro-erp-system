@@ -24,7 +24,8 @@ class InvoicePolicy
         return $this->isOwnerOrManager($user) && $this->sameStore($user, $invoice);
     }
 
-    public function delete(User $user, Invoice $invoice): bool
+    /** US-0503 (D-06): the only correction of a sale. There is no delete. */
+    public function void(User $user, Invoice $invoice): bool
     {
         return $this->isOwnerOrManager($user) && $this->sameStore($user, $invoice);
     }
