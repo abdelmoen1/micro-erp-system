@@ -79,9 +79,15 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     )->middleware('idempotent');
 
 
-    // Invoices
-    Route::apiResource('invoices', InvoiceController::class)->except('store');
-    Route::post('invoices', [InvoiceController::class, 'store'])->middleware('idempotent');
+    // Sales (US-0501 – US-0503, 05 §3). Final at creation (D-06): no DELETE and no financial edit;
+    // PATCH changes notes only, and a mistake is corrected by a void. `/invoices` is an alias.
+    foreach (['sales', 'invoices'] as $sales) {
+        Route::get($sales, [InvoiceController::class, 'index']);
+        Route::get("{$sales}/{invoice}", [InvoiceController::class, 'show']);
+        Route::match(['put', 'patch'], "{$sales}/{invoice}", [InvoiceController::class, 'update']);
+        Route::post("{$sales}/{invoice}/void", [InvoiceController::class, 'void'])->middleware('idempotent');
+    }
+    Route::post('sales', [InvoiceController::class, 'store'])->middleware('idempotent');
 
     // Debts
     Route::get('debts', [DebtController::class, 'index']);

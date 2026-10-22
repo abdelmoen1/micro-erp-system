@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Support\Quantity;
 use Illuminate\Support\Facades\DB;
 
 class ProductService
@@ -16,7 +17,7 @@ class ProductService
     public function create(User $user, array $data): Product
     {
         return DB::transaction(function () use ($user, $data) {
-            $openingStock = (int) ($data['current_stock'] ?? 0);
+            $openingStock = Quantity::of($data['current_stock'] ?? 0);
 
             $product = Product::create([
                 ...$data,

@@ -72,8 +72,10 @@ class DashboardService
 
     private function invoicesBetween(int $storeId, CarbonImmutable $from, CarbonImmutable $to): Builder
     {
+        // A voided sale never happened for the numbers (US-0503).
         return Invoice::query()
             ->where('store_id', $storeId)
+            ->where('status', Invoice::STATUS_ACTIVE)
             ->whereBetween('created_at', BusinessClock::toUtc($from, $to));
     }
 
@@ -130,7 +132,7 @@ class DashboardService
 
     private function debtMetrics(int $storeId): array
     {
-        $query = Debt::query()->where('store_id', $storeId);
+        $query = Debt::query()->where('store_id', $storeId)->where('status', '<>', Debt::STATUS_CANCELLED);
         $statuses = (clone $query)->select('status')->selectRaw('COUNT(*) as count')->groupBy('status')->pluck('count', 'status');
 
         return [

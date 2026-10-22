@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\StockMovement;
 use App\Services\AuditService;
 use App\Services\StockService;
+use App\Support\Quantity;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -26,25 +27,26 @@ class StockAdjustmentController extends Controller
     public function store(StoreStockAdjustmentRequest $request)
     {
         $data = $request->validated();
-        $quantity = (int) $data['quantity'];
+        $quantity = Quantity::of((string) $data['quantity']);
 
         [$movement, $product] = DB::transaction(function () use ($request, $data, $quantity) {
             $product = Product::query()->forStore($request->user()->store_id)->findOrFail($data['product_id']);
 
             $movement = $this->stock->move(
                 $product,
-                $quantity > 0 ? StockMovement::TYPE_ADJUSTMENT_IN : StockMovement::TYPE_ADJUSTMENT_OUT,
+                Quantity::isNegative($quantity) ? StockMovement::TYPE_ADJUSTMENT_OUT : StockMovement::TYPE_ADJUSTMENT_IN,
                 $quantity,
                 $request->user(),
                 $data['reason'],
             );
 
+            $unit = $product->unit;
             $this->audit->record('stock.adjusted', $product, [
                 'movement_id' => $movement->id,
-                'quantity' => $quantity,
+                'quantity' => Quantity::format($quantity, $unit),
                 // From the locked row inside move(), not a read taken before the lock.
-                'balance_before' => $movement->balance_after - $quantity,
-                'balance_after' => $movement->balance_after,
+                'balance_before' => Quantity::format(Quantity::sub($movement->balance_after, $quantity), $unit),
+                'balance_after' => Quantity::format($movement->balance_after, $unit),
                 'reason' => $data['reason'],
             ]);
 

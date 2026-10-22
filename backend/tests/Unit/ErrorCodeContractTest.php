@@ -54,9 +54,10 @@ class ErrorCodeContractTest extends TestCase
 
             $source = file_get_contents($file->getPathname());
 
-            // new ApiException(403, 'USER_INACTIVE', ...) and ApiException::businessRule('CODE', ...)
+            // new ApiException(403, 'USER_INACTIVE', ...), ApiException::businessRule('CODE', ...)
+            // and ApiException::conflict('CODE', ...)
             preg_match_all("/ApiException\(\s*\d{3},\s*'([A-Z_]+)'/", $source, $direct);
-            preg_match_all("/businessRule\(\s*'([A-Z_]+)'/", $source, $business);
+            preg_match_all("/(?:businessRule|conflict)\(\s*'([A-Z_]+)'/", $source, $business);
             $codes = array_merge($codes, $direct[1], $business[1]);
 
             if (str_ends_with($file->getFilename(), 'ApiExceptionRenderer.php')) {

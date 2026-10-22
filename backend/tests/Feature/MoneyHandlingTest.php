@@ -31,12 +31,14 @@ class MoneyHandlingTest extends TestCase
             ->assertJsonValidationErrors('amount');
         $api->postJson('/api/v1/debts', ['customer_id' => $customer->id, 'amount' => '10.001'], $this->idem())
             ->assertUnprocessable();
-        $api->postJson('/api/v1/invoices', [
-            'customer_id' => $customer->id, 'has_debt' => true,
-            'items' => [['item_name' => 'x', 'quantity' => 1, 'unit_price' => '1.999']],
-        ], $this->idem())->assertUnprocessable();
+        $api->postJson('/api/v1/sales', [
+            'customer_id' => $customer->id,
+            'items' => [['product_id' => $this->makeProduct($store)->id, 'quantity' => 1]],
+            'paid_amount' => '1.999', 'payment_method' => 'cash',
+        ], $this->idem())->assertUnprocessable()->assertJsonValidationErrors('paid_amount');
 
         $this->assertSame(0, Payment::count());
+        $this->assertSame(1, \App\Models\Invoice::count(), 'Only the fixture invoice exists.');
         $this->assertDatabaseHas('debts', ['id' => $debt->id, 'remaining_amount' => '100.00']);
     }
 
@@ -48,14 +50,18 @@ class MoneyHandlingTest extends TestCase
         $customer = $this->makeCustomer($store);
         $api = $this->actingAs($owner, 'sanctum');
 
-        $invoice = $api->postJson('/api/v1/invoices', [
-            'customer_id' => $customer->id, 'has_debt' => true,
-            'items' => [['item_name' => 'Rice', 'quantity' => 3, 'unit_price' => '4.10']],
+        $rice = $this->makeProduct($store, ['name' => 'Rice', 'selling_price' => '4.10']);
+
+        $invoice = $api->postJson('/api/v1/sales', [
+            'customer_id' => $customer->id,
+            'items' => [['product_id' => $rice->id, 'quantity' => 3]],
+            'paid_amount' => '0',
         ], $this->idem())->assertCreated();
 
         $invoice->assertJsonPath('data.total_amount', '12.30')
+            ->assertJsonPath('data.paid_amount', '0.00')
             ->assertJsonPath('data.items.0.unit_price', '4.10')
-            ->assertJsonPath('data.items.0.total', '12.30')
+            ->assertJsonPath('data.items.0.line_total', '12.30')
             ->assertJsonPath('data.debt.remaining_amount', '12.30')
             ->assertJsonPath('meta.currency', 'ILS');
 

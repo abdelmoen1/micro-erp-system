@@ -24,6 +24,7 @@ class Product extends Model
         'store_id',
         'name',
         'barcode',
+        'unit',
         'selling_price',
         'cost_price',
         'current_stock',
@@ -36,8 +37,9 @@ class Product extends Model
         return [
             'selling_price' => 'decimal:2',
             'cost_price' => 'decimal:2',
-            'current_stock' => 'integer',
-            'minimum_stock' => 'integer',
+            // CR-13: DECIMAL(12,3); whole numbers for pieces (doc 15 §4).
+            'current_stock' => 'decimal:3',
+            'minimum_stock' => 'decimal:3',
         ];
     }
 
