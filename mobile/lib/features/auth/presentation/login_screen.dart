@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_failure.dart';
@@ -11,7 +12,7 @@ import '../../../core/widgets/message_banner.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/session_controller.dart';
 
-/// SCR-M-01 (US-0205), hi-fi board US-1507 P2: the logo on its own ivory, the form on a
+/// SCR-M-01 (US-0205), hi-fi board US-1507 P2: the logo on the ivory ground, the form on a
 /// surface rising from the bottom. States follow docs/design/ia.md §4.1.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key, this.sessionExpired = false});
@@ -177,130 +178,136 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final scaled = MediaQuery.textScalerOf(context).scale(16) > 18;
     final label = theme.textTheme.labelMedium;
 
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        // At least one screen tall: the logo is centred above the panel, the panel sits at the
-        // bottom (thumb zone). Taller content (130 % text, banners, keyboard) scrolls instead of clipping.
-        child: LayoutBuilder(
-          builder: (context, viewport) => SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: viewport.maxHeight),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const SizedBox.shrink(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Center(child: HisbahLogo(width: scaled ? 150 : 220)),
-                  ),
-                  DecoratedBox(
-                    decoration: const BoxDecoration(
-                      color: HisbahColors.surface,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(HisbahRadius.sheet)),
-                      boxShadow: [BoxShadow(color: HisbahColors.border, offset: Offset(0, -1))],
+    // Reversed brand: the ivory mark on deep teal; the form keeps its ivory panel for legibility.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: HisbahColors.primary,
+        body: SafeArea(
+          bottom: false,
+          // At least one screen tall: the logo is centred above the panel, the panel sits at the
+          // bottom (thumb zone). Taller content (130 % text, banners, keyboard) scrolls instead of clipping.
+          child: LayoutBuilder(
+            builder: (context, viewport) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: viewport.maxHeight),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox.shrink(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: HisbahLogo(markSize: scaled ? 76 : 104, color: HisbahColors.surface),
+                      ),
                     ),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(24, 24, 24, 32 + MediaQuery.paddingOf(context).bottom),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(t.loginTitle, style: theme.textTheme.headlineMedium),
-                            Text(t.loginHelper, style: const TextStyle(fontSize: 16, color: HisbahColors.inkMuted)),
-                            const SizedBox(height: 16),
-                            if (banner != null) ...[banner, const SizedBox(height: 16)],
-                            Text(t.emailLabel, style: label),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              key: const Key('login.email'),
-                              controller: _email,
-                              enabled: !_submitting,
-                              keyboardType: TextInputType.emailAddress,
-                              autocorrect: false,
-                              textDirection: TextDirection.ltr,
-                              textInputAction: TextInputAction.next,
-                              autofillHints: const [AutofillHints.username, AutofillHints.email],
-                              style: const TextStyle(fontSize: 16),
-                              decoration: const InputDecoration(
-                                hintText: 'name@store.ps',
-                                hintTextDirection: TextDirection.ltr,
+                    DecoratedBox(
+                      decoration: const BoxDecoration(
+                        color: HisbahColors.surface,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(HisbahRadius.sheet)),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(24, 24, 24, 32 + MediaQuery.paddingOf(context).bottom),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(t.loginTitle, style: theme.textTheme.headlineMedium),
+                              Text(t.loginHelper, style: const TextStyle(fontSize: 16, color: HisbahColors.inkMuted)),
+                              const SizedBox(height: 16),
+                              if (banner != null) ...[banner, const SizedBox(height: 16)],
+                              Text(t.emailLabel, style: label),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                key: const Key('login.email'),
+                                controller: _email,
+                                enabled: !_submitting,
+                                keyboardType: TextInputType.emailAddress,
+                                autocorrect: false,
+                                textDirection: TextDirection.ltr,
+                                textInputAction: TextInputAction.next,
+                                autofillHints: const [AutofillHints.username, AutofillHints.email],
+                                style: const TextStyle(fontSize: 16),
+                                decoration: const InputDecoration(
+                                  hintText: 'name@store.ps',
+                                  hintTextDirection: TextDirection.ltr,
+                                ),
+                                validator: (v) => _validateEmail(v, t),
+                                errorBuilder: (_, error) => _errorLine(error),
+                                onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
                               ),
-                              validator: (v) => _validateEmail(v, t),
-                              errorBuilder: (_, error) => _errorLine(error),
-                              onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(t.passwordLabel, style: label),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              key: const Key('login.password'),
-                              controller: _password,
-                              focusNode: _passwordFocus,
-                              enabled: !_submitting,
-                              obscureText: _obscure,
-                              textDirection: TextDirection.ltr,
-                              textInputAction: TextInputAction.go,
-                              autofillHints: const [AutofillHints.password],
-                              style: const TextStyle(fontSize: 16),
-                              decoration: InputDecoration(
-                                suffixIcon: Padding(
-                                  padding: const EdgeInsetsDirectional.only(end: 4),
-                                  child: Semantics(
-                                    button: true,
-                                    toggled: !_obscure,
-                                    label: _obscure ? t.showPasswordA11y : t.hidePasswordA11y,
-                                    excludeSemantics: true,
-                                    child: TextButton.icon(
-                                      key: const Key('login.togglePassword'),
-                                      style: TextButton.styleFrom(
-                                        minimumSize: const Size(84, 48),
-                                        foregroundColor: HisbahColors.primary,
-                                        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                              const SizedBox(height: 16),
+                              Text(t.passwordLabel, style: label),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                key: const Key('login.password'),
+                                controller: _password,
+                                focusNode: _passwordFocus,
+                                enabled: !_submitting,
+                                obscureText: _obscure,
+                                textDirection: TextDirection.ltr,
+                                textInputAction: TextInputAction.go,
+                                autofillHints: const [AutofillHints.password],
+                                style: const TextStyle(fontSize: 16),
+                                decoration: InputDecoration(
+                                  suffixIcon: Padding(
+                                    padding: const EdgeInsetsDirectional.only(end: 4),
+                                    child: Semantics(
+                                      button: true,
+                                      toggled: !_obscure,
+                                      label: _obscure ? t.showPasswordA11y : t.hidePasswordA11y,
+                                      excludeSemantics: true,
+                                      child: TextButton.icon(
+                                        key: const Key('login.togglePassword'),
+                                        style: TextButton.styleFrom(
+                                          minimumSize: const Size(84, 48),
+                                          foregroundColor: HisbahColors.primary,
+                                          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                                        ),
+                                        onPressed: () => setState(() => _obscure = !_obscure),
+                                        icon: Icon(
+                                          _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                          size: 20,
+                                        ),
+                                        label: Text(_obscure ? t.showPassword : t.hidePassword),
                                       ),
-                                      onPressed: () => setState(() => _obscure = !_obscure),
-                                      icon: Icon(
-                                        _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                                        size: 20,
-                                      ),
-                                      label: Text(_obscure ? t.showPassword : t.hidePassword),
                                     ),
                                   ),
                                 ),
+                                validator: (v) => _validatePassword(v, t),
+                                errorBuilder: (_, error) => _errorLine(error),
+                                onFieldSubmitted: (_) => _submit(),
                               ),
-                              validator: (v) => _validatePassword(v, t),
-                              errorBuilder: (_, error) => _errorLine(error),
-                              onFieldSubmitted: (_) => _submit(),
-                            ),
-                            const SizedBox(height: 20),
-                            FilledButton(
-                              key: const Key('login.submit'),
-                              onPressed: _submitting || _throttled ? null : _submit,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (_submitting) ...[
-                                    const SizedBox.square(
-                                      dimension: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.4,
-                                        color: HisbahColors.disabledInk,
+                              const SizedBox(height: 20),
+                              FilledButton(
+                                key: const Key('login.submit'),
+                                onPressed: _submitting || _throttled ? null : _submit,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_submitting) ...[
+                                      const SizedBox.square(
+                                        dimension: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.4,
+                                          color: HisbahColors.disabledInk,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 10),
+                                      const SizedBox(width: 10),
+                                    ],
+                                    Flexible(child: Text(_buttonLabel(t), textAlign: TextAlign.center)),
                                   ],
-                                  Flexible(child: Text(_buttonLabel(t), textAlign: TextAlign.center)),
-                                ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

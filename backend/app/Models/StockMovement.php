@@ -27,6 +27,9 @@ class StockMovement extends Model
 
     public const TYPE_SALE_VOID = 'sale_void';
 
+    // US-0601: stock put back by a sale return.
+    public const TYPE_SALE_RETURN = 'sale_return';
+
     protected $fillable = [
         'store_id',
         'product_id',
@@ -56,5 +59,10 @@ class StockMovement extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

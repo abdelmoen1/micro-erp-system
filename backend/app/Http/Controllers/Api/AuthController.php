@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AcceptInvitationRequest;
+use App\Http\Requests\GoogleRegisterStoreRequest;
 use App\Http\Requests\RegisterStoreRequest;
 use App\Models\User;
 use App\Services\AuthService;
+use App\Services\GoogleIdTokenVerifier;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
@@ -18,7 +20,7 @@ class AuthController extends Controller
         $user = $this->authService->registerStore($request->validated());
         $token = $this->authService->issueToken($user);
 
-        return $this->authenticatedResponse($user, 'تم إنشاء المتجر والمالك بنجاح', 201, $token);
+        return $this->authenticatedResponse($user->load('store'), 'تم إنشاء المتجر والمالك بنجاح', 201, $token);
     }
 
     public function acceptInvitation(AcceptInvitationRequest $request)
@@ -40,6 +42,40 @@ class AuthController extends Controller
         $token = $this->authService->issueToken($user);
 
         return $this->authenticatedResponse($user->load('store'), 'تم تسجيل دخولك بنجاح', 200, $token);
+    }
+
+    /**
+     * Google sign-in. A known account gets a token; a new one gets an onboarding token for
+     * POST /register/google, so no store is created before the owner fills it in.
+     */
+    public function google(Request $request, GoogleIdTokenVerifier $verifier)
+    {
+        $data = $request->validate(['credential' => ['required', 'string', 'max:4096']]);
+        $profile = $verifier->verify($data['credential']);
+        $user = $this->authService->findGoogleUser($profile);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'أكمل بيانات متجرك لإنشاء الحساب',
+                'onboarding' => [
+                    'token' => $this->authService->onboardingToken($profile),
+                    'name' => $profile['name'],
+                    'email' => $profile['email'],
+                ],
+            ]);
+        }
+
+        $token = $this->authService->issueToken($user);
+
+        return $this->authenticatedResponse($user->load('store'), 'تم تسجيل دخولك بنجاح', 200, $token);
+    }
+
+    public function registerWithGoogle(GoogleRegisterStoreRequest $request)
+    {
+        $user = $this->authService->registerStoreWithGoogle($request->validated());
+        $token = $this->authService->issueToken($user);
+
+        return $this->authenticatedResponse($user, 'تم إنشاء المتجر والمالك بنجاح', 201, $token);
     }
 
     public function logout(Request $request)

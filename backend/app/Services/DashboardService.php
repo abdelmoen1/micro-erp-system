@@ -6,15 +6,20 @@ use App\Models\Customer;
 use App\Models\Debt;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Product;
+use App\Models\SaleReturn;
 use App\Models\Store;
 use App\Support\BusinessClock;
 use App\Support\Money;
+use App\Support\Quantity;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class DashboardService
 {
+    public function __construct(private readonly DebtService $debts) {}
+
     public function dashboard(Store $store, string $period): array
     {
         $storeId = $store->id;
@@ -25,6 +30,9 @@ class DashboardService
         $paymentMetrics = $this->paymentMetrics($storeId, $clock, $from, $to);
         $debtMetrics = $this->debtMetrics($storeId);
         $customerMetrics = $this->customerMetrics($storeId);
+        // US-0801 AC5: debts created in the period minus those cancelled by a void in the period.
+        $invoiceMetrics['new_debt'] = $this->newDebt($storeId, $from, $to);
+        $insights = $this->insights($store);
 
         return [
             'period' => [
@@ -37,11 +45,24 @@ class DashboardService
                 'total_sales' => $invoiceMetrics['total_sales'],
                 'cash_sales' => $invoiceMetrics['cash_sales'],
                 'credit_sales' => $invoiceMetrics['credit_sales'],
+                // D-08: money taken at the till vs. what the period's sales left on credit.
+                'collected_at_sale' => $invoiceMetrics['collected_at_sale'],
+                'new_debt' => $invoiceMetrics['new_debt'],
                 'total_collected_payments' => $paymentMetrics['total_collected'],
                 'total_remaining_debt' => $debtMetrics['total_remaining'],
                 'customers_count' => $customerMetrics['total'],
                 'invoices_count' => $invoiceMetrics['total'],
+                'low_stock_count' => $insights['low_stock']['count'],
             ],
+            // US-0801 AC1: money in at the till vs repayments of debts, and their total.
+            'collections' => [
+                'at_sale' => $invoiceMetrics['collected_at_sale'],
+                'debt_repayments' => $paymentMetrics['total_collected'],
+                'total' => Money::add($invoiceMetrics['collected_at_sale'], $paymentMetrics['total_collected']),
+            ],
+            // AC4: returns are their own figure; voided sales are already out of the totals.
+            'returns' => $this->returnMetrics($storeId, $from, $to),
+            'insights' => $insights,
             'customers' => $customerMetrics,
             'invoices' => [
                 'total' => $invoiceMetrics['total'],
@@ -64,9 +85,66 @@ class DashboardService
             'charts' => [
                 'sales' => $this->salesChart($storeId, $clock, $from, $to, $period),
                 'payments' => $this->paymentsChart($storeId, $clock, $from, $to, $period),
+                // W-05 «اليوم حسب الساعة»: only for period=today.
+                'sales_hourly' => $period === 'today' ? $this->hourlySales($storeId, $clock, $from, $to) : null,
             ],
             'recent_invoices' => $this->recentInvoices($storeId, $from, $to),
             'recent_payments' => $this->recentPayments($storeId, $from, $to),
+        ];
+    }
+
+    private function newDebt(int $storeId, CarbonImmutable $from, CarbonImmutable $to): string
+    {
+        $range = BusinessClock::toUtc($from, $to);
+        $created = Debt::query()->where('store_id', $storeId)->whereBetween('created_at', $range)->pluck('amount');
+        $cancelled = Debt::query()
+            ->where('store_id', $storeId)
+            ->where('status', Debt::STATUS_CANCELLED)
+            ->whereHas('invoice', fn(Builder $q) => $q->whereBetween('voided_at', $range))
+            ->pluck('amount');
+
+        return Money::sub(Money::sum($created), Money::sum($cancelled));
+    }
+
+    /** @return array{count: int, total: string, debt_reduction: string, refunded: string} */
+    private function returnMetrics(int $storeId, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $returns = SaleReturn::query()
+            ->where('store_id', $storeId)
+            ->whereBetween('created_at', BusinessClock::toUtc($from, $to))
+            ->get(['total_amount', 'debt_reduction', 'refund_amount']);
+
+        return [
+            'count' => $returns->count(),
+            'total' => Money::sum($returns->pluck('total_amount')),
+            'debt_reduction' => Money::sum($returns->pluck('debt_reduction')),
+            'refunded' => Money::sum($returns->pluck('refund_amount')),
+        ];
+    }
+
+    /** US-0801 AC2–AC3: the cards that tell the owner what needs attention now. */
+    private function insights(Store $store): array
+    {
+        $overdue = $this->debts->query($store, 'overdue');
+        $dueToday = $this->debts->query($store, 'due_today');
+        $low = Product::query()->forStore($store->id)->active()->whereColumn('current_stock', '<=', 'minimum_stock');
+
+        return [
+            'overdue' => ['count' => (clone $overdue)->count(), 'amount' => Money::sum((clone $overdue)->pluck('remaining_amount'))],
+            'due_today' => ['count' => (clone $dueToday)->count(), 'amount' => Money::sum((clone $dueToday)->pluck('remaining_amount'))],
+            'low_stock' => [
+                'count' => (clone $low)->count(),
+                'items' => (clone $low)->orderBy('current_stock')->orderBy('name')->limit(5)->get()
+                    ->map(fn(Product $p) => [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'unit' => $p->unit,
+                        'current_stock' => Quantity::format($p->current_stock, $p->unit),
+                        'minimum_stock' => Quantity::format($p->minimum_stock, $p->unit),
+                    ])->values(),
+            ],
+            'negative_stock' => ['count' => Product::query()->forStore($store->id)->active()->where('current_stock', '<', 0)->count()],
+            'top_balances' => $this->debts->balances($store, 5),
         ];
     }
 
@@ -82,11 +160,14 @@ class DashboardService
     private function invoiceMetrics(int $storeId, CarbonImmutable $from, CarbonImmutable $to): array
     {
         $invoices = $this->invoicesBetween($storeId, $from, $to)
-            ->get(['total_amount', 'has_debt', 'source']);
+            ->get(['total_amount', 'paid_amount', 'has_debt', 'source']);
 
         $sales = $invoices->filter(fn(Invoice $invoice) => $invoice->source?->value === 'sale');
+        $collected = Money::sum($sales->pluck('paid_amount'));
 
         return [
+            'collected_at_sale' => $collected,
+            'new_debt' => Money::sub(Money::sum($sales->pluck('total_amount')), $collected),
             'total' => $invoices->count(),
             'cash' => $invoices->where('has_debt', false)->count(),
             'debt' => $invoices->where('has_debt', true)->count(),
@@ -180,6 +261,21 @@ class DashboardService
                 'credit_amount' => Money::sum($bucket->filter(fn($row) => (bool) $row->has_debt)->pluck('total_amount')),
             ];
         });
+    }
+
+    /** Sales per local hour of today (24 buckets, "00"–"23"), in the store timezone. */
+    private function hourlySales(int $storeId, BusinessClock $clock, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $byHour = $this->invoicesBetween($storeId, $from, $to)
+            ->where('source', 'sale')
+            ->toBase()
+            ->get(['created_at', 'total_amount'])
+            ->groupBy(fn($row) => CarbonImmutable::parse($row->created_at, 'UTC')->setTimezone($clock->timezone())->format('H'));
+
+        return array_map(fn(int $hour) => [
+            'hour' => sprintf('%02d', $hour),
+            'amount' => Money::sum($byHour->get(sprintf('%02d', $hour), collect())->pluck('total_amount')),
+        ], range(0, 23));
     }
 
     private function paymentsChart(int $storeId, BusinessClock $clock, CarbonImmutable $from, CarbonImmutable $to, string $period): array

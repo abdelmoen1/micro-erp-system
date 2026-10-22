@@ -7,6 +7,8 @@ use App\Exceptions\ApiException;
 use App\Models\Store;
 use App\Models\StoreInvitation;
 use App\Models\User;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -18,6 +20,9 @@ class AuthService
     public const MAX_LOGIN_ATTEMPTS = 5;
 
     public const LOGIN_DECAY_SECONDS = 60;
+
+    /** How long a new Google user has to finish onboarding before signing in again. */
+    public const ONBOARDING_MINUTES = 30;
 
     /**
      * Stateless credential check (no session), throttled per email + IP
@@ -81,14 +86,78 @@ class AuthService
             $owner = new User([
                 'name' => $data['owner_name'],
                 'email' => $data['email'],
-                'password' => $data['password'],
+                'phone' => $data['owner_phone'] ?? null,
+                'password' => $data['password'] ?? null,
             ]);
             $owner->store_id = $store->id;
             $owner->role = UserRole::OWNER;
+            $owner->google_id = $data['google_id'] ?? null;
             $owner->save();
 
             return $owner->load('store');
         });
+    }
+
+    /**
+     * The account for a verified Google profile: by Google id, else by email (Google verified it,
+     * so the account is linked on first use). Null means a new user who must onboard first.
+     */
+    public function findGoogleUser(array $profile): ?User
+    {
+        $user = User::where('google_id', $profile['sub'])->first()
+            ?? User::where('email', $profile['email'])->first();
+
+        if (!$user) {
+            return null;
+        }
+
+        if (!$user->isActive()) {
+            throw new ApiException(403, 'USER_INACTIVE', 'تم إيقاف هذا الحساب. تواصل مع صاحب المتجر.');
+        }
+
+        if ($user->google_id === null) {
+            $user->forceFill(['google_id' => $profile['sub']])->save();
+        }
+
+        return $user;
+    }
+
+    /** A sealed, short-lived copy of the Google profile that POST /register/google trusts. */
+    public function onboardingToken(array $profile): string
+    {
+        return Crypt::encryptString(json_encode([
+            'sub' => $profile['sub'],
+            'email' => $profile['email'],
+            'name' => $profile['name'],
+            'exp' => now()->addMinutes(self::ONBOARDING_MINUTES)->getTimestamp(),
+        ]));
+    }
+
+    public function registerStoreWithGoogle(array $data): User
+    {
+        try {
+            $profile = json_decode(Crypt::decryptString($data['onboarding_token']), true);
+        } catch (DecryptException) {
+            $profile = null;
+        }
+
+        if (!is_array($profile) || ($profile['exp'] ?? 0) <= now()->getTimestamp()) {
+            throw ValidationException::withMessages([
+                'onboarding_token' => 'انتهت مهلة التسجيل. تابع بحساب Google مرة أخرى.',
+            ]);
+        }
+
+        if (User::where('google_id', $profile['sub'])->orWhere('email', $profile['email'])->exists()) {
+            throw ValidationException::withMessages([
+                'email' => 'هذا البريد مسجّل مسبقاً. سجّل الدخول بحساب Google.',
+            ]);
+        }
+
+        return $this->registerStore([
+            ...$data,
+            'email' => $profile['email'],
+            'google_id' => $profile['sub'],
+        ]);
     }
 
     public function createInvitation(User $inviter, array $data): array

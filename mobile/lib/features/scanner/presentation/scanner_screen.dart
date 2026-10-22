@@ -17,27 +17,44 @@ import 'manual_entry_sheet.dart';
 import 'scan_frame.dart';
 import 'scan_sheets.dart';
 
-/// A · «مسح باركود» from the بيع tab. B: the permission is checked on every open, and the
-/// Android dialog is shown only now, over the entry context (never at app launch).
-Future<void> openScanner(BuildContext context, WidgetRef ref) async {
-  final permissions = ref.read(cameraPermissionsProvider);
+/// A · the T-1301-7 scanner on its own (product sheets D, E, H; view only). B: the permission is
+/// checked on every open, and the Android dialog is shown only now (never at app launch).
+Future<void> openScanner(BuildContext context) => _pushScanner(context, pickMode: false);
+
+/// M-02 «مسح»: the same camera (and manual entry), but the first code read goes back to the cart,
+/// which looks it up and shows the result in its own message slot. Null when the cashier closes it.
+Future<String?> scanBarcode(BuildContext context) => _pushScanner(context, pickMode: true);
+
+/// S3 · add a product: the first QR, Data Matrix or barcode read (or typed) goes back raw; the
+/// caller decides what it means. Null when the owner closes the scanner.
+Future<String?> scanProductCode(BuildContext context) => _pushScanner(context, pickMode: true, productCodes: true);
+
+Future<String?> _pushScanner(BuildContext context, {required bool pickMode, bool productCodes = false}) async {
+  final permissions = ProviderScope.containerOf(context, listen: false).read(cameraPermissionsProvider);
   var permission = await permissions.status();
   // TODO(U-10): no rationale screen before the first system dialog (rationale only after a denial).
   if (permission == CameraPermission.denied) permission = await permissions.request();
-  if (!context.mounted) return;
+  if (!context.mounted) return null;
   // A page-less route on the root navigator, above the shell and its bottom bar. It is not a
   // go_router location, so after a 401 re-login returns to بيع without the scanner (spec H).
-  await Navigator.of(
-    context,
-    rootNavigator: true,
-  ).push(MaterialPageRoute<void>(builder: (_) => ScannerScreen(initialPermission: permission)));
+  return Navigator.of(context, rootNavigator: true).push(
+    MaterialPageRoute<String>(
+      builder: (_) => ScannerScreen(initialPermission: permission, pickMode: pickMode, productCodes: productCodes),
+    ),
+  );
 }
 
-/// C / C′ / F with the D, E, G and H sheets on top (S2 · T-1301-7). View only.
+/// C / C′ / F with the D, E, G and H sheets on top (S2 · T-1301-7). View only, unless [pickMode].
 class ScannerScreen extends ConsumerStatefulWidget {
-  const ScannerScreen({super.key, required this.initialPermission});
+  const ScannerScreen({super.key, required this.initialPermission, this.pickMode = false, this.productCodes = false});
 
   final CameraPermission initialPermission;
+
+  /// Return the first code read (camera or manual) instead of showing the product sheets.
+  final bool pickMode;
+
+  /// Also decode QR and Data Matrix (adding a product by its code).
+  final bool productCodes;
 
   @override
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
@@ -92,7 +109,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with WidgetsBindi
   }
 
   void _startCamera() {
-    final camera = ref.read(barcodeCameraFactoryProvider)();
+    final camera = ref.read(widget.productCodes ? productCodeCameraFactoryProvider : barcodeCameraFactoryProvider)();
     _camera = camera;
     _cameraPaused = false;
     _detections = camera.detections.listen(_onDetected);
@@ -110,6 +127,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with WidgetsBindi
     unawaited(HapticFeedback.mediumImpact());
     _source = _Source.camera;
     _pauseCamera();
+    if (widget.pickMode) {
+      Navigator.of(context).pop(code);
+      return;
+    }
     unawaited(ref.read(lookupControllerProvider.notifier).lookup(code));
   }
 
@@ -163,6 +184,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with WidgetsBindi
 
   void _submitManual(String code) {
     _source = _Source.manual;
+    if (widget.pickMode) {
+      Navigator.of(context).pop(code);
+      return;
+    }
     unawaited(ref.read(lookupControllerProvider.notifier).lookup(code));
   }
 

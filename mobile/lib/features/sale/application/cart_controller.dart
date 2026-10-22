@@ -60,11 +60,13 @@ class CartController extends Notifier<Cart> {
   @override
   Cart build() => Cart.empty;
 
-  /// A barcode from the camera or the manual field.
-  Future<ScanResult> scan(String rawCode) async {
+  /// A barcode from the camera or the manual field. [retry] is «إعادة المحاولة» after a failed
+  /// lookup: the same code on purpose, so the D-31 cooldown does not apply.
+  Future<ScanResult> scan(String rawCode, {bool retry = false}) async {
     final code = rawCode.trim();
     final started = Stopwatch()..start();
-    if (code.isEmpty || !ref.read(repeatScanGuardProvider).accept(code)) return ScanIgnored(code);
+    if (code.isEmpty) return ScanIgnored(code);
+    if (!retry && !ref.read(repeatScanGuardProvider).accept(code)) return ScanIgnored(code);
 
     final Product? product;
     final lookupWatch = Stopwatch()..start();

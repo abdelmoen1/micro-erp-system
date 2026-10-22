@@ -12,6 +12,12 @@ final cameraPermissionsProvider = Provider<CameraPermissions>((ref) => const Sys
 /// A new camera for each scanner screen (the screen disposes it). Overridden in tests.
 final barcodeCameraFactoryProvider = Provider<BarcodeCamera Function()>((ref) => MobileScannerCamera.new);
 
+/// The same camera reading QR / Data Matrix too, for adding a product by its code (S3).
+final productCodeCameraFactoryProvider = Provider<BarcodeCamera Function()>(
+  (ref) =>
+      () => MobileScannerCamera(productCodes: true),
+);
+
 /// Result of looking up one barcode (S2 spec: D found, E not found, H failed).
 sealed class LookupState {
   const LookupState();

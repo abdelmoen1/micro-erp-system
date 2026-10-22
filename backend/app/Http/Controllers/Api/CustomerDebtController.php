@@ -2,22 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PayAllDebtsRequest;
 use App\Http\Resources\DebtResource;
 use App\Models\Customer;
 use App\Models\Debt;
 use App\Models\Payment;
-use App\Services\DebtLedger;
+use App\Services\PaymentService;
 use App\Support\Money;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class CustomerDebtController extends Controller
 {
-    public function __construct(private readonly DebtLedger $ledger) {}
+    public function __construct(private readonly PaymentService $payments) {}
 
     /**
      * Display a listing of the resource.
@@ -62,54 +59,22 @@ class CustomerDebtController extends Controller
         $this->ensureBelongsToStore($request, $customer);
 
         $validated = $request->validated();
-        $storeId = $request->user()->store_id;
 
-        $result = DB::transaction(function () use ($validated, $customer, $request, $storeId) {
-
-            $debts = $customer->debts()
-                ->forStore($storeId)
-                ->where('remaining_amount', '>', 0)
-                ->lockForUpdate()
-                ->get();
-
-            if ($debts->isEmpty()) {
-                throw ApiException::businessRule('NOTHING_TO_PAY', 'لا يوجد على هذا العميل أي مبلغ متبقي.', [
-                    'customer' => ['لا يوجد على هذا العميل أي مبلغ متبقي.'],
-                ]);
-            }
-
-            $paymentGroupId = (string) Str::uuid();
-
-            $totalPaid = '0.00';
-
-            // D-12: a real repayment of what is owed, recorded as payments.
-            // Write-offs are a different operation and never go through here.
-            foreach ($debts as $debt) {
-                $amount = Money::of($debt->remaining_amount);
-
-                $debt->payments()->create([
-                    'amount' => $amount,
-                    'method' => $validated['method'],
-                    'paid_at' => $validated['paid_at'] ?? now(),
-                    'notes' => $validated['notes'] ?? null,
-                    'created_by' => $request->user()->id,
-                    'payment_group_id' => $paymentGroupId,
-                ]);
-
-                $this->ledger->recalculate($debt);
-
-                $totalPaid = Money::add($totalPaid, $amount);
-            }
-
-            return [
-                'payment_group_id' => $paymentGroupId,
-                'debts_count' => $debts->count(),
-                'total_paid' => $totalPaid,
-            ];
-        });
+        // D-12: a real repayment of what is owed, recorded as payments. Without an amount the
+        // whole balance is settled; with one it goes to the oldest due debts first (US-0705).
+        $result = $this->payments->payCustomer(
+            $request->user(),
+            $customer,
+            isset($validated['amount']) ? Money::of($validated['amount']) : null,
+            $validated['method'],
+            $validated['paid_at'] ?? null,
+            $validated['notes'] ?? null,
+        );
 
         return response()->json([
-            'message' => 'تم تسديد جميع ديون العميل بنجاح.',
+            'message' => isset($validated['amount'])
+                ? 'تم تسجيل الدفعة بنجاح.'
+                : 'تم تسديد جميع ديون العميل بنجاح.',
             'data' => $result,
         ], 201);
     }

@@ -210,11 +210,11 @@ class _SellButton extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: current ? HisbahColors.ground : HisbahColors.primary,
                 border: current ? Border.all(color: HisbahColors.primary, width: 2) : null,
-                boxShadow: [
-                  // Ring of the bar colour that "cuts" the button out of the bar.
-                  const BoxShadow(color: HisbahColors.surface, spreadRadius: 5),
-                  if (!current)
-                    const BoxShadow(color: Color(0x40176D73), blurRadius: 14, offset: Offset(0, 6), spreadRadius: 5),
+                // Ring of the bar colour that "cuts" the button out of the bar, edged with the
+                // bar's own hairline so the raised part reads without a drop shadow.
+                boxShadow: const [
+                  BoxShadow(color: HisbahColors.border, spreadRadius: 6),
+                  BoxShadow(color: HisbahColors.surface, spreadRadius: 5),
                 ],
               ),
               child: Icon(Icons.add, size: 28, color: current ? HisbahColors.primary : HisbahColors.onPrimary),
