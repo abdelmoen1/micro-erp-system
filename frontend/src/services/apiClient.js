@@ -14,7 +14,7 @@ const USER_KEY = "user";
 
 /** An error response in the v1 envelope: { message, code, errors, details?, correlation_id }. */
 export class ApiError extends Error {
-  constructor({ status, code, message, errors, details, correlationId }) {
+  constructor({ status, code, message, errors, details, correlationId, retryAfter }) {
     super(message || "حدث خطأ غير متوقع، يرجى المحاولة لاحقاً.");
     this.name = "ApiError";
     this.status = status;
@@ -22,6 +22,8 @@ export class ApiError extends Error {
     this.errors = errors || {};
     this.details = details || null;
     this.correlationId = correlationId || null;
+    /** Seconds from the Retry-After header of a 429 (throttled login / register). */
+    this.retryAfter = retryAfter ?? null;
   }
 
   /** First message for a field, e.g. fieldError("email"). */
@@ -68,8 +70,9 @@ export const session = {
 };
 
 let unauthorizedHandler = () => {
+  // W-01 «انتهت الجلسة»: the login screen explains why the user is back there.
   if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-    window.location.assign("/login");
+    window.location.assign("/login?expired=1");
   }
 };
 
@@ -86,18 +89,20 @@ export function onUnauthorized(handler) {
  */
 export async function apiRequest(method, path, { body, idempotencyKey, signal, headers } = {}) {
   const token = session.token();
+  // A FormData body (file upload, US-0408) goes as multipart; the browser sets its boundary.
+  const multipart = typeof FormData !== "undefined" && body instanceof FormData;
   const init = {
     method,
     signal,
     headers: {
       Accept: "application/json",
       "Accept-Language": "ar",
-      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+      ...(body !== undefined && !multipart ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
       ...headers,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : multipart ? body : JSON.stringify(body),
   };
 
   let response;
@@ -118,6 +123,7 @@ export async function apiRequest(method, path, { body, idempotencyKey, signal, h
       errors: payload?.errors,
       details: payload?.details,
       correlationId: payload?.correlation_id ?? response.headers.get("X-Correlation-ID"),
+      retryAfter: retryAfterSeconds(response, payload),
     });
 
     // A protected call that comes back 401 means the session is over (token expired or revoked).
@@ -179,6 +185,13 @@ export async function apiIdempotent(method, path, body, { idempotencyKey, retrie
 }
 
 // ---------------------------------------------------------------- helpers
+
+function retryAfterSeconds(response, payload) {
+  const header = Number.parseInt(response.headers.get("Retry-After") ?? "", 10);
+  if (Number.isFinite(header)) return header;
+  const body = Number.parseInt(payload?.errors?.retry_after?.[0] ?? "", 10);
+  return Number.isFinite(body) ? body : null;
+}
 
 async function parseJson(response) {
   const text = await response.text();
