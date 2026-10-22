@@ -155,7 +155,7 @@ void main() {
     await pumpApp(tester);
     await submitLogin(tester, 'employee@demo.test', 'pw');
 
-    expect(find.text('سلة البيع — شاشة هبوط الموظف'), findsOneWidget);
+    expect(find.text('امسح منتجاً للبدء'), findsOneWidget); // M-02 empty cart
     expect(disk.values[AuthRepository.tokenKey], '1|test-token');
 
     await tester.tap(find.byKey(const Key('nav.more')));
@@ -211,7 +211,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('home.shortcut.pos')));
     await tester.pumpAndSettle();
-    expect(find.text('سلة البيع — شاشة هبوط الموظف'), findsOneWidget);
+    expect(find.text('امسح منتجاً للبدء'), findsOneWidget); // M-02 empty cart
   });
 
   testWidgets('Home shows a retry when the dashboard fails to load', (tester) async {
@@ -275,7 +275,7 @@ void main() {
       await tester.tap(find.byKey(const Key('nav.pos')));
       await tester.pumpAndSettle();
       expect(tester.getRect(find.byKey(const Key('nav.pos.circle'))).width, 54); // outline when current
-      expect(find.text('سلة البيع — شاشة هبوط الموظف'), findsOneWidget);
+      expect(find.text('امسح منتجاً للبدء'), findsOneWidget); // M-02 empty cart
     });
 
     testWidgets('the raised part of بيع above the bar is tappable', (tester) async {
@@ -286,7 +286,7 @@ void main() {
       final circle = tester.getRect(find.byKey(const Key('nav.pos.circle')));
       await tester.tapAt(circle.topCenter + const Offset(0, 6));
       await tester.pumpAndSettle();
-      expect(find.text('سلة البيع — شاشة هبوط الموظف'), findsOneWidget);
+      expect(find.text('امسح منتجاً للبدء'), findsOneWidget); // M-02 empty cart
     });
 
     for (final role in ['owner', 'employee']) {

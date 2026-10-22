@@ -20,6 +20,8 @@ class AppUser {
     required this.storeId,
     required this.storeName,
     required this.storeTimezone,
+    this.storePhone,
+    this.storeAddress,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,8 @@ class AppUser {
       storeId: (json['store_id'] as num?)?.toInt(),
       storeName: store['name'] as String? ?? '',
       storeTimezone: store['timezone'] as String? ?? 'Asia/Gaza',
+      storePhone: store['phone'] as String?,
+      storeAddress: store['address'] as String?,
     );
   }
 
@@ -43,12 +47,19 @@ class AppUser {
   final String storeName;
   final String storeTimezone;
 
+  /// Printed at the top of the receipt (M-06) when the owner entered them.
+  final String? storePhone;
+  final String? storeAddress;
+
+  /// D-26 / D-06: only an owner or manager may override a credit limit or void a sale.
+  bool get canOverride => role != UserRole.employee;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
     'email': email,
     'role': role.name,
     'store_id': storeId,
-    'store': {'name': storeName, 'timezone': storeTimezone},
+    'store': {'name': storeName, 'timezone': storeTimezone, 'phone': storePhone, 'address': storeAddress},
   };
 }

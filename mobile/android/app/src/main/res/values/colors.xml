@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand deep teal (HisbahColors.primary) behind the adaptive launcher icon. -->
+    <color name="ic_launcher_background">#10565B</color>
+    <!-- Warm ground (HisbahColors.ground): launch window and Android 12+ splash. -->
+    <color name="launch_background">#F2EEE4</color>
+</resources>

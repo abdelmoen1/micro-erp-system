@@ -1,30 +1,24 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { loginUser, registerStore } from "./api";
+import { googleSignIn, loginUser, registerStore, registerStoreWithGoogle } from "./api";
 import { queryKeys } from "./queryClient";
 
 // Auth mutations. On success the session is stored (api.js) and the cached current user is
 // replaced, so no screen keeps showing a previous account.
 
-export function useLoginMutation() {
+function useSessionMutation(mutationFn) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: loginUser,
+    mutationFn,
     onSuccess: (result) => {
+      if (!result.token) return; // Google onboarding: no account yet.
       queryClient.clear();
       queryClient.setQueryData(queryKeys.me, result.user);
     },
   });
 }
 
-export function useRegisterMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: registerStore,
-    onSuccess: (result) => {
-      queryClient.clear();
-      queryClient.setQueryData(queryKeys.me, result.user);
-    },
-  });
-}
+export const useLoginMutation = () => useSessionMutation(loginUser);
+export const useRegisterMutation = () => useSessionMutation(registerStore);
+export const useGoogleMutation = () => useSessionMutation(googleSignIn);
+export const useGoogleRegisterMutation = () => useSessionMutation(registerStoreWithGoogle);

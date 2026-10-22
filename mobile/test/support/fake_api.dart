@@ -82,6 +82,9 @@ class FakeApi implements HttpClientAdapter {
 
   void offline(String route) => _offline.add(route);
 
+  /// The connection comes back for [route].
+  void restore(String route) => _offline.remove(route);
+
   List<RequestOptions> requestsTo(String route) => requests.where((r) => '${r.method} ${r.path}' == route).toList();
 
   @override

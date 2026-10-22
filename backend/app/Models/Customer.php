@@ -10,6 +10,11 @@ class Customer extends Model
 {
     use BelongsToStore, SoftDeletes;
 
+    // US-0301 AC4: inactive customers are hidden from new sales; history stays payable.
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_INACTIVE = 'inactive';
+
     protected $fillable = [
         'name',
         'phone',
@@ -18,6 +23,11 @@ class Customer extends Model
         'credit_limit',
         'store_id',
     ];
+
+    public function isActive(): bool
+    {
+        return ($this->status ?? self::STATUS_ACTIVE) === self::STATUS_ACTIVE;
+    }
 
     protected function casts(): array
     {
@@ -36,6 +46,13 @@ class Customer extends Model
     {
         return $this->hasMany(Invoice::class);
     }
+
+    /** Debts by their own customer_id (US-0701), the source of the customer's balance. */
+    public function ledgerDebts()
+    {
+        return $this->hasMany(Debt::class, 'customer_id');
+    }
+
     public function debts()
     {
         return $this->hasManyThrough(

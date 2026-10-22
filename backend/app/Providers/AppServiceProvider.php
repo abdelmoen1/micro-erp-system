@@ -27,5 +27,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Account creation endpoints: 5 per minute per IP (US-0104).
         RateLimiter::for('register', fn(Request $request) => Limit::perMinute(5)->by($request->ip()));
+        // Google sign-in: each call costs a round trip to Google.
+        RateLimiter::for('sso', fn(Request $request) => Limit::perMinute(10)->by($request->ip()));
     }
 }

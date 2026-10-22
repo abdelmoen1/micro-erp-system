@@ -50,6 +50,10 @@ Every error response under `/api/v1` has this shape and the `X-Correlation-ID` h
 | 401 | `INVALID_CREDENTIALS` | `POST /login` | "Email or password is incorrect"; keep the email field |
 | 403 | `USER_INACTIVE` | `POST /login` with correct password; **any** authenticated call by a deactivated user (the token is revoked at the same time) | Clear the token; show the "account deactivated" screen |
 | 403 | `STORE_REQUIRED` | Any authenticated call by a user with no store | Show error; contact support |
+| 401 | `GOOGLE_TOKEN_INVALID` | `POST /auth/google`: the Google ID token is invalid, expired, unverified or for another client | Show `message`; offer the Google button again |
+| 503 | `SSO_UNAVAILABLE` | `POST /auth/google`: `GOOGLE_CLIENT_ID` is not set, or Google could not be reached | Show `message`; email sign-in still works |
+
+Google sign-in: `POST /auth/google {credential}` returns `{user, token}` for a known account (linked by email on first use) or `{onboarding: {token, name, email}}` for a new one; `POST /register/google {onboarding_token, store_name, owner_name, …}` then creates the store (token valid 30 min). `/auth/google` allows 10 requests/min per IP.
 
 Login throttling: after 5 failed attempts per email + IP within 60 s, `POST /login` returns 429 `TOO_MANY_REQUESTS` with `Retry-After`. A successful login resets the counter. `POST /register` and `POST /register/invitation` allow 5 requests/min per IP.
 
@@ -73,12 +77,14 @@ A repeated request with the same key and body returns the **original** status an
 | 422 | `PAYMENT_EXCEEDS_REMAINING` | Amount is larger than the remaining debt (`errors.amount`) |
 | 422 | `NOTHING_TO_PAY` | Pay-all on a customer with nothing outstanding |
 | 422 | `PAYMENT_ALREADY_REVERSED` | The payment or payment group is already reversed |
+| 422 | `REVERSE_GROUP_REQUIRED` | `POST /payments/{id}/reverse` on a payment that belongs to a pay-all group (D-11, DEF-10). `details.payment_group_id` names the group; reverse it with `POST /payment-groups/{id}/reverse` |
 
 ### Products and stock
 
 | HTTP | `code` | Meaning |
 |---|---|---|
 | 422 | `INSUFFICIENT_STOCK` | A stock **adjustment** would make the product's stock negative (`errors.quantity` gives the current stock). Nothing is written. A **sale** never returns this code (D-27: see the `NEGATIVE_STOCK` warning below) |
+| 422 | `IMPORT_INVALID` | `POST /products/import` (US-0408): the CSV has errors, or a missing header / no rows / more than 2000 rows. Nothing is imported. `details.errors` lists `{row, column, message}` (first 200) |
 
 ### Sales (US-0501 – US-0503, [`sales.http`](sales.http))
 
@@ -91,6 +97,8 @@ A repeated request with the same key and body returns the **original** status an
 | 409 | `INVOICE_HAS_PAYMENTS` | The sale's debt has live (non-reversed) payments | Reverse the payments first, then void |
 | 409 | `INVOICE_HAS_RETURNS` | Goods were returned against the sale | Voiding is not possible; use returns |
 | 409 | `INVOICE_NOT_VOIDABLE` | The record is an opening debt, not a sale | Manage it from the debts screens |
+| 422 | `INVOICE_VOIDED` | `POST /sales/{id}/returns` on a voided sale (US-0601 AC5). Nothing is written | Refresh the sale |
+| 422 | `INVOICE_NOT_RETURNABLE` | `POST /sales/{id}/returns` on an opening debt, which has no goods | Manage it from the debts screens |
 
 Field rules on `POST /sales` come back as `VALIDATION_FAILED` with these `errors` keys: `items.N.product_id` (unknown, other store's or inactive product), `items.N.quantity` (a fraction for a `piece` product, more than 3 decimals, or ≤ 0), `paid_amount` (above the total, more than 2 decimals), `payment_method` (missing while `paid_amount > 0`), `customer_id` (missing while something stays unpaid, D-07), `due_date` (in the past in the store timezone, or sent for a fully paid sale).
 

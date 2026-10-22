@@ -61,6 +61,23 @@ class Invoice extends Model
         return $this->hasOne(Debt::class);
     }
 
+    /** US-0601: returns against this sale, oldest first. */
+    public function returns()
+    {
+        return $this->hasMany(SaleReturn::class)->orderBy('id');
+    }
+
+    /** The seller (M-06 receipt «البائع»). */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function voider()
+    {
+        return $this->belongsTo(User::class, 'voided_by');
+    }
+
     public function isVoided(): bool
     {
         return $this->status === self::STATUS_VOIDED;

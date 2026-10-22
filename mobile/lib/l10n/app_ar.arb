@@ -2,11 +2,9 @@
   "@@locale": "ar",
   "appTitle": "حسبة",
   "loading": "جارٍ التحميل…",
-
   "splashTagline": "دفتر متجرك، في جيبك",
   "splashSubline": "المبيعات والديون والمخزون في مكان واحد",
   "splashChecking": "جارٍ التحقق من الجلسة",
-
   "loginTitle": "تسجيل الدخول",
   "loginHelper": "أدخل بيانات حسابك في المتجر",
   "emailLabel": "البريد الإلكتروني",
@@ -23,17 +21,28 @@
   "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   "tooManyAttempts": "محاولات كثيرة. يمكنك المحاولة بعد",
   "loginButtonWait": "انتظر {time}",
-  "@loginButtonWait": { "placeholders": { "time": { "type": "String" } } },
+  "@loginButtonWait": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "networkError": "تعذّر الاتصال بالخادم. تحقق من الإنترنت ثم أعد المحاولة.",
   "serverError": "حدث خطأ في الخادم. أعد المحاولة بعد قليل.",
   "serverReference": "رمز المرجع: {reference}",
-  "@serverReference": { "placeholders": { "reference": { "type": "String" } } },
+  "@serverReference": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
   "retry": "إعادة المحاولة",
   "sessionExpired": "انتهت الجلسة. سجّل الدخول للمتابعة.",
   "accountInactive": "هذا الحساب موقوف. تواصل مع مالك المتجر لإعادة تفعيله.",
   "storeRequired": "الحساب غير مرتبط بمتجر. تواصل مع الدعم لربط حسابك بمتجر.",
   "forbidden": "ليس لديك صلاحية لهذا الإجراء.",
-
   "tabHome": "الرئيسية",
   "tabPos": "بيع",
   "tabCustomers": "الزبائن",
@@ -44,14 +53,12 @@
   "online": "متصل",
   "offline": "غير متصل",
   "offlineBanner": "لا يوجد اتصال — البيع يحتاج إلى الإنترنت",
-
   "placeholderHome": "لوحة اليوم — شاشة هبوط المالك والمدير",
   "placeholderCustomers": "قائمة الزبائن",
   "placeholderProducts": "المنتجات والمخزون المنخفض",
   "placeholderPos": "سلة البيع — شاشة هبوط الموظف",
   "placeholderBody": "محتوى هذه الشاشة يُصمَّم في S4 (US-1508). هنا يظهر فقط إطار التطبيق: الرأس، حالة الاتصال، وشريط التنقل.",
   "placeholderPosBody": "المسح والسلة والدفع تُبنى في مرحلة لاحقة (S5). هنا يظهر فقط إطار التطبيق.",
-
   "roleOwner": "مالك",
   "roleManager": "مدير",
   "roleEmployee": "موظف",
@@ -60,18 +67,35 @@
   "logoutConfirmTitle": "تسجيل الخروج؟",
   "logoutConfirmBody": "ستحتاج إلى البريد الإلكتروني وكلمة المرور للدخول مجدداً.",
   "stay": "البقاء",
-
   "homeGreeting": "أهلاً، {name}",
-  "@homeGreeting": { "placeholders": { "name": { "type": "String" } } },
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "homeTodaySales": "مبيعات اليوم",
   "homeInvoicesCount": "{count, plural, =0{لا فواتير بعد} =1{فاتورة واحدة} =2{فاتورتان} few{{count} فواتير} other{{count} فاتورة}}",
-  "@homeInvoicesCount": { "placeholders": { "count": { "type": "int" } } },
+  "@homeInvoicesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "homeCash": "نقدي",
   "homeCredit": "آجل (دين)",
   "homeCollectedToday": "تحصيل اليوم",
   "homeOutstandingDebts": "ديون مستحقة",
   "homeCustomersWithDebt": "{count, plural, =0{لا زبائن مدينون} =1{زبون واحد مدين} =2{زبونان مدينان} few{{count} زبائن مدينون} other{{count} زبون مدين}}",
-  "@homeCustomersWithDebt": { "placeholders": { "count": { "type": "int" } } },
+  "@homeCustomersWithDebt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "homeShortcuts": "اختصارات",
   "homeNewSale": "بيع جديد",
   "homeRecentInvoices": "آخر فواتير اليوم",
@@ -80,7 +104,6 @@
   "homeWalkIn": "زبون نقدي",
   "homeLoadError": "تعذّر تحميل لوحة اليوم.",
   "currencySymbol": "₪",
-
   "scanEntryTitle": "عرض بيانات منتج",
   "scanEntryBody": "الاسم والسعر والمخزون. للعرض فقط، لا يُضاف إلى بيع.",
   "scanBarcode": "مسح باركود",
@@ -119,5 +142,688 @@
   "manualSubmit": "عرض المنتج",
   "manualCancelA11y": "إلغاء الإدخال اليدوي",
   "lookupFailedTitle": "تعذّر عرض المنتج",
-  "lookupSavedForRetry": "محفوظ لإعادة المحاولة."
+  "lookupSavedForRetry": "محفوظ لإعادة المحاولة.",
+  "cancel": "إلغاء",
+  "backWord": "رجوع",
+  "searchByName": "بحث بالاسم",
+  "scanShort": "مسح",
+  "totalWord": "الإجمالي",
+  "payButton": "الدفع",
+  "linesCount": "{count, plural, =0{لا أصناف} =1{صنف واحد} =2{صنفان} few{{count} أصناف} many{{count} صنفاً} other{{count} صنف}}",
+  "@linesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanLookingUp": "جارٍ البحث عن المنتج…",
+  "barcodeWord": "الباركود",
+  "scanAdded": "أُضيف إلى السلة",
+  "scanIncremented": "+1 · {name}",
+  "@scanIncremented": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "scanQuantityNow": "الكمية الآن {quantity}",
+  "@scanQuantityNow": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "scanAddedWeighed": "أُضيف بالوزن",
+  "scanDuplicate": "قراءة مكررة — لم تُضف",
+  "scanDuplicateBody": "الباركود نفسه خلال 1.5 ثانية. امسح مجدداً بعد لحظة لإضافة قطعة.",
+  "scanUnknown": "باركود غير معروف",
+  "scanUnknownBody": "لا يوجد منتج بهذا الرقم في متجرك:",
+  "scanLookupFailed": "تعذّر البحث عن المنتج",
+  "scanLookupFailedBody": "تحقق من الاتصال ثم أعد المحاولة.",
+  "cartEmptyTitle": "امسح منتجاً للبدء",
+  "cartEmptyBody": "أو ابحث عنه بالاسم. المنتجات بالوزن تفتح شاشة إدخال الوزن.",
+  "unitChipPiece": "قطعة",
+  "unitChipWeighed": "بالوزن",
+  "pieceWord": "قطعة",
+  "piecesWord": "قطع",
+  "kgShort": "كغ",
+  "gramShort": "غ",
+  "justNew": "جديد",
+  "justIncremented": "+1 الآن",
+  "justAddedWeighed": "أُضيف الآن",
+  "editWeightOf": "تعديل وزن {name}",
+  "@editWeightOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removeItem": "حذف {name}",
+  "@removeItem": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "decreaseItem": "إنقاص {name}",
+  "@decreaseItem": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "increaseItem": "زيادة {name}",
+  "@increaseItem": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "lineStockNote": "المخزون المسجّل {stock} فقط — البيع مسموح ويُسجَّل للمراجعة",
+  "@lineStockNote": {
+    "placeholders": {
+      "stock": {
+        "type": "String"
+      }
+    }
+  },
+  "stockWord": "المخزون",
+  "weightTitle": "أدخل الوزن",
+  "weightTitleEdit": "تعديل الوزن",
+  "perKg": "لكل كغ",
+  "unitKilogram": "كيلوغرام",
+  "unitGram": "غرام",
+  "priceWord": "السعر",
+  "gramsEquals": "= {kg} كغ",
+  "@gramsEquals": {
+    "placeholders": {
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "weightHintKg": "حتى 3 منازل عشرية (1 غ). مثال: 0.750",
+  "weightHintGram": "بالغرام، أرقام صحيحة فقط",
+  "weightErrorZero": "أدخل وزناً أكبر من صفر",
+  "weightErrorTooBig": "الوزن أكبر من المسموح",
+  "weightCtaEmpty": "أدخل الوزن للإضافة",
+  "weightCtaAdd": "إضافة {kg} كغ ·",
+  "@weightCtaAdd": {
+    "placeholders": {
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "weightCtaUpdate": "تحديث · {kg} كغ ·",
+  "@weightCtaUpdate": {
+    "placeholders": {
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFromCart": "حذف من السلة",
+  "keyBackspace": "حذف آخر رقم",
+  "keyDecimal": "فاصلة عشرية",
+  "productSearchTitle": "بحث عن منتج",
+  "productSearchHint": "ابحث باسم المنتج أو الباركود",
+  "productSearchEmpty": "لا يوجد منتج بهذا الاسم",
+  "productSearchEmptyBody": "تحقق من الكتابة. المنتجات تُضاف من لوحة الإدارة على الويب.",
+  "productSearchError": "تعذّر تحميل المنتجات",
+  "listErrorBody": "تحقق من الاتصال. البيع الحالي محفوظ كما هو.",
+  "checkoutTitle": "الدفع",
+  "checkoutNotCreatedYet": "لم تُنشأ الفاتورة بعد",
+  "backToCart": "العودة إلى السلة",
+  "showItems": "عرض الأصناف",
+  "hideItems": "إخفاء الأصناف",
+  "editCart": "تعديل السلة",
+  "saleModeLabel": "طريقة البيع",
+  "modeCash": "كاش كامل",
+  "modePartial": "جزئي",
+  "modeCredit": "دين",
+  "paidNowLabel": "المبلغ المدفوع الآن",
+  "paidHint": "أكبر من صفر وأقل من الإجمالي {total}",
+  "@paidHint": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "paidErrorInvalid": "أدخل مبلغاً أكبر من صفر، بخانتين عشريتين كحد أقصى.",
+  "paidErrorNotBelowTotal": "المدفوع يساوي الإجمالي أو يزيد عليه. اختر «كاش كامل» بدلاً من «جزئي».",
+  "paymentMethodLabel": "وسيلة الدفع",
+  "methodCash": "نقداً",
+  "methodJawwalPay": "جوال باي",
+  "methodPalPay": "بال باي",
+  "methodBankOfPalestine": "بنك فلسطين",
+  "methodNone": "لا شيء",
+  "customerLabel": "الزبون",
+  "optionalWord": "اختياري",
+  "requiredWord": "مطلوب",
+  "balanceWord": "الرصيد",
+  "limitWord": "السقف",
+  "noLimitLong": "بلا سقف دين",
+  "noLimitShort": "بلا سقف",
+  "changeWord": "تغيير",
+  "pickCustomer": "اختيار الزبون",
+  "addCustomerToInvoice": "إضافة زبون إلى الفاتورة",
+  "customerRequiredPartial": "اختر الزبون — البيع الجزئي يُسجَّل ديناً باسمه",
+  "customerRequiredCredit": "اختر الزبون — البيع بالدين يُسجَّل باسمه",
+  "dueLabel": "موعد السداد",
+  "optionalParen": "(اختياري)",
+  "dueNone": "بدون موعد",
+  "dueWeek": "بعد 7 أيام",
+  "dueMonth": "بعد 30 يوماً",
+  "dueOn": "الاستحقاق:",
+  "negativeStockTitle": "تنبيه مخزون — يمكنك المتابعة",
+  "negativeStockRow": "المسجّل {stock} · المطلوب {quantity}",
+  "@negativeStockRow": {
+    "placeholders": {
+      "stock": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "negativeStockBody": "الكمية أكبر من المخزون المسجّل في النظام. سيتم البيع، وسيصبح المخزون سالباً ويظهر للمالك في قائمة مراجعة المخزون.",
+  "limitBlockedTitle": "تجاوز سقف الدين — لا يمكنك إتمام البيع",
+  "limitBalanceNowOf": "رصيد {name} الآن",
+  "@limitBalanceNowOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "limitThisSaleDebt": "دين هذا البيع",
+  "limitCeiling": "سقف الدين",
+  "limitOverBy": "الزيادة على السقف",
+  "limitServerBody": "رفض الخادم البيع: رصيد {name} تغيّر منذ تحميل القائمة، والدين الجديد يتجاوز سقفه الآن. لم تُنشأ فاتورة.",
+  "@limitServerBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "limitBlockedHelp": "زِد المبلغ المدفوع حتى لا يتجاوز الدين السقف، أو اطلب من المالك أو المدير إتمام البيع من حسابه.",
+  "limitWarnTitle": "سيتجاوز رصيد {name} سقف الدين",
+  "@limitWarnTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "limitWarnBody": "الرصيد بعد البيع {after} والسقف {limit} (زيادة {over}).",
+  "@limitWarnBody": {
+    "placeholders": {
+      "after": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      },
+      "over": {
+        "type": "String"
+      }
+    }
+  },
+  "limitWarnHelp": "لديك صلاحية التجاوز. ستُطلب منك موافقة صريحة، ويُسجَّل التجاوز باسمك.",
+  "submitOfflineTitle": "لا يوجد اتصال — لم يُرسَل البيع",
+  "submitOfflineBody": "لم يصل الطلب إلى الخادم. تحقق من الإنترنت ثم أعد المحاولة. البيع لن يُسجَّل مرتين.",
+  "submitUncertainTitle": "انقطع الاتصال أثناء الحفظ — النتيجة غير مؤكدة",
+  "submitUncertainBody": "قد يكون البيع سُجّل أو لا. أعد المحاولة للتحقق: يُرسَل الطلب نفسه بالمفتاح نفسه، فلا يتكرر البيع. التعديل مقفل حتى يتأكد.",
+  "submitServerTitle": "حدث خطأ في الخادم — لم يُسجَّل البيع",
+  "submitServerBody": "أعد المحاولة بعد قليل. إن تكرر الخطأ، أعطِ رمز المرجع للدعم.",
+  "submitRejectedTitle": "لم يُسجَّل البيع",
+  "paidWord": "المدفوع",
+  "remainingWord": "المتبقي",
+  "statusPaidFull": "مدفوع بالكامل",
+  "statusPartialDebt": "جزئي — يبقى ديناً",
+  "statusFullDebt": "دين كامل",
+  "barLimitBlocked": "لا يمكن المتابعة: الدين يتجاوز سقف الزبون",
+  "barPaidFull": "مدفوع بالكامل — لا دين",
+  "barDebtOn": "سيُسجَّل دين {amount} على {name}",
+  "@barDebtOn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "barDebtNoCustomer": "سيبقى {amount} ديناً — اختر الزبون",
+  "@barDebtNoCustomer": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmSale": "تأكيد البيع ·",
+  "savingSale": "جارٍ حفظ البيع…",
+  "savingShort": "جارٍ الحفظ…",
+  "verifyAndRetry": "التحقق وإعادة المحاولة",
+  "continueOverLimit": "متابعة رغم تجاوز السقف…",
+  "retrySale": "إعادة المحاولة ·",
+  "overrideTitle": "تأكيد تجاوز سقف الدين",
+  "overrideBalanceNow": "الرصيد الحالي",
+  "overrideBalanceAfter": "الرصيد بعد البيع",
+  "overrideNote": "بالموافقة يُنشأ البيع ويُسجَّل التجاوز في سجل التدقيق باسم {name} ({role}). إغلاق هذه النافذة لا يُتم البيع.",
+  "@overrideNote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "overrideForbidden": "رفض الخادم التجاوز: حسابك لا يملك هذه الصلاحية الآن. لم يُسجَّل البيع.",
+  "overrideBack": "رجوع دون إتمام",
+  "overrideConfirm": "أوافق على التجاوز وأؤكد البيع",
+  "pickerTitle": "اختيار الزبون",
+  "pickerCancel": "إلغاء الاختيار",
+  "pickerSearchHint": "ابحث بالاسم أو رقم الهاتف",
+  "pickerNeedsCustomer": "البيع الجزئي أو بالدين يحتاج زبوناً لتسجيل الدين باسمه.",
+  "pickerLoading": "جارٍ تحميل الزبائن",
+  "pickerEmpty": "لا يوجد زبون بهذا الاسم أو الرقم",
+  "pickerEmptyBody": "تحقق من الكتابة، أو أضفه زبوناً جديداً.",
+  "pickerAddNamed": "إضافة «{name}» زبوناً جديداً",
+  "@pickerAddNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pickerNewCustomer": "زبون جديد",
+  "pickerError": "تعذّر تحميل الزبائن",
+  "pickerErrorBody": "تحقق من الاتصال. البيع الحالي محفوظ كما هو.",
+  "pickerSkip": "متابعة بدون زبون",
+  "owesWord": "عليه",
+  "noDebtWord": "لا دين",
+  "newCustomerTitle": "زبون جديد",
+  "newCustomerName": "اسم الزبون",
+  "newCustomerPhone": "رقم الهاتف",
+  "newCustomerPhoneHint": "10 أرقام. سقف الدين يحدده المالك أو المدير لاحقاً.",
+  "newCustomerNameRequired": "اكتب اسم الزبون",
+  "newCustomerPhoneInvalid": "رقم الهاتف 10 أرقام ويبدأ بـ 0",
+  "newCustomerSave": "حفظ واختيار الزبون",
+  "newCustomerBack": "رجوع إلى البحث",
+  "receiptDoneTitle": "تم البيع",
+  "receiptPaidWord": "دُفع",
+  "receiptPaidTail": "بالكامل",
+  "receiptDebtWord": "سُجّل دين",
+  "receiptDebtTail": "على {name}",
+  "@receiptDebtTail": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptVoidedTitle": "أُلغيت الفاتورة",
+  "receiptInvoiceWord": "الفاتورة",
+  "receiptVoidedTail": "محفوظة في السجل بحالة «ملغاة»",
+  "receiptNumber": "رقم الفاتورة",
+  "receiptDate": "التاريخ",
+  "receiptSeller": "البائع",
+  "remainingAsDebt": "المتبقي ديناً",
+  "voidedStamp": "ملغاة",
+  "receiptNegativeNote": "سُجّل «{names}» بمخزون سالب، وأُضيف إلى قائمة مراجعة المخزون لدى المالك.",
+  "@receiptNegativeNote": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptOverrideNote": "تم تجاوز سقف دين {customer} بموافقة {user}. التجاوز مسجّل في سجل التدقيق.",
+  "@receiptOverrideNote": {
+    "placeholders": {
+      "customer": {
+        "type": "String"
+      },
+      "user": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptReplayNote": "تحققنا من الخادم: البيع مسجّل مرة واحدة فقط رغم انقطاع الاتصال.",
+  "receiptVoidedBy": "أُلغيت بواسطة {name} · {time}",
+  "@receiptVoidedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptVoidReason": "السبب: {reason}",
+  "@receiptVoidReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptVoidEffect": "أُعيد المخزون وأُلغي الدين المرتبط. الفاتورة باقية في السجل بحالة «ملغاة».",
+  "newSale": "بيع جديد",
+  "voidInvoiceEllipsis": "إلغاء الفاتورة…",
+  "voidTitle": "إلغاء الفاتورة #{id}",
+  "@voidTitle": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "voidEffectsTitle": "عند الإلغاء:",
+  "voidEffectStock": "تُعاد كميات الأصناف إلى المخزون.",
+  "voidEffectDebt": "يُلغى الدين المرتبط {amount} على {name}.",
+  "@voidEffectDebt": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "voidEffectKept": "تبقى الفاتورة في السجل بحالة «ملغاة» ولا تُحذف.",
+  "voidEffectFinal": "لا يمكن التراجع عن الإلغاء.",
+  "voidReasonLabel": "سبب الإلغاء (مطلوب)",
+  "voidReasonRequired": "اكتب سبب الإلغاء — يُحفظ في سجل التدقيق",
+  "voidBlocked": "لا يمكن إلغاء هذه الفاتورة: عليها دفعات لاحقة أو مرتجعات. استخدم «مرتجع» من إدارة المبيعات على الويب.",
+  "voidForbidden": "ليست لديك صلاحية إلغاء الفواتير. الإلغاء للمالك أو المدير.",
+  "voidNetwork": "تعذّر الاتصال — لم تُلغَ الفاتورة. أعد المحاولة.",
+  "voiding": "جارٍ الإلغاء…",
+  "voidConfirm": "إلغاء الفاتورة نهائياً",
+  "custSearchHint": "بحث بالاسم أو الهاتف",
+  "custAdd": "+ زبون",
+  "custSearchMin": "اكتب حرفين أو أكثر للبحث.",
+  "custEmptyTitle": "لا زبائن بعد",
+  "custEmptyBody": "أضف زبائن الدين. البيع النقدي لا يحتاج زبوناً.",
+  "custNoResults": "لا زبون باسم «{query}»",
+  "@custNoResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "custNoResultsBody": "أضفه الآن بالاسم والهاتف.",
+  "custAddNamed": "إضافة «{name}»",
+  "@custAddNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "custLoadError": "تعذّر تحميل الزبائن. تحقق من الاتصال ثم أعد المحاولة.",
+  "custOverdue": "متأخر",
+  "custInactive": "موقوف",
+  "custRemaining": "المتبقي عليه",
+  "custOverdueAmount": "متأخر {amount}",
+  "@custOverdueAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "custLimit": "حد الدين {amount}",
+  "@custLimit": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "custNoLimit": "بلا حد للدين",
+  "custRecordPayment": "تسجيل دفعة",
+  "custCall": "اتصال بـ {phone}",
+  "@custCall": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "custOpenDebts": "ديون مفتوحة",
+  "custNoOpenDebts": "لا ديون مفتوحة على هذا الزبون.",
+  "custRecentPayments": "آخر الدفعات",
+  "custNoPayments": "لا دفعات بعد.",
+  "custDebtSale": "فاتورة #{id}",
+  "@custDebtSale": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "custDebtOpening": "دين افتتاحي",
+  "custDue": "استحقاق {date}",
+  "@custDue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "custNoDue": "بلا تاريخ استحقاق",
+  "custStatusOpen": "مفتوح",
+  "custReversed": "معكوسة",
+  "custDetailError": "تعذّر تحميل ملف الزبون.",
+  "custInactiveNote": "هذا الزبون موقوف: لا يظهر في البيع الجديد، ودفعاته مقبولة.",
+  "payTitle": "دفعة من {name}",
+  "@payTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "payAmount": "المبلغ",
+  "payFull": "كامل المتبقي",
+  "payOther": "مبلغ آخر",
+  "payRemainingNote": "المتبقي {amount} · حتى خانتين عشريتين",
+  "@payRemainingNote": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payMethod": "طريقة الدفع",
+  "payNow": "المتبقي الآن",
+  "payThis": "الدفعة",
+  "payAfter": "بعد الدفعة",
+  "payOldestFirst": "تُوزَّع على الديون من الأقدم استحقاقاً.",
+  "payConfirm": "تأكيد استلام {amount}",
+  "@payConfirm": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paySaving": "جارٍ تسجيل الدفعة…",
+  "payRetry": "إعادة المحاولة",
+  "payUncertain": "لم يصل رد الخادم، فلا نعرف إن سُجّلت الدفعة. اضغط «إعادة المحاولة»: تُرسل بنفس المفتاح فلن تُسجَّل مرتين.",
+  "payInvalid": "أدخل مبلغاً صحيحاً بخانتين عشريتين على الأكثر.",
+  "payTooMuch": "المبلغ أكبر من المتبقي ({amount}).",
+  "@payTooMuch": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payNothing": "لا يوجد على هذا الزبون مبلغ متبقٍّ.",
+  "payDone": "استُلمت {amount}",
+  "@payDone": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payDoneRemaining": "المتبقي على {name} الآن {amount}",
+  "@payDoneRemaining": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payDoneButton": "تم",
+  "prodSearchHint": "بحث بالاسم أو الباركود",
+  "prodAdd": "+ منتج",
+  "prodFilterAll": "الكل",
+  "prodFilterLow": "منخفض",
+  "prodFilterNegative": "سالب",
+  "prodEmptyTitle": "لا منتجات بعد",
+  "prodEmptyBody": "امسح رمز المنتج أو الباركود لإضافته بسرعة، أو استورد قائمتك من الويب.",
+  "prodNoResults": "لا منتجات تطابق هذا البحث.",
+  "prodLoadError": "تعذّر تحميل المنتجات.",
+  "prodStockOk": "متوفر",
+  "prodStockLow": "منخفض",
+  "prodStockOut": "نفد",
+  "prodStockNegative": "سالب",
+  "prodPerPiece": "قطعة",
+  "prodPerKg": "كغ",
+  "addTitle": "إضافة منتج",
+  "addScan": "مسح رمز QR أو الباركود",
+  "addScanSub": "نقرأ ما في الرمز ونعبّئ الحقول",
+  "addManual": "إدخال يدوي",
+  "addManualSub": "للمنتجات بلا رمز، مثل الموزون",
+  "addChecking": "جارٍ التحقق من الرمز…",
+  "addExistsTitle": "المنتج موجود",
+  "addExistsBody": "الباركود {code} مسجّل في متجرك. لن نضيفه مرة ثانية.",
+  "@addExistsBody": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "addScanAnother": "مسح رمز آخر",
+  "addFromCode": "من الرمز",
+  "addBarcodeOnly": "الرمز يحتوي الباركود فقط. أكمل الاسم والسعر.",
+  "addReadFields": "قرأنا من الرمز: {fields}. راجعها قبل الحفظ.",
+  "@addReadFields": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "addFieldName": "الاسم",
+  "addFieldBarcode": "الباركود",
+  "addFieldPrice": "السعر",
+  "addFieldUnit": "الوحدة",
+  "addUnreadable": "هذا الرمز لا يحتوي بيانات منتج. أدخل المنتج يدوياً؛ لن نستخدم محتواه.",
+  "addManualNote": "إدخال يدوي. الاسم وسعر البيع مطلوبان.",
+  "addLookupFailed": "تعذّر التحقق من وجود المنتج الآن؛ سنتحقق عند الحفظ.",
+  "formNewTitle": "منتج جديد",
+  "formName": "اسم المنتج",
+  "formNameHint": "مثال: تمر مجهول 1 كغ",
+  "formBarcode": "الباركود",
+  "formOptional": "اختياري",
+  "formSoldBy": "يُباع",
+  "formByPiece": "بالقطعة",
+  "formByKg": "بالوزن (كغ)",
+  "formPrice": "سعر البيع",
+  "formCost": "سعر الشراء",
+  "formStock": "المخزون الآن",
+  "formMin": "تنبيه عند",
+  "formNameRequired": "اكتب اسم المنتج.",
+  "formPriceInvalid": "أدخل سعراً صحيحاً.",
+  "formStockPiece": "عدد صحيح للمنتج بالقطعة.",
+  "formStockKg": "حتى 3 خانات عشرية.",
+  "formSave": "حفظ المنتج",
+  "formSaving": "جارٍ الحفظ…",
+  "formNetwork": "تعذّر الحفظ: لا اتصال بالخادم. بياناتك باقية في النموذج؛ أعد المحاولة.",
+  "formForbidden": "إضافة المنتجات للمالك أو المدير. اطلب من المالك إضافته.",
+  "formFailed": "تعذّر الحفظ. حاول مرة أخرى.",
+  "savedTitle": "أُضيف «{name}»",
+  "@savedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "savedScanNext": "مسح منتج آخر",
+  "savedBack": "العودة إلى المنتجات",
+  "homeAttention": "يحتاج انتباهك",
+  "homeOverdueAlert": "ديون متأخرة: {count}",
+  "@homeOverdueAlert": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeDueTodayAlert": "مستحق اليوم: {count}",
+  "@homeDueTodayAlert": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeLowStockAlert": "منتجات تحت الحد: {count}",
+  "@homeLowStockAlert": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeNegativeAlert": "مخزون سالب للمراجعة: {count}",
+  "@homeNegativeAlert": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeAllClear": "لا شيء يحتاج انتباهك الآن.",
+  "homeCollections": "التحصيلات",
+  "homeCollectionsSplit": "عند البيع {atSale} · ديون {repayments}",
+  "@homeCollectionsSplit": {
+    "placeholders": {
+      "atSale": {
+        "type": "String"
+      },
+      "repayments": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -40,10 +40,25 @@ export const queryKeys = {
   products: {
     all: ["products"],
     list: (filters) => ["products", "list", filters],
+    detail: (id) => ["products", "detail", id],
+    movements: (id) => ["products", "movements", id],
+    negative: ["products", "negative"],
   },
   customers: {
     all: ["customers"],
+    list: (filters) => ["customers", "list", filters],
     detail: (id) => ["customers", "detail", id],
+    summary: (id) => ["customers", "summary", id],
+    statement: (id, range) => ["customers", "statement", id, range],
   },
-  debts: { all: ["debts"] },
+  debts: {
+    all: ["debts"],
+    list: (filters) => ["debts", "list", filters],
+    balances: ["debts", "balances"],
+  },
+  payments: {
+    all: ["payments"],
+    list: (filters) => ["payments", "list", filters],
+  },
+  staff: { all: ["staff"] },
 };

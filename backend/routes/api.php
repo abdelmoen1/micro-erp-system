@@ -19,8 +19,10 @@ use App\Http\Controllers\Api\StockAdjustmentController;
 
 // Authentication (login throttling lives in AuthService: 5 failures/min per email+IP)
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/auth/google', [AuthController::class, 'google'])->middleware('throttle:sso');
 Route::middleware('throttle:register')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register/google', [AuthController::class, 'registerWithGoogle']);
     Route::post('/register/invitation', [AuthController::class, 'acceptInvitation']);
 });
 
@@ -54,6 +56,8 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     // Products (US-0401). No DELETE: products are deactivated (BR-04). `lookup` and `low-stock` precede {product}.
     Route::get('products/lookup', [ProductController::class, 'lookup']);
     Route::get('products/low-stock', [ProductController::class, 'lowStock']);
+    Route::get('products/negative-stock', [ProductController::class, 'negativeStock']);
+    Route::post('products/import', [ProductController::class, 'import']);
     Route::get('products', [ProductController::class, 'index']);
     Route::post('products', [ProductController::class, 'store']);
     Route::get('products/{product}', [ProductController::class, 'show']);
@@ -66,6 +70,10 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
 
     // Customers
     Route::apiResource('customers', CustomerController::class);
+    Route::get('customers/{customer}/summary', [CustomerController::class, 'summary']);
+    Route::get('customers/{customer}/statement', [CustomerController::class, 'statement']);
+    Route::post('customers/{customer}/deactivate', [CustomerController::class, 'deactivate']);
+    Route::post('customers/{customer}/reactivate', [CustomerController::class, 'reactivate']);
 
     Route::get(
         '/customers/{customer}/debts',
@@ -86,11 +94,14 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
         Route::get("{$sales}/{invoice}", [InvoiceController::class, 'show']);
         Route::match(['put', 'patch'], "{$sales}/{invoice}", [InvoiceController::class, 'update']);
         Route::post("{$sales}/{invoice}/void", [InvoiceController::class, 'void'])->middleware('idempotent');
+        // US-0601: return lines of a sale (D-05 debt first, then cash refund).
+        Route::post("{$sales}/{invoice}/returns", [InvoiceController::class, 'storeReturn'])->middleware('idempotent');
     }
     Route::post('sales', [InvoiceController::class, 'store'])->middleware('idempotent');
 
     // Debts
     Route::get('debts', [DebtController::class, 'index']);
+    Route::get('debts/balances', [DebtController::class, 'balances']);
     Route::post('debts', [DebtController::class, 'store'])->middleware('idempotent');
     Route::get('debts/{debt}', [DebtController::class, 'show']);
     Route::get('debts/{debt}/details', [DebtController::class, 'details']);

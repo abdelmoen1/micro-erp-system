@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Models\Debt;
 use App\Models\IdempotencyKey;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\SaleReturn;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
@@ -37,6 +39,8 @@ class IdempotencyTest extends TestCase
         'POST api/v1/sales',
         'POST api/v1/sales/{invoice}/void',
         'POST api/v1/invoices/{invoice}/void',
+        'POST api/v1/sales/{invoice}/returns',
+        'POST api/v1/invoices/{invoice}/returns',
         'POST api/v1/stock-adjustments',
     ];
 
@@ -234,6 +238,8 @@ class IdempotencyTest extends TestCase
             'sale' => ['sale'],
             'void sale' => ['void'],
             'void sale via the invoices alias' => ['void-alias'],
+            'sale return' => ['return'],
+            'sale return via the invoices alias' => ['return-alias'],
             'stock adjustment' => ['stock-adjustment'],
         ];
     }
@@ -256,6 +262,8 @@ class IdempotencyTest extends TestCase
             'remaining' => Debt::orderBy('id')->pluck('remaining_amount')->map(fn($v) => (string) $v)->all(),
             'movements' => StockMovement::count(),
             'stock' => Product::orderBy('id')->pluck('current_stock')->all(),
+            'returns' => SaleReturn::count(),
+            'returned' => InvoiceItem::orderBy('id')->pluck('returned_quantity')->map(fn($v) => (string) $v)->all(),
         ]);
 
         return match ($name) {
@@ -290,6 +298,19 @@ class IdempotencyTest extends TestCase
                 $path = $name === 'void' ? 'sales' : 'invoices';
 
                 return ['POST', "/api/v1/{$path}/{$sale->id}/void", ['reason' => 'Rang up twice'], $state];
+            })(),
+            'return', 'return-alias' => (function () use ($name, $customer, $state) {
+                $sale = app(SaleService::class)->create($this->owner, [
+                    'customer_id' => $customer->id,
+                    'paid_amount' => '0',
+                    'items' => [['product_id' => $this->makeProduct($this->store)->id, 'quantity' => 3]],
+                ])['invoice'];
+                $path = $name === 'return' ? 'sales' : 'invoices';
+
+                return ['POST', "/api/v1/{$path}/{$sale->id}/returns", [
+                    'items' => [['invoice_item_id' => $sale->items->first()->id, 'quantity' => 1]],
+                    'reason' => 'Damaged box',
+                ], $state];
             })(),
             'stock-adjustment' => ['POST', '/api/v1/stock-adjustments', [
                 'product_id' => $this->makeProduct($this->store)->id,

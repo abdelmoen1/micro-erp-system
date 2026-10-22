@@ -5,6 +5,7 @@ import 'package:intl/intl.dart' show DateFormat;
 
 import '../../core/providers.dart';
 import '../../core/theme/hisbah_tokens.dart';
+import '../../core/widgets/ltr_value.dart';
 import '../../core/widgets/state_views.dart';
 import '../../l10n/app_localizations.dart';
 import '../auth/application/session_controller.dart';
@@ -42,7 +43,12 @@ class HomeDashboard extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           _StatRow(
-            first: _StatTile(icon: Icons.savings_outlined, label: t.homeCollectedToday, amount: today.collectedToday),
+            first: _StatTile(
+              icon: Icons.savings_outlined,
+              label: t.homeCollectedToday,
+              amount: today.collectedToday,
+              note: t.homeCollectionsSplit(formatShekel(today.collectedAtSale), formatShekel(today.debtRepayments)),
+            ),
             second: _StatTile(
               key: const Key('home.outstanding'),
               icon: Icons.account_balance_wallet_outlined,
@@ -52,6 +58,10 @@ class HomeDashboard extends ConsumerWidget {
               tone: StatusTone.error,
             ),
           ),
+          const SizedBox(height: 22),
+          _SectionTitle(t.homeAttention),
+          const SizedBox(height: 10),
+          _Attention(today: today),
           const SizedBox(height: 22),
           _SectionTitle(t.homeShortcuts),
           const SizedBox(height: 10),
@@ -102,7 +112,10 @@ class _TodayCard extends ConsumerWidget {
             child: Container(
               width: 150,
               height: 150,
-              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0x1FFFFFFF), width: 22)),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0x1FFFFFFF), width: 22),
+              ),
             ),
           ),
           PositionedDirectional(
@@ -167,6 +180,78 @@ class _TodayCard extends ConsumerWidget {
   }
 }
 
+/// M-10 «يحتاج انتباهك»: overdue and due-today debts, low and negative stock (US-0801 AC3).
+class _Attention extends StatelessWidget {
+  const _Attention({required this.today});
+
+  final TodayDashboard today;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    if (!today.needsAttention) {
+      return Text(
+        t.homeAllClear,
+        key: const Key('home.allClear'),
+        style: const TextStyle(color: HisbahColors.inkMuted),
+      );
+    }
+    final rows = [
+      if (today.overdueCount > 0)
+        (
+          Icons.schedule_rounded,
+          t.homeOverdueAlert(today.overdueCount),
+          formatShekel(today.overdueAmount),
+          StatusTone.error,
+        ),
+      if (today.dueTodayCount > 0)
+        (Icons.event_outlined, t.homeDueTodayAlert(today.dueTodayCount), null, StatusTone.info),
+      if (today.lowStockCount > 0)
+        (Icons.inventory_2_outlined, t.homeLowStockAlert(today.lowStockCount), null, StatusTone.warning),
+      if (today.negativeStockCount > 0)
+        (Icons.warning_amber_rounded, t.homeNegativeAlert(today.negativeStockCount), null, StatusTone.error),
+    ];
+    return DecoratedBox(
+      key: const Key('home.attention'),
+      decoration: BoxDecoration(
+        color: HisbahColors.surface,
+        borderRadius: BorderRadius.circular(HisbahRadius.card),
+        border: Border.all(color: HisbahColors.border),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: i == 0 ? null : const Border(top: BorderSide(color: HisbahColors.border)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(color: rows[i].$4.bg, borderRadius: BorderRadius.circular(10)),
+                    child: Icon(rows[i].$1, size: 20, color: rows[i].$4.fg),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(rows[i].$2, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  ),
+                  if (rows[i].$3 != null)
+                    LtrValue(
+                      rows[i].$3!,
+                      style: TextStyle(fontWeight: FontWeight.w700, color: rows[i].$4.fg),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatRow extends StatelessWidget {
   const _StatRow({required this.first, required this.second});
 
@@ -219,16 +304,25 @@ class _StatTile extends StatelessWidget {
             child: Icon(icon, size: 20, color: fg),
           ),
           const SizedBox(height: 10),
-          Text(label, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 2),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
-            child: _Amount(amount, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: HisbahColors.ink)),
+            child: _Amount(
+              amount,
+              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: HisbahColors.ink),
+            ),
           ),
           if (note != null) ...[
             const SizedBox(height: 2),
-            Text(note!, style: TextStyle(fontSize: 12, color: fg, fontWeight: FontWeight.w600)),
+            Text(
+              note!,
+              style: TextStyle(fontSize: 12, color: fg, fontWeight: FontWeight.w600),
+            ),
           ],
         ],
       ),
@@ -260,7 +354,10 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     header: true,
-    child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HisbahColors.ink)),
+    child: Text(
+      text,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HisbahColors.ink),
+    ),
   );
 }
 

@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Store;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use DateTimeInterface;
 
 /**
@@ -38,7 +39,8 @@ final class BusinessClock
 
         return match ($period) {
             'today' => [$now->startOfDay(), $now->endOfDay()],
-            'this_week' => [$now->startOfWeek(), $now->endOfWeek()],
+            // Explicit Monday–Sunday: the app locale (ar since DEF-19) must not move the week.
+            'this_week' => [$now->startOfWeek(CarbonInterface::MONDAY), $now->endOfWeek(CarbonInterface::SUNDAY)],
             'this_year' => [$now->startOfYear(), $now->endOfYear()],
             default => [$now->startOfMonth(), $now->endOfMonth()],
         };

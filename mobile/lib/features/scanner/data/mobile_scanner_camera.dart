@@ -10,17 +10,20 @@ import '../domain/barcode_camera.dart';
 
 /// [BarcodeCamera] on mobile_scanner (CameraX + bundled ML Kit on Android).
 class MobileScannerCamera implements BarcodeCamera {
-  MobileScannerCamera()
+  /// [productCodes] adds QR and Data Matrix (S3 · add a product by its code); the till keeps to
+  /// retail 1D codes so a QR on a poster never interrupts a sale.
+  MobileScannerCamera({bool productCodes = false})
     : _controller = MobileScannerController(
         facing: CameraFacing.back,
         // TODO(U-8 / US-1305): formats, multi-frame confirmation and cooldown come from the spike.
         // Retail 1D codes first; Code 128 for shop-printed labels.
-        formats: const [
+        formats: [
           BarcodeFormat.ean13,
           BarcodeFormat.ean8,
           BarcodeFormat.upcA,
           BarcodeFormat.upcE,
           BarcodeFormat.code128,
+          if (productCodes) ...[BarcodeFormat.qrCode, BarcodeFormat.dataMatrix],
         ],
       ) {
     _controller.addListener(_syncTorch);

@@ -8,7 +8,10 @@ ApiFailure mapDioException(DioException e) {
   final response = e.response;
 
   if (response == null) {
-    return NetworkFailure(message: e.message);
+    // A send or receive timeout may come after the server got the request: the outcome is unknown
+    // (M-04 «غير مؤكد»). Connection errors mean the request never left the phone.
+    final maybeDelivered = e.type == DioExceptionType.sendTimeout || e.type == DioExceptionType.receiveTimeout;
+    return NetworkFailure(message: e.message, maybeDelivered: maybeDelivered);
   }
 
   final status = response.statusCode ?? 0;
