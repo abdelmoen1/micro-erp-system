@@ -1,14 +1,27 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CiLock, CiUser } from "react-icons/ci";
 import { FiShield } from "react-icons/fi";
 import { FaEye, FaEyeSlash, FaStore } from "react-icons/fa";
 import { IoMailOutline, IoStorefrontOutline } from "react-icons/io5";
 import "../Sign.css";
 import { useState } from "react";
+import { ApiError } from "../services/apiClient";
+import { useRegisterMutation } from "../services/useAuth";
+
+// API field (RegisterStoreRequest) → the form's error slot.
+const SERVER_FIELDS = {
+  store_name: "storeName",
+  owner_name: "ownerName",
+  email: "email",
+  password: "password",
+};
+
 function Register() {
+  const navigate = useNavigate();
+  const register = useRegisterMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [loading, setLoding] = useState(false);
+  const loading = register.isPending;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -30,7 +43,7 @@ function Register() {
     } else if (!password) {
       newErrors.password = "كلمة المرور مطلوبة";
     } else if (password.length < 8) {
-      newErrors.password = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
+      newErrors.password = "كلمة المرور يجب أن تكون 8 أحرف على الأقل";
     } else if (!passwordConfirm) {
       newErrors.passwordConfirm = "يجب تأكيد كلمة المرور";
     } else if (passwordConfirm !== password) {
@@ -39,9 +52,24 @@ function Register() {
       newErrors.remember = "يجب الموافقة على الشروط والأحكام";
     }
     setErrors(newErrors);
-    if (Object.keys(newErrors).length === 0) {
-      setLoding(!loading);
+    if (Object.keys(newErrors).length > 0 || loading) {
+      return;
     }
+
+    // DEF-13: the form now creates the store and its owner, then opens the dashboard (US-0201 AC1).
+    register.mutate(
+      {
+        store_name: storeName,
+        owner_name: ownerName,
+        email,
+        password,
+        password_confirmation: passwordConfirm,
+      },
+      {
+        onSuccess: () => navigate("/dashboard"),
+        onError: (error) => setErrors(serverErrors(error)),
+      },
+    );
   };
   return (
     <div className="auth-layout">
@@ -168,9 +196,15 @@ function Register() {
           {errors.remember && (
             <span className="error-message">{errors.remember}</span>
           )}
+          {errors.form && (
+            <span className="error-message" role="alert">
+              {errors.form}
+            </span>
+          )}
 
           <button
             type="submit"
+            disabled={loading}
             className={`btn btn-primary auth-submit${loading ? " loading-btn" : ""}`}
           >
             {loading ? <span className="loading"></span> : "Sign Up"}
@@ -179,12 +213,27 @@ function Register() {
 
         <div className="auth-footer">
           <p>
-            Already have an account? <Link to="/register">Log In</Link>
+            Already have an account? <Link to="/login">Log In</Link>
           </p>
         </div>
       </div>
     </div>
   );
+}
+
+/** US-0201 AC2: each API validation error next to its field; anything else above the button. */
+function serverErrors(error) {
+  if (!(error instanceof ApiError)) {
+    return { form: error.message };
+  }
+
+  const mapped = {};
+  for (const [field, slot] of Object.entries(SERVER_FIELDS)) {
+    const message = error.fieldError(field);
+    if (message) mapped[slot] = message;
+  }
+
+  return Object.keys(mapped).length > 0 ? mapped : { form: error.message };
 }
 
 export default Register;
