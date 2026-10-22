@@ -62,7 +62,7 @@ class ScanEntryCard extends ConsumerWidget {
             key: const Key('scan.open'),
             icon: const Icon(Icons.crop_free, size: 22),
             label: Text(t.scanBarcode),
-            onPressed: () => openScanner(context, ref),
+            onPressed: () => openScanner(context),
           ),
         ],
       ),

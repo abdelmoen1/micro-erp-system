@@ -101,7 +101,10 @@ final class ServerError extends ApiFailure {
 
 /// No response: offline, DNS failure, refused connection or timeout.
 final class NetworkFailure extends ApiFailure {
-  const NetworkFailure({super.message});
+  const NetworkFailure({super.message, this.maybeDelivered = false});
+
+  /// A timeout after sending: the server may have applied the write. Retry with the same key.
+  final bool maybeDelivered;
 }
 
 /// Any other status or code (`BAD_REQUEST`, `METHOD_NOT_ALLOWED`, `HTTP_<status>`, ...).

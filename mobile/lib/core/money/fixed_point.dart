@@ -39,6 +39,8 @@ class Money implements Comparable<Money> {
   int compareTo(Money other) => cents.compareTo(other.cents);
 
   bool operator >(Money other) => cents > other.cents;
+  bool operator >=(Money other) => cents >= other.cents;
+  bool operator <=(Money other) => cents <= other.cents;
   bool operator <(Money other) => cents < other.cents;
 
   @override
@@ -90,6 +92,8 @@ class Quantity implements Comparable<Quantity> {
   int compareTo(Quantity other) => milli.compareTo(other.milli);
 
   bool operator >(Quantity other) => milli > other.milli;
+  bool operator >=(Quantity other) => milli >= other.milli;
+  bool operator <=(Quantity other) => milli <= other.milli;
   bool operator <(Quantity other) => milli < other.milli;
 
   @override

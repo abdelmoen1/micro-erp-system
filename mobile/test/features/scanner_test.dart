@@ -12,7 +12,9 @@ import 'package:smartshop/features/auth/data/auth_repository.dart';
 import 'package:smartshop/features/auth/presentation/login_screen.dart';
 import 'package:smartshop/features/scanner/application/lookup_controller.dart';
 import 'package:smartshop/features/scanner/domain/barcode_camera.dart';
+import 'package:smartshop/features/sale/presentation/cart_screen.dart';
 import 'package:smartshop/features/scanner/presentation/scanner_screen.dart';
+import 'package:smartshop/features/scanner/presentation/scanner_screen.dart' as scanner show openScanner;
 
 import '../support/fake_api.dart';
 import 'products_test.dart' show productJson;
@@ -129,7 +131,11 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> openScanner(WidgetTester tester) => tapKey(tester, 'scan.open');
+  /// The view-only scanner (T-1301-7), opened over the بيع tab as the app does.
+  Future<void> openScanner(WidgetTester tester) async {
+    unawaited(scanner.openScanner(tester.element(find.byType(CartScreen))));
+    await tester.pumpAndSettle();
+  }
 
   Future<void> read(WidgetTester tester, String code) async {
     cameras.last.read(code);
@@ -153,15 +159,12 @@ void main() {
   });
 
   group('A · B entry and permission', () {
-    testWidgets('the بيع tab gains one card; the camera permission is not touched until the tap', (tester) async {
+    testWidgets('the بيع tab is the cart; the camera permission is not touched until a scan', (tester) async {
       permissions = FakePermissions(CameraPermission.denied, afterRequest: CameraPermission.granted);
       await pumpApp(tester);
 
-      expect(find.byKey(const Key('scan.entry')), findsOneWidget);
-      expect(find.text('عرض بيانات منتج'), findsOneWidget);
-      expect(find.text('الاسم والسعر والمخزون. للعرض فقط، لا يُضاف إلى بيع.'), findsOneWidget);
-      // Visible above the bottom bar without scrolling (hi-fi A at 360 × 760).
-      expect(find.byKey(const Key('scan.open')).hitTestable(), findsOneWidget);
+      // M-02: «مسح» is visible above the bottom bar without scrolling (360 × 760).
+      expect(find.byKey(const Key('cart.scan')).hitTestable(), findsOneWidget);
       expect(permissions.statusChecks + permissions.requests, 0);
 
       await openScanner(tester);
@@ -254,7 +257,7 @@ void main() {
       await read(tester, rice);
       await tapKey(tester, 'scan.backToSale');
       expect(find.byType(ScannerScreen), findsNothing);
-      expect(find.byKey(const Key('scan.entry')), findsOneWidget);
+      expect(find.byKey(const Key('cart.scan')), findsOneWidget);
     });
 
     test('money and barcodes are formatted from the API string, never a double', () {
@@ -443,7 +446,7 @@ void main() {
       await tester.enterText(find.byKey(const Key('login.email')), 'employee@demo.test');
       await tester.enterText(find.byKey(const Key('login.password')), 'secret');
       await tapKey(tester, 'login.submit');
-      expect(find.byKey(const Key('scan.entry')), findsOneWidget);
+      expect(find.byKey(const Key('cart.scan')), findsOneWidget);
       expect(find.byType(ScannerScreen), findsNothing);
     });
   });

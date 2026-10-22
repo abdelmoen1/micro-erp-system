@@ -4,12 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
 import '../../core/theme/hisbah_tokens.dart';
 import '../../core/widgets/dashed_card.dart';
+import '../../core/widgets/hisbah_logo.dart';
 import '../../l10n/app_localizations.dart';
 import '../auth/application/session_controller.dart';
 import '../auth/domain/app_user.dart';
+import '../customers/presentation/customers_screen.dart';
 import '../home/dashboard.dart';
 import '../home/home_dashboard.dart';
-import '../scanner/presentation/scan_entry_card.dart';
+import '../products/presentation/products_screen.dart';
+import '../sale/presentation/cart_screen.dart';
 import 'app_shell.dart';
 
 /// Root screen of each tab: header (title, store, connection) and the tab content.
@@ -22,6 +25,12 @@ class TabRootScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // بيع is the M-02 cart: its own layout (fixed actions and total bar around the line list).
+    if (tab == AppTab.pos) return const CartScreen();
+    // S3: M-07 customers and M-11 products have their own search headers and lists.
+    if (tab == AppTab.customers) return const CustomersScreen();
+    if (tab == AppTab.products) return const ProductsScreen();
+
     final t = AppLocalizations.of(context);
     final session = ref.watch(sessionProvider);
     final storeName = session is SignedIn ? session.user.storeName : '';
@@ -31,19 +40,11 @@ class TabRootScreen extends ConsumerWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(20, 10, 20, 20 + MediaQuery.paddingOf(context).bottom),
       children: [
-        _Header(title: tab.label(t), storeName: storeName),
+        TabHeader(title: tab.label(t), storeName: storeName),
         const SizedBox(height: 14),
         switch (tab) {
           AppTab.home => const HomeDashboard(),
           AppTab.more => const _MoreTab(),
-          AppTab.pos => const Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _Placeholder(tab: AppTab.pos),
-              SizedBox(height: 14),
-              ScanEntryCard(),
-            ],
-          ),
           _ => _Placeholder(tab: tab),
         },
       ],
@@ -60,8 +61,8 @@ class TabRootScreen extends ConsumerWidget {
   }
 }
 
-class _Header extends ConsumerWidget {
-  const _Header({required this.title, required this.storeName});
+class TabHeader extends ConsumerWidget {
+  const TabHeader({super.key, required this.title, required this.storeName});
 
   final String title;
   final String storeName;
@@ -73,8 +74,9 @@ class _Header extends ConsumerWidget {
     final fg = online ? HisbahColors.primary : StatusTone.offline.fg;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const ExcludeSemantics(child: HisbahMarkTile(size: 40)),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

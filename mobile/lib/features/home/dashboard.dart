@@ -15,6 +15,13 @@ class TodayDashboard {
     required this.invoicesCount,
     required this.customersWithDebt,
     required this.recentInvoices,
+    this.collectedAtSale = '0.00',
+    this.debtRepayments = '0.00',
+    this.overdueCount = 0,
+    this.overdueAmount = '0.00',
+    this.dueTodayCount = 0,
+    this.lowStockCount = 0,
+    this.negativeStockCount = 0,
   });
 
   factory TodayDashboard.fromJson(Map<String, dynamic> json) {
@@ -24,6 +31,10 @@ class TodayDashboard {
     final debts = json['debts'] as Map<String, dynamic>? ?? const {};
     final customers = json['customers'] as Map<String, dynamic>? ?? const {};
     final recent = json['recent_invoices'] as List<dynamic>? ?? const [];
+    final collections = json['collections'] as Map<String, dynamic>? ?? const {};
+    final insights = json['insights'] as Map<String, dynamic>? ?? const {};
+    Map<String, dynamic> card(String key) => insights[key] as Map<String, dynamic>? ?? const {};
+    int count(String key) => (card(key)['count'] as num?)?.toInt() ?? 0;
 
     return TodayDashboard(
       totalSales: '${sales['total'] ?? summary['total_sales'] ?? '0.00'}',
@@ -34,6 +45,13 @@ class TodayDashboard {
       invoicesCount: (summary['invoices_count'] as num?)?.toInt() ?? 0,
       customersWithDebt: (customers['with_outstanding_debts'] as num?)?.toInt() ?? 0,
       recentInvoices: [for (final row in recent) RecentInvoice.fromJson(row as Map<String, dynamic>)],
+      collectedAtSale: '${collections['at_sale'] ?? '0.00'}',
+      debtRepayments: '${collections['debt_repayments'] ?? '0.00'}',
+      overdueCount: count('overdue'),
+      overdueAmount: '${card('overdue')['amount'] ?? '0.00'}',
+      dueTodayCount: count('due_today'),
+      lowStockCount: count('low_stock'),
+      negativeStockCount: count('negative_stock'),
     );
   }
 
@@ -47,10 +65,29 @@ class TodayDashboard {
   final int invoicesCount;
   final int customersWithDebt;
   final List<RecentInvoice> recentInvoices;
+
+  /// US-0801 AC1: money taken at the till vs debt repayments (dashboard v2).
+  final String collectedAtSale;
+  final String debtRepayments;
+
+  /// US-0801 AC3 insight cards (M-10 «يحتاج انتباهك»).
+  final int overdueCount;
+  final String overdueAmount;
+  final int dueTodayCount;
+  final int lowStockCount;
+  final int negativeStockCount;
+
+  bool get needsAttention => overdueCount + dueTodayCount + lowStockCount + negativeStockCount > 0;
 }
 
 class RecentInvoice {
-  const RecentInvoice({required this.id, required this.customerName, required this.amount, required this.onCredit, this.createdAt});
+  const RecentInvoice({
+    required this.id,
+    required this.customerName,
+    required this.amount,
+    required this.onCredit,
+    this.createdAt,
+  });
 
   factory RecentInvoice.fromJson(Map<String, dynamic> json) => RecentInvoice(
     id: (json['id'] as num).toInt(),
