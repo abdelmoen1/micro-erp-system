@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * US-0401. Never hard-deleted (BR-04): products are deactivated instead.
  * `current_stock` only changes together with a stock movement.
+ * This is the store's own row (name, price, cost, stock). A barcoded item also links to the shared
+ * CatalogProduct, which no store edit changes.
  */
 class Product extends Model
 {
@@ -22,6 +24,7 @@ class Product extends Model
 
     protected $fillable = [
         'store_id',
+        'catalog_product_id',
         'name',
         'barcode',
         'unit',
@@ -46,6 +49,12 @@ class Product extends Model
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
+    }
+
+    /** The shared catalog identity, when the barcode is a global GTIN (null for store-only codes). */
+    public function catalogProduct(): BelongsTo
+    {
+        return $this->belongsTo(CatalogProduct::class);
     }
 
     public function movements(): HasMany

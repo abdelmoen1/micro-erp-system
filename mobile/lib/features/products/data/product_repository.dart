@@ -23,6 +23,20 @@ class ProductRepository {
     }
   }
 
+  /// Shared catalog, before adding a product: my store's product with this barcode (any status)
+  /// and the platform-wide item another store already saved. Either may be null.
+  Future<CatalogMatch> catalogLookup(String barcode) async {
+    final body = await _api.get('/products/catalog-lookup', query: {'barcode': barcode.trim()});
+    final data = body['data'] as Map<String, dynamic>;
+    final product = data['product'] as Map<String, dynamic>?;
+    final item = data['catalog_product'] as Map<String, dynamic>?;
+    return CatalogMatch(
+      product: product == null ? null : Product.fromJson(product),
+      catalogName: item?['name'] as String?,
+      catalogUnit: item == null ? null : ProductUnit.fromApi(item['unit']),
+    );
+  }
+
   /// Active products whose name contains [query] (or whose barcode is exactly [query]), by name.
   /// M-02 «بحث بالاسم».
   Future<List<Product>> search(String query) async {
@@ -53,6 +67,18 @@ class ProductRepository {
     final body = await _api.post('/products', body: draft.toJson());
     return Product.fromJson((body['data'] ?? body['product']) as Map<String, dynamic>);
   }
+}
+
+/// GET /products/catalog-lookup: [product] is already in my store; otherwise [catalogName] and
+/// [catalogUnit] are the shared details to prefill (the price, cost and stock stay the store's).
+class CatalogMatch {
+  const CatalogMatch({this.product, this.catalogName, this.catalogUnit});
+
+  final Product? product;
+  final String? catalogName;
+  final ProductUnit? catalogUnit;
+
+  bool get inCatalog => catalogName != null;
 }
 
 /// The fields of POST /products, as the owner confirmed them on the form.

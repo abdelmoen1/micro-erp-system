@@ -52,6 +52,16 @@ GET {{base}}/products/lookup?barcode=7290000000017
 Authorization: Bearer {{token}}
 Accept: application/json
 
+### 3b. Shared catalog lookup (before adding) — 200 always
+# { "data": { "barcode": "<normalized>", "product": { …my product, any status } | null,
+#             "catalog_product": { "id", "barcode", "name", "unit" } | null } }
+# A global GTIN another store saved comes back as catalog_product; POST /products with just that
+# barcode + selling_price/cost_price/current_stock links to it (name/unit default to the catalog's).
+# Barcodes are normalized everywhere: Arabic digits → ASCII, spaces dropped, UPC-A / GTIN-14 → GTIN-13.
+GET {{base}}/products/catalog-lookup?barcode=6291041500213
+Authorization: Bearer {{token}}
+Accept: application/json
+
 ### 4. Show — 200 { "data": { …product } }
 GET {{base}}/products/1
 Authorization: Bearer {{token}}

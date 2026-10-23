@@ -1332,6 +1332,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'تعذّر التحقق من وجود المنتج الآن؛ سنتحقق عند الحفظ.';
 
   @override
+  String get addFromCatalog =>
+      'هذا المنتج معروف في حسبة، فملأنا اسمه ووحدته. أدخل سعر البيع والتكلفة والكمية لمتجرك.';
+
+  @override
   String get formNewTitle => 'منتج جديد';
 
   @override

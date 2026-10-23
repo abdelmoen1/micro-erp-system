@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ConfirmSummary, Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, Field, Segments, StatusBadge } from "../components/ui";
 import { newIdempotencyKey, session } from "../services/apiClient";
-import { useAdjustStock, useDeactivateProduct, useMovements, useProduct, useSaveProduct } from "../services/backoffice";
+import { lookupCatalog, useAdjustStock, useDeactivateProduct, useMovements, useProduct, useSaveProduct } from "../services/backoffice";
 import { canManage, stockState } from "../lib/domain";
 import { dateTime } from "../lib/format";
 
@@ -132,7 +132,24 @@ function ProductForm({ product, manager, onSaved }) {
     current_stock: product ? product.current_stock : "0",
     minimum_stock: product?.minimum_stock ?? "",
   }));
+  const [match, setMatch] = useState(null);
   const save = useSaveProduct();
+
+  // New products only: a barcode another store saved fills the shared name and unit; one already
+  // in this store points to it instead (its stock changes by adjustment, not a second product).
+  const checkCatalog = async () => {
+    const code = form.barcode.trim();
+    if (product || !code) return setMatch(null);
+    try {
+      const found = await lookupCatalog(code);
+      setMatch(found);
+      if (!found.product && found.catalog_product) {
+        setForm((f) => ({ ...f, name: found.catalog_product.name, unit: found.catalog_product.unit }));
+      }
+    } catch {
+      setMatch(null); // The server checks the barcode again on save.
+    }
+  };
   const err = (field) => save.error?.fieldError?.(field);
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
   const readOnly = !manager;
@@ -158,8 +175,23 @@ function ProductForm({ product, manager, onSaved }) {
         <input id="pf-name" className={`fld${err("name") ? " err" : ""}`} value={form.name} onChange={set("name")} readOnly={readOnly} />
       </Field>
       <Field id="pf-barcode" label="الباركود" optional error={err("barcode")}>
-        <input id="pf-barcode" className={`fld ltr m${err("barcode") ? " err" : ""}`} value={form.barcode} onChange={set("barcode")} readOnly={readOnly} />
+        <input id="pf-barcode" className={`fld ltr m${err("barcode") ? " err" : ""}`} value={form.barcode} onChange={set("barcode")} onBlur={checkCatalog} readOnly={readOnly} />
       </Field>
+      {match?.product ? (
+        <p role="status" className="banner tone-pending">
+          <span>
+            هذا الباركود مسجّل في متجرك: <Link to={`/products/${match.product.id}`}>{match.product.name}</Link>
+            <span className="sub">لن يُضاف مرة ثانية. عدّل مخزونه من صفحته.</span>
+          </span>
+        </p>
+      ) : match?.catalog_product ? (
+        <p role="status" className="banner tone-info">
+          <span>
+            منتج معروف في حسبة، فملأنا اسمه ووحدته.
+            <span className="sub">أدخل سعر البيع والتكلفة والكمية لمتجرك. تعديل الاسم يخص متجرك وحده.</span>
+          </span>
+        </p>
+      ) : null}
       <div className="field">
         <span className="field-label">يُباع</span>
         <Segments

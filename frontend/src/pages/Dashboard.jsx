@@ -246,6 +246,14 @@ function LowStock({ loading }) {
             <span className="sk" style={{ width: 60, height: 14 }} />
           </div>
         ))
+      ) : low.isError ? (
+        // A failed request is not «everything above the minimum».
+        <div role="alert" className="state-card" style={{ padding: "24px 8px", gap: 8 }}>
+          <b>تعذّر تحميل المخزون</b>
+          <button type="button" className="btn btn-g btn-sm" onClick={() => low.refetch()}>
+            إعادة المحاولة
+          </button>
+        </div>
       ) : rows.length === 0 ? (
         <div className="state-card" style={{ padding: "24px 8px", gap: 8 }}>
           <b>{noProducts ? "لا منتجات بعد" : "لا منتجات تحت الحد الأدنى"}</b>

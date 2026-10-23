@@ -144,13 +144,46 @@ void main() {
     }
 
     testWidgets('a code whose barcode is already in the store stops at «already exists»', (tester) async {
-      api.on('GET /products/lookup', FakeResponse(200, {'data': dates}));
+      api.on('GET /products/catalog-lookup', FakeResponse(200, {
+        'data': {'barcode': '6281007041235', 'product': dates, 'catalog_product': null},
+      }));
       await pumpApp(tester);
       await scanCode(tester, 'https://id.gs1.org/01/06281007041235/10/LOT42');
 
       expect(find.byKey(const Key('addProduct.existing')), findsOneWidget);
-      expect(api.requestsTo('GET /products/lookup').single.queryParameters['barcode'], '6281007041235');
+      expect(api.requestsTo('GET /products/catalog-lookup').single.queryParameters['barcode'], '6281007041235');
       expect(api.requestsTo('POST /products'), isEmpty);
+    });
+
+    testWidgets('a barcode another store saved prefills the shared name and unit; price and stock are mine', (tester) async {
+      api.on('GET /products/catalog-lookup', const FakeResponse(200, {
+        'data': {
+          'barcode': '6281007041235',
+          'product': null,
+          'catalog_product': {'id': 4, 'barcode': '6281007041235', 'name': 'تمر مجهول', 'unit': 'kg'},
+        },
+      }));
+      api.on('POST /products', FakeResponse(201, {'message': 'تم إنشاء المنتج بنجاح', 'product': dates}));
+      await pumpApp(tester);
+      await scanCode(tester, '6281007041235');
+
+      expect(find.byKey(const Key('addProduct.fromCatalog')), findsOneWidget);
+      expect(tester.widget<TextField>(find.byKey(const Key('form.name'))).controller!.text, 'تمر مجهول');
+
+      for (final (key, value) in [('form.selling_price', '40'), ('form.current_stock', '2.5')]) {
+        await tester.scrollUntilVisible(find.byKey(Key(key)), 80, scrollable: find.byType(Scrollable).last);
+        await tester.enterText(find.byKey(Key(key)), value);
+      }
+      await tap(tester, find.byKey(const Key('form.save')));
+
+      expect(find.byKey(const Key('addProduct.saved')), findsOneWidget);
+      expect(api.requestsTo('POST /products').single.data, {
+        'name': 'تمر مجهول',
+        'barcode': '6281007041235',
+        'unit': 'kg',
+        'selling_price': '40',
+        'current_stock': '2.5',
+      });
     });
 
     testWidgets('a JSON code prefills only what it carries; a 403 is explained, then it saves', (tester) async {

@@ -115,6 +115,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Product? _existing;
   Product? _saved;
   bool _lookupFailed = false;
+  bool _fromCatalog = false;
   String? _banner;
   Map<String, String> _errors = const {};
 
@@ -144,14 +145,20 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     super.dispose();
   }
 
-  /// Duplicate detection before the form: an active product with this barcode already exists.
+  /// Before the form: «already exists» when my store has this barcode; otherwise the shared
+  /// catalog's name and unit (another store saved it) so only price, cost and stock are left.
   Future<void> _checkDuplicate(String barcode) async {
     try {
-      final found = await ref.read(productRepositoryProvider).lookupByBarcode(barcode);
+      final match = await ref.read(productRepositoryProvider).catalogLookup(barcode);
       if (!mounted) return;
       setState(() {
-        _existing = found;
-        _stage = found == null ? _Stage.form : _Stage.duplicate;
+        _existing = match.product;
+        if (match.product == null && match.inCatalog) {
+          _fromCatalog = true;
+          _name.text = match.catalogName!;
+          _unit = match.catalogUnit ?? _unit;
+        }
+        _stage = match.product == null ? _Stage.form : _Stage.duplicate;
       });
     } on ApiFailure {
       // The server rejects a duplicate barcode on save anyway (422), so the form can go on.
@@ -384,7 +391,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          // Wraps on narrow screens: label, «optional» and the «from code» chip can all be present.
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               if (optional)
@@ -428,6 +437,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   icon: Icons.qr_code_2_rounded,
                   title: note.$2,
                   children: [if (raw != null) LtrValue(raw.length > 120 ? '${raw.substring(0, 120)}…' : raw)],
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (_fromCatalog) ...[
+                ToneCard(
+                  key: const Key('addProduct.fromCatalog'),
+                  tone: StatusTone.success,
+                  icon: Icons.inventory_2_outlined,
+                  title: t.addFromCatalog,
                 ),
                 const SizedBox(height: 8),
               ],

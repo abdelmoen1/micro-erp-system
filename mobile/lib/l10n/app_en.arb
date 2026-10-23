@@ -386,6 +386,7 @@
   "addUnreadable": "This code holds no product data. Enter the product manually; its content won't be used.",
   "addManualNote": "Manual entry. Name and selling price are required.",
   "addLookupFailed": "Couldn't check for an existing product now; it is checked again on save.",
+  "addFromCatalog": "Hisbah already knows this product, so its name and unit are filled in. Enter your store's selling price, cost and quantity.",
   "formNewTitle": "New product",
   "formName": "Product name",
   "formNameHint": "e.g. Medjool dates 1 kg",

@@ -185,3 +185,43 @@ test("W-15: a manager is told the staff page is the owner's", async ({ page }) =
   await expect(page.getByText("هذه الصفحة للمالك فقط")).toBeVisible();
   await expect(page.getByRole("link", { name: "الموظفون" })).toHaveCount(0);
 });
+
+test("shared catalog: a barcode another store saved fills the name and unit; mine is sent with my price and stock", async ({ page }) => {
+  await signIn(page);
+  let sent = null;
+  await page.route("**/api/v1/products/catalog-lookup**", (r) =>
+    r.fulfill({ json: { data: { barcode: "6291041500213", product: null, catalog_product: { id: 4, barcode: "6291041500213", name: "عصير برتقال 1 لتر", unit: "piece" } } } }),
+  );
+  await page.route("**/api/v1/products", async (r) => {
+    sent = r.request().postDataJSON();
+    await r.fulfill({ status: 201, json: { message: "تم إنشاء المنتج بنجاح", product: { id: 30, catalog_product_id: 4, ...sent, current_stock: "6", minimum_stock: "5", is_low_stock: false, status: "active" } } });
+  });
+  // After saving, the form navigates to the new product's page.
+  await page.route(/\/api\/v1\/products\/30(\/movements)?$/, (r) =>
+    r.fulfill({ json: { data: r.request().url().endsWith("/30") ? { id: 30, name: "عصير برتقال 1 لتر", unit: "piece", current_stock: "6", minimum_stock: "5" } : [] } }),
+  );
+
+  await page.goto("/products/new");
+  await page.getByLabel("الباركود").fill("6291041500213");
+  await page.getByLabel("الباركود").blur();
+  await expect(page.getByText("منتج معروف في حسبة")).toBeVisible();
+  await expect(page.getByLabel("اسم المنتج")).toHaveValue("عصير برتقال 1 لتر");
+
+  await page.getByLabel("سعر البيع").fill("7.50");
+  await page.getByLabel("المخزون الآن").fill("6");
+  await page.getByRole("button", { name: "حفظ المنتج" }).click();
+  await expect.poll(() => sent).toMatchObject({ name: "عصير برتقال 1 لتر", barcode: "6291041500213", unit: "piece", selling_price: "7.50", current_stock: "6" });
+});
+
+test("shared catalog: a barcode already in my store links to it instead of adding it twice", async ({ page }) => {
+  await signIn(page);
+  await page.route("**/api/v1/products/catalog-lookup**", (r) =>
+    r.fulfill({ json: { data: { barcode: "6291041500213", product: { id: 9, name: "عصير برتقال", barcode: "6291041500213", unit: "piece", current_stock: "4" }, catalog_product: { id: 4, name: "عصير برتقال", unit: "piece" } } } }),
+  );
+
+  await page.goto("/products/new");
+  await page.getByLabel("الباركود").fill("6291041500213");
+  await page.getByLabel("الباركود").blur();
+  await expect(page.getByText("هذا الباركود مسجّل في متجرك")).toBeVisible();
+  await expect(page.getByRole("link", { name: "عصير برتقال" })).toHaveAttribute("href", "/products/9");
+});

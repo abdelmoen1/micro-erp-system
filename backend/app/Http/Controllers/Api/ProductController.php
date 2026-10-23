@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Http\Resources\CatalogProductResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\StockMovementResource;
+use App\Models\CatalogProduct;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Services\ProductImportService;
 use App\Services\ProductService;
+use App\Support\Barcode;
 use App\Support\Quantity;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -44,7 +47,7 @@ class ProductController extends Controller
             ->when($status !== 'all', fn($query) => $query->where('status', $status))
             ->when($filters['search'] ?? null, function ($query, string $search) {
                 $query->where(fn($q) => $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('barcode', $search));
+                    ->orWhere('barcode', Barcode::normalize($search) ?? $search));
             })
             ->when(($filters['stock'] ?? null) === 'low', fn($query) => $query->whereColumn('current_stock', '<=', 'minimum_stock'))
             ->when(($filters['stock'] ?? null) === 'negative', fn($query) => $query->where('current_stock', '<', 0))
@@ -130,9 +133,7 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, Product $product)
     {
-        $product->update($request->validated());
-
-        return new ProductResource($product);
+        return new ProductResource($this->products->update($request->user(), $product, $request->validated()));
     }
 
     public function deactivate(Product $product)
@@ -178,9 +179,29 @@ class ProductController extends Controller
         $product = Product::query()
             ->forStore($request->user()->store_id)
             ->active()
-            ->where('barcode', trim($data['barcode']))
+            ->where('barcode', Barcode::normalize($data['barcode']))
             ->firstOrFail();
 
         return new ProductResource($product);
+    }
+
+    /**
+     * Shared catalog, before adding a product: my store's product with this barcode (any status,
+     * so the form can say «already in your store»), and the platform-wide catalog item that any
+     * store saved first (its name and unit prefill the form). Either may be null.
+     */
+    public function catalogLookup(Request $request)
+    {
+        $data = $request->validate(['barcode' => ['required', 'string', 'max:64']]);
+        $barcode = Barcode::normalize($data['barcode']);
+
+        $product = Product::query()->forStore($request->user()->store_id)->where('barcode', $barcode)->first();
+        $catalog = $product?->catalogProduct ?? CatalogProduct::query()->where('barcode', $barcode)->first();
+
+        return response()->json(['data' => [
+            'barcode' => $barcode,
+            'product' => $product ? new ProductResource($product) : null,
+            'catalog_product' => $catalog ? new CatalogProductResource($catalog) : null,
+        ]]);
     }
 }

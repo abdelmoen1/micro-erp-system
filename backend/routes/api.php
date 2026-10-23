@@ -55,6 +55,8 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
 
     // Products (US-0401). No DELETE: products are deactivated (BR-04). `lookup` and `low-stock` precede {product}.
     Route::get('products/lookup', [ProductController::class, 'lookup']);
+    // Shared catalog: my product and the platform-wide item for a barcode, before adding one.
+    Route::get('products/catalog-lookup', [ProductController::class, 'catalogLookup']);
     Route::get('products/low-stock', [ProductController::class, 'lowStock']);
     Route::get('products/negative-stock', [ProductController::class, 'negativeStock']);
     Route::post('products/import', [ProductController::class, 'import']);
