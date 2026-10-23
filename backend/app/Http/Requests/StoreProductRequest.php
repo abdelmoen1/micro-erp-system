@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\CatalogProduct;
 use App\Models\Product;
+use App\Support\Barcode;
 use App\Support\Money;
 use App\Support\Quantity;
 use Illuminate\Foundation\Http\FormRequest;
@@ -19,8 +21,17 @@ class StoreProductRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if (is_string($this->barcode)) {
-            $barcode = trim($this->barcode);
-            $this->merge(['barcode' => $barcode === '' ? null : $barcode]);
+            $barcode = Barcode::normalize($this->barcode);
+            $this->merge(['barcode' => $barcode]);
+
+            // Shared catalog: a known barcode brings its name and unit unless the store sent its own.
+            $catalog = $barcode === null ? null : CatalogProduct::query()->where('barcode', $barcode)->first();
+            if ($catalog) {
+                $this->merge(array_filter([
+                    'name' => blank($this->name) ? $catalog->name : null,
+                    'unit' => blank($this->unit) ? $catalog->unit : null,
+                ]));
+            }
         }
     }
 

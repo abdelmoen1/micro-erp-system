@@ -68,6 +68,9 @@ export const useProducts = (filters) =>
 
 export const useProduct = (id) => useQuery({ queryKey: queryKeys.products.detail(id), queryFn: data(`/products/${id}`), enabled: Boolean(id) });
 
+/** Shared catalog, before adding: { product } already in my store, or the { catalog_product } another store saved. */
+export const lookupCatalog = (barcode) => apiGet(`/products/catalog-lookup${qs({ barcode })}`).then((r) => r.data);
+
 export const useMovements = (id) =>
   useQuery({ queryKey: queryKeys.products.movements(id), queryFn: data(`/products/${id}/movements`), enabled: Boolean(id) });
 

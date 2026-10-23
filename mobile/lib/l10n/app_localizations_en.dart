@@ -1337,6 +1337,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t check for an existing product now; it is checked again on save.';
 
   @override
+  String get addFromCatalog =>
+      'Hisbah already knows this product, so its name and unit are filled in. Enter your store\'s selling price, cost and quantity.';
+
+  @override
   String get formNewTitle => 'New product';
 
   @override

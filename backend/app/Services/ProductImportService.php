@@ -6,6 +6,7 @@ use App\Exceptions\ApiException;
 use App\Http\Requests\ProductMessages;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\Barcode;
 use App\Support\Money;
 use App\Support\Quantity;
 use Illuminate\Http\UploadedFile;
@@ -107,6 +108,8 @@ class ProductImportService
             }
             $data['unit'] ??= Quantity::UNIT_PIECE;
             $data['unit'] = strtolower($data['unit']);
+            // Same spelling as POST /products, so duplicates and catalog links match.
+            $data['barcode'] = Barcode::normalize($data['barcode']);
             $rows[] = ['line' => $line, 'data' => array_filter($data, fn($v) => $v !== null)];
         }
 

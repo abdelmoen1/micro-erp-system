@@ -2414,6 +2414,12 @@ abstract class AppLocalizations {
   /// **'تعذّر التحقق من وجود المنتج الآن؛ سنتحقق عند الحفظ.'**
   String get addLookupFailed;
 
+  /// No description provided for @addFromCatalog.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا المنتج معروف في حسبة، فملأنا اسمه ووحدته. أدخل سعر البيع والتكلفة والكمية لمتجرك.'**
+  String get addFromCatalog;
+
   /// No description provided for @formNewTitle.
   ///
   /// In ar, this message translates to:

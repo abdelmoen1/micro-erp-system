@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Product;
+use App\Support\Barcode;
 use App\Support\Money;
 use App\Support\Quantity;
 use Illuminate\Foundation\Http\FormRequest;
@@ -23,8 +24,7 @@ class UpdateProductRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if (is_string($this->barcode)) {
-            $barcode = trim($this->barcode);
-            $this->merge(['barcode' => $barcode === '' ? null : $barcode]);
+            $this->merge(['barcode' => Barcode::normalize($this->barcode)]);
         }
     }
 

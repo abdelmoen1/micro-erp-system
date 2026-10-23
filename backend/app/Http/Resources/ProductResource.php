@@ -14,6 +14,8 @@ class ProductResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            // Shared catalog item (null for store-only barcodes); name and unit below are this store's.
+            'catalog_product_id' => $this->catalog_product_id,
             'name' => $this->name,
             'barcode' => $this->barcode,
             'unit' => $this->unit,

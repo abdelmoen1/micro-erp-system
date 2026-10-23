@@ -120,6 +120,25 @@ void main() {
       await expectLater(products.lookupByBarcode('1'), throwsA(isA<Unauthenticated>()));
       expect(sessionFailures.single, isA<Unauthenticated>());
     });
+
+    test('catalog lookup: my product, or the shared name and unit another store saved', () async {
+      api.onSequence('GET /products/catalog-lookup', [
+        const FakeResponse(200, {
+          'data': {'barcode': '6291041500213', 'product': null, 'catalog_product': {'id': 1, 'barcode': '6291041500213', 'name': 'عصير', 'unit': 'kg'}},
+        }),
+        FakeResponse(200, {
+          'data': {'barcode': '6291041500213', 'product': productJson(id: 9), 'catalog_product': null},
+        }),
+        const FakeResponse(200, {'data': {'barcode': '1', 'product': null, 'catalog_product': null}}),
+      ]);
+
+      final shared = await products.catalogLookup(' 6291041500213 ');
+      expect([shared.product, shared.catalogName, shared.catalogUnit], [null, 'عصير', ProductUnit.kg]);
+      expect(api.requestsTo('GET /products/catalog-lookup').first.queryParameters['barcode'], '6291041500213');
+
+      expect((await products.catalogLookup('6291041500213')).product?.id, 9);
+      expect((await products.catalogLookup('1')).inCatalog, isFalse);
+    });
   });
 
   group('US-0403 low stock', () {

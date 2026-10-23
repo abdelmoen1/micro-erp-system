@@ -215,3 +215,21 @@ async function fillCredentials(page) {
   await page.getByLabel("كلمة المرور", { exact: true }).fill("password123");
   await page.getByLabel("تأكيد كلمة المرور", { exact: true }).fill("password123");
 }
+
+test("a failed low-stock request says so instead of «all products above the minimum»", async ({ page }) => {
+  await mockSignedInApi(page);
+  // An API without the product endpoints (the live API before S2) answers 404.
+  await page.route("**/api/v1/products/low-stock", (route) =>
+    route.fulfill({ status: 404, json: { message: "غير موجود", code: "NOT_FOUND", errors: {}, correlation_id: "01X" } }),
+  );
+  await page.addInitScript((u) => {
+    localStorage.setItem("token", "2|test-token");
+    localStorage.setItem("user", JSON.stringify(u));
+  }, user);
+
+  await page.goto("/dashboard");
+
+  await expect(page.getByText("تعذّر تحميل المخزون")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText("كل المنتجات فوق الحد الأدنى")).toHaveCount(0);
+  await expect(page.getByText("₪ 64.50").first()).toBeVisible();
+});
