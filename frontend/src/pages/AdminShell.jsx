@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 import HisbahLogo from "../components/HisbahLogo";
 import Icon from "../components/Icon";
 import { initialOf } from "../lib/format";
@@ -29,8 +29,10 @@ export default function AdminShell() {
     setLeaving(true);
     await logout();
     queryClient.clear();
-    navigate("/login", { replace: true });
+    navigate("/admin/login", { replace: true });
   };
+
+  if (!session.token()) return <Navigate to="/admin/login" replace />;
 
   if (!user.is_platform_admin) {
     return (
@@ -39,9 +41,14 @@ export default function AdminShell() {
           <Icon name="lock" size={40} color="#4a5565" strokeWidth={1.8} />
           <b className="state-title">هذه الصفحات لمالك المنصة فقط</b>
           <span className="state-text">حسابك حساب متجر. إدارة المتاجر والاشتراكات متاحة لإدارة حسبة وحدها.</span>
-          <Link className="btn btn-s btn-sm" to="/dashboard">
-            العودة إلى متجري
-          </Link>
+          <div className="head-actions">
+            <Link className="btn btn-s btn-sm" to="/dashboard">
+              العودة إلى متجري
+            </Link>
+            <button type="button" className="btn btn-g btn-sm" onClick={signOut} disabled={leaving}>
+              الدخول بحساب الإدارة
+            </button>
+          </div>
         </div>
       </main>
     );
