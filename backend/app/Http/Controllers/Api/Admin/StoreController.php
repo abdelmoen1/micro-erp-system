@@ -30,7 +30,7 @@ class StoreController extends Controller
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', Rule::in([Store::STATUS_ACTIVE, Store::STATUS_SUSPENDED])],
-            'subscription' => ['nullable', Rule::in([Store::SUBSCRIPTION_ACTIVE, Store::SUBSCRIPTION_EXPIRED, Store::SUBSCRIPTION_INACTIVE])],
+            'subscription' => ['nullable', Rule::in([Store::SUBSCRIPTION_ACTIVE, Store::SUBSCRIPTION_TRIAL, Store::SUBSCRIPTION_EXPIRED, Store::SUBSCRIPTION_INACTIVE])],
             'sort' => ['nullable', Rule::in(['newest', 'oldest', 'name'])],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
         ]);

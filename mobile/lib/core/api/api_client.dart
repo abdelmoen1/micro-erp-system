@@ -38,7 +38,7 @@ class ApiClient {
 
   final Dio dio;
 
-  /// Called when an authenticated call returns 401 or USER_INACTIVE.
+  /// Called when an authenticated call returns 401, USER_INACTIVE, STORE_SUSPENDED or SUBSCRIPTION_EXPIRED.
   final void Function(ApiFailure failure)? onSessionFailure;
 
   /// [query] values are URL-encoded by dio (barcodes may contain any character).
@@ -63,8 +63,10 @@ class ApiClient {
       return data is Map<String, dynamic> ? data : <String, dynamic>{};
     } on DioException catch (e) {
       final failure = mapDioException(e);
-      // A dead session on an authenticated call is a global event (re-login / deactivated screen).
-      if (auth && (failure is Unauthenticated || failure is UserInactive)) {
+      // A dead session, a suspended store or an ended subscription on an authenticated call is a
+      // global event (re-login / blocked banner / renewal screen).
+      if (auth &&
+          (failure is Unauthenticated || failure is UserInactive || failure is StoreSuspended || failure is SubscriptionExpired)) {
         onSessionFailure?.call(failure);
       }
       throw failure;

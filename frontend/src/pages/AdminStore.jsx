@@ -42,7 +42,7 @@ export default function AdminStore() {
         <SubscriptionPanel store={s} onActivate={() => setDialog("subscribe")} onDeactivate={() => setDialog("unsubscribe")} />
       </div>
       <p className="data-note">
-        الحالتان منفصلتان: إيقاف الحساب لا يغيّر الاشتراك، وتفعيل الاشتراك لا يعيد فتح حساب موقوف. الاشتراك لا يمنع الدخول حالياً.
+        الحالتان منفصلتان: إيقاف الحساب لا يغيّر الاشتراك، وتفعيل الاشتراك لا يعيد فتح حساب موقوف. بعد انتهاء الفترة التجريبية أو الاشتراك، يرى أعضاء المتجر شاشة التجديد فقط وتبقى بياناتهم كما هي.
       </p>
 
       <div className="platform-grid">
@@ -177,13 +177,13 @@ function AccessPanel({ store }) {
 
 function SubscriptionPanel({ store, onActivate, onDeactivate }) {
   const sub = store.subscription;
-  const word = { active: "فعّال", expired: "منتهٍ", inactive: "غير مشترك" }[sub.state];
-  const tone = { active: "is-on", expired: "is-warn", inactive: "is-idle" }[sub.state];
+  const word = { active: "فعّال", trial: "فترة تجريبية", expired: "منتهٍ", inactive: "غير مشترك" }[sub.state];
+  const tone = { active: "is-on", trial: "is-trial", expired: "is-warn", inactive: "is-off" }[sub.state];
   return (
     <section className={`card state-panel ${tone}`} aria-labelledby="sub-title">
       <h2 id="sub-title">الاشتراك</h2>
       <p className="state-word">
-        <Icon name={sub.state === "active" ? "ok" : sub.state === "expired" ? "clock" : "dot"} size={26} strokeWidth={2} />
+        <Icon name={sub.state === "active" ? "ok" : sub.state === "inactive" ? "ban" : "clock"} size={26} strokeWidth={2} />
         {word}
       </p>
       <p className="state-means">
@@ -191,11 +191,17 @@ function SubscriptionPanel({ store, onActivate, onDeactivate }) {
           ? sub.expires_at
             ? "مدفوع ومفعّل حتى تاريخ الانتهاء."
             : "مدفوع ومفعّل بلا تاريخ انتهاء."
-          : sub.state === "expired"
-            ? "انتهى التاريخ المحدد. جدّد بعد التحقق من الدفع."
-            : "لم يُفعَّل اشتراك مدفوع لهذا المتجر."}
+          : sub.state === "trial"
+            ? "يعمل المتجر مجاناً حتى نهاية الفترة التجريبية، ثم يحتاج اشتراكاً."
+            : sub.state === "expired"
+              ? "انتهى الاشتراك: الأعضاء يرون شاشة التجديد فقط. جدّد بعد التحقق من الدفع."
+              : "انتهت الفترة التجريبية بلا اشتراك: الأعضاء يرون شاشة التجديد فقط."}
       </p>
       <dl className="state-facts">
+        <div>
+          <dt>نهاية الفترة التجريبية</dt>
+          <dd className="m">{sub.trial_ends_at ? dateTime(sub.trial_ends_at) : "—"}</dd>
+        </div>
         <div>
           <dt>بداية الاشتراك</dt>
           <dd className="m">{sub.started_at ? dateOnly(sub.started_at) : "—"}</dd>
@@ -213,7 +219,7 @@ function SubscriptionPanel({ store, onActivate, onDeactivate }) {
       </dl>
       <div className="state-actions">
         <button type="button" className="btn btn-sm btn-p" onClick={onActivate}>
-          {sub.state === "inactive" ? "تفعيل الاشتراك" : "تجديد أو تعديل الانتهاء"}
+          {sub.status === "active" ? "تجديد أو تعديل الانتهاء" : "تفعيل الاشتراك"}
         </button>
         {sub.status === "active" ? (
           <button type="button" className="btn btn-sm btn-dl" onClick={onDeactivate}>

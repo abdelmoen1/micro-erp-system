@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StockAdjustmentController;
+use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\Admin\OverviewController as AdminOverviewController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\StoreController as AdminStoreController;
@@ -47,8 +48,14 @@ Route::middleware(['auth:sanctum', 'active', 'platform.admin'])->prefix('admin')
 Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
 
 
+    // Session routes: open to a store whose trial or subscription has ended, so it can still sign in,
+    // see why, and recover as soon as the platform admin activates the subscription.
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/subscription', [SubscriptionController::class, 'show']);
+
+    // Business routes: need a running trial or a valid paid subscription (403 SUBSCRIPTION_EXPIRED).
+    Route::middleware('subscribed')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::post('/invitations', [InvitationController::class, 'store']);
     Route::get('/users', [UserController::class, 'index']);
@@ -140,4 +147,5 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
         '/payment-groups/{paymentGroupId}/reverse',
         [PaymentController::class, 'reverseGroup']
     )->middleware('idempotent');
+    }); // subscribed
 });

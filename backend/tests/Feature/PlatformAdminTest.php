@@ -155,20 +155,22 @@ class PlatformAdminTest extends TestCase
 
     public function test_overview_counts_stores_and_subscription_states(): void
     {
-        $admin = $this->makeAdmin();
-        $this->makeStore('Suspended')->forceFill(['status' => 'suspended'])->save();
+        $admin = $this->makeAdmin(); // its store is in its trial
+        $this->makeStore('Suspended')->forceFill(['status' => 'suspended'])->save(); // trial
         $this->makeStore('Paid')->forceFill(['subscription_status' => 'active', 'subscription_expires_at' => now()->addMonth()])->save();
-        $this->makeStore('Lapsed')->forceFill(['subscription_status' => 'active', 'subscription_expires_at' => now()->subDay()])->save();
+        $this->makeStore('Lapsed')->forceFill(['subscription_status' => 'active', 'subscription_expires_at' => now()->subDay(), 'trial_ends_at' => now()->subDays(2)])->save();
         $this->makeStore('Open-ended')->forceFill(['subscription_status' => 'active'])->save();
+        $this->makeStore('Never paid')->forceFill(['trial_ends_at' => now()->subMinute()])->save();
 
         $this->actingAs($admin, 'sanctum')->getJson('/api/v1/admin/overview')
             ->assertOk()
-            ->assertJsonPath('data.stores.total', 5)
-            ->assertJsonPath('data.stores.active', 4)
+            ->assertJsonPath('data.stores.total', 6)
+            ->assertJsonPath('data.stores.active', 5)
             ->assertJsonPath('data.stores.suspended', 1)
             ->assertJsonPath('data.subscriptions.active', 2)
+            ->assertJsonPath('data.subscriptions.trial', 2)
             ->assertJsonPath('data.subscriptions.expired', 1)
-            ->assertJsonPath('data.subscriptions.inactive', 2);
+            ->assertJsonPath('data.subscriptions.inactive', 1);
     }
 
     public function test_store_list_searches_filters_and_paginates(): void
@@ -178,7 +180,7 @@ class PlatformAdminTest extends TestCase
         $bakery->forceFill(['created_at' => now()->subDays(12)])->save();
         $this->makeUser($bakery, 'owner', ['email' => 'baker@example.com', 'name' => 'Abu Samir']);
         $grocer = $this->makeStore('Grocer');
-        $grocer->forceFill(['status' => 'suspended', 'subscription_status' => 'active', 'subscription_expires_at' => now()->subDay()])->save();
+        $grocer->forceFill(['status' => 'suspended', 'subscription_status' => 'active', 'subscription_expires_at' => now()->subDay(), 'trial_ends_at' => now()->subDays(3)])->save();
 
         $as = $this->actingAs($admin, 'sanctum');
 
@@ -190,7 +192,7 @@ class PlatformAdminTest extends TestCase
             ->assertJsonPath('data.0.address', 'Gaza, Rimal')
             ->assertJsonPath('data.0.days_since_registration', 12)
             ->assertJsonPath('data.0.status', 'active')
-            ->assertJsonPath('data.0.subscription.state', 'inactive');
+            ->assertJsonPath('data.0.subscription.state', 'trial');
 
         $as->getJson('/api/v1/admin/stores?search=Rimal')->assertJsonPath('data.0.id', $bakery->id);
 
@@ -230,7 +232,8 @@ class PlatformAdminTest extends TestCase
             ->assertJsonPath('data.products_count', 2)
             ->assertJsonPath('data.active_products_count', 1)
             ->assertJsonCount(2, 'data.members')
-            ->assertJsonPath('data.subscription.state', 'inactive')
+            ->assertJsonPath('data.subscription.state', 'trial')
+            ->assertJsonPath('data.subscription.has_access', true)
             ->assertJsonMissingPath('data.members.0.password');
 
         $this->actingAs($admin, 'sanctum')->getJson('/api/v1/admin/stores/999999')->assertNotFound();
@@ -396,12 +399,14 @@ class PlatformAdminTest extends TestCase
         $this->assertSame($admin->id, $log->user_id);
         $this->assertSame('Jawwal Pay transfer #4471', $log->metadata['note']);
 
-        // Deactivating the subscription leaves account access alone too.
+        // Deactivating the subscription leaves account access alone too; the store is back on its
+        // (still running) trial.
         $store->forceFill(['status' => 'active'])->save();
         $this->actingAs($admin, 'sanctum')
             ->postJson("/api/v1/admin/stores/{$store->id}/subscription", ['status' => 'inactive'])
             ->assertOk()
-            ->assertJsonPath('data.subscription.state', 'inactive')
+            ->assertJsonPath('data.subscription.status', 'inactive')
+            ->assertJsonPath('data.subscription.state', 'trial')
             ->assertJsonPath('data.status', 'active');
         $this->assertSame('active', $store->fresh()->status);
         $this->assertSame(1, AuditLog::where('action', 'store.subscription_deactivated')->count());
@@ -459,10 +464,13 @@ class PlatformAdminTest extends TestCase
     {
         $store = $this->makeStore('Shop');
         $owner = $this->makeUser($store, 'owner');
-        $store->forceFill(['subscription_status' => 'active', 'subscription_expires_at' => now()->subDay()])->save();
+        $store->forceFill(['subscription_status' => 'active', 'subscription_expires_at' => now()->subDay(), 'trial_ends_at' => now()->subDays(3)])->save();
 
         $this->assertSame('expired', $store->fresh()->subscriptionState());
+        $this->assertSame('active', $store->fresh()->status);
+        // Signed in and told why; business routes wait for renewal (SubscriptionTrialTest).
         $this->actingAs($owner, 'sanctum')->getJson('/api/v1/me')->assertOk();
+        $this->actingAs($owner, 'sanctum')->getJson('/api/v1/dashboard')->assertForbidden()->assertJsonPath('code', 'SUBSCRIPTION_EXPIRED');
     }
 
     // ---------------------------------------------------------------- products and isolation

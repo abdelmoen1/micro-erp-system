@@ -47,6 +47,7 @@
 .state-panel.is-off { --rail: var(--danger); --word: var(--danger); }
 .state-panel.is-warn { --rail: var(--warning-fg); --word: var(--warning-fg); }
 .state-panel.is-idle { --rail: var(--line-2); --word: var(--tx-2); }
+.state-panel.is-trial { --rail: var(--info-fg); --word: var(--info-fg); }
 .state-panel h2 { font-size: 14px; font-weight: 600; color: var(--tx-2); }
 .state-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 

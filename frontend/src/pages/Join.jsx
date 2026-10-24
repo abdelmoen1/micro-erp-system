@@ -6,6 +6,7 @@ import GoogleButton from "../components/GoogleButton";
 import HisbahLogo from "../components/HisbahLogo";
 import Icon from "../components/Icon";
 import { GOOGLE_CLIENT_ID } from "../lib/google";
+import { landingPath } from "../lib/domain";
 import { shortReference } from "../lib/format";
 import { ApiError, NetworkError } from "../services/apiClient";
 import { useGoogleMutation, useGoogleRegisterMutation, useRegisterMutation } from "../services/useAuth";
@@ -232,7 +233,7 @@ export default function Join() {
           setOutcome(null);
           return;
         }
-        navigate("/dashboard", { replace: true }); // Already registered: Google signed them in.
+        navigate(landingPath(result.user), { replace: true }); // Already registered: Google signed them in.
       },
       onError: fail,
     });

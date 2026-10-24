@@ -30,9 +30,26 @@ class AuthRepository {
 
   Future<AppUser> login(String email, String password) async {
     final body = await _api.post('/login', auth: false, body: {'email': email, 'password': password});
+    return _startSession(body, 'login');
+  }
+
+  /// `POST /register` (the same fields as the web /join form): creates the store and its owner,
+  /// starts the store's free trial on the server, and signs the owner in.
+  Future<AppUser> register(Map<String, String> fields) async {
+    final body = await _api.post('/register', auth: false, body: fields);
+    return _startSession(body, 'register');
+  }
+
+  /// `GET /subscription`: reachable after the trial or subscription has ended.
+  Future<SubscriptionSummary> subscription() async {
+    final body = await _api.get('/subscription');
+    return SubscriptionSummary.fromJson(body['data'] as Map<String, dynamic>? ?? const {});
+  }
+
+  Future<AppUser> _startSession(Map<String, dynamic> body, String endpoint) async {
     final token = body['token'] as String?;
     if (token == null) {
-      throw const UnexpectedFailure(statusCode: 200, message: 'login response without token');
+      throw UnexpectedFailure(statusCode: 200, message: '$endpoint response without token');
     }
     final user = AppUser.fromJson(body['user'] as Map<String, dynamic>);
     await _store.write(tokenKey, token);

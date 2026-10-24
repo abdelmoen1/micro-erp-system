@@ -31,6 +31,7 @@ export function createQueryClient() {
 // One place for cache keys, so invalidation after a write hits every screen that shows the data.
 export const queryKeys = {
   me: ["me"],
+  subscription: ["subscription"],
   dashboard: (period) => ["dashboard", period],
   sales: {
     all: ["sales"],

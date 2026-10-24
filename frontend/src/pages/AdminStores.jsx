@@ -83,7 +83,15 @@ export default function AdminStores() {
       render: (s) => (
         <>
           <SubscriptionBadge state={s.subscription.state} />
-          {s.subscription.expires_at ? <span className="cell-sub">حتى <span className="m">{dateOnly(s.subscription.expires_at)}</span></span> : null}
+          {s.subscription.state === "trial" && s.subscription.trial_ends_at ? (
+            <span className="cell-sub">
+              تنتهي <span className="m">{dateOnly(s.subscription.trial_ends_at)}</span>
+            </span>
+          ) : s.subscription.expires_at ? (
+            <span className="cell-sub">
+              حتى <span className="m">{dateOnly(s.subscription.expires_at)}</span>
+            </span>
+          ) : null}
         </>
       ),
     },
@@ -102,6 +110,7 @@ export default function AdminStores() {
         <Count label="حسابات مفعّلة" value={o?.stores.active} />
         <Count label="حسابات موقوفة" value={o?.stores.suspended} tone="danger" />
         <Count label="اشتراكات فعّالة" value={o?.subscriptions.active} tone="ok" />
+        <Count label="في الفترة التجريبية" value={o?.subscriptions.trial} />
         <Count label="اشتراكات منتهية" value={o?.subscriptions.expired} tone="warn" />
         <Count label="بلا اشتراك" value={o?.subscriptions.inactive} />
       </section>
@@ -147,6 +156,7 @@ export default function AdminStores() {
           options={[
             ["all", "كل الاشتراكات"],
             ["active", "فعّال", o?.subscriptions.active],
+            ["trial", "تجريبي", o?.subscriptions.trial],
             ["expired", "منتهٍ", o?.subscriptions.expired],
             ["inactive", "بلا اشتراك", o?.subscriptions.inactive],
           ]}
@@ -168,7 +178,9 @@ export default function AdminStores() {
         }
       />
       <Pager meta={list.data?.meta} onPage={setPageNo} />
-      <p className="data-note">الاشتراك لا يمنع الدخول حالياً؛ إيقاف الحساب وحده يمنع أعضاء المتجر من الدخول.</p>
+      <p className="data-note">
+        المتجر الجديد يبدأ بفترة تجريبية 7 أيام. بعد انتهائها، أو انتهاء الاشتراك، يدخل أعضاء المتجر ويرون شاشة التجديد فقط حتى يُفعَّل الاشتراك. إيقاف الحساب يمنع الدخول كلياً.
+      </p>
     </>
   );
 }

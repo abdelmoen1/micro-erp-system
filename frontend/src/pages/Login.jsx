@@ -6,6 +6,7 @@ import GoogleButton from "../components/GoogleButton";
 import HisbahLogo, { HisbahMark } from "../components/HisbahLogo";
 import Icon from "../components/Icon";
 import { GOOGLE_CLIENT_ID } from "../lib/google";
+import { landingPath } from "../lib/domain";
 import { shortReference } from "../lib/format";
 import { ApiError, NetworkError } from "../services/apiClient";
 import { useGoogleMutation, useLoginMutation } from "../services/useAuth";
@@ -109,7 +110,7 @@ export default function Login() {
           return;
         }
         setOutcome({ kind: "success" });
-        navigate("/dashboard", { replace: true });
+        navigate(landingPath(result.user), { replace: true });
       },
       onError: (error) => setOutcome(outcomeOf(error)),
     });
@@ -131,9 +132,9 @@ export default function Login() {
     login.mutate(
       { email: email.trim(), password },
       {
-        onSuccess: () => {
+        onSuccess: (result) => {
           setOutcome({ kind: "success" });
-          navigate("/dashboard", { replace: true });
+          navigate(landingPath(result.user), { replace: true });
         },
         onError: (error) => {
           const next = outcomeOf(error);

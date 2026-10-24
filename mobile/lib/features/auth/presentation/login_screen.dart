@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_failure.dart';
 import '../../../core/providers.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/hisbah_logo.dart';
 import '../../../core/widgets/message_banner.dart';
@@ -121,6 +123,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       NetworkFailure() => MessageBanner(icon: Icons.warning_amber_rounded, text: t.networkError),
       UserInactive() => MessageBanner(icon: Icons.block, tone: StatusTone.voided, text: t.accountInactive),
       StoreRequired() => MessageBanner(icon: Icons.block, tone: StatusTone.voided, text: t.storeRequired),
+      StoreSuspended() => MessageBanner(icon: Icons.block, tone: StatusTone.voided, text: t.storeSuspended),
       // Shown under the fields instead.
       ValidationFailed() => null,
       final ApiFailure other => MessageBanner(
@@ -131,7 +134,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       null when blocked != null => MessageBanner(
         icon: Icons.block,
         tone: StatusTone.voided,
-        text: blocked.storeMissing ? t.storeRequired : t.accountInactive,
+        text: blocked.storeSuspended
+            ? t.storeSuspended
+            : blocked.storeMissing
+            ? t.storeRequired
+            : t.accountInactive,
       ),
       null when widget.sessionExpired => MessageBanner(
         icon: Icons.info_outline,
@@ -300,6 +307,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     Flexible(child: Text(_buttonLabel(t), textAlign: TextAlign.center)),
                                   ],
                                 ),
+                              ),
+                              const SizedBox(height: 12),
+                              // Wraps onto two lines on narrow phones and large text.
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(t.loginNoAccount, style: const TextStyle(color: HisbahColors.inkMuted)),
+                                  TextButton(
+                                    key: const Key('login.register'),
+                                    onPressed: _submitting ? null : () => context.go(Routes.register),
+                                    child: Text(t.loginCreateStore),
+                                  ),
+                                ],
                               ),
                             ],
                           ),

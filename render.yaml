@@ -54,3 +54,9 @@ services:
         value: database
       - key: QUEUE_CONNECTION
         value: database
+      # Subscriptions (backend/config/hisbah.php). The support WhatsApp number (international digits)
+      # is shown on the "subscription expired" screens; leave it unset to hide the WhatsApp button.
+      - key: SUPPORT_WHATSAPP
+        sync: false
+      - key: HISBAH_TRIAL_DAYS
+        value: "7"
