@@ -1,0 +1,6 @@
+# Small instance (512 MB RAM): keep MySQL's memory well inside the limit.
+# Character set and collation stay at the server defaults, identical to the source server.
+[mysqld]
+performance_schema = OFF
+innodb_buffer_pool_size = 128M
+max_connections = 50

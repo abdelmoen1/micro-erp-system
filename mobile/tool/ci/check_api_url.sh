@@ -5,7 +5,7 @@ set -euo pipefail
 
 url=${1:-}
 if [ -z "$url" ]; then
-  echo "::error::Repository variable MOBILE_API_BASE_URL is not set (e.g. https://<service>.up.railway.app/api/v1)."
+  echo "::error::Repository variable MOBILE_API_BASE_URL is not set (e.g. https://<service>.onrender.com/api/v1)."
   exit 1
 fi
 if ! [[ $url =~ ^https://([A-Za-z0-9.-]+)(:[0-9]+)?/api/v1$ ]]; then

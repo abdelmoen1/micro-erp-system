@@ -7,7 +7,7 @@ abstract final class Env {
   /// Base URL of the Laravel API v1. Without a define, debug and profile builds reach
   /// the host machine from the Android emulator (real phones need the PC's LAN address).
   /// Release builds have no fallback: they must be built with an explicit URL
-  /// (the CI release and patch workflows pass the Railway HTTPS URL), so a release
+  /// (the CI release and patch workflows pass the deployed HTTPS URL), so a release
   /// never silently points at a development machine.
   static const apiBaseUrl = _definedApiBaseUrl != ''
       ? _definedApiBaseUrl
