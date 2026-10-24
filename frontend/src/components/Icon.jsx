@@ -31,6 +31,9 @@ const PATHS = {
   upload: "M12 15V3M7 8l5-5 5 5M4 15v5h16v-5",
   edit: "M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4",
   pin: "M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
+  shield: "M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6zM9 12l2 2 4-4",
+  shop: "M4 9.5 5.5 4h13L20 9.5M4 9.5h16M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M5.5 12.5V20h13v-7.5M10 20v-4.5h4V20",
+  calendar: "M4 6h16v14H4zM4 10h16M8 3v5M16 3v5",
 };
 
 export default function Icon({ name, size = 20, color = "currentColor", strokeWidth = 2, className, title }) {

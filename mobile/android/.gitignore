@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Gradle output when Android is built directly (flutter builds to mobile/build/).
+/build/

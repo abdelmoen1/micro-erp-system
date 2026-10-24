@@ -14,6 +14,9 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StockAdjustmentController;
+use App\Http\Controllers\Api\Admin\OverviewController as AdminOverviewController;
+use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Api\Admin\StoreController as AdminStoreController;
 
 // All routes are served under /api/v1 (bootstrap/app.php, D-22).
 
@@ -26,6 +29,19 @@ Route::middleware('throttle:register')->group(function () {
     Route::post('/register/invitation', [AuthController::class, 'acceptInvitation']);
 });
 
+
+// Platform owner (users.is_platform_admin, granted only by `php artisan hisbah:platform-admin`).
+// Not under `store`: the admin works across stores. Account access and subscription are separate writes.
+Route::middleware(['auth:sanctum', 'active', 'platform.admin'])->prefix('admin')->group(function () {
+    Route::get('overview', AdminOverviewController::class);
+    Route::get('stores', [AdminStoreController::class, 'index']);
+    Route::get('stores/{store}', [AdminStoreController::class, 'show']);
+    Route::get('stores/{store}/products', [AdminStoreController::class, 'products']);
+    Route::post('stores/{store}/status', [AdminStoreController::class, 'updateStatus']);
+    Route::post('stores/{store}/subscription', [AdminStoreController::class, 'updateSubscription']);
+    Route::get('products', [AdminProductController::class, 'index']);
+    Route::get('catalog-products/{catalogProduct}', [AdminProductController::class, 'catalog']);
+});
 
 // Protected API
 Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {

@@ -58,7 +58,26 @@ class AuthService
             throw new ApiException(403, 'USER_INACTIVE', 'تم إيقاف هذا الحساب. تواصل مع صاحب المتجر.');
         }
 
+        $this->ensureStoreOpen($user);
+
         return $user;
+    }
+
+    /** 403 for every member of a store the platform admin suspended. */
+    public static function storeSuspended(): ApiException
+    {
+        return new ApiException(403, 'STORE_SUSPENDED', 'تم إيقاف حساب هذا المتجر. تواصل مع إدارة حسبة.');
+    }
+
+    /**
+     * Members of a suspended store cannot sign in. The platform admin still can, so the admin pages
+     * stay reachable to reactivate it; their own store routes are closed like everyone else's.
+     */
+    private function ensureStoreOpen(User $user): void
+    {
+        if ($user->store?->isSuspended() && !$user->isPlatformAdmin()) {
+            throw self::storeSuspended();
+        }
     }
 
     /** Sanctum token that expires with sanctum.expiration (30 days by default). */
@@ -114,6 +133,8 @@ class AuthService
         if (!$user->isActive()) {
             throw new ApiException(403, 'USER_INACTIVE', 'تم إيقاف هذا الحساب. تواصل مع صاحب المتجر.');
         }
+
+        $this->ensureStoreOpen($user);
 
         if ($user->google_id === null) {
             $user->forceFill(['google_id' => $profile['sub']])->save();
@@ -186,6 +207,10 @@ class AuthService
                 throw ValidationException::withMessages([
                     'token' => 'الدعوة غير صالحة أو منتهية.',
                 ]);
+            }
+
+            if ($invitation->store()->value('status') === Store::STATUS_SUSPENDED) {
+                throw self::storeSuspended();
             }
 
             if ($invitation->email && !hash_equals(strtolower($invitation->email), strtolower($data['email']))) {

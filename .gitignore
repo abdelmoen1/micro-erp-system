@@ -1,0 +1,5 @@
+# A Composer install at the repository root (local Laravel Boost / MCP tooling). The app's
+# dependencies live in backend/; nothing at the root is shipped.
+/vendor/
+/composer.json
+/composer.lock
