@@ -23,6 +23,7 @@ class StoreDebtRequest extends FormRequest
                     ->where(fn($query) => $query->where('store_id', $this->user()->store_id)->whereNull('deleted_at')),
             ],
             'amount' => ['required', ...Money::inputRules()],
+            'due_date' => ['nullable', 'date_format:Y-m-d'],
         ];
     }
 
@@ -35,6 +36,7 @@ class StoreDebtRequest extends FormRequest
             'amount.numeric' => 'قيمة الدين يجب أن تكون رقمية.',
             'amount.decimal' => 'قيمة الدين يجب ألا تتجاوز منزلتين عشريتين.',
             'amount.gt' => 'قيمة الدين يجب أن تكون أكبر من صفر.',
+            'due_date.date_format' => 'صيغة تاريخ الاستحقاق يجب أن تكون YYYY-MM-DD.',
             'amount.max' => 'قيمة الدين أكبر من الحد المسموح.',
         ];
     }

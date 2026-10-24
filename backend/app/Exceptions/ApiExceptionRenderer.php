@@ -47,12 +47,19 @@ class ApiExceptionRenderer
 
         $correlationId = AssignCorrelationId::current($request);
 
-        return response()->json([
+        $body = [
             'message' => $message,
             'code' => $code,
             'errors' => (object) $errors,
             'correlation_id' => $correlationId,
-        ], $status, $headers + [AssignCorrelationId::HEADER => $correlationId]);
+        ];
+
+        // Optional machine-readable facts for codes that need them (e.g. the credit-limit amounts).
+        if ($e instanceof ApiException && $e->details !== []) {
+            $body['details'] = $e->details;
+        }
+
+        return response()->json($body, $status, $headers + [AssignCorrelationId::HEADER => $correlationId]);
     }
 
     private static function describe(Throwable $e): array

@@ -1,0 +1,108 @@
+# Hisbah Smart Shop — API v1 product catalog (US-0401)
+#
+# Reads: every role. Writes (create, update, deactivate): owner and manager; employee → 403 FORBIDDEN.
+# Another store's product → 404 NOT_FOUND. There is no DELETE (BR-04): DELETE → 405 METHOD_NOT_ALLOWED.
+# Money is a 2-decimal string (D-09). CR-13 (modified 2026-10-19): `unit` is `piece` (default) or `kg`; prices are per unit;
+# quantities are strings in that unit, "12" for pieces and "2.500" for kg (whole pieces, kg to 3 decimals).
+# Behaviour is covered by tests/Feature/ProductCatalogTest.php. Use a disposable local database only.
+
+@base = http://127.0.0.1:8000/api/v1
+@token = <sanctum token from POST /login>
+
+### 1. Create — 201 (also records an `opening` stock movement of `current_stock`)
+POST {{base}}/products
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{
+  "name": "Milk 1L",
+  "barcode": "7290000000017",
+  "selling_price": "6.50",
+  "cost_price": "5.00",
+  "current_stock": 12,
+  "minimum_stock": 5
+}
+
+# Required: name, selling_price (> 0, max 2 decimals, per unit), current_stock (≥ 0; whole for piece, up to 3 decimals for kg).
+# Optional: unit (piece | kg, default piece).
+# Optional: barcode (unique in the store, max 64; "" = none), cost_price (≥ 0), minimum_stock (default 5).
+# Response:
+# {
+#   "message": "تم إنشاء المنتج بنجاح",
+#   "product": {
+#     "id": 1, "name": "Milk 1L", "barcode": "7290000000017",
+#     "selling_price": "6.50", "cost_price": "5.00",
+#     "unit": "piece", "current_stock": "12", "minimum_stock": "5", "is_low_stock": false,
+#     "status": "active", "created_at": "…", "updated_at": "…"
+#   },
+#   "meta": { "currency": "ILS" }
+# }
+# Duplicate barcode in the same store → 422 VALIDATION_FAILED, errors.barcode.
+
+### 2. List — 200 (active products, by name, 20 per page)
+# ?search= matches the name (substring) or the exact barcode.
+# ?status=active (default) | inactive | all
+GET {{base}}/products?search=milk
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 3. Barcode lookup — 200 with { "data": { …product } }, or 404 when no ACTIVE product has it
+GET {{base}}/products/lookup?barcode=7290000000017
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 3b. Shared catalog lookup (before adding) — 200 always
+# { "data": { "barcode": "<normalized>", "product": { …my product, any status } | null,
+#             "catalog_product": { "id", "barcode", "name", "unit" } | null } }
+# A global GTIN another store saved comes back as catalog_product; POST /products with just that
+# barcode + selling_price/cost_price/current_stock links to it (name/unit default to the catalog's).
+# Barcodes are normalized everywhere: Arabic digits → ASCII, spaces dropped, UPC-A / GTIN-14 → GTIN-13.
+GET {{base}}/products/catalog-lookup?barcode=6291041500213
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 4. Show — 200 { "data": { …product } }
+GET {{base}}/products/1
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 5. Update — 200 { "data": { …product } }
+# Any of: name, barcode, unit, selling_price, cost_price, minimum_stock, status (active | inactive).
+# unit → piece is refused (422 errors.unit) while the stock has a fraction of a kg.
+# current_stock is refused (422): stock changes only through stock movements (adjustments: US-0402).
+PATCH {{base}}/products/1
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{ "selling_price": "6.90" }
+
+### 6. Deactivate — 200 { "message": "تم إيقاف المنتج", "product": { …, "status": "inactive" } }
+# Hidden from the default list and from lookup. Reactivate with PATCH { "status": "active" }.
+POST {{base}}/products/1/deactivate
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 7. Low stock (US-0403) — 200, paginated { "data": [ …products ] }
+# Active products with current_stock <= minimum_stock (default 5), lowest stock first. All roles.
+GET {{base}}/products/low-stock
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 8. Stock adjustment (US-0402) — 201 { "message", "movement": { type: adjustment_in | adjustment_out, quantity, balance_after, … }, "product": { … } }
+# Owner / Manager (employee 403). quantity: signed, non-zero, in the product's unit ("-2", "-0.250"); reason required.
+# Would go below zero: 422 INSUFFICIENT_STOCK. Idempotency-Key required (428 without it).
+POST {{base}}/stock-adjustments
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+Idempotency-Key: 6f1c2f1e-8a43-4d43-9a3f-2f7f0f6b3c11
+
+{ "product_id": 1, "quantity": -2, "reason": "Shelf count: 2 broken" }
+
+### 9. Movement history (US-0402) — 200, paginated, newest first { "data": [ …movements ] }
+# Types: opening, adjustment_in, adjustment_out (sale, sale_void, return come with US-0501 / US-0503 / US-0601).
+GET {{base}}/products/1/movements
+Authorization: Bearer {{token}}
+Accept: application/json

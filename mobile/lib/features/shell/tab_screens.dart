@@ -4,14 +4,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
 import '../../core/theme/hisbah_tokens.dart';
 import '../../core/widgets/dashed_card.dart';
+import '../../core/widgets/hisbah_logo.dart';
 import '../../l10n/app_localizations.dart';
 import '../auth/application/session_controller.dart';
 import '../auth/domain/app_user.dart';
+import '../customers/presentation/customers_screen.dart';
+import '../home/dashboard.dart';
+import '../home/home_dashboard.dart';
+import '../products/presentation/products_screen.dart';
+import '../sale/presentation/cart_screen.dart';
 import 'app_shell.dart';
 
 /// Root screen of each tab: header (title, store, connection) and the tab content.
-/// Feature content arrives in later sprints (designed in S4 / US-1508, POS built in S5);
-/// S1 only proves the shell, navigation and session.
+/// Home shows today's dashboard; the other tabs' content arrives in later sprints
+/// (POS built in S5).
 class TabRootScreen extends ConsumerWidget {
   const TabRootScreen({super.key, required this.tab});
 
@@ -19,28 +25,44 @@ class TabRootScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // بيع is the M-02 cart: its own layout (fixed actions and total bar around the line list).
+    if (tab == AppTab.pos) return const CartScreen();
+    // S3: M-07 customers and M-11 products have their own search headers and lists.
+    if (tab == AppTab.customers) return const CustomersScreen();
+    if (tab == AppTab.products) return const ProductsScreen();
+
     final t = AppLocalizations.of(context);
     final session = ref.watch(sessionProvider);
     final storeName = session is SignedIn ? session.user.storeName : '';
 
+    final list = ListView(
+      // Always scrollable so pull-to-refresh works on a short Home.
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(20, 10, 20, 20 + MediaQuery.paddingOf(context).bottom),
+      children: [
+        TabHeader(title: tab.label(t), storeName: storeName),
+        const SizedBox(height: 14),
+        switch (tab) {
+          AppTab.home => const HomeDashboard(),
+          AppTab.more => const _MoreTab(),
+          _ => _Placeholder(tab: tab),
+        },
+      ],
+    );
+
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(20, 10, 20, 20 + MediaQuery.paddingOf(context).bottom),
-          children: [
-            _Header(title: tab.label(t), storeName: storeName),
-            const SizedBox(height: 14),
-            if (tab == AppTab.more) const _MoreTab() else _Placeholder(tab: tab),
-          ],
-        ),
+        child: tab == AppTab.home
+            ? RefreshIndicator(onRefresh: () => ref.refresh(dashboardProvider.future), child: list)
+            : list,
       ),
     );
   }
 }
 
-class _Header extends ConsumerWidget {
-  const _Header({required this.title, required this.storeName});
+class TabHeader extends ConsumerWidget {
+  const TabHeader({super.key, required this.title, required this.storeName});
 
   final String title;
   final String storeName;
@@ -52,8 +74,9 @@ class _Header extends ConsumerWidget {
     final fg = online ? HisbahColors.primary : StatusTone.offline.fg;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const ExcludeSemantics(child: HisbahMarkTile(size: 40)),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,7 +130,9 @@ class _Placeholder extends StatelessWidget {
       AppTab.pos || AppTab.more => ('SCR-M-02', t.placeholderPos, t.placeholderPosBody),
     };
     return ConstrainedBox(
-      constraints: BoxConstraints(minHeight: MediaQuery.sizeOf(context).height * 0.5),
+      // On بيع the scan card (T-1301-7) sits below, so the frame is shorter there and the card
+      // stays above the bottom bar at 360 × 760 (S2 hi-fi A).
+      constraints: BoxConstraints(minHeight: MediaQuery.sizeOf(context).height * (tab == AppTab.pos ? 0.36 : 0.5)),
       child: DashedCard(
         child: Center(
           child: Column(

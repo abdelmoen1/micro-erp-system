@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Customer;
+use App\Support\Money;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,7 +14,8 @@ class StoreCustomerRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        // US-0305 AC1: every role creates customers; only Owner / Manager set a credit limit.
+        return !$this->has('credit_limit') || $this->user()->can('setCreditLimit', Customer::class);
     }
 
     /**
@@ -33,6 +36,7 @@ class StoreCustomerRequest extends FormRequest
             ],
             'address' => 'nullable|string|max:500',
             'notes' => 'nullable|string',
+            'credit_limit' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:' . Money::MAX],
         ];
     }
 
@@ -44,6 +48,7 @@ class StoreCustomerRequest extends FormRequest
             'phone.required' => 'رقم الهاتف مطلوب',
             'phone.unique' => 'رقم الهاتف مستخدم مسبقًا لعميل آخر',
             'address.string' => 'العنوان يجب أن يكون نصًا',
+            ...CustomerCreditLimitMessages::all(),
         ];
     }
 }

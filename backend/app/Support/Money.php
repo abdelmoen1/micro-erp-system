@@ -56,10 +56,15 @@ final class Money
         return bcsub(self::of($a), self::of($b), self::SCALE);
     }
 
-    /** Line total: unit price × integer quantity. */
-    public static function times(int|float|string|null $unitPrice, int $quantity): string
+    /**
+     * Line total: unit price × quantity, rounded half-up to 2 decimals (doc 15 §4).
+     * The quantity may be whole (pieces) or have up to 3 decimals (kg).
+     */
+    public static function times(int|float|string|null $unitPrice, int|float|string $quantity): string
     {
-        return bcmul(self::of($unitPrice), (string) $quantity, self::SCALE);
+        $exact = bcmul(self::of($unitPrice), Quantity::of($quantity), self::SCALE + Quantity::SCALE);
+
+        return self::of($exact);
     }
 
     public static function sum(iterable $values): string

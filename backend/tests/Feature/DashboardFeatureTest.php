@@ -86,6 +86,7 @@ class DashboardFeatureTest extends TestCase
             Debt::create([
                 'store_id' => $store->id,
                 'invoice_id' => $invoice->id,
+                'customer_id' => $invoice->customer_id,
                 'amount' => $total,
                 'remaining_amount' => $total,
                 'status' => 'unpaid',

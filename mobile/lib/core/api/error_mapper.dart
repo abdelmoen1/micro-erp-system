@@ -8,7 +8,10 @@ ApiFailure mapDioException(DioException e) {
   final response = e.response;
 
   if (response == null) {
-    return NetworkFailure(message: e.message);
+    // A send or receive timeout may come after the server got the request: the outcome is unknown
+    // (M-04 «غير مؤكد»). Connection errors mean the request never left the phone.
+    final maybeDelivered = e.type == DioExceptionType.sendTimeout || e.type == DioExceptionType.receiveTimeout;
+    return NetworkFailure(message: e.message, maybeDelivered: maybeDelivered);
   }
 
   final status = response.statusCode ?? 0;
@@ -51,7 +54,14 @@ ApiFailure mapDioException(DioException e) {
   }
 
   if (status == 422 && code != null) {
-    return BusinessRuleViolation(code: code, fieldErrors: fieldErrors, message: message, correlationId: correlationId);
+    final details = envelope['details'];
+    return BusinessRuleViolation(
+      code: code,
+      fieldErrors: fieldErrors,
+      details: details is Map ? Map<String, Object?>.from(details) : const {},
+      message: message,
+      correlationId: correlationId,
+    );
   }
   if (status >= 500) {
     return ServerError(statusCode: status, message: message, correlationId: correlationId);

@@ -14,34 +14,56 @@ use App\Enums\InvoiceSource;
 use App\Http\Resources\InvoiceResource;
 use App\Models\Invoice;
 use App\Services\AuditService;
+use App\Services\DebtService;
 use App\Support\Money;
+use Illuminate\Validation\Rule;
 
 class DebtController extends Controller
 {
-    public function __construct(private readonly AuditService $audit) {}
+    public function __construct(
+        private readonly AuditService $audit,
+        private readonly DebtService $debts,
+    ) {}
 
     /**
-     * Display a listing of the resource.
+     * W-13 / M-08 debt lists (US-0702). `bucket`: due_today | this_week | overdue | open | all;
+     * `sort`: due (oldest due first, the follow-up order), balance (highest remaining) or recent.
+     * `meta.total_remaining` is Σ remaining of the whole filtered list (AC4) and `meta.counts`
+     * feeds the tab counters.
      */
     public function index(Request $request)
     {
-        $storeId = $request->user()->store_id;
+        $filters = $request->validate([
+            'bucket' => ['nullable', Rule::in(DebtService::BUCKETS)],
+            'customer_id' => ['nullable', 'integer'],
+            'sort' => ['nullable', Rule::in(['due', 'balance', 'recent'])],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
 
-        $debts = Debt::query()
-            ->where('store_id', $storeId)
-            ->with(['invoice', 'payments'])
-            ->select(
-                'id',
-                'store_id',
-                'invoice_id',
-                'amount',
-                'remaining_amount',
-                'status',
-            )
-            ->latest()
-            ->paginate(10);
+        $store = $request->user()->store;
+        $bucket = $filters['bucket'] ?? 'all';
+        $query = $this->debts->query($store, $bucket, $filters['customer_id'] ?? null);
+        $total = Money::sum((clone $query)->pluck('remaining_amount'));
 
-        return DebtResource::collection($debts);
+        $sort = $filters['sort'] ?? ($bucket === 'all' ? 'recent' : 'due');
+        $query->with(['invoice', 'payments', 'customer']);
+        match ($sort) {
+            'balance' => $query->orderByDesc('remaining_amount'),
+            'due' => $query->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')->orderBy('due_date'),
+            default => $query->latest(),
+        };
+
+        return DebtResource::collection($query->orderByDesc('id')->paginate($filters['per_page'] ?? 10))
+            ->additional(['meta' => [
+                'total_remaining' => $total,
+                'counts' => $this->debts->counts($store),
+            ]]);
+    }
+
+    /** W-13 «أعلى رصيد» (US-0702 AC3): customers by total remaining, highest first. */
+    public function balances(Request $request)
+    {
+        return response()->json(['data' => $this->debts->balances($request->user()->store)]);
     }
 
     /**
@@ -59,6 +81,7 @@ class DebtController extends Controller
                 'store_id' => $storeId,
                 'customer_id' => $validated['customer_id'],
                 'total_amount' => $amount,
+                'paid_amount' => '0.00',
                 'has_debt' => true,
                 'payment_method' => null,
                 'source' => InvoiceSource::OPENING_DEBT,
@@ -74,6 +97,9 @@ class DebtController extends Controller
             $debt = Debt::create([
                 'invoice_id' => $invoice->id,
                 'store_id' => $storeId,
+                'customer_id' => $invoice->customer_id,
+                // US-0701 AC2: a past date is allowed for a legacy debt; it is overdue at once.
+                'due_date' => $validated['due_date'] ?? null,
                 'amount' => $amount,
                 'remaining_amount' => $amount,
                 'status' => 'unpaid',
@@ -108,7 +134,7 @@ class DebtController extends Controller
             404
         );
 
-        $debt->load('invoice.customer');
+        $debt->load(['invoice.customer', 'customer', 'payments']);
 
         return new DebtResource($debt);
     }
