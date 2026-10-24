@@ -1,0 +1,103 @@
+# Hisbah Smart Shop — API v1 platform owner (/admin)
+#
+# Who: only an account with users.is_platform_admin = true. Nothing in the API sets that flag; it is granted on
+# the server with an existing account:
+#     php artisan hisbah:platform-admin owner@example.com          # grant
+#     php artisan hisbah:platform-admin owner@example.com --revoke # revoke (also signs the account out everywhere)
+# Any other signed-in account → 403 FORBIDDEN on every /admin route (unknown ids too, so ids cannot be probed);
+# no token → 401; a deactivated admin → 403 USER_INACTIVE. /admin routes are not under the `store` middleware.
+#
+# Two separate store states:
+#   status               active | suspended. Suspended → every member gets 403 STORE_SUSPENDED at login and on every
+#                        store route (tokens are kept; access returns on reactivation). Does not touch the subscription.
+#   subscription.status  active | inactive, set by hand after a payment is verified; subscription.state adds `expired`
+#                        (active with an expiry in the past). Recorded only: it does not block access yet.
+# Each change stamps *_changed_at / *_changed_by and writes an audit row (store.suspended, store.reactivated,
+# store.subscription_activated, store.subscription_deactivated) into that store's history. Re-sending the current
+# state changes nothing. Behaviour is covered by tests/Feature/PlatformAdminTest.php. Use a disposable local database.
+
+@base = http://127.0.0.1:8000/api/v1
+@token = <sanctum token of a platform admin from POST /login>
+
+### 1. Overview counts — 200
+GET {{base}}/admin/overview
+Authorization: Bearer {{token}}
+Accept: application/json
+
+# { data: { stores: { total, active, suspended, registered_last_30_days },
+#           subscriptions: { active, expired, inactive }, products: { store_rows, catalog_items }, generated_at } }
+
+### 2. Stores — 200, paginated { data, links, meta }
+GET {{base}}/admin/stores?search=gaza&status=active&subscription=expired&sort=newest&per_page=20&page=1
+Authorization: Bearer {{token}}
+Accept: application/json
+
+# search: store name, phone, address, or a member's name / email. status: active | suspended.
+# subscription: active | expired | inactive. sort: newest (default) | oldest | name. per_page ≤ 50.
+# Row: id, name, phone, address, timezone, created_at, days_since_registration, owner {id, name, email, phone, status},
+#      status, suspension_reason, status_changed_at, subscription {status, state, started_at, expires_at, changed_at},
+#      users_count, products_count.
+
+### 3. One store — 200 (404 for an unknown id)
+GET {{base}}/admin/stores/5
+Authorization: Bearer {{token}}
+Accept: application/json
+
+# The row above plus status_changed_by / subscription.changed_by {id, name}, members [{id, name, email, phone, role,
+# status, created_at}], active_products_count and history [{id, action, at, by {id, name}, metadata}] (latest 30).
+
+### 4. That store's products only — 200, paginated
+GET {{base}}/admin/stores/5/products?search=milk&status=all
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 5. Suspend the account — 200 (422 VALIDATION_FAILED for another status or a reason over 500 characters)
+POST {{base}}/admin/stores/5/status
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{ "status": "suspended", "reason": "Unpaid since September" }
+
+### 6. Reactivate the account — 200 (clears suspension_reason)
+POST {{base}}/admin/stores/5/status
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{ "status": "active" }
+
+### 7. Activate or renew the subscription — 200
+POST {{base}}/admin/stores/5/subscription
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{ "status": "active", "expires_at": "2027-01-31", "note": "Jawwal Pay transfer #4471" }
+
+# expires_at is optional (open-ended) and must be in the future. A bare date runs to 23:59:59 of that day in the
+# store's timezone; a full ISO date-time is taken as given. Renewing an active subscription keeps started_at.
+
+### 8. Deactivate the subscription — 200 (expires_at is refused here)
+POST {{base}}/admin/stores/5/subscription
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{ "status": "inactive", "note": "Refunded" }
+
+### 9. Product rows across stores — 200, paginated
+GET {{base}}/admin/products?search=6291041500213&store=rafah&store_id=&catalog_product_id=&status=all
+Authorization: Bearer {{token}}
+Accept: application/json
+
+# One row per store product: name, barcode, unit, selling_price, cost_price, current_stock, minimum_stock,
+# is_low_stock, status, catalog_product {id, barcode, name, unit} | null, store {id, name, address, phone, status}.
+# Nothing is summed or merged across stores. search: product name or exact barcode; store: store name or address.
+
+### 10. A shared catalog item and every store that carries it — 200 (404 unknown)
+GET {{base}}/admin/catalog-products/3
+Authorization: Bearer {{token}}
+Accept: application/json
+
+# { data: { id, barcode, name, unit, created_at, stores_count, offers: [ row as in 9, one per store ] } }

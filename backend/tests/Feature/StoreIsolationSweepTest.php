@@ -29,6 +29,8 @@ class StoreIsolationSweepTest extends TestCase
         $routes = collect(Route::getRoutes()->getRoutes())
             ->filter(fn(RouteDefinition $route) => str_starts_with($route->uri(), 'api/v1/'))
             ->filter(fn(RouteDefinition $route) => count($route->parameterNames()) > 0)
+            // Platform admin routes span stores by design; a store owner gets 403 there (PlatformAdminTest).
+            ->reject(fn(RouteDefinition $route) => str_starts_with($route->uri(), 'api/v1/admin/'))
             ->values();
 
         $this->assertNotEmpty($routes);

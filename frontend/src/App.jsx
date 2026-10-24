@@ -19,6 +19,12 @@ const Debts = lazy(() => import("./pages/Collections").then((m) => ({ default: m
 const Payments = lazy(() => import("./pages/Collections").then((m) => ({ default: m.Payments })));
 const Staff = lazy(() => import("./pages/Staff"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
+// Platform owner area: its own shell; the API refuses every /admin call from a store account.
+const AdminShell = lazy(() => import("./pages/AdminShell"));
+const AdminStores = lazy(() => import("./pages/AdminStores"));
+const AdminStore = lazy(() => import("./pages/AdminStore"));
+const AdminProducts = lazy(() => import("./pages/AdminProducts"));
+const AdminCatalogItem = lazy(() => import("./pages/AdminProducts").then((m) => ({ default: m.AdminCatalogItem })));
 
 export default function App() {
   return (
@@ -45,6 +51,12 @@ export default function App() {
               <Route path="/debts" element={<Debts />} />
               <Route path="/payments" element={<Payments />} />
               <Route path="/staff" element={<Staff />} />
+            </Route>
+            <Route element={<AdminShell />}>
+              <Route path="/admin" element={<AdminStores />} />
+              <Route path="/admin/stores/:id" element={<AdminStore />} />
+              <Route path="/admin/products" element={<AdminProducts />} />
+              <Route path="/admin/catalog/:id" element={<AdminCatalogItem />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

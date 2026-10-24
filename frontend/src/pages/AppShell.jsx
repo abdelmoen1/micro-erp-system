@@ -68,6 +68,12 @@ export default function AppShell() {
             )}
           </nav>
           <div className="side-foot">
+            {user.is_platform_admin ? (
+              <NavLink to="/admin" className="platform-entry" onClick={() => setOpen(false)}>
+                <Icon name="shield" size={18} strokeWidth={1.8} />
+                إدارة المنصة
+              </NavLink>
+            ) : null}
             <div className="store-card">
               <span className="store-ic" aria-hidden="true">
                 <Icon name="home" size={18} strokeWidth={1.8} />

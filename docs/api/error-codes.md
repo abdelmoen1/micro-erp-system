@@ -50,6 +50,7 @@ Every error response under `/api/v1` has this shape and the `X-Correlation-ID` h
 | 401 | `INVALID_CREDENTIALS` | `POST /login` | "Email or password is incorrect"; keep the email field |
 | 403 | `USER_INACTIVE` | `POST /login` with correct password; **any** authenticated call by a deactivated user (the token is revoked at the same time) | Clear the token; show the "account deactivated" screen |
 | 403 | `STORE_REQUIRED` | Any authenticated call by a user with no store | Show error; contact support |
+| 403 | `STORE_SUSPENDED` | `POST /login`, `POST /auth/google` or `POST /register/invitation` for a store the platform admin suspended; **any** store route called with an earlier token (the token is kept, so access returns on reactivation) | Show "store suspended, contact Hisbah"; do not retry |
 | 401 | `GOOGLE_TOKEN_INVALID` | `POST /auth/google`: the Google ID token is invalid, expired, unverified or for another client | Show `message`; offer the Google button again |
 | 503 | `SSO_UNAVAILABLE` | `POST /auth/google`: `GOOGLE_CLIENT_ID` is not set, or Google could not be reached | Show `message`; email sign-in still works |
 

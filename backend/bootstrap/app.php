@@ -37,7 +37,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'store' => \App\Http\Middleware\EnsureUserHasStore::class,
             'active' => \App\Http\Middleware\EnsureUserIsActive::class,
             'idempotent' => \App\Http\Middleware\EnsureIdempotency::class,
+            'platform.admin' => \App\Http\Middleware\EnsurePlatformAdmin::class,
         ]);
+
+        // Admin routes refuse non-admins before {store} is resolved: no 404/403 difference to probe ids with.
+        $middleware->prependToPriorityList(
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\EnsurePlatformAdmin::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->dontReport(ApiException::class);

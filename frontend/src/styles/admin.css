@@ -115,6 +115,13 @@ select.fld { padding-inline: 12px; }
 .qty button:disabled { color: #b8b0a2; }
 .qty span { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 700; }
 
+/* store shell: the platform admin's way into /admin (shown only to them; the API enforces it) */
+.platform-entry {
+  display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 12px;
+  background: var(--deep); color: var(--on-deep); font-size: 14px; font-weight: 700;
+}
+.platform-entry:hover { background: var(--deep-pressed); color: var(--on-deep); text-decoration: none; }
+
 @media (max-width: 640px) {
   .page-head h1 { font-size: 22px; }
   .date-fld { width: 100%; }

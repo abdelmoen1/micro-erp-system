@@ -1,0 +1,79 @@
+/* Platform owner area (/admin). Same shell as the store back office, but the sidebar is the deep brand
+   green so it is always clear these pages span every store. Loaded with the admin chunk only. */
+
+.shell.platform .side { background: var(--deep); border-inline-end: 0; color: var(--on-deep); }
+.shell.platform .side-brand, .shell.platform .side-brand:hover { color: var(--on-deep); }
+.shell.platform .side a:focus-visible, .shell.platform .side button:focus-visible { outline-color: var(--accent-300); }
+.shell.platform .menubtn { background: transparent; border-color: var(--on-deep-line); color: var(--on-deep); }
+.shell.platform .nav a { color: var(--on-deep-muted); }
+.shell.platform .nav a:hover { background: rgba(251, 249, 244, 0.08); color: var(--on-deep); }
+.shell.platform .nav a[aria-current="page"] { background: var(--on-deep); color: var(--deep); box-shadow: none; }
+.shell.platform .user-card { background: rgba(251, 249, 244, 0.06); border-color: var(--on-deep-line); }
+.shell.platform .user-card .who span { color: var(--on-deep-faint); }
+.shell.platform .avatar { background: var(--accent-300); color: var(--deep); }
+.shell.platform .logout { color: var(--on-deep-muted); }
+.shell.platform .logout:hover:not(:disabled) { background: rgba(255, 201, 189, 0.16); color: var(--on-deep-error); }
+.shell.platform .role-chip { background: var(--brand-tint); color: var(--deep); }
+
+.platform-tag { display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 13px; font-weight: 600; color: var(--accent-300); }
+.platform-back {
+  display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-radius: 10px;
+  font-size: 13px; font-weight: 600; color: var(--on-deep-muted);
+}
+.platform-back:hover { background: rgba(251, 249, 244, 0.08); color: var(--on-deep); text-decoration: none; }
+.platform-back svg { transform: scaleX(-1); }
+
+.platform-denied { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--ground); }
+.platform-denied .card { max-width: 480px; }
+
+/* stores: counts strip and the two filters */
+.platform-counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 12px; }
+.platform-count.is-danger .value { color: var(--danger); }
+.platform-count.is-ok .value { color: var(--success-fg); }
+.platform-count.is-warn .value { color: var(--warning-fg); }
+.platform-filters { display: flex; flex-wrap: wrap; gap: 10px; }
+.platform-filters .segs { max-width: 100%; overflow-x: auto; }
+.platform-filters .seg-count { margin-inline-start: 6px; }
+.platform-sort { width: 190px; }
+
+/* store page: account access and subscription, side by side and visibly separate */
+.state-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.state-panel {
+  --rail: var(--border-strong); --word: var(--ink);
+  padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+  border-inline-start: 6px solid var(--rail);
+}
+.state-panel.is-on { --rail: var(--success-fg); --word: var(--success-fg); }
+.state-panel.is-off { --rail: var(--danger); --word: var(--danger); }
+.state-panel.is-warn { --rail: var(--warning-fg); --word: var(--warning-fg); }
+.state-panel.is-idle { --rail: var(--line-2); --word: var(--tx-2); }
+.state-panel h2 { font-size: 14px; font-weight: 600; color: var(--tx-2); }
+.state-word { display: flex; align-items: center; gap: 10px; font-size: 30px; font-weight: 700; line-height: 1.2; color: var(--word); }
+.state-means { font-size: 14px; color: var(--tx-2); max-width: 46ch; }
+.state-facts { margin: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; }
+.state-facts > div { display: flex; gap: 12px; justify-content: space-between; }
+.state-facts dt { color: var(--tx-2); flex: none; }
+.state-facts dd { margin: 0; text-align: left; }
+.state-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.state-panel > .btn { margin-top: 4px; }
+
+.platform-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.facts { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.facts dt { font-size: 12px; color: var(--tx-2); font-weight: 600; }
+.facts dd { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
+.facts dd.m { text-align: right; }
+.member-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--tx-2); flex: none; }
+.history li { align-items: flex-start; }
+.history li > span:last-child { flex: none; text-align: left; }
+
+.platform-section { display: flex; flex-direction: column; gap: 12px; }
+.section-title { font-size: 19px; font-weight: 700; }
+.platform-inline-search { width: min(320px, 100%); }
+
+@media (max-width: 760px) {
+  .state-panels, .platform-grid, .facts { grid-template-columns: minmax(0, 1fr); }
+  .state-word { font-size: 26px; }
+  .platform-sort { width: 100%; }
+  .history li { flex-direction: column; }
+  .history li > span:last-child { text-align: right; }
+}

@@ -1,10 +1,12 @@
 <?php
 
+use App\Models\User;
 use App\Services\IdempotencyService;
 use App\Services\StockService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -62,3 +64,35 @@ Artisan::command('hisbah:verify-debts', function () {
 
     return 1;
 })->purpose('Report how many debts carry the same customer as their invoice (US-0701 backfill)');
+
+// Platform owner dashboard: the only way to grant or revoke platform admin. It promotes an existing
+// account (no account or password is ever created here), so run it on the server after signing up.
+Artisan::command('hisbah:platform-admin {email : Email of an existing account} {--revoke : Remove platform admin instead}', function () {
+    $user = User::where('email', $this->argument('email'))->first();
+
+    if (!$user) {
+        $this->error('No account uses that email. Register it first, then run this command again.');
+
+        return 1;
+    }
+
+    $grant = !$this->option('revoke');
+
+    if ($grant && !$user->isActive()) {
+        $this->error('The account is deactivated; reactivate it before granting platform admin.');
+
+        return 1;
+    }
+
+    $user->forceFill(['is_platform_admin' => $grant])->save();
+
+    if (!$grant) {
+        // Revocation takes effect at once on every device.
+        $user->tokens()->delete();
+    }
+
+    Log::notice($grant ? 'Platform admin granted.' : 'Platform admin revoked.', ['user_id' => $user->id]);
+    $this->info(($grant ? 'Granted' : 'Revoked') . " platform admin for user #{$user->id}.");
+
+    return 0;
+})->purpose('Grant (or --revoke) platform admin for an existing account');
