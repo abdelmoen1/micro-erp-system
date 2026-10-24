@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 /// Direction A "Ledger" (docs/design/tokens.json 0.2.0-draft, hi-fi board US-1507 P2).
 /// Selected by the TL on 2026-10-15 (DR-2 part 1); final DR-2 approval is still PENDING.
+/// Brand palette (2026-10-22): deep teal #10565B, secondary teal #176D73, warm ground #F2EEE4,
+/// card #FBF9F4, pale teal #E1ECE8, ink #14262E. Red is kept for errors, overdue debt and
+/// destructive actions only.
 abstract final class HisbahColors {
-  static const ground = Color(0xFFF2EEE4); // also the logo's own background
+  static const ground = Color(0xFFF2EEE4);
   static const surface = Color(0xFFFBF9F4);
   static const raised = Color(0xFFFFFFFF);
   static const border = Color(0xFFE2DBCD);
@@ -11,10 +14,20 @@ abstract final class HisbahColors {
   static const ink = Color(0xFF14262E);
   static const inkMuted = Color(0xFF4E5856);
   static const inkSubtle = Color(0xFF5F6A68);
-  static const primary = Color(0xFF176D73);
-  static const primaryPressed = Color(0xFF0E4F54);
+  static const primary = Color(0xFF10565B);
+  static const primaryPressed = Color(0xFF0B4044);
+  static const secondary = Color(0xFF176D73);
   static const onPrimary = Color(0xFFFFFFFF);
+
+  /// Secondary text on [primary] (white at 80 %, 6.0:1).
+  static const onPrimaryMuted = Color(0xCCFFFFFF);
+
+  /// Hairline on [primary] (white at 24 %): rules and outlines inside the teal hero.
+  static const onPrimaryLine = Color(0x3DFFFFFF);
   static const primaryTint = Color(0xFFE1ECE8);
+
+  /// Teal outline on light surfaces (secondary teal at 45 %): outlined chips.
+  static const primaryOutline = Color(0x73176D73);
   static const highlightRow = Color(0xFFE5EFEB);
   static const disabledBg = Color(0xFFE6E1D6);
   static const disabledInk = Color(0xFF566160);
@@ -47,6 +60,8 @@ enum StatusTone {
 }
 
 abstract final class HisbahRadius {
+  /// Icon chips inside cards and rows.
+  static const chip = 10.0;
   static const field = 14.0;
   static const button = 16.0;
   static const card = 18.0;

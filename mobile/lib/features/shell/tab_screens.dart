@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
 import '../../core/theme/hisbah_tokens.dart';
 import '../../core/widgets/dashed_card.dart';
+import '../../core/widgets/hisbah_logo.dart';
 import '../../l10n/app_localizations.dart';
 import '../auth/application/session_controller.dart';
 import '../auth/domain/app_user.dart';
@@ -73,8 +74,9 @@ class _Header extends ConsumerWidget {
     final fg = online ? HisbahColors.primary : StatusTone.offline.fg;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const ExcludeSemantics(child: HisbahMarkTile(size: 40)),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
