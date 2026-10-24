@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import HisbahLogo, { HisbahMark } from "../components/HisbahLogo";
 import Icon from "../components/Icon";
+import { session } from "../services/apiClient";
 import "../styles/landing.css";
 
 // Everything the page claims is something the product does today (S2): barcode and weighed
@@ -66,6 +67,10 @@ function Feature({ id, kicker, title, text, points, panel, tone, flip, children 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
   const root = useRef(null);
+  // A stored session swaps «sign in / create a store» for the dashboard. An expired token is
+  // caught by the dashboard's first call (401 → /login?expired=1), so it is not checked here.
+  const [signedIn] = useState(() => Boolean(session.token()));
+  const storeName = signedIn ? session.user()?.store?.name : null;
 
   // Sections fade up once as they enter the viewport. Without IntersectionObserver nothing is hidden.
   useEffect(() => {
@@ -110,12 +115,20 @@ export default function Landing() {
             ))}
           </nav>
           <div className="lp-head-actions">
-            <Link to="/login" className="lp-btn outline">
-              تسجيل الدخول
-            </Link>
-            <Link to="/join" className="lp-btn solid">
-              أنشئ متجرك
-            </Link>
+            {signedIn ? (
+              <Link to="/dashboard" className="lp-btn solid">
+                لوحة التحكم
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className="lp-btn outline">
+                  تسجيل الدخول
+                </Link>
+                <Link to="/join" className="lp-btn solid">
+                  أنشئ متجرك
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -141,14 +154,21 @@ export default function Landing() {
             <p className="lp-lede">
               حسبة يسجّل البيع والدين والمخزون لمتجرك: تبيع من الجوال داخل المحل، وتتابع كل شيء من لوحة الإدارة. مصمم للبقالات والمحامص ومحلات البهارات.
             </p>
-            <Link to="/join" className="lp-cta-card">
+            <Link to={signedIn ? "/dashboard" : "/join"} className="lp-cta-card">
               <span className="cta-tile" aria-hidden="true">
                 <HisbahMark size={30} />
               </span>
-              <span>
-                <b>أنشئ متجرك في حسبة</b>
-                <small>البيع من الجوال، والإدارة من الحاسوب</small>
-              </span>
+              {signedIn ? (
+                <span>
+                  <b>افتح لوحة التحكم</b>
+                  <small>{storeName ?? "مبيعات اليوم وديونه ومخزونه"}</small>
+                </span>
+              ) : (
+                <span>
+                  <b>أنشئ متجرك في حسبة</b>
+                  <small>البيع من الجوال، والإدارة من الحاسوب</small>
+                </span>
+              )}
             </Link>
             <a href="#dashboard" className="lp-underline">
               تملك متجراً؟ اعرف عن لوحة الإدارة
@@ -390,8 +410,8 @@ export default function Landing() {
             </div>
           }
         >
-          <Link to="/join" className="lp-btn solid big">
-            أنشئ متجرك
+          <Link to={signedIn ? "/dashboard" : "/join"} className="lp-btn solid big">
+            {signedIn ? "افتح لوحة التحكم" : "أنشئ متجرك"}
           </Link>
         </Feature>
         <p className="lp-wrap lp-fineprint">الشاشات توضيحية ببيانات تجريبية.</p>
@@ -425,15 +445,28 @@ export default function Landing() {
                 <br />
                 صار أخف
               </h2>
-              <p className="lp-text">أنشئ المتجر الآن، وأضف أول منتج، وسجّل أول بيع من الجوال.</p>
-              <div className="lp-close-actions">
-                <Link to="/join" className="lp-btn solid big">
-                  أنشئ متجرك
-                </Link>
-                <Link to="/login" className="lp-btn outline big">
-                  تسجيل الدخول
-                </Link>
-              </div>
+              {signedIn ? (
+                <>
+                  <p className="lp-text">تابع مبيعات اليوم والديون والمخزون من لوحة التحكم.</p>
+                  <div className="lp-close-actions">
+                    <Link to="/dashboard" className="lp-btn solid big">
+                      افتح لوحة التحكم
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="lp-text">أنشئ المتجر الآن، وأضف أول منتج، وسجّل أول بيع من الجوال.</p>
+                  <div className="lp-close-actions">
+                    <Link to="/join" className="lp-btn solid big">
+                      أنشئ متجرك
+                    </Link>
+                    <Link to="/login" className="lp-btn outline big">
+                      تسجيل الدخول
+                    </Link>
+                  </div>
+                </>
+              )}
             </div>
             <div className="phone" aria-hidden="true">
               <div className="phone-screen">
@@ -485,8 +518,14 @@ export default function Landing() {
             </nav>
             <nav aria-label="حسابك">
               <h3>حسابك</h3>
-              <Link to="/login">تسجيل الدخول</Link>
-              <Link to="/join">إنشاء متجر</Link>
+              {signedIn ? (
+                <Link to="/dashboard">لوحة التحكم</Link>
+              ) : (
+                <>
+                  <Link to="/login">تسجيل الدخول</Link>
+                  <Link to="/join">إنشاء متجر</Link>
+                </>
+              )}
             </nav>
           </div>
           <div className="lp-foot-bottom">
