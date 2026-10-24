@@ -216,6 +216,29 @@ async function fillCredentials(page) {
   await page.getByLabel("تأكيد كلمة المرور", { exact: true }).fill("password123");
 }
 
+test("the landing page offers sign-in to visitors and the dashboard to a signed-in owner", async ({ page }) => {
+  await page.goto("/");
+  const header = page.getByRole("banner");
+  await expect(header.getByRole("link", { name: "تسجيل الدخول" })).toBeVisible();
+  await expect(header.getByRole("link", { name: "لوحة التحكم" })).toHaveCount(0);
+
+  await page.evaluate((u) => {
+    localStorage.setItem("token", "2|test-token");
+    localStorage.setItem("user", JSON.stringify(u));
+  }, user);
+  await page.reload();
+
+  await expect(header.getByRole("link", { name: "تسجيل الدخول" })).toHaveCount(0);
+  await expect(header.getByRole("link", { name: "أنشئ متجرك" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /افتح لوحة التحكم.*بقالة النور/ })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem("token"))).toBe("2|test-token");
+
+  await mockSignedInApi(page);
+  await header.getByRole("link", { name: "لوحة التحكم" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading", { name: "الرئيسية" })).toBeVisible();
+});
+
 test("a failed low-stock request says so instead of «all products above the minimum»", async ({ page }) => {
   await mockSignedInApi(page);
   // An API without the product endpoints (the live API before S2) answers 404.
