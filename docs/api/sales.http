@@ -1,0 +1,171 @@
+# Hisbah Smart Shop — API v1 sales (US-0501 cash, US-0502 credit / partial, US-0503 immutability and void)
+#
+# Contract for the Flutter checkout (US-0506) and the web sales screens (US-0504). Decisions: D-06 (final at
+# creation), D-07 (customer optional when fully paid), D-08 (invoices.paid_amount), D-26 (credit limit, approved
+# "allow with warning"), D-27 (sale allowed below zero stock with a NEGATIVE_STOCK flag), CR-13 (weighed goods).
+#
+# Roles: every role sells. Void and notes: owner and manager (employee → 403 FORBIDDEN).
+# Another store's sale or product → 404 / 422; nothing about it is revealed.
+# Money: 2-decimal strings (D-09). Quantities: strings in the product's unit — "3" pieces, "0.750" kg (doc 15 §4).
+# Every POST here needs an Idempotency-Key (UUID v4). Reuse it ONLY to retry the same request; a changed
+# request (for example after adding confirm_over_limit) needs a new key. See error-codes.md.
+# `/invoices` is an alias of `/sales` for GET, PATCH and void. The legacy POST /invoices and DELETE are removed.
+# Behaviour is covered by tests/Feature/SaleTest.php. Use a disposable local database only.
+
+@base = http://127.0.0.1:8000/api/v1
+@token = <sanctum token from POST /login>
+
+### 1. Cash sale, walk-in — 201
+# Products 7 (piece, 5.00) and 9 (kg, 60.00 per kg). The client sends NO prices; any price field is ignored.
+POST {{base}}/sales
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+Idempotency-Key: 0b8f0c1e-6f3a-4b7e-9d1a-0c5e2f7a1b01
+
+{
+  "items": [
+    { "product_id": 7, "quantity": "3" },
+    { "product_id": 9, "quantity": "0.750" }
+  ],
+  "paid_amount": "60.00",
+  "payment_method": "cash"
+}
+
+# Response:
+# {
+#   "message": "تم حفظ عملية البيع بنجاح.",
+#   "data": {
+#     "id": 41, "source": "sale", "status": "active", "has_debt": false, "payment_method": "cash",
+#     "total_amount": "60.00", "paid_amount": "60.00", "debt_amount": "0.00", "notes": null,
+#     "items": [
+#       { "id": 101, "product_id": 7, "item_name": "Cola can", "unit": "piece", "quantity": "3",
+#         "returned_quantity": "0", "unit_price": "5.00", "line_total": "15.00", "total": "15.00" },
+#       { "id": 102, "product_id": 9, "item_name": "Almonds", "unit": "kg", "quantity": "0.750",
+#         "returned_quantity": "0.000", "unit_price": "60.00", "line_total": "45.00", "total": "45.00" }
+#     ],
+#     "customer": null, "debt": null,
+#     "created_by": 3, "created_at": "2026-10-20T08:14:03.000000Z",
+#     "voided_at": null, "voided_by": null, "void_reason": null
+#   },
+#   "flags": [],
+#   "warnings": [],
+#   "meta": { "currency": "ILS" }
+# }
+# line_total = round_half_up(quantity × unit_price, 2): 0.333 kg × 7.50 = 2.4975 → "2.50".
+# Receipt line: 0.750 كغم × 60.00 ₪ = 45.00 ₪
+
+### 2. Partial sale (SRS example) — 201: 3 cartons at 15.00, paid 20.00, 25.00 on credit
+POST {{base}}/sales
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+Idempotency-Key: 0b8f0c1e-6f3a-4b7e-9d1a-0c5e2f7a1b02
+
+{
+  "customer_id": 12,
+  "items": [ { "product_id": 301, "quantity": "3" } ],
+  "paid_amount": "20.00",
+  "payment_method": "cash",
+  "due_date": "2026-11-01",
+  "notes": null
+}
+
+# data.total_amount "45.00", data.paid_amount "20.00", data.debt_amount "25.00",
+# data.debt = { "id": 77, "customer_id": 12, "amount": "25.00", "total_payments": "0.00", "return_credit": "0.00",
+#               "remaining_amount": "25.00", "due_date": "2026-11-01", "status": "unpaid", … }
+# Rules:
+# - customer_id is required when paid_amount < total (D-07)      → 422 VALIDATION_FAILED errors.customer_id
+# - payment_method is required when paid_amount > 0               → errors.payment_method
+#   (cash | jawwal_pay | palpay | bank_of_palestine)
+# - paid_amount may not exceed the total                          → errors.paid_amount
+# - due_date (YYYY-MM-DD) only when a debt results, never before today in the store timezone → errors.due_date
+# - piece quantities are whole; kg up to 3 decimals; > 0          → errors.items.N.quantity
+# - unknown / other store's / inactive product                    → errors.items.N.product_id
+# - the same product twice in one sale                            → errors.items.N.product_id (send one line)
+
+### 3. Full credit sale — 201: paid_amount "0", payment_method omitted (stored as null)
+POST {{base}}/sales
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+Idempotency-Key: 0b8f0c1e-6f3a-4b7e-9d1a-0c5e2f7a1b03
+
+{
+  "customer_id": 12,
+  "items": [ { "product_id": 301, "quantity": "2" } ],
+  "paid_amount": "0"
+}
+
+### 4. Credit limit (D-26) — the sale would take the customer over the limit
+# Employee → 422 CREDIT_LIMIT_EXCEEDED (confirm_over_limit is ignored):
+# {
+#   "message": "تتجاوز هذه العملية سقف دين العميل (100.00): …", "code": "CREDIT_LIMIT_EXCEEDED",
+#   "errors": { "customer_id": ["…"] },
+#   "details": { "credit_limit": "100.00", "outstanding": "90.00", "new_debt": "25.00",
+#                "balance_after": "115.00", "can_override": false },
+#   "correlation_id": "…"
+# }
+# Owner / Manager → 422 CREDIT_LIMIT_CONFIRMATION_REQUIRED with the same details and "can_override": true.
+# After the user confirms the warning, resend the SAME sale with confirm_over_limit = true and a NEW key:
+POST {{base}}/sales
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+Idempotency-Key: 0b8f0c1e-6f3a-4b7e-9d1a-0c5e2f7a1b04
+
+{
+  "customer_id": 12,
+  "items": [ { "product_id": 301, "quantity": "1" } ],
+  "paid_amount": "0",
+  "confirm_over_limit": true
+}
+
+# → 201, and an audit entry `sale.credit_limit_overridden` (limit, outstanding, new debt, actor) on the sale.
+
+### 5. Stock shortfall (D-27) — 201, never blocked
+# Selling 5 when 2 are on the shelf saves the sale, takes the stock to -3 and returns:
+# "flags": ["NEGATIVE_STOCK"],
+# "warnings": [ { "code": "NEGATIVE_STOCK", "product_id": 7, "name": "Water 1.5L", "balance_after": "-3" } ]
+# Show it as a non-blocking notice. Managers review products with negative stock later (S3/S4 review list).
+
+### 6. List — 200 (newest first, 10 per page; includes opening-debt records with source "opening_debt")
+GET {{base}}/sales
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 7. Show — 200 { "data": { …sale } }
+GET {{base}}/sales/41
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 8. Notes — 200 (owner / manager). The invoice is final: any financial field → 422 INVOICE_IMMUTABLE
+# Refused fields: customer_id, items, total_amount, paid_amount, has_debt, payment_method, status, source, due_date.
+PATCH {{base}}/sales/41
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{ "notes": "Delivered to the back door" }
+
+### 9. Void — 200 (owner / manager; reason required)
+POST {{base}}/sales/41/void
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+Idempotency-Key: 0b8f0c1e-6f3a-4b7e-9d1a-0c5e2f7a1b09
+
+{ "reason": "Rang up twice" }
+
+# Effects, in one transaction:
+# - data.status "voided", voided_at / voided_by / void_reason set; the invoice and its lines are kept;
+# - exactly the stock the sale took is put back as `sale_void` movements (kg to the gram);
+# - the debt becomes status "cancelled" with remaining_amount "0.00" (it can no longer be paid);
+# - audit entry `sale.voided` with the reason, the cancelled debt and the restored quantities.
+# Refusals (nothing changes):
+# - 409 INVOICE_ALREADY_VOIDED   a second void (a retry with the SAME key replays the first 200 instead)
+# - 409 INVOICE_HAS_PAYMENTS     the debt has live payments: reverse them first
+# - 409 INVOICE_HAS_RETURNS      goods were returned against the sale (US-0601)
+# - 409 INVOICE_NOT_VOIDABLE     the record is an opening debt, not a sale
+# - 403 FORBIDDEN                employee
+# Alias with the same behaviour: POST {{base}}/invoices/41/void

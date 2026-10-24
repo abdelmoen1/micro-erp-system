@@ -82,7 +82,7 @@ jobs:
           platform: android
           flutter-version: ${{ env.FLUTTER_VERSION }}
           working-directory: mobile
-          args: --artifact apk --public-key-path shorebird-patch-public.pem -- --dart-define-from-file=env/production.json
+          args: --artifact apk --public-key-path shorebird-patch-public.pem -- --no-tree-shake-icons --dart-define-from-file=env/production.json
 
       - name: Inspect APK (application ID, version, signing certificate)
         id: apk

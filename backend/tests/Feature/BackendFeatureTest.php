@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Debt;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreInvitation;
 use App\Models\User;
@@ -38,6 +39,11 @@ class BackendFeatureTest extends TestCase
         return Customer::create(['store_id' => $store->id, 'name' => 'Customer', 'phone' => $phone]);
     }
 
+    private function product(Store $store, string $price): Product
+    {
+        return Product::create(['store_id' => $store->id, 'name' => "Item {$price}", 'selling_price' => $price, 'current_stock' => 100]);
+    }
+
     private function invoice(Store $store, Customer $customer, bool $debt = true, float $total = 100): Invoice
     {
         $invoice = Invoice::create([
@@ -50,7 +56,7 @@ class BackendFeatureTest extends TestCase
         ]);
         $invoice->items()->create(['item_name' => 'Item', 'quantity' => 2, 'unit_price' => $total / 2, 'total' => $total]);
         if ($debt) {
-            Debt::create(['store_id' => $store->id, 'invoice_id' => $invoice->id, 'amount' => $total, 'remaining_amount' => $total, 'status' => 'unpaid']);
+            Debt::create(['store_id' => $store->id, 'invoice_id' => $invoice->id, 'customer_id' => $customer->id, 'amount' => $total, 'remaining_amount' => $total, 'status' => 'unpaid']);
         }
         return $invoice->fresh();
     }
@@ -118,31 +124,35 @@ class BackendFeatureTest extends TestCase
         $this->actingAs($owner, 'sanctum')->deleteJson("/api/v1/customers/{$cb->id}")->assertNotFound();
     }
 
-    public function test_invoices_totals_debts_update_delete_and_isolation(): void
+    /** Rewritten for US-0501/0503: sales are product-based and final; edits and deletes are gone (D-06). */
+    public function test_sales_totals_debts_immutability_and_isolation(): void
     {
         $a = $this->store('A');
         $b = $this->store('B');
         $owner = $this->user($a);
         $ca = $this->customer($a);
         $cb = $this->customer($b, '0590000002');
+        $tea = $this->product($a, '10.00');
+        $sugar = $this->product($a, '5.50');
         $api = $this->actingAs($owner, 'sanctum');
-        $cash = $api->postJson('/api/v1/invoices', ['customer_id' => $ca->id, 'has_debt' => false, 'payment_method' => 'cash', 'items' => [['item_name' => 'A', 'quantity' => 2, 'unit_price' => 10], ['item_name' => 'B', 'quantity' => 1, 'unit_price' => 5.5]]], $this->idem())->assertCreated();
+        $cash = $api->postJson('/api/v1/sales', ['customer_id' => $ca->id, 'paid_amount' => '25.50', 'payment_method' => 'cash', 'items' => [['product_id' => $tea->id, 'quantity' => 2], ['product_id' => $sugar->id, 'quantity' => 1]]], $this->idem())->assertCreated();
         $cashId = $cash->json('data.id');
-        $this->assertDatabaseHas('invoices', ['id' => $cashId, 'total_amount' => 25.50]);
+        $this->assertDatabaseHas('invoices', ['id' => $cashId, 'total_amount' => 25.50, 'paid_amount' => 25.50, 'has_debt' => false]);
         $this->assertDatabaseCount('debts', 0);
-        $debtResponse = $api->postJson('/api/v1/invoices', ['customer_id' => $ca->id, 'has_debt' => true, 'items' => [['item_name' => 'Debt', 'quantity' => 2, 'unit_price' => 50]]], $this->idem())->assertCreated();
+        $debtResponse = $api->postJson('/api/v1/sales', ['customer_id' => $ca->id, 'paid_amount' => '0', 'items' => [['product_id' => $tea->id, 'quantity' => 10]]], $this->idem())->assertCreated();
         $debtId = $debtResponse->json('data.debt.id');
-        $this->assertDatabaseHas('debts', ['id' => $debtId, 'amount' => 100, 'remaining_amount' => 100, 'status' => 'unpaid']);
+        $this->assertDatabaseHas('debts', ['id' => $debtId, 'customer_id' => $ca->id, 'amount' => 100, 'remaining_amount' => 100, 'status' => 'unpaid']);
         $foreign = $this->invoice($b, $cb);
+        $api->getJson("/api/v1/sales/{$foreign->id}")->assertNotFound();
         $api->getJson("/api/v1/invoices/{$foreign->id}")->assertNotFound();
-        $api->putJson("/api/v1/invoices/{$foreign->id}", ['items' => [['item_name' => 'x', 'quantity' => 1, 'unit_price' => 1]]])->assertNotFound();
-        $api->deleteJson("/api/v1/invoices/{$foreign->id}")->assertNotFound();
-        $this->assertNotContains($foreign->id, $api->getJson('/api/v1/invoices')->assertOk()->json('data.*.id'));
-        $api->putJson("/api/v1/invoices/{$cashId}", ['items' => [['item_name' => 'Updated', 'quantity' => 3, 'unit_price' => 10]]])->assertOk();
-        $this->assertDatabaseHas('invoices', ['id' => $cashId, 'total_amount' => 30]);
-        $api->deleteJson("/api/v1/invoices/{$cashId}")->assertOk();
-        $this->assertDatabaseMissing('invoices', ['id' => $cashId]);
-        $api->postJson('/api/v1/invoices', ['customer_id' => $ca->id, 'has_debt' => false, 'items' => []], $this->idem())->assertUnprocessable();
+        $api->patchJson("/api/v1/sales/{$foreign->id}", ['notes' => 'x'])->assertNotFound();
+        $api->postJson("/api/v1/sales/{$foreign->id}/void", ['reason' => 'x'], $this->idem())->assertNotFound();
+        $this->assertNotContains($foreign->id, $api->getJson('/api/v1/sales')->assertOk()->json('data.*.id'));
+        $api->putJson("/api/v1/sales/{$cashId}", ['items' => [['product_id' => $tea->id, 'quantity' => 3]]])->assertUnprocessable()->assertJsonPath('code', 'INVOICE_IMMUTABLE');
+        $this->assertDatabaseHas('invoices', ['id' => $cashId, 'total_amount' => 25.50]);
+        $api->deleteJson("/api/v1/sales/{$cashId}")->assertStatus(405);
+        $this->assertDatabaseHas('invoices', ['id' => $cashId]);
+        $api->postJson('/api/v1/sales', ['customer_id' => $ca->id, 'paid_amount' => '0', 'items' => []], $this->idem())->assertUnprocessable();
     }
 
     public function test_debts_payments_status_reversal_pay_all_and_isolation(): void
@@ -206,14 +216,14 @@ class BackendFeatureTest extends TestCase
 
         $employeeApi = $this->actingAs($employee, 'sanctum');
         $employeeApi->postJson('/api/v1/customers', ['name' => 'Employee customer', 'phone' => '0590000003'])->assertCreated();
-        $employeeApi->postJson('/api/v1/invoices', [
+        $employeeApi->postJson('/api/v1/sales', [
             'customer_id' => $customer->id,
-            'has_debt' => false,
+            'paid_amount' => '10.00',
             'payment_method' => 'cash',
-            'items' => [['item_name' => 'Cash item', 'quantity' => 1, 'unit_price' => 10]],
+            'items' => [['product_id' => $this->product($store, '10.00')->id, 'quantity' => 1]],
         ], $this->idem())->assertCreated();
         $employeeApi->postJson('/api/v1/payments', ['debt_id' => $debt->id, 'amount' => 10, 'method' => 'cash'], $this->idem())->assertCreated();
-        $employeeApi->deleteJson("/api/v1/invoices/{$invoice->id}")->assertForbidden();
+        $employeeApi->postJson("/api/v1/sales/{$invoice->id}/void", ['reason' => 'Not allowed'], $this->idem())->assertForbidden();
         $employeeApi->putJson("/api/v1/debts/{$debt->id}", ['amount' => 90])->assertForbidden();
         $employeeApi->deleteJson("/api/v1/debts/{$debt->id}")->assertForbidden();
         $payment = Payment::where('debt_id', $debt->id)->first();
@@ -233,30 +243,33 @@ class BackendFeatureTest extends TestCase
         $this->assertDatabaseHas('payments', ['id' => $payment->id, 'is_reversed' => true]);
     }
 
-    public function test_invoice_conversion_and_payment_protected_deletion_rules(): void
+    /**
+     * Rewritten for US-0503 (DEF-01, DEF-06): the old cash/credit conversion and delete paths are
+     * gone. Converting is a 422 INVOICE_IMMUTABLE, the debt is never removed, and DELETE has no route.
+     */
+    public function test_invoice_conversion_and_delete_paths_no_longer_exist(): void
     {
         $store = $this->store('Main');
         $owner = $this->user($store);
         $customer = $this->customer($store);
         $api = $this->actingAs($owner, 'sanctum');
 
-        $convertible = $this->invoice($store, $customer, true, 100);
-        $convertibleDebtId = $convertible->debt->id;
-        $api->putJson("/api/v1/invoices/{$convertible->id}", [
+        $credit = $this->invoice($store, $customer, true, 100);
+        $creditDebtId = $credit->debt->id;
+        $api->putJson("/api/v1/invoices/{$credit->id}", [
             'has_debt' => false,
             'payment_method' => 'cash',
-        ])->assertOk();
-        $this->assertDatabaseHas('invoices', ['id' => $convertible->id, 'has_debt' => false, 'payment_method' => 'cash']);
-        $this->assertDatabaseHas('debts', ['id' => $convertibleDebtId]);
-        $this->assertNotNull(Debt::withTrashed()->find($convertibleDebtId)->deleted_at);
+        ])->assertUnprocessable()->assertJsonPath('code', 'INVOICE_IMMUTABLE');
+        $this->assertDatabaseHas('invoices', ['id' => $credit->id, 'has_debt' => true]);
+        $this->assertNull(Debt::withTrashed()->find($creditDebtId)->deleted_at);
 
         $cash = $this->invoice($store, $customer, false, 50);
-        $api->putJson("/api/v1/invoices/{$cash->id}", ['has_debt' => true])->assertUnprocessable();
+        $api->putJson("/api/v1/invoices/{$cash->id}", ['has_debt' => true])->assertUnprocessable()->assertJsonPath('code', 'INVOICE_IMMUTABLE');
         $this->assertDatabaseHas('invoices', ['id' => $cash->id, 'has_debt' => false]);
 
         $paid = $this->invoice($store, $customer, true, 75);
         $payment = $paid->debt->payments()->create(['amount' => 25, 'method' => 'cash', 'paid_at' => now()]);
-        $api->deleteJson("/api/v1/invoices/{$paid->id}")->assertUnprocessable();
+        $api->deleteJson("/api/v1/invoices/{$paid->id}")->assertStatus(405);
         $this->assertDatabaseHas('invoices', ['id' => $paid->id]);
         $this->assertDatabaseHas('debts', ['id' => $paid->debt->id, 'remaining_amount' => 75]);
         $this->assertDatabaseHas('payments', ['id' => $payment->id, 'is_reversed' => false]);

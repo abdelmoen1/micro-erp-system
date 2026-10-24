@@ -48,6 +48,27 @@ FakeResponse meOk({int id = 1, String role = 'owner'}) => FakeResponse(200, {
   'meta': {'currency': 'ILS'},
 });
 
+/// `GET /dashboard?period=today` as DashboardService renders it (fields the app reads).
+FakeResponse dashboardOk({List<Map<String, dynamic>> recentInvoices = const []}) => FakeResponse(200, {
+  'data': {
+    'period': {'key': 'today', 'timezone': 'Asia/Gaza'},
+    'summary': {
+      'total_sales': '1250.50',
+      'cash_sales': '850.50',
+      'credit_sales': '400.00',
+      'total_collected_payments': '120.00',
+      'total_remaining_debt': '3200.00',
+      'customers_count': 9,
+      'invoices_count': recentInvoices.length,
+    },
+    'customers': {'total': 9, 'with_outstanding_debts': 4},
+    'sales': {'total': '1250.50', 'cash': '850.50', 'credit': '400.00'},
+    'payments': {'total_collected': '120.00', 'count': 2, 'today': '120.00', 'this_month': '900.00'},
+    'debts': {'total_debt': '5000.00', 'total_remaining': '3200.00'},
+    'recent_invoices': recentInvoices,
+  },
+});
+
 /// Routes `METHOD /path` to a response (or a queue of responses), records every
 /// request, and simulates a dropped connection for [FakeApi.offline] routes.
 class FakeApi implements HttpClientAdapter {
@@ -60,6 +81,9 @@ class FakeApi implements HttpClientAdapter {
   void onSequence(String route, List<FakeResponse> responses) => _routes[route] = [...responses];
 
   void offline(String route) => _offline.add(route);
+
+  /// The connection comes back for [route].
+  void restore(String route) => _offline.remove(route);
 
   List<RequestOptions> requestsTo(String route) => requests.where((r) => '${r.method} ${r.path}' == route).toList();
 

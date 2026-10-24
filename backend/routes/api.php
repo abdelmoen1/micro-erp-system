@@ -12,13 +12,17 @@ use App\Http\Controllers\Api\InvitationController;
 use App\Http\Controllers\Api\StoreSettingsController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\StockAdjustmentController;
 
 // All routes are served under /api/v1 (bootstrap/app.php, D-22).
 
 // Authentication (login throttling lives in AuthService: 5 failures/min per email+IP)
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/auth/google', [AuthController::class, 'google'])->middleware('throttle:sso');
 Route::middleware('throttle:register')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register/google', [AuthController::class, 'registerWithGoogle']);
     Route::post('/register/invitation', [AuthController::class, 'acceptInvitation']);
 });
 
@@ -49,8 +53,29 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     Route::patch('/my-store', [StoreSettingsController::class, 'update']);
 
 
+    // Products (US-0401). No DELETE: products are deactivated (BR-04). `lookup` and `low-stock` precede {product}.
+    Route::get('products/lookup', [ProductController::class, 'lookup']);
+    // Shared catalog: my product and the platform-wide item for a barcode, before adding one.
+    Route::get('products/catalog-lookup', [ProductController::class, 'catalogLookup']);
+    Route::get('products/low-stock', [ProductController::class, 'lowStock']);
+    Route::get('products/negative-stock', [ProductController::class, 'negativeStock']);
+    Route::post('products/import', [ProductController::class, 'import']);
+    Route::get('products', [ProductController::class, 'index']);
+    Route::post('products', [ProductController::class, 'store']);
+    Route::get('products/{product}', [ProductController::class, 'show']);
+    Route::patch('products/{product}', [ProductController::class, 'update']);
+    Route::post('products/{product}/deactivate', [ProductController::class, 'deactivate']);
+    Route::get('products/{product}/movements', [ProductController::class, 'movements']);
+
+    // Stock adjustments (US-0402): idempotent like the financial writes (05 §2).
+    Route::post('stock-adjustments', [StockAdjustmentController::class, 'store'])->middleware('idempotent');
+
     // Customers
     Route::apiResource('customers', CustomerController::class);
+    Route::get('customers/{customer}/summary', [CustomerController::class, 'summary']);
+    Route::get('customers/{customer}/statement', [CustomerController::class, 'statement']);
+    Route::post('customers/{customer}/deactivate', [CustomerController::class, 'deactivate']);
+    Route::post('customers/{customer}/reactivate', [CustomerController::class, 'reactivate']);
 
     Route::get(
         '/customers/{customer}/debts',
@@ -64,12 +89,21 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     )->middleware('idempotent');
 
 
-    // Invoices
-    Route::apiResource('invoices', InvoiceController::class)->except('store');
-    Route::post('invoices', [InvoiceController::class, 'store'])->middleware('idempotent');
+    // Sales (US-0501 – US-0503, 05 §3). Final at creation (D-06): no DELETE and no financial edit;
+    // PATCH changes notes only, and a mistake is corrected by a void. `/invoices` is an alias.
+    foreach (['sales', 'invoices'] as $sales) {
+        Route::get($sales, [InvoiceController::class, 'index']);
+        Route::get("{$sales}/{invoice}", [InvoiceController::class, 'show']);
+        Route::match(['put', 'patch'], "{$sales}/{invoice}", [InvoiceController::class, 'update']);
+        Route::post("{$sales}/{invoice}/void", [InvoiceController::class, 'void'])->middleware('idempotent');
+        // US-0601: return lines of a sale (D-05 debt first, then cash refund).
+        Route::post("{$sales}/{invoice}/returns", [InvoiceController::class, 'storeReturn'])->middleware('idempotent');
+    }
+    Route::post('sales', [InvoiceController::class, 'store'])->middleware('idempotent');
 
     // Debts
     Route::get('debts', [DebtController::class, 'index']);
+    Route::get('debts/balances', [DebtController::class, 'balances']);
     Route::post('debts', [DebtController::class, 'store'])->middleware('idempotent');
     Route::get('debts/{debt}', [DebtController::class, 'show']);
     Route::get('debts/{debt}/details', [DebtController::class, 'details']);

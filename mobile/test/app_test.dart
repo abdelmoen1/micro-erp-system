@@ -44,6 +44,8 @@ void main() {
   setUp(() {
     api = FakeApi();
     disk = MemoryKeyValueStore();
+    // Home (owner / manager landing) loads today's dashboard.
+    api.on('GET /dashboard', dashboardOk());
   });
 
   testWidgets('TC-1303-01 app boots to the Arabic login screen when signed out', (tester) async {
@@ -153,7 +155,7 @@ void main() {
     await pumpApp(tester);
     await submitLogin(tester, 'employee@demo.test', 'pw');
 
-    expect(find.text('سلة البيع — شاشة هبوط الموظف'), findsOneWidget);
+    expect(find.text('امسح منتجاً للبدء'), findsOneWidget); // M-02 empty cart
     expect(disk.values[AuthRepository.tokenKey], '1|test-token');
 
     await tester.tap(find.byKey(const Key('nav.more')));
@@ -179,7 +181,49 @@ void main() {
     disk.values[AuthRepository.tokenKey] = 'tok';
     api.on('GET /me', meOk(role: 'owner'));
     await pumpApp(tester);
-    expect(find.text('لوحة اليوم — شاشة هبوط المالك والمدير'), findsOneWidget);
+    expect(find.text('أهلاً، Demo owner'), findsOneWidget);
+    expect(find.text('1,250.50 ₪'), findsOneWidget);
+    expect(find.text('لا فواتير بعد'), findsOneWidget);
+    expect(find.byKey(const Key('home.noInvoices')), findsOneWidget);
+    expect(api.requestsTo('GET /dashboard').single.queryParameters, {'period': 'today'});
+  });
+
+  testWidgets("Home lists today's latest invoices and its shortcut opens POS", (tester) async {
+    disk.values[AuthRepository.tokenKey] = 'tok';
+    api.on('GET /me', meOk(role: 'owner'));
+    api.on(
+      'GET /dashboard',
+      dashboardOk(
+        recentInvoices: [
+          {'id': 7, 'customer': {'id': 3, 'name': 'أبو أحمد'}, 'total_amount': '400.00', 'type': 'credit', 'created_at': '2026-10-17T09:30:00Z'},
+          {'id': 6, 'customer': null, 'total_amount': '25.00', 'type': 'cash', 'created_at': null},
+        ],
+      ),
+    );
+    await pumpApp(tester);
+    expect(find.text('فاتورتان'), findsOneWidget);
+    expect(find.text('أبو أحمد'), findsOneWidget);
+    expect(find.text('زبون نقدي'), findsOneWidget);
+    expect(find.text('4 زبائن مدينون'), findsOneWidget);
+
+    // Scroll the shortcuts out from under the bottom bar before tapping.
+    await tester.drag(find.byKey(const Key('home.today')), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home.shortcut.pos')));
+    await tester.pumpAndSettle();
+    expect(find.text('امسح منتجاً للبدء'), findsOneWidget); // M-02 empty cart
+  });
+
+  testWidgets('Home shows a retry when the dashboard fails to load', (tester) async {
+    disk.values[AuthRepository.tokenKey] = 'tok';
+    api.on('GET /me', meOk(role: 'owner'));
+    api.onSequence('GET /dashboard', [envelope(500, 'SERVER_ERROR'), dashboardOk()]);
+    await pumpApp(tester);
+    expect(find.text('تعذّر تحميل لوحة اليوم.'), findsOneWidget);
+
+    await tester.tap(find.text('إعادة المحاولة'));
+    await tester.pumpAndSettle();
+    expect(find.text('1,250.50 ₪'), findsOneWidget);
   });
 
   testWidgets('expired token on launch shows the "session expired" message', (tester) async {
@@ -231,7 +275,7 @@ void main() {
       await tester.tap(find.byKey(const Key('nav.pos')));
       await tester.pumpAndSettle();
       expect(tester.getRect(find.byKey(const Key('nav.pos.circle'))).width, 54); // outline when current
-      expect(find.text('سلة البيع — شاشة هبوط الموظف'), findsOneWidget);
+      expect(find.text('امسح منتجاً للبدء'), findsOneWidget); // M-02 empty cart
     });
 
     testWidgets('the raised part of بيع above the bar is tappable', (tester) async {
@@ -242,7 +286,7 @@ void main() {
       final circle = tester.getRect(find.byKey(const Key('nav.pos.circle')));
       await tester.tapAt(circle.topCenter + const Offset(0, 6));
       await tester.pumpAndSettle();
-      expect(find.text('سلة البيع — شاشة هبوط الموظف'), findsOneWidget);
+      expect(find.text('امسح منتجاً للبدء'), findsOneWidget); // M-02 empty cart
     });
 
     for (final role in ['owner', 'employee']) {
