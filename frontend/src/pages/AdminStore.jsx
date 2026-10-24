@@ -1,11 +1,12 @@
 import { useDeferredValue, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Icon from "../components/Icon";
+import { AccessSwitch } from "../components/platform";
 import { ROLE_LABEL, daysAgo } from "../lib/platform";
 import { Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, Field, MoneyText, PageHeader, Pager, QtyText, ReasonField, StatusBadge } from "../components/ui";
 import { dateOnly, dateTime } from "../lib/format";
 import { stockState } from "../lib/domain";
-import { useAdminStore, useAdminStoreProducts, useSetStoreStatus, useSetSubscription } from "../services/admin";
+import { useAdminStore, useAdminStoreProducts, useSetSubscription } from "../services/admin";
 
 const HISTORY = {
   "store.suspended": "أُوقف حساب المتجر",
@@ -37,7 +38,7 @@ export default function AdminStore() {
       <PageHeader title={s.name} sub={`سُجّل في ${dateOnly(s.created_at)}، ${daysAgo(s.days_since_registration)}`} />
 
       <div className="state-panels">
-        <AccessPanel store={s} onChange={() => setDialog("access")} />
+        <AccessPanel store={s} />
         <SubscriptionPanel store={s} onActivate={() => setDialog("subscribe")} onDeactivate={() => setDialog("unsubscribe")} />
       </div>
       <p className="data-note">
@@ -110,7 +111,6 @@ export default function AdminStore() {
 
       <StoreProducts storeId={s.id} storeName={s.name} />
 
-      {dialog === "access" ? <AccessDialog store={s} onClose={() => setDialog(null)} /> : null}
       {dialog === "subscribe" ? <SubscribeDialog store={s} onClose={() => setDialog(null)} /> : null}
       {dialog === "unsubscribe" ? <UnsubscribeDialog store={s} onClose={() => setDialog(null)} /> : null}
     </>
@@ -144,11 +144,14 @@ function Changed({ at, by }) {
   );
 }
 
-function AccessPanel({ store, onChange }) {
+function AccessPanel({ store }) {
   const suspended = store.status === "suspended";
   return (
     <section className={`card state-panel ${suspended ? "is-off" : "is-on"}`} aria-labelledby="access-title">
-      <h2 id="access-title">حساب المتجر</h2>
+      <div className="state-head">
+        <h2 id="access-title">حساب المتجر</h2>
+        <AccessSwitch store={store} />
+      </div>
       <p className="state-word">
         <Icon name={suspended ? "ban" : "ok"} size={26} strokeWidth={2} />
         {suspended ? "موقوف" : "مفعّل"}
@@ -168,9 +171,6 @@ function AccessPanel({ store, onChange }) {
           </dd>
         </div>
       </dl>
-      <button type="button" className={`btn btn-sm ${suspended ? "btn-p" : "btn-dl"}`} onClick={onChange}>
-        {suspended ? "تفعيل الحساب" : "إيقاف الحساب"}
-      </button>
     </section>
   );
 }
@@ -222,34 +222,6 @@ function SubscriptionPanel({ store, onActivate, onDeactivate }) {
         ) : null}
       </div>
     </section>
-  );
-}
-
-function AccessDialog({ store, onClose }) {
-  const save = useSetStoreStatus();
-  const [reason, setReason] = useState("");
-  const suspending = store.status !== "suspended";
-  const submit = () =>
-    save.mutate({ id: store.id, status: suspending ? "suspended" : "active", ...(suspending && reason.trim() ? { reason: reason.trim() } : {}) }, { onSuccess: onClose });
-
-  return (
-    <Dialog title={suspending ? `إيقاف حساب ${store.name}؟` : `تفعيل حساب ${store.name}؟`} role="alertdialog" onClose={onClose}>
-      <p>
-        {suspending
-          ? "يُمنع المالك وكل الموظفين من الدخول فوراً، وتتوقف جلساتهم المفتوحة. لا تُحذف أي بيانات، والاشتراك يبقى كما هو."
-          : "يعود المالك والموظفون إلى الدخول والعمل فوراً. الاشتراك يبقى كما هو."}
-      </p>
-      {suspending ? <ReasonField id="suspend-reason" label="السبب (يظهر في سجل التغييرات)" value={reason} onChange={setReason} error={save.error?.fieldError?.("reason")} /> : null}
-      <ErrorBanner error={save.error} />
-      <div className="dlg-actions">
-        <button type="button" className={`btn ${suspending ? "btn-dd" : "btn-p"}`} disabled={save.isPending} onClick={submit}>
-          {save.isPending ? "جارٍ الحفظ…" : suspending ? "إيقاف الحساب" : "تفعيل الحساب"}
-        </button>
-        <button type="button" className="btn btn-g" onClick={onClose}>
-          رجوع
-        </button>
-      </div>
-    </Dialog>
   );
 }
 

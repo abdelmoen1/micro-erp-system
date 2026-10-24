@@ -116,7 +116,7 @@ test("the platform admin sees counts and stores, and filters by subscription sta
   const table = page.getByRole("table", { name: "المتاجر المسجّلة" });
   await expect(table.getByRole("link", { name: "بقالة الأمانة" })).toBeVisible();
   await expect(table).toContainText("قبل 12 يوماً");
-  await expect(table).toContainText("الحساب مفعّل");
+  await expect(table.getByRole("switch", { name: "حساب بقالة الأمانة" })).toHaveAttribute("aria-checked", "true");
   await expect(table).toContainText("بلا اشتراك");
 
   await page.getByRole("group", { name: "حالة الاشتراك" }).getByRole("button", { name: /منتهٍ/ }).click();
@@ -158,12 +158,15 @@ test("suspending the account and activating the subscription are separate reques
   await expect(subscription).toContainText("غير مشترك");
   await expect(page.getByRole("table", { name: "منتجات بقالة الأمانة" })).toContainText("₪ 4.50");
 
-  await access.getByRole("button", { name: "إيقاف الحساب" }).click();
+  const toggle = access.getByRole("switch", { name: "حساب بقالة الأمانة" });
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+  await toggle.click();
   const confirm = page.getByRole("alertdialog", { name: /إيقاف حساب بقالة الأمانة/ });
   await confirm.getByRole("textbox").fill("لم تصل دفعة أكتوبر");
   await confirm.getByRole("button", { name: "إيقاف الحساب" }).click();
   await expect(access).toContainText("موقوف");
   await expect(access).toContainText("لم تصل دفعة أكتوبر");
+  await expect(toggle).toHaveAttribute("aria-checked", "false");
   // The subscription panel did not change.
   await expect(subscription).toContainText("غير مشترك");
 
@@ -177,6 +180,49 @@ test("suspending the account and activating the subscription are separate reques
   expect(writes).toEqual([
     ["status", { status: "suspended", reason: "لم تصل دفعة أكتوبر" }],
     ["subscription", { status: "active", expires_at: "2027-01-31" }],
+  ]);
+});
+
+test("the account switch in the stores list: switching on is immediate, switching off asks first", async ({ page }) => {
+  await signIn(page, admin);
+  let rows = [
+    { ...store, id: 5, name: "بقالة الأمانة", status: "active" },
+    { ...store, id: 6, name: "سوبرماركت النور", status: "suspended" },
+  ];
+  const writes = [];
+  await page.route("**/api/v1/admin/overview", (r) => r.fulfill({ json: { data: overview } }));
+  await page.route(/\/api\/v1\/admin\/stores(\?.*)?$/, (r) => r.fulfill({ json: { data: rows, meta: { ...meta, total: 2 } } }));
+  await page.route(/\/api\/v1\/admin\/stores\/\d+\/status$/, async (r) => {
+    const id = Number(r.request().url().match(/stores\/(\d+)\/status/)[1]);
+    const body = r.request().postDataJSON();
+    writes.push([id, body]);
+    rows = rows.map((s) => (s.id === id ? { ...s, status: body.status } : s));
+    await r.fulfill({ json: { data: rows.find((s) => s.id === id) } });
+  });
+
+  await page.goto("/admin");
+  const nour = page.getByRole("switch", { name: "حساب سوبرماركت النور" });
+  const amana = page.getByRole("switch", { name: "حساب بقالة الأمانة" });
+  await expect(nour).toHaveAttribute("aria-checked", "false");
+  await expect(amana).toHaveAttribute("aria-checked", "true");
+
+  // On: no dialog, one request.
+  await nour.click();
+  await expect(nour).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
+
+  // Off: confirmation first; "رجوع" sends nothing.
+  await amana.click();
+  const confirm = page.getByRole("alertdialog", { name: /إيقاف حساب بقالة الأمانة/ });
+  await confirm.getByRole("button", { name: "رجوع" }).click();
+  await expect(amana).toHaveAttribute("aria-checked", "true");
+  await amana.click();
+  await page.getByRole("alertdialog", { name: /إيقاف حساب بقالة الأمانة/ }).getByRole("button", { name: "إيقاف الحساب" }).click();
+  await expect(amana).toHaveAttribute("aria-checked", "false");
+
+  expect(writes).toEqual([
+    [6, { status: "active" }],
+    [5, { status: "suspended" }],
   ]);
 });
 
