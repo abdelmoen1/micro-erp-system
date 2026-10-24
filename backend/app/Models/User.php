@@ -30,6 +30,11 @@ class User extends Authenticatable
         'role',
     ];
 
+    /** Matches the column default, so a just-created user serializes the flag too. */
+    protected $attributes = [
+        'is_platform_admin' => false,
+    ];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -53,7 +58,17 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'deactivated_at' => 'datetime',
+            'is_platform_admin' => 'boolean',
         ];
+    }
+
+    /**
+     * The platform owner. Deliberately not fillable: only `php artisan hisbah:platform-admin`
+     * grants it, never a registration or any other API request.
+     */
+    public function isPlatformAdmin(): bool
+    {
+        return (bool) $this->is_platform_admin;
     }
 
     public function isActive(): bool

@@ -18,6 +18,7 @@ function outcomeOf(error) {
   if (!(error instanceof ApiError)) return { kind: "server" };
   if (error.status === 429) return { kind: "throttled", wait: error.retryAfter ?? 60 };
   if (error.code === "USER_INACTIVE") return { kind: "inactive" };
+  if (error.code === "STORE_SUSPENDED") return { kind: "suspended" };
   if (error.code === "GOOGLE_TOKEN_INVALID" || error.code === "SSO_UNAVAILABLE") return { kind: "google", message: error.message };
   if (error.status === 401 || error.code === "INVALID_CREDENTIALS") return { kind: "invalid" };
   if (error.status === 422) return { kind: "fields", errors: error.errors };
@@ -38,6 +39,12 @@ function LoginBanner({ outcome, waitLeft }) {
       return (
         <Banner tone="voided" icon="ban">
           هذا الحساب موقوف. تواصل مع مالك المتجر لإعادة تفعيله.
+        </Banner>
+      );
+    case "suspended":
+      return (
+        <Banner tone="voided" icon="ban">
+          حساب هذا المتجر موقوف. تواصل مع إدارة حسبة لإعادة تفعيله.
         </Banner>
       );
     case "expired":

@@ -17,7 +17,11 @@ class AuditService
 {
     public function __construct(private readonly Request $request) {}
 
-    public function record(string $action, Model|string $entity, array $metadata = [], ?User $actor = null): AuditLog
+    /**
+     * The row belongs to the actor's store, or to `$storeId` when a platform admin acts on another
+     * store, so the entry sits in that store's history.
+     */
+    public function record(string $action, Model|string $entity, array $metadata = [], ?User $actor = null, ?int $storeId = null): AuditLog
     {
         $actor ??= Auth::user();
 
@@ -30,7 +34,7 @@ class AuditService
             : [$entity, $metadata['entity_id'] ?? null];
 
         return AuditLog::create([
-            'store_id' => $actor->store_id,
+            'store_id' => $storeId ?? $actor->store_id,
             'user_id' => $actor->id,
             'action' => $action,
             'entity_type' => $type,
