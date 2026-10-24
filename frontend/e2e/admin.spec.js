@@ -38,6 +38,48 @@ const overview = {
 
 const meta = { current_page: 1, last_page: 1, total: 1, per_page: 20 };
 
+test("signed out, /admin goes to the admin sign-in, and the platform admin lands on the dashboard", async ({ page }) => {
+  let sent = null;
+  await page.route("**/api/v1/login", async (r) => {
+    sent = r.request().postDataJSON();
+    await r.fulfill({ json: { message: "ok", user: admin, token: "9|admin-token" } });
+  });
+  await page.route("**/api/v1/admin/overview", (r) => r.fulfill({ json: { data: overview } }));
+  await page.route(/\/api\/v1\/admin\/stores(\?.*)?$/, (r) => r.fulfill({ json: { data: [store], meta } }));
+
+  await page.goto("/admin/stores/5");
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  await expect(page.getByRole("heading", { name: "دخول إدارة المنصة" })).toBeVisible();
+
+  await page.getByLabel("البريد الإلكتروني").fill("owner@example.test");
+  await page.getByLabel("كلمة المرور", { exact: true }).fill("not-a-real-password");
+  await page.getByRole("button", { name: "دخول الإدارة" }).click();
+
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByRole("heading", { name: "المتاجر" })).toBeVisible();
+  expect(sent).toEqual({ email: "owner@example.test", password: "not-a-real-password" });
+  expect(await page.evaluate(() => localStorage.getItem("token"))).toBe("9|admin-token");
+});
+
+test("a store account is refused on the admin sign-in and signed out again", async ({ page }) => {
+  let loggedOut = false;
+  await page.route("**/api/v1/login", (r) => r.fulfill({ json: { message: "ok", user: owner, token: "3|store-token" } }));
+  await page.route("**/api/v1/logout", async (r) => {
+    loggedOut = r.request().headers().authorization === "Bearer 3|store-token";
+    await r.fulfill({ json: { message: "ok" } });
+  });
+
+  await page.goto("/admin/login");
+  await page.getByLabel("البريد الإلكتروني").fill("ali@shop.ps");
+  await page.getByLabel("كلمة المرور", { exact: true }).fill("not-a-real-password");
+  await page.getByRole("button", { name: "دخول الإدارة" }).click();
+
+  await expect(page.getByText("هذا الحساب حساب متجر، وليس حساب إدارة المنصة.")).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  expect(loggedOut).toBe(true);
+  expect(await page.evaluate(() => localStorage.getItem("token"))).toBeNull();
+});
+
 test("a store owner who opens /admin gets the refusal screen and no admin link", async ({ page }) => {
   await signIn(page, owner);
   let adminCalls = 0;

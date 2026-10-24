@@ -71,8 +71,12 @@ export const session = {
 
 let unauthorizedHandler = () => {
   // W-01 «انتهت الجلسة»: the login screen explains why the user is back there.
-  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-    window.location.assign("/login?expired=1");
+  if (typeof window === "undefined") return;
+  // The platform owner signs in on their own page.
+  const admin = window.location.pathname.startsWith("/admin");
+  const target = admin ? "/admin/login" : "/login";
+  if (window.location.pathname !== target) {
+    window.location.assign(`${target}?expired=1`);
   }
 };
 
