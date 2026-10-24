@@ -1,7 +1,7 @@
 import { useDeferredValue, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon";
-import { AccessBadge, SubscriptionBadge } from "../components/platform";
+import { AccessSwitch, SubscriptionBadge } from "../components/platform";
 import { daysAgo } from "../lib/platform";
 import { DataTable, EmptyState, ErrorBanner, PageHeader, Pager, Segments } from "../components/ui";
 import { dateOnly } from "../lib/format";
@@ -76,7 +76,7 @@ export default function AdminStores() {
         </>
       ),
     },
-    { key: "status", label: "الحساب", render: (s) => <AccessBadge status={s.status} /> },
+    { key: "status", label: "الحساب", render: (s) => <AccessSwitch store={s} compact /> },
     {
       key: "subscription",
       label: "الاشتراك",

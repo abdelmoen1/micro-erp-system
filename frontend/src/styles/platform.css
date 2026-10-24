@@ -48,6 +48,29 @@
 .state-panel.is-warn { --rail: var(--warning-fg); --word: var(--warning-fg); }
 .state-panel.is-idle { --rail: var(--line-2); --word: var(--tx-2); }
 .state-panel h2 { font-size: 14px; font-weight: 600; color: var(--tx-2); }
+.state-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* account access switch: green track = account open, grey = suspended; the text says which */
+.access-switch { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.switch {
+  position: relative; flex: none; width: 52px; height: 30px; padding: 0; border: 0; border-radius: 999px;
+  background: var(--line-2); transition: background-color 0.2s var(--ease);
+}
+.switch.on { background: var(--success-fg); }
+.switch-knob {
+  position: absolute; top: 3px; inset-inline-start: 3px; width: 24px; height: 24px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(20, 38, 46, 0.3); transition: inset-inline-start 0.2s var(--ease);
+}
+.switch.on .switch-knob { inset-inline-start: 25px; }
+.switch:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--primary); }
+.switch:disabled { opacity: 0.6; cursor: progress; }
+.switch-text { font-size: 14px; font-weight: 700; color: var(--tx-1); min-width: 4.5em; }
+.switch[aria-checked="false"] + .switch-text { color: var(--danger); }
+.access-switch.compact .switch { width: 44px; height: 26px; }
+.access-switch.compact .switch-knob { width: 20px; height: 20px; }
+.access-switch.compact .switch.on .switch-knob { inset-inline-start: 21px; }
+.access-switch.compact .switch-text { font-size: 13px; }
+.switch-error { flex-basis: 100%; font-size: 12px; font-weight: 600; color: var(--error-fg); }
 .state-word { display: flex; align-items: center; gap: 10px; font-size: 30px; font-weight: 700; line-height: 1.2; color: var(--word); }
 .state-means { font-size: 14px; color: var(--tx-2); max-width: 46ch; }
 .state-facts { margin: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; }
