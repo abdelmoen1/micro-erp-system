@@ -32,6 +32,16 @@ ApiFailure mapDioException(DioException e) {
       return UserInactive(message: message, correlationId: correlationId);
     case 'STORE_REQUIRED':
       return StoreRequired(message: message, correlationId: correlationId);
+    case 'STORE_SUSPENDED':
+      return StoreSuspended(message: message, correlationId: correlationId);
+    case 'SUBSCRIPTION_EXPIRED':
+      final details = envelope['details'];
+      final number = details is Map ? details['support_whatsapp'] : null;
+      return SubscriptionExpired(
+        supportWhatsapp: number is String && number.isNotEmpty ? number : null,
+        message: message,
+        correlationId: correlationId,
+      );
     case 'FORBIDDEN':
       return Forbidden(message: message, correlationId: correlationId);
     case 'NOT_FOUND':

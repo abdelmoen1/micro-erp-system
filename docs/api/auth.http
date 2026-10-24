@@ -73,6 +73,22 @@ Accept: application/json
 # and that token is revoked (the next call gets 401 UNAUTHENTICATED).
 # { "message": "تم إيقاف هذا الحساب. تواصل مع صاحب المتجر.", "code": "USER_INACTIVE", "errors": {}, … }
 
+### 7b. Free trial and subscription — GET /subscription (200, also after the trial has ended)
+# Every new store gets a 7-day trial from its registration time (stores.trial_ends_at; HISBAH_TRIAL_DAYS).
+# The login / me responses carry user.store.has_access, user.store.subscription_state and user.store.trial_ends_at.
+# Once has_access is false (trial over without a paid subscription, or a paid one past its expiry), sign-in,
+# GET /me, GET /subscription and POST /logout still work; every other store route returns
+# 403 SUBSCRIPTION_EXPIRED with the same summary in `details`. Nothing is deleted; access returns as soon as the
+# platform admin activates the subscription (POST /admin/stores/{id}/subscription). A suspended store gets
+# 403 STORE_SUSPENDED instead (it wins over the subscription).
+GET http://127.0.0.1:8000/api/v1/subscription
+Authorization: Bearer {{token}}
+Accept: application/json
+
+# { "data": { "state": "trial|active|expired|inactive", "has_access": true, "trial_ends_at": "2026-11-01T09:30:15+00:00",
+#             "subscription_expires_at": null, "trial_days_left": 7, "support_whatsapp": "970599000000" } }
+# support_whatsapp comes from SUPPORT_WHATSAPP (digits; null when not set: the clients then hide the WhatsApp button).
+
 ### 8. Old prefix is gone — 404 (no /api/* route outside /api/v1)
 POST http://127.0.0.1:8000/api/login
 Accept: application/json

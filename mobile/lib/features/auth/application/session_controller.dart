@@ -31,21 +31,40 @@ final class SignedIn extends SessionState {
   final AppUser user;
 }
 
-/// 403 USER_INACTIVE or STORE_REQUIRED: shown on the login screen until another account signs in.
-final class AccountBlocked extends SessionState {
-  const AccountBlocked({required this.storeMissing});
+/// The store's trial or paid subscription has ended. The session is kept (the token still works
+/// for /me, /subscription and /logout); every business call is refused by the server until the
+/// platform admin activates the subscription. Only the renewal screen is shown.
+final class SubscriptionLapsed extends SessionState {
+  const SubscriptionLapsed(this.user, {this.supportWhatsapp});
 
-  final bool storeMissing;
+  final AppUser user;
+
+  /// From the 403 details when known; the renewal screen also reads it from GET /subscription.
+  final String? supportWhatsapp;
 }
 
-/// Owns the session lifecycle (US-0205): restore on launch, login, logout,
-/// and global reactions to 401 / USER_INACTIVE from any API call.
+/// 403 USER_INACTIVE, STORE_REQUIRED or STORE_SUSPENDED: shown on the login screen until another
+/// account signs in.
+final class AccountBlocked extends SessionState {
+  const AccountBlocked({required this.storeMissing, this.storeSuspended = false});
+
+  final bool storeMissing;
+
+  /// The platform admin suspended the store (not the user's own account).
+  final bool storeSuspended;
+}
+
+/// Owns the session lifecycle (US-0205): restore on launch, login, registration, logout, and global
+/// reactions to 401 / USER_INACTIVE / STORE_SUSPENDED / SUBSCRIPTION_EXPIRED from any API call.
 class SessionController extends Notifier<SessionState> {
   @override
   SessionState build() {
     Future.microtask(_restore);
     return const SessionRestoring();
   }
+
+  /// SignedIn, or the renewal screen when the server says the store has no access.
+  SessionState _signedIn(AppUser user) => user.hasAccess ? SignedIn(user) : SubscriptionLapsed(user);
 
   Future<void> _restore() async {
     final repo = ref.read(authRepositoryProvider);
@@ -54,7 +73,7 @@ class SessionController extends Notifier<SessionState> {
       return;
     }
     try {
-      state = SignedIn(await repo.me());
+      state = _signedIn(await repo.me());
     } on Unauthenticated {
       await repo.clearLocalSession();
       state = const SignedOut(reason: SignedOutReason.sessionExpired);
@@ -63,10 +82,13 @@ class SessionController extends Notifier<SessionState> {
       state = const AccountBlocked(storeMissing: false);
     } on StoreRequired {
       state = const AccountBlocked(storeMissing: true);
+    } on StoreSuspended {
+      await repo.clearLocalSession();
+      state = const AccountBlocked(storeMissing: false, storeSuspended: true);
     } on ApiFailure {
       // Server unreachable: start offline with the cached user if there is one.
       final cached = await repo.cachedUser();
-      state = cached != null ? SignedIn(cached) : const SignedOut();
+      state = cached != null ? _signedIn(cached) : const SignedOut();
     }
   }
 
@@ -75,7 +97,7 @@ class SessionController extends Notifier<SessionState> {
   Future<void> login(String email, String password) async {
     final repo = ref.read(authRepositoryProvider);
     try {
-      state = SignedIn(await repo.login(email.trim(), password));
+      state = _signedIn(await repo.login(email.trim(), password));
     } on UserInactive {
       state = const AccountBlocked(storeMissing: false);
       rethrow;
@@ -83,7 +105,26 @@ class SessionController extends Notifier<SessionState> {
       await repo.clearLocalSession();
       state = const AccountBlocked(storeMissing: true);
       rethrow;
+    } on StoreSuspended {
+      await repo.clearLocalSession();
+      state = const AccountBlocked(storeMissing: false, storeSuspended: true);
+      rethrow;
     }
+  }
+
+  /// Creates the store and its owner (the server starts the free trial), then signs in.
+  /// Validation, throttling and network failures are rethrown for the registration screen.
+  Future<void> register(Map<String, String> fields) async {
+    state = _signedIn(await ref.read(authRepositoryProvider).register(fields));
+  }
+
+  /// "Check again" on the renewal screen: back to the app once the subscription is active.
+  /// Returns the server's current view of the subscription.
+  Future<SubscriptionSummary> recheckSubscription() async {
+    final repo = ref.read(authRepositoryProvider);
+    final summary = await repo.subscription();
+    if (summary.hasAccess) state = SignedIn(await repo.me());
+    return summary;
   }
 
   Future<void> logout() async {
@@ -91,12 +132,25 @@ class SessionController extends Notifier<SessionState> {
     state = const SignedOut();
   }
 
-  /// Called by the API client when an authenticated call returns 401 or USER_INACTIVE.
+  /// Called by the API client when an authenticated call returns 401, USER_INACTIVE,
+  /// STORE_SUSPENDED or SUBSCRIPTION_EXPIRED.
   Future<void> onSessionFailure(ApiFailure failure) async {
     final current = state;
+    if (failure is SubscriptionExpired) {
+      // The session stays: only the renewal screen until the subscription is activated.
+      final user = switch (current) {
+        SignedIn(:final user) => user,
+        SubscriptionLapsed(:final user) => user,
+        _ => null,
+      };
+      if (user != null) state = SubscriptionLapsed(user, supportWhatsapp: failure.supportWhatsapp);
+      return;
+    }
     await ref.read(authRepositoryProvider).clearLocalSession();
     if (failure is UserInactive) {
       state = const AccountBlocked(storeMissing: false);
+    } else if (failure is StoreSuspended) {
+      state = const AccountBlocked(storeMissing: false, storeSuspended: true);
     } else if (current is SignedIn) {
       state = SignedOut(reason: SignedOutReason.sessionExpired, previousUserId: current.user.id);
     } else if (current is! SignedOut) {

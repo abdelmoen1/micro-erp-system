@@ -42,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => \App\Http\Middleware\EnsureUserIsActive::class,
             'idempotent' => \App\Http\Middleware\EnsureIdempotency::class,
             'platform.admin' => \App\Http\Middleware\EnsurePlatformAdmin::class,
+            'subscribed' => \App\Http\Middleware\EnsureStoreSubscription::class,
         ]);
 
         // Admin routes refuse non-admins before {store} is resolved: no 404/403 difference to probe ids with.

@@ -19,6 +19,7 @@ const Debts = lazy(() => import("./pages/Collections").then((m) => ({ default: m
 const Payments = lazy(() => import("./pages/Collections").then((m) => ({ default: m.Payments })));
 const Staff = lazy(() => import("./pages/Staff"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
+const SubscriptionExpired = lazy(() => import("./pages/SubscriptionExpired"));
 // Platform owner area: its own shell; the API refuses every /admin call from a store account.
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminShell = lazy(() => import("./pages/AdminShell"));
@@ -39,6 +40,7 @@ export default function App() {
           {/* Old links (and the mobile app) still point at /register. */}
           <Route path="/register" element={<Navigate to="/join" replace />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="/subscription-expired" element={<SubscriptionExpired />} />
             <Route element={<AppShell />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/customers" element={<Customers />} />

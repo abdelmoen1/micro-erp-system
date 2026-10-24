@@ -23,6 +23,14 @@ export const useProductCount = () =>
     queryFn: ({ signal }) => apiGet("/products?status=all", { signal }).then((r) => r.meta?.total ?? r.data?.length ?? 0),
   });
 
+/** GET /subscription: the store's trial / subscription; reachable after it has ended. */
+export const useSubscription = () =>
+  useQuery({
+    queryKey: queryKeys.subscription,
+    queryFn: ({ signal }) => apiGet("/subscription", { signal }).then((r) => r.data),
+    staleTime: 0,
+  });
+
 /** POST /logout, then forget the session whatever the answer (the token may already be gone). */
 export async function logout() {
   try {

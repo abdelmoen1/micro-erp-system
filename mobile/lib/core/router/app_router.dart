@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/application/session_controller.dart';
 import '../../features/auth/domain/app_user.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/register_screen.dart';
+import '../../features/auth/presentation/subscription_expired_screen.dart';
 import '../../features/shell/app_shell.dart';
 import '../../features/shell/splash_screen.dart';
 import '../../features/shell/tab_screens.dart';
@@ -13,6 +15,8 @@ import '../providers.dart';
 abstract final class Routes {
   static const splash = '/splash';
   static const login = '/login';
+  static const register = '/register';
+  static const subscriptionExpired = '/subscription-expired';
   static const home = '/home';
   static const pos = '/pos';
   static const customers = '/customers';
@@ -26,7 +30,7 @@ String landingFor(AppUser user) => user.role.landsOnPos ? Routes.pos : Routes.ho
 /// Pure redirect rule, unit-testable without widgets.
 String? sessionRedirect(SessionState session, Uri uri) {
   final location = uri.path;
-  const entry = {Routes.splash, Routes.login};
+  const entry = {Routes.splash, Routes.login, Routes.register, Routes.subscriptionExpired};
 
   switch (session) {
     case SessionRestoring():
@@ -34,8 +38,11 @@ String? sessionRedirect(SessionState session, Uri uri) {
     case AccountBlocked():
       // Shown on the login screen as a banner (hi-fi M-01 · 403); another account may sign in.
       return location == Routes.login ? null : Routes.login;
+    case SubscriptionLapsed():
+      // The trial or subscription has ended: only the renewal screen until it is activated.
+      return location == Routes.subscriptionExpired ? null : Routes.subscriptionExpired;
     case SignedOut(:final reason, :final previousUserId):
-      if (location == Routes.login) return null;
+      if (location == Routes.login || location == Routes.register) return null;
       if (reason != SignedOutReason.sessionExpired) return Routes.login;
       // Expired mid-use: remember where the user was, to return there after re-login.
       return Uri(
@@ -70,6 +77,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.login,
         builder: (_, state) => LoginScreen(sessionExpired: state.uri.queryParameters['expired'] == '1'),
       ),
+      GoRoute(path: Routes.register, builder: (_, _) => const RegisterScreen()),
+      GoRoute(path: Routes.subscriptionExpired, builder: (_, _) => const SubscriptionExpiredScreen()),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(shell: shell),
         branches: [

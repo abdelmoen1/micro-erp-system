@@ -1449,4 +1449,183 @@ class AppLocalizationsEn extends AppLocalizations {
   String homeCollectionsSplit(String atSale, String repayments) {
     return 'At sale $atSale · debts $repayments';
   }
+
+  @override
+  String get loginNoAccount => 'No account yet?';
+
+  @override
+  String get loginCreateStore => 'Create a new store';
+
+  @override
+  String get storeSuspended =>
+      'This store\'s account is suspended. Contact Hisbah to reactivate it.';
+
+  @override
+  String get registerTitle => 'Create a new store';
+
+  @override
+  String get registerHelper => 'Three steps, then a free 7-day trial.';
+
+  @override
+  String registerStepOf(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get registerStepStore => 'Store';
+
+  @override
+  String get registerStepStoreSub =>
+      'Start with your store\'s name and its owner.';
+
+  @override
+  String get registerStepContact => 'Location and contact';
+
+  @override
+  String get registerStepContactSub =>
+      'The phone and address appear on the customer\'s receipt.';
+
+  @override
+  String get registerStepAccount => 'Sign-in details';
+
+  @override
+  String get registerStepAccountSub =>
+      'Choose the email and password you sign in to Hisbah with.';
+
+  @override
+  String get storeNameLabel => 'Store name';
+
+  @override
+  String get ownerNameLabel => 'Owner\'s name';
+
+  @override
+  String get storePhoneLabel => 'Phone number';
+
+  @override
+  String get cityLabel => 'City';
+
+  @override
+  String get cityHint => 'Choose the city';
+
+  @override
+  String get streetLabel => 'Address (street and area)';
+
+  @override
+  String get passwordConfirmLabel => 'Confirm password';
+
+  @override
+  String get passwordMinHint => 'At least 8 characters';
+
+  @override
+  String get storeNameRequired => 'Enter the store name.';
+
+  @override
+  String get ownerNameRequired => 'Enter the owner\'s name.';
+
+  @override
+  String get phoneRequired => 'Enter the phone number.';
+
+  @override
+  String get phoneInvalid =>
+      'The phone number has 9 or 10 digits, e.g. 0599123456.';
+
+  @override
+  String get cityRequired => 'Choose the city.';
+
+  @override
+  String get streetRequired => 'Enter the store\'s address.';
+
+  @override
+  String get registerEmailRequired => 'Enter the email address.';
+
+  @override
+  String get registerEmailInvalid => 'The email address is not valid.';
+
+  @override
+  String get passwordTooShort => 'The password needs at least 8 characters.';
+
+  @override
+  String get passwordMismatch =>
+      'The confirmation does not match the password.';
+
+  @override
+  String get emailTaken =>
+      'This email is already registered. Sign in, or use another email.';
+
+  @override
+  String get registerFailedTaken =>
+      'The store was not created: the email is in use.';
+
+  @override
+  String get registerFailedValidation =>
+      'The store was not created. Check the marked fields.';
+
+  @override
+  String get registerNetworkError =>
+      'Could not reach the server. Your details are still in the form; try again.';
+
+  @override
+  String get registerServerError =>
+      'A server error stopped the store from being created. Try again shortly.';
+
+  @override
+  String get registerNext => 'Next';
+
+  @override
+  String get registerBack => 'Back';
+
+  @override
+  String get registerSubmit => 'Create the store';
+
+  @override
+  String get registerSubmitting => 'Creating the store…';
+
+  @override
+  String get registerHaveAccount => 'Already have an account?';
+
+  @override
+  String get registerSignIn => 'Sign in';
+
+  @override
+  String get subscriptionTrialEndedTitle => 'Your free trial has ended';
+
+  @override
+  String get subscriptionPaidEndedTitle =>
+      'Your store\'s subscription has ended';
+
+  @override
+  String subscriptionEndedOn(String store, String date) {
+    return '«$store», ended on $date';
+  }
+
+  @override
+  String get subscriptionDataSafe =>
+      'Your data is kept as it is: customers, debts, sales and products. Everything is back as soon as the subscription is activated.';
+
+  @override
+  String get subscriptionContactWhatsapp => 'Contact us on WhatsApp';
+
+  @override
+  String get subscriptionContactNoNumber =>
+      'Contact Hisbah to activate the subscription.';
+
+  @override
+  String subscriptionWhatsappMessage(String store, String email) {
+    return 'Hello, I would like to activate the subscription of «$store» on Hisbah.\nEmail: $email';
+  }
+
+  @override
+  String subscriptionWhatsappFailed(String number) {
+    return 'Could not open WhatsApp. Support number: $number';
+  }
+
+  @override
+  String get subscriptionCheckAgain => 'Check again';
+
+  @override
+  String get subscriptionChecking => 'Checking…';
+
+  @override
+  String get subscriptionStillInactive =>
+      'The subscription is not active yet. Once Hisbah confirms the payment, tap «Check again».';
 }

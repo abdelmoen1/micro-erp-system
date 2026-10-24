@@ -1444,4 +1444,179 @@ class AppLocalizationsAr extends AppLocalizations {
   String homeCollectionsSplit(String atSale, String repayments) {
     return 'عند البيع $atSale · ديون $repayments';
   }
+
+  @override
+  String get loginNoAccount => 'ليس لديك حساب؟';
+
+  @override
+  String get loginCreateStore => 'إنشاء متجر جديد';
+
+  @override
+  String get storeSuspended =>
+      'حساب هذا المتجر موقوف. تواصل مع إدارة حسبة لإعادة تفعيله.';
+
+  @override
+  String get registerTitle => 'إنشاء متجر جديد';
+
+  @override
+  String get registerHelper => 'ثلاث خطوات، وتبدأ بفترة تجريبية مجانية 7 أيام.';
+
+  @override
+  String registerStepOf(int current, int total) {
+    return 'الخطوة $current من $total';
+  }
+
+  @override
+  String get registerStepStore => 'المتجر';
+
+  @override
+  String get registerStepStoreSub => 'لنبدأ باسم متجرك واسم صاحبه المسؤول عنه.';
+
+  @override
+  String get registerStepContact => 'الموقع والتواصل';
+
+  @override
+  String get registerStepContactSub =>
+      'الهاتف والعنوان يظهران على إيصال الزبون.';
+
+  @override
+  String get registerStepAccount => 'بيانات الدخول';
+
+  @override
+  String get registerStepAccountSub =>
+      'اختر البريد وكلمة المرور التي تدخل بها إلى حسبة.';
+
+  @override
+  String get storeNameLabel => 'اسم المتجر';
+
+  @override
+  String get ownerNameLabel => 'اسم صاحب المتجر';
+
+  @override
+  String get storePhoneLabel => 'رقم الهاتف';
+
+  @override
+  String get cityLabel => 'المدينة';
+
+  @override
+  String get cityHint => 'اختر المدينة';
+
+  @override
+  String get streetLabel => 'العنوان (الشارع والمنطقة)';
+
+  @override
+  String get passwordConfirmLabel => 'تأكيد كلمة المرور';
+
+  @override
+  String get passwordMinHint => '8 أحرف على الأقل';
+
+  @override
+  String get storeNameRequired => 'يرجى إدخال اسم المتجر.';
+
+  @override
+  String get ownerNameRequired => 'يرجى إدخال اسم صاحب المتجر.';
+
+  @override
+  String get phoneRequired => 'يرجى إدخال رقم الهاتف.';
+
+  @override
+  String get phoneInvalid => 'رقم الهاتف 9 أو 10 أرقام، مثل 0599123456.';
+
+  @override
+  String get cityRequired => 'يرجى اختيار المدينة.';
+
+  @override
+  String get streetRequired => 'يرجى إدخال عنوان المتجر.';
+
+  @override
+  String get registerEmailRequired => 'يرجى إدخال البريد الإلكتروني.';
+
+  @override
+  String get registerEmailInvalid => 'صيغة البريد الإلكتروني غير صحيحة.';
+
+  @override
+  String get passwordTooShort => 'كلمة المرور 8 أحرف على الأقل.';
+
+  @override
+  String get passwordMismatch => 'التأكيد لا يطابق كلمة المرور.';
+
+  @override
+  String get emailTaken =>
+      'هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.';
+
+  @override
+  String get registerFailedTaken =>
+      'لم يُنشأ المتجر: البريد الإلكتروني مستخدم.';
+
+  @override
+  String get registerFailedValidation =>
+      'لم يُنشأ المتجر. راجع الحقول المعلّمة.';
+
+  @override
+  String get registerNetworkError =>
+      'تعذّر الاتصال بالخادم. بياناتك باقية في النموذج، أعد المحاولة.';
+
+  @override
+  String get registerServerError =>
+      'حدث خطأ في الخادم ولم يُنشأ المتجر. أعد المحاولة بعد قليل.';
+
+  @override
+  String get registerNext => 'التالي';
+
+  @override
+  String get registerBack => 'رجوع';
+
+  @override
+  String get registerSubmit => 'إنشاء المتجر';
+
+  @override
+  String get registerSubmitting => 'جارٍ إنشاء المتجر…';
+
+  @override
+  String get registerHaveAccount => 'لديك حساب؟';
+
+  @override
+  String get registerSignIn => 'تسجيل الدخول';
+
+  @override
+  String get subscriptionTrialEndedTitle => 'انتهت الفترة التجريبية';
+
+  @override
+  String get subscriptionPaidEndedTitle => 'انتهى اشتراك متجرك';
+
+  @override
+  String subscriptionEndedOn(String store, String date) {
+    return 'متجر «$store»، انتهت في $date';
+  }
+
+  @override
+  String get subscriptionDataSafe =>
+      'بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والمنتجات. يعود كل شيء فور تفعيل الاشتراك.';
+
+  @override
+  String get subscriptionContactWhatsapp => 'تواصل معنا عبر واتساب';
+
+  @override
+  String get subscriptionContactNoNumber =>
+      'تواصل مع إدارة حسبة لتفعيل الاشتراك.';
+
+  @override
+  String subscriptionWhatsappMessage(String store, String email) {
+    return 'مرحباً، أريد تفعيل اشتراك متجر «$store» على حسبة.\nالبريد: $email';
+  }
+
+  @override
+  String subscriptionWhatsappFailed(String number) {
+    return 'تعذّر فتح واتساب. رقم الدعم: $number';
+  }
+
+  @override
+  String get subscriptionCheckAgain => 'تحقق من جديد';
+
+  @override
+  String get subscriptionChecking => 'جارٍ التحقق…';
+
+  @override
+  String get subscriptionStillInactive =>
+      'لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد».';
 }

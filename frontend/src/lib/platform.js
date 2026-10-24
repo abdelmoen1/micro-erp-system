@@ -7,9 +7,10 @@ export const ACCESS = {
   suspended: { label: "الحساب موقوف", badge: "inactive" },
 };
 
-/** `state` from the API: active | expired | inactive (an expiry in the past reads as expired). */
+/** `state` from the API: active (paid) | trial | expired (paid, past its expiry) | inactive (trial over, never paid). */
 export const SUBSCRIPTION = {
   active: { label: "اشتراك فعّال", badge: "active" },
+  trial: { label: "فترة تجريبية", badge: "due_today" },
   expired: { label: "اشتراك منتهٍ", badge: "overdue" },
   inactive: { label: "بلا اشتراك", badge: "unpaid" },
 };

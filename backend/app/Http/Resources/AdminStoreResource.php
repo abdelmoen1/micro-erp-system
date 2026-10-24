@@ -37,6 +37,8 @@ class AdminStoreResource extends JsonResource
             'subscription' => [
                 'status' => $this->subscription_status,
                 'state' => $this->subscriptionState(),
+                'has_access' => $this->hasAccess(),
+                'trial_ends_at' => $this->trial_ends_at,
                 'started_at' => $this->subscription_started_at,
                 'expires_at' => $this->subscription_expires_at,
                 'changed_at' => $this->subscription_changed_at,

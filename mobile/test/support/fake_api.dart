@@ -19,13 +19,21 @@ FakeResponse envelope(
   String message = 'رسالة',
   Map<String, Object> errors = const {},
   Map<String, String> headers = const {},
+  Map<String, Object?>? details,
 }) => FakeResponse(
   status,
-  {'message': message, 'code': code, 'errors': errors, 'correlation_id': '01M4TX2BQ5JA9MSMRA877EFV4Y'},
+  {
+    'message': message,
+    'code': code,
+    'errors': errors,
+    'details': ?details,
+    'correlation_id': '01M4TX2BQ5JA9MSMRA877EFV4Y',
+  },
   headers: {'x-correlation-id': '01M4TX2BQ5JA9MSMRA877EFV4Y', ...headers},
 );
 
-Map<String, dynamic> userJson({int id = 1, String role = 'owner'}) => {
+/// [hasAccess] false: the store's trial or subscription has ended (`store.has_access`).
+Map<String, dynamic> userJson({int id = 1, String role = 'owner', bool hasAccess = true}) => {
   'id': id,
   'name': 'Demo $role',
   'email': '$role@demo.test',
@@ -33,20 +41,40 @@ Map<String, dynamic> userJson({int id = 1, String role = 'owner'}) => {
   'status': 'active',
   'store_id': 1,
   'deactivated_at': null,
-  'store': {'id': 1, 'name': 'Demo Shop', 'timezone': 'Asia/Gaza'},
+  'store': {
+    'id': 1,
+    'name': 'Demo Shop',
+    'timezone': 'Asia/Gaza',
+    'has_access': hasAccess,
+    'subscription_state': hasAccess ? 'trial' : 'inactive',
+    'trial_ends_at': '2026-10-20T08:00:00.000000Z',
+  },
 };
 
-FakeResponse loginOk({int id = 1, String role = 'owner'}) => FakeResponse(200, {
+FakeResponse loginOk({int id = 1, String role = 'owner', bool hasAccess = true}) => FakeResponse(200, {
   'message': 'تم تسجيل دخولك بنجاح',
-  'user': userJson(id: id, role: role),
+  'user': userJson(id: id, role: role, hasAccess: hasAccess),
   'token': '1|test-token',
   'meta': {'currency': 'ILS'},
 });
 
-FakeResponse meOk({int id = 1, String role = 'owner'}) => FakeResponse(200, {
-  'user': userJson(id: id, role: role),
+FakeResponse meOk({int id = 1, String role = 'owner', bool hasAccess = true}) => FakeResponse(200, {
+  'user': userJson(id: id, role: role, hasAccess: hasAccess),
   'meta': {'currency': 'ILS'},
 });
+
+/// `GET /subscription` as SubscriptionAccess::summary renders it.
+FakeResponse subscriptionOk({String state = 'inactive', bool hasAccess = false, String? supportWhatsapp = '970599000000'}) =>
+    FakeResponse(200, {
+      'data': {
+        'state': state,
+        'has_access': hasAccess,
+        'trial_ends_at': '2026-10-20T08:00:00+00:00',
+        'subscription_expires_at': null,
+        'trial_days_left': 0,
+        'support_whatsapp': supportWhatsapp,
+      },
+    });
 
 /// `GET /dashboard?period=today` as DashboardService renders it (fields the app reads).
 FakeResponse dashboardOk({List<Map<String, dynamic>> recentInvoices = const []}) => FakeResponse(200, {

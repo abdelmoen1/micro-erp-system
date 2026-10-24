@@ -1,6 +1,9 @@
 // Back-office domain helpers shared by the S3 screens (roles, payment methods, stock and sale kinds).
 
 export const roleOf = (user) => user?.role ?? "employee";
+
+/** Where a store user lands after signing in: the renewal screen once the trial / subscription has ended. */
+export const landingPath = (user) => (user?.store?.has_access === false ? "/subscription-expired" : "/dashboard");
 export const canManage = (user) => ["owner", "manager"].includes(roleOf(user));
 
 export const PAYMENT_METHODS = [

@@ -2611,6 +2611,318 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'عند البيع {atSale} · ديون {repayments}'**
   String homeCollectionsSplit(String atSale, String repayments);
+
+  /// No description provided for @loginNoAccount.
+  ///
+  /// In ar, this message translates to:
+  /// **'ليس لديك حساب؟'**
+  String get loginNoAccount;
+
+  /// No description provided for @loginCreateStore.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنشاء متجر جديد'**
+  String get loginCreateStore;
+
+  /// No description provided for @storeSuspended.
+  ///
+  /// In ar, this message translates to:
+  /// **'حساب هذا المتجر موقوف. تواصل مع إدارة حسبة لإعادة تفعيله.'**
+  String get storeSuspended;
+
+  /// No description provided for @registerTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنشاء متجر جديد'**
+  String get registerTitle;
+
+  /// No description provided for @registerHelper.
+  ///
+  /// In ar, this message translates to:
+  /// **'ثلاث خطوات، وتبدأ بفترة تجريبية مجانية 7 أيام.'**
+  String get registerHelper;
+
+  /// No description provided for @registerStepOf.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطوة {current} من {total}'**
+  String registerStepOf(int current, int total);
+
+  /// No description provided for @registerStepStore.
+  ///
+  /// In ar, this message translates to:
+  /// **'المتجر'**
+  String get registerStepStore;
+
+  /// No description provided for @registerStepStoreSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'لنبدأ باسم متجرك واسم صاحبه المسؤول عنه.'**
+  String get registerStepStoreSub;
+
+  /// No description provided for @registerStepContact.
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع والتواصل'**
+  String get registerStepContact;
+
+  /// No description provided for @registerStepContactSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'الهاتف والعنوان يظهران على إيصال الزبون.'**
+  String get registerStepContactSub;
+
+  /// No description provided for @registerStepAccount.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيانات الدخول'**
+  String get registerStepAccount;
+
+  /// No description provided for @registerStepAccountSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر البريد وكلمة المرور التي تدخل بها إلى حسبة.'**
+  String get registerStepAccountSub;
+
+  /// No description provided for @storeNameLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم المتجر'**
+  String get storeNameLabel;
+
+  /// No description provided for @ownerNameLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم صاحب المتجر'**
+  String get ownerNameLabel;
+
+  /// No description provided for @storePhoneLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الهاتف'**
+  String get storePhoneLabel;
+
+  /// No description provided for @cityLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'المدينة'**
+  String get cityLabel;
+
+  /// No description provided for @cityHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر المدينة'**
+  String get cityHint;
+
+  /// No description provided for @streetLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'العنوان (الشارع والمنطقة)'**
+  String get streetLabel;
+
+  /// No description provided for @passwordConfirmLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد كلمة المرور'**
+  String get passwordConfirmLabel;
+
+  /// No description provided for @passwordMinHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'8 أحرف على الأقل'**
+  String get passwordMinHint;
+
+  /// No description provided for @storeNameRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال اسم المتجر.'**
+  String get storeNameRequired;
+
+  /// No description provided for @ownerNameRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال اسم صاحب المتجر.'**
+  String get ownerNameRequired;
+
+  /// No description provided for @phoneRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال رقم الهاتف.'**
+  String get phoneRequired;
+
+  /// No description provided for @phoneInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الهاتف 9 أو 10 أرقام، مثل 0599123456.'**
+  String get phoneInvalid;
+
+  /// No description provided for @cityRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى اختيار المدينة.'**
+  String get cityRequired;
+
+  /// No description provided for @streetRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال عنوان المتجر.'**
+  String get streetRequired;
+
+  /// No description provided for @registerEmailRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال البريد الإلكتروني.'**
+  String get registerEmailRequired;
+
+  /// No description provided for @registerEmailInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'صيغة البريد الإلكتروني غير صحيحة.'**
+  String get registerEmailInvalid;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة المرور 8 أحرف على الأقل.'**
+  String get passwordTooShort;
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In ar, this message translates to:
+  /// **'التأكيد لا يطابق كلمة المرور.'**
+  String get passwordMismatch;
+
+  /// No description provided for @emailTaken.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.'**
+  String get emailTaken;
+
+  /// No description provided for @registerFailedTaken.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُنشأ المتجر: البريد الإلكتروني مستخدم.'**
+  String get registerFailedTaken;
+
+  /// No description provided for @registerFailedValidation.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُنشأ المتجر. راجع الحقول المعلّمة.'**
+  String get registerFailedValidation;
+
+  /// No description provided for @registerNetworkError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر الاتصال بالخادم. بياناتك باقية في النموذج، أعد المحاولة.'**
+  String get registerNetworkError;
+
+  /// No description provided for @registerServerError.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدث خطأ في الخادم ولم يُنشأ المتجر. أعد المحاولة بعد قليل.'**
+  String get registerServerError;
+
+  /// No description provided for @registerNext.
+  ///
+  /// In ar, this message translates to:
+  /// **'التالي'**
+  String get registerNext;
+
+  /// No description provided for @registerBack.
+  ///
+  /// In ar, this message translates to:
+  /// **'رجوع'**
+  String get registerBack;
+
+  /// No description provided for @registerSubmit.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنشاء المتجر'**
+  String get registerSubmit;
+
+  /// No description provided for @registerSubmitting.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ إنشاء المتجر…'**
+  String get registerSubmitting;
+
+  /// No description provided for @registerHaveAccount.
+  ///
+  /// In ar, this message translates to:
+  /// **'لديك حساب؟'**
+  String get registerHaveAccount;
+
+  /// No description provided for @registerSignIn.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الدخول'**
+  String get registerSignIn;
+
+  /// No description provided for @subscriptionTrialEndedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت الفترة التجريبية'**
+  String get subscriptionTrialEndedTitle;
+
+  /// No description provided for @subscriptionPaidEndedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهى اشتراك متجرك'**
+  String get subscriptionPaidEndedTitle;
+
+  /// No description provided for @subscriptionEndedOn.
+  ///
+  /// In ar, this message translates to:
+  /// **'متجر «{store}»، انتهت في {date}'**
+  String subscriptionEndedOn(String store, String date);
+
+  /// No description provided for @subscriptionDataSafe.
+  ///
+  /// In ar, this message translates to:
+  /// **'بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والمنتجات. يعود كل شيء فور تفعيل الاشتراك.'**
+  String get subscriptionDataSafe;
+
+  /// No description provided for @subscriptionContactWhatsapp.
+  ///
+  /// In ar, this message translates to:
+  /// **'تواصل معنا عبر واتساب'**
+  String get subscriptionContactWhatsapp;
+
+  /// No description provided for @subscriptionContactNoNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'تواصل مع إدارة حسبة لتفعيل الاشتراك.'**
+  String get subscriptionContactNoNumber;
+
+  /// No description provided for @subscriptionWhatsappMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرحباً، أريد تفعيل اشتراك متجر «{store}» على حسبة.\nالبريد: {email}'**
+  String subscriptionWhatsappMessage(String store, String email);
+
+  /// No description provided for @subscriptionWhatsappFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر فتح واتساب. رقم الدعم: {number}'**
+  String subscriptionWhatsappFailed(String number);
+
+  /// No description provided for @subscriptionCheckAgain.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحقق من جديد'**
+  String get subscriptionCheckAgain;
+
+  /// No description provided for @subscriptionChecking.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ التحقق…'**
+  String get subscriptionChecking;
+
+  /// No description provided for @subscriptionStillInactive.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد».'**
+  String get subscriptionStillInactive;
 }
 
 class _AppLocalizationsDelegate
