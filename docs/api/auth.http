@@ -19,6 +19,7 @@
 #     "store_id": 1, "deactivated_at": null,
 #     "created_at": "…", "updated_at": "…",
 #     "store": { "id": 1, "name": "Demo Shop", "phone": null, "address": null,
+#                "area": null, "latitude": null, "longitude": null,   // own store only; set at /register or PATCH /my-store
 #                "timezone": "Asia/Gaza", "created_at": "…", "updated_at": "…" }
 #   },
 #   "token": "<sanctum token, expires after 30 days>",

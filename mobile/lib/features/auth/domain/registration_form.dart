@@ -30,12 +30,13 @@ const registrationSteps = [
   [RegistrationField.email, RegistrationField.password, RegistrationField.passwordConfirmation],
 ];
 
-/// API field → the form field that shows its error (`address` is the street + city pair).
+/// API field → the form field that shows its error (`address` is the street + city pair; `area` is the city).
 const registrationApiFields = {
   'store_name': RegistrationField.storeName,
   'owner_name': RegistrationField.ownerName,
   'phone': RegistrationField.phone,
   'address': RegistrationField.street,
+  'area': RegistrationField.city,
   'email': RegistrationField.email,
   'password': RegistrationField.password,
   'password_confirmation': RegistrationField.passwordConfirmation,
@@ -95,6 +96,7 @@ class RegistrationDraft {
     'owner_name': ownerName.trim(),
     'phone': digits(phone),
     'address': '${street.trim()}، $city',
+    'area': city!,
     'email': email.trim(),
     'password': password,
     'password_confirmation': passwordConfirmation,

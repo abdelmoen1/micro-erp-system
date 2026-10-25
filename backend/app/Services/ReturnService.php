@@ -96,10 +96,12 @@ class ReturnService
                 $item->update(['returned_quantity' => Quantity::add($item->returned_quantity ?? '0', $line['quantity'])]);
 
                 if ($item->product_id && $products->has($item->product_id)) {
+                    // A carton line is returned in whole cartons (its own unit) and puts back the
+                    // pieces of its snapshot size, even if the product's carton changed since.
                     $this->stock->move(
                         $products->get($item->product_id),
                         StockMovement::TYPE_SALE_RETURN,
-                        $line['quantity'],
+                        $item->baseQuantity($line['quantity']),
                         $actor,
                         reason: $reason,
                         referenceType: 'sale_return',
@@ -157,7 +159,9 @@ class ReturnService
             if (Quantity::isNegative($quantity) || Quantity::isZero($quantity)) {
                 $errors["items.{$index}.quantity"] = ['الكمية المرتجعة يجب أن تكون أكبر من صفر.'];
             } elseif (!Quantity::fitsUnit($quantity, $unit)) {
-                $errors["items.{$index}.quantity"] = ['هذا الصنف يباع بالقطعة؛ أدخل عددًا صحيحًا.'];
+                $errors["items.{$index}.quantity"] = [$item->isPack()
+                    ? 'هذا الصنف بيع بالكرتونة؛ أرجع كراتين كاملة.'
+                    : 'هذا الصنف يباع بالقطعة؛ أدخل عددًا صحيحًا.'];
             } elseif (Quantity::compare($quantity, $returnable) > 0) {
                 $max = Quantity::format($returnable, $unit);
                 $errors["items.{$index}.quantity"] = ["الكمية المرتجعة أكبر من المتاح للإرجاع ({$max})."];

@@ -13,6 +13,7 @@ use App\Models\StockMovement;
 use App\Models\User;
 use App\Support\BusinessClock;
 use App\Support\Money;
+use App\Support\Pack;
 use App\Support\Quantity;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -81,15 +82,18 @@ class SaleService
                     'item_name' => $product->name,
                     'unit' => $product->unit,
                     'quantity' => $line['quantity'],
+                    // Snapshot: this line's quantity and unit price are per carton of this size.
+                    'pack_size' => $line['pack_size'],
                     'unit_price' => $line['unit_price'],
                     'total' => $line['total'],
                 ]);
 
                 // D-27: a shortfall does not block the sale; it is flagged for the manager's review.
+                // Stock is in pieces: a carton line takes quantity × pack_size of them.
                 $movement = $this->stock->move(
                     $product,
                     StockMovement::TYPE_SALE,
-                    Quantity::negate($line['quantity']),
+                    Quantity::negate($line['base_quantity']),
                     $actor,
                     referenceType: 'invoice',
                     referenceId: $invoice->id,
@@ -271,18 +275,30 @@ class SaleService
         foreach ($items as $index => $item) {
             $product = $products->get((int) $item['product_id']);
             $quantity = Quantity::of((string) $item['quantity']);
+            $byPack = ($item['sale_unit'] ?? null) === Pack::SALE_UNIT;
 
-            if (!Quantity::fitsUnit($quantity, $product->unit)) {
-                $errors["items.{$index}.quantity"] = ['هذا المنتج يباع بالقطعة؛ أدخل عددًا صحيحًا.'];
+            if ($byPack && !$product->hasPack()) {
+                $errors["items.{$index}.sale_unit"] = ['هذا المنتج لا يُباع بالكرتونة.'];
 
                 continue;
             }
 
-            $unitPrice = Money::of($product->selling_price);
+            // A carton line counts whole cartons; otherwise the product's own unit decides.
+            if (!Quantity::fitsUnit($quantity, $byPack ? Quantity::UNIT_PIECE : $product->unit)) {
+                $errors["items.{$index}.quantity"] = [$byPack ? 'الكرتونة تُباع كاملة؛ أدخل عددًا صحيحًا من الكراتين.' : 'هذا المنتج يباع بالقطعة؛ أدخل عددًا صحيحًا.'];
+
+                continue;
+            }
+
+            // The price of the unit actually sold: per carton for a carton line, never per piece.
+            $unitPrice = Money::of($byPack ? $product->pack_price : $product->selling_price);
+            $packSize = $byPack ? (int) $product->pack_size : null;
 
             $lines[] = [
                 'product' => $product,
                 'quantity' => $quantity,
+                'pack_size' => $packSize,
+                'base_quantity' => Pack::baseQuantity($quantity, $packSize),
                 'unit_price' => $unitPrice,
                 'total' => Money::times($unitPrice, $quantity),
             ];

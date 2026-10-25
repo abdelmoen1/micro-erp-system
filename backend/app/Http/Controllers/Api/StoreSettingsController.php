@@ -17,7 +17,8 @@ class StoreSettingsController extends Controller
     }
 
     /**
-     * Owner-only store settings. S1 scope: the business timezone (D-23 / CR-14).
+     * Owner-only store settings: the business timezone (D-23 / CR-14), the address, the area and
+     * the map coordinates. Access and subscription columns are not fillable, so they cannot be sent.
      */
     public function update(UpdateStoreSettingsRequest $request)
     {

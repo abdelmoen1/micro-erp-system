@@ -78,9 +78,52 @@ void main() {
     test('selling above the recorded stock is allowed and flagged (D-27)', () {
       final cart = Cart.empty.addPiece(cola).addPiece(cola).addPiece(cola);
 
-      expect(cart.lineFor(7)!.exceedsStock, isTrue);
+      expect(cart.exceedsStock(cart.lineFor(7)!), isTrue);
       expect(cart.overStockLines.map((l) => l.product.id), [7]);
       expect(Cart.empty.addPiece(cola).overStockLines, isEmpty);
+    });
+  });
+
+  group('Cartons', () {
+    // 2.50 a bottle, 54.00 a carton of 24; 30 bottles on the shelf.
+    final water = Product.fromJson({
+      ...productJson(id: 12, name: 'Water', barcode: '444', price: '2.50', stock: '30'),
+      'pack_size': 24,
+      'pack_price': '54.00',
+    });
+
+    test('pieces and cartons of one product are two lines, each at its own price', () {
+      final cart = Cart.empty.addPiece(water).addPiece(water).addPack(water).addPack(water);
+
+      expect(cart.lines, hasLength(2));
+      expect(cart.lineFor(12)!.quantity, Quantity.whole(2));
+      expect(cart.lineFor(12, pack: true)!.quantity, Quantity.whole(2));
+      expect(cart.lineFor(12, pack: true)!.unitPrice.toApi(), '54.00', reason: 'per carton, never per piece');
+      expect(cart.lineFor(12, pack: true)!.baseQuantity, Quantity.whole(48));
+      // 2 × 2.50 + 2 × 54.00
+      expect(cart.total.toApi(), '113.00');
+      expect(cart.toSaleItems(), [
+        {'product_id': 12, 'quantity': '2'},
+        {'product_id': 12, 'quantity': '2', 'sale_unit': 'pack'},
+      ]);
+    });
+
+    test('the stock warning counts every piece inside the cartons', () {
+      final oneCarton = Cart.empty.addPack(water);
+      expect(oneCarton.overStockLines, isEmpty, reason: '24 of 30');
+
+      final more = oneCarton.addPiece(water).addPiece(water).addPiece(water).addPiece(water).addPiece(water).addPiece(water).addPiece(water);
+      expect(more.baseQuantityOf(12), Quantity.whole(31));
+      expect(more.overStockLines, hasLength(2), reason: '24 + 7 = 31 > 30: both lines of the product');
+    });
+
+    test('a carton is whole, only for products that have one, and removing it keeps the pieces', () {
+      expect(() => Cart.empty.setQuantity(water, Quantity.parse('1.500'), pack: true), throwsArgumentError);
+      expect(() => Cart.empty.addPack(cola), throwsArgumentError);
+
+      final cart = Cart.empty.addPiece(water).addPack(water).remove(12, pack: true);
+      expect(cart.lines.single.pack, isFalse);
+      expect(cart.lineFor(12)!.quantity, Quantity.one);
     });
   });
 

@@ -102,6 +102,7 @@ FakeResponse dashboardOk({List<Map<String, dynamic>> recentInvoices = const []})
 class FakeApi implements HttpClientAdapter {
   final Map<String, List<FakeResponse>> _routes = {};
   final Set<String> _offline = {};
+  final Set<String> _timeouts = {};
   final List<RequestOptions> requests = [];
 
   void on(String route, FakeResponse response) => _routes[route] = [response];
@@ -110,8 +111,14 @@ class FakeApi implements HttpClientAdapter {
 
   void offline(String route) => _offline.add(route);
 
+  /// The request is sent but no answer comes (a receive timeout): it may have reached the server.
+  void timeout(String route) => _timeouts.add(route);
+
   /// The connection comes back for [route].
-  void restore(String route) => _offline.remove(route);
+  void restore(String route) {
+    _offline.remove(route);
+    _timeouts.remove(route);
+  }
 
   List<RequestOptions> requestsTo(String route) => requests.where((r) => '${r.method} ${r.path}' == route).toList();
 
@@ -126,6 +133,10 @@ class FakeApi implements HttpClientAdapter {
 
     if (_offline.contains(route)) {
       throw DioException.connectionError(requestOptions: options, reason: 'offline (fake)');
+    }
+
+    if (_timeouts.contains(route)) {
+      throw DioException.receiveTimeout(timeout: const Duration(seconds: 30), requestOptions: options);
     }
 
     final queue = _routes[route];

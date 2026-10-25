@@ -1628,4 +1628,157 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get subscriptionStillInactive =>
       'The subscription is not active yet. Once Hisbah confirms the payment, tap «Check again».';
+
+  @override
+  String get saleScanTitle => 'Scan products to sell';
+
+  @override
+  String get saleScanKeepGoing => 'Camera on: scan the next product';
+
+  @override
+  String get saleScanCloseA11y => 'Close the camera and go back to the cart';
+
+  @override
+  String get cartPanelTitle => 'Cart';
+
+  @override
+  String get saleScanEmptyBody =>
+      'Point the camera at a product\'s barcode. It stays open so you can add products one after another.';
+
+  @override
+  String get completeSale => 'Complete sale';
+
+  @override
+  String methodRecordOnly(String method) {
+    return 'This only records that the customer paid by $method. Hisbah is not connected to this service and does not check that the money arrived, so confirm it before completing the sale.';
+  }
+
+  @override
+  String get invTitle => 'Add products by scanning';
+
+  @override
+  String get invInstruction =>
+      'Scan a product\'s barcode to add it to your store. It never goes into the sale cart.';
+
+  @override
+  String get invWaiting => 'Finish or close the form to scan the next product';
+
+  @override
+  String get invCloseA11y => 'Close the camera and go back to products';
+
+  @override
+  String get invBackToScanning => 'Close and go back to scanning';
+
+  @override
+  String invStockNow(String stock) {
+    return 'In stock now $stock';
+  }
+
+  @override
+  String get invExistsNote =>
+      'This product is already in your store, so it will not be added again. To record new goods for it, choose «Add quantity».';
+
+  @override
+  String get invAddStock => 'Add quantity';
+
+  @override
+  String invAddStockQty(String unit) {
+    return 'Quantity received ($unit)';
+  }
+
+  @override
+  String get invReason => 'Reason';
+
+  @override
+  String get invReasonDefault => 'Goods received';
+
+  @override
+  String get invReasonRequired => 'Write why the quantity is added.';
+
+  @override
+  String get invQtyPiece => 'Enter a whole number above zero.';
+
+  @override
+  String get invQtyKg => 'Enter a weight above zero, up to 3 decimals.';
+
+  @override
+  String get invAddStockSave => 'Add to stock';
+
+  @override
+  String invStockAdded(String name, String stock) {
+    return 'Quantity added to «$name». In stock now $stock';
+  }
+
+  @override
+  String get invStockForbidden =>
+      'Only the owner or a manager can change stock.';
+
+  @override
+  String invOpeningStock(String unit) {
+    return 'Quantity on hand now ($unit)';
+  }
+
+  @override
+  String get invNetworkUncertain =>
+      'The connection dropped before the server answered, so the save may have gone through. Your entries are kept; tap «Retry» and we will check without adding the product twice.';
+
+  @override
+  String get invFromCatalog =>
+      'Known in Hisbah: name and unit are filled in. Add your store\'s prices and quantity.';
+
+  @override
+  String get packWord => 'carton';
+
+  @override
+  String unitChipPack(int size) {
+    return 'Carton ×$size';
+  }
+
+  @override
+  String packPer(int size) {
+    return 'carton ($size pieces)';
+  }
+
+  @override
+  String packEquals(String pieces) {
+    return '= $pieces pieces';
+  }
+
+  @override
+  String addPackLine(int size, String price) {
+    return '+ carton ($size pieces) for $price';
+  }
+
+  @override
+  String get packToggle => 'Also sold by the carton (wholesale)';
+
+  @override
+  String get packToggleSub =>
+      'Stock stays in pieces; selling a carton takes all its pieces.';
+
+  @override
+  String get packSizeLabel => 'Pieces per carton';
+
+  @override
+  String get packPriceLabel => 'Price of a whole carton';
+
+  @override
+  String get packSizeInvalid => 'A whole number from 2 to 10000.';
+
+  @override
+  String get packPriceNotAbovePiece =>
+      'The carton price must be higher than one piece. Did you type the piece price here?';
+
+  @override
+  String packPerPiece(String price) {
+    return 'One piece inside the carton costs $price.';
+  }
+
+  @override
+  String packPerPieceVs(String pack, String piece) {
+    return 'One piece inside the carton costs $pack, against $piece on its own.';
+  }
+
+  @override
+  String get invQtyPack => 'Enter a whole number of cartons above zero.';
 }

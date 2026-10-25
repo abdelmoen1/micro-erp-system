@@ -32,6 +32,10 @@ export const useAdminProducts = (filters) =>
 
 export const useCatalogItem = (id) => useQuery({ queryKey: queryKeys.admin.catalog(id), queryFn: data(`/admin/catalog-products/${id}`) });
 
+/** The shared catalog: one row per barcode with its store count and price range. */
+export const useAdminCatalog = (filters) =>
+  useQuery({ queryKey: queryKeys.admin.catalogList(filters), queryFn: page(`/admin/catalog-products${qs(filters)}`), placeholderData: (p) => p });
+
 /** After either write: the store page, the lists and the overview counts. */
 function useStoreWrite(path) {
   const client = useQueryClient();

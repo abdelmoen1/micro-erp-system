@@ -115,6 +115,14 @@
 .danger-zone .btn { flex: none; }
 .delete-list { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
 
+/* shared catalog: price range in the list, and the cheapest / dearest store marked in place */
+.price-range { white-space: nowrap; }
+.price-cell { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.price-tag { padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.price-tag.is-low { background: var(--success-bg); color: var(--success-fg); }
+.price-tag.is-high { background: var(--warning-bg); color: var(--warning-fg); }
+.price-compare { padding: 12px 16px; border-radius: 12px; background: var(--brand-tint); color: var(--tx-1); font-size: 15px; line-height: 1.7; }
+
 .platform-section { display: flex; flex-direction: column; gap: 12px; }
 .section-title { font-size: 19px; font-weight: 700; }
 .platform-inline-search { width: min(320px, 100%); }

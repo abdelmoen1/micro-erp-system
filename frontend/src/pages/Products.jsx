@@ -145,7 +145,8 @@ export default function Products() {
   );
 }
 
-const TEMPLATE = "name,barcode,unit,selling_price,cost_price,current_stock,minimum_stock\nشاي أسود 100 كيس,6294003500071,piece,14.00,10.50,20,4\nلوز نيء,,kg,60.00,44.00,2.500,1\n";
+const TEMPLATE =
+  "name,barcode,unit,selling_price,cost_price,pack_size,pack_price,current_stock,minimum_stock\nشاي أسود 100 كيس,6294003500071,piece,14.00,10.50,,,20,4\nماء 600 مل,6291007030017,piece,2.50,1.80,24,54.00,48,24\nلوز نيء,,kg,60.00,44.00,,,2.500,1\n";
 
 /** US-0408 · check the whole file first; import only when every row is valid (all or nothing). */
 function ImportDialog({ onClose }) {
@@ -183,8 +184,9 @@ function ImportDialog({ onClose }) {
             <input type="file" accept=".csv,text/csv" className="sr-only" onChange={(e) => pick(e.target.files?.[0] ?? null)} />
           </label>
           <p className="field-hint" style={{ lineHeight: 1.8 }}>
-            الأعمدة: <span className="m">name, barcode, unit, selling_price, cost_price, current_stock, minimum_stock</span>. الوحدة <span className="m">piece</span> أو{" "}
-            <span className="m">kg</span>؛ الاسم وسعر البيع والمخزون إلزامية.{" "}
+            الأعمدة: <span className="m">name, barcode, unit, selling_price, cost_price, pack_size, pack_price, current_stock, minimum_stock</span>. الوحدة{" "}
+            <span className="m">piece</span> أو <span className="m">kg</span>؛ الاسم وسعر البيع والمخزون إلزامية. للكرتونة (اختياري، بالقطعة فقط): عدد قطعها{" "}
+            <span className="m">pack_size</span> وسعرها كاملة <span className="m">pack_price</span>؛ المخزون يبقى بالقطعة.{" "}
             <a href={templateHref} download="hisbah-products.csv">
               تنزيل نموذج
             </a>

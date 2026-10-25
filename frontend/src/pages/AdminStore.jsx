@@ -56,6 +56,21 @@ export default function AdminStore() {
             <Fact label="هاتف المالك" value={s.owner?.phone} ltr />
             <Fact label="هاتف المتجر" value={s.phone} ltr />
             <Fact label="العنوان" value={s.address} />
+            <Fact label="المنطقة" value={s.area} />
+            <div>
+              <dt>الموقع على الخريطة</dt>
+              <dd>
+                {s.latitude != null && s.longitude != null ? (
+                  <a href={`https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=17/${s.latitude}/${s.longitude}`} target="_blank" rel="noreferrer">
+                    <span className="m">
+                      {s.latitude}, {s.longitude}
+                    </span>
+                  </a>
+                ) : (
+                  "لم يحدده المتجر"
+                )}
+              </dd>
+            </div>
             <Fact label="المنطقة الزمنية" value={s.timezone} ltr />
             <Fact label="المنتجات" value={`${s.products_count} (${s.active_products_count} نشطة)`} />
             <Fact label="الأعضاء" value={String(s.users_count)} />
@@ -301,7 +316,7 @@ function UnsubscribeDialog({ store, onClose }) {
   const save = useSetSubscription();
   const [note, setNote] = useState("");
   return (
-    <Dialog title={`إيقاف اشتراك ${store.name}؟`} role="alertdialog" onClose={onClose}>
+    <Dialog title={`إيقاف اشتراك ${store.name}؟`} role="alertdialog" tone="warning" icon="clock" onClose={onClose}>
       <p>يُسجَّل المتجر بلا اشتراك. حساب المتجر يبقى كما هو، ويستمر أعضاؤه في الدخول.</p>
       <ReasonField id="unsub-note" label="ملاحظة (اختياري)" value={note} onChange={setNote} error={save.error?.fieldError?.("note")} />
       <ErrorBanner error={save.error} />
@@ -337,7 +352,7 @@ function DeleteDialog({ store, onClose }) {
   };
 
   return (
-    <Dialog title={`حذف ${store.name} نهائياً؟`} role="alertdialog" onClose={onClose}>
+    <Dialog title={`حذف ${store.name} نهائياً؟`} role="alertdialog" tone="danger" icon="trash" onClose={onClose}>
       <form className="form-stack" onSubmit={submit}>
         <p>سيُحذف كل ما يخص هذا المتجر ولا يمكن استرجاعه:</p>
         <ul className="delete-list">
