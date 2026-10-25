@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
+import '../../../core/widgets/latin_digits.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../customers/domain/customer.dart';
 import 'product_search_sheet.dart';
@@ -311,7 +312,11 @@ class _CustomerPickerSheetState extends ConsumerState<CustomerPickerSheet> {
           enabled: !_saving,
           keyboardType: TextInputType.phone,
           textDirection: TextDirection.ltr,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+          inputFormatters: [
+            const LatinDigitsFormatter(),
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+          ],
           onChanged: (_) => setState(() => _phoneError = null),
           decoration: InputDecoration(
             filled: true,

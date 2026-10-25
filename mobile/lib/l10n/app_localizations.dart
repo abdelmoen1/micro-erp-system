@@ -2471,13 +2471,13 @@ abstract class AppLocalizations {
   /// No description provided for @formPrice.
   ///
   /// In ar, this message translates to:
-  /// **'سعر البيع'**
+  /// **'السعر للزبون (سعر البيع)'**
   String get formPrice;
 
   /// No description provided for @formCost.
   ///
   /// In ar, this message translates to:
-  /// **'سعر الشراء'**
+  /// **'تكلفة المنتج عليك (سعر الشراء)'**
   String get formCost;
 
   /// No description provided for @formStock.
@@ -2489,7 +2489,7 @@ abstract class AppLocalizations {
   /// No description provided for @formMin.
   ///
   /// In ar, this message translates to:
-  /// **'تنبيه عند'**
+  /// **'نبّهني عندما يصل المخزون إلى'**
   String get formMin;
 
   /// No description provided for @formNameRequired.
@@ -3169,6 +3169,102 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'أدخل عدداً صحيحاً من الكراتين أكبر من صفر.'**
   String get invQtyPack;
+
+  /// No description provided for @formPriceHelpPiece.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما يدفعه الزبون مقابل قطعة واحدة.'**
+  String get formPriceHelpPiece;
+
+  /// No description provided for @formPriceHelpKg.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما يدفعه الزبون مقابل كيلو واحد.'**
+  String get formPriceHelpKg;
+
+  /// No description provided for @formCostHelp.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما تدفعه أنت للمورّد. لا يظهر للزبون.'**
+  String get formCostHelp;
+
+  /// No description provided for @formMinHelp.
+  ///
+  /// In ar, this message translates to:
+  /// **'يظهر المنتج في قائمة «منخفض» عندما يصل المخزون إلى هذا الرقم أو أقل.'**
+  String get formMinHelp;
+
+  /// No description provided for @formRequiredA11y.
+  ///
+  /// In ar, this message translates to:
+  /// **'مطلوب'**
+  String get formRequiredA11y;
+
+  /// No description provided for @formFixErrors.
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع الحقول المعلَّمة باللون الأحمر.'**
+  String get formFixErrors;
+
+  /// No description provided for @subscriptionHowTo.
+  ///
+  /// In ar, this message translates to:
+  /// **'بعد الدفع تفعّل إدارة حسبة اشتراكك، ثم اضغط «تحقق من جديد» لتعود إلى متجرك.'**
+  String get subscriptionHowTo;
+
+  /// No description provided for @subscriptionDetails.
+  ///
+  /// In ar, this message translates to:
+  /// **'اذكر هذه البيانات عند التواصل:'**
+  String get subscriptionDetails;
+
+  /// No description provided for @subscriptionStoreLine.
+  ///
+  /// In ar, this message translates to:
+  /// **'المتجر: {store}'**
+  String subscriptionStoreLine(String store);
+
+  /// No description provided for @subscriptionEmailLine.
+  ///
+  /// In ar, this message translates to:
+  /// **'البريد: {email}'**
+  String subscriptionEmailLine(String email);
+
+  /// No description provided for @subscriptionCopy.
+  ///
+  /// In ar, this message translates to:
+  /// **'نسخ البيانات'**
+  String get subscriptionCopy;
+
+  /// No description provided for @subscriptionCopied.
+  ///
+  /// In ar, this message translates to:
+  /// **'نُسخت البيانات.'**
+  String get subscriptionCopied;
+
+  /// No description provided for @discardTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجاهل ما كتبته؟'**
+  String get discardTitle;
+
+  /// No description provided for @discardBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُحفظ هذا المنتج بعد. إذا خرجت الآن ستضيع البيانات التي أدخلتها.'**
+  String get discardBody;
+
+  /// No description provided for @discardKeep.
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة الإدخال'**
+  String get discardKeep;
+
+  /// No description provided for @discardConfirm.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجاهل وخروج'**
+  String get discardConfirm;
 }
 
 class _AppLocalizationsDelegate

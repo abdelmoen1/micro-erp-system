@@ -11,6 +11,7 @@ import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/hisbah_logo.dart';
+import '../../../core/widgets/latin_digits.dart';
 import '../../../core/widgets/message_banner.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/registration_form.dart';
@@ -242,6 +243,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               onSubmitted: onDone == null ? null : (_) => onDone(),
               enabled: !_submitting,
               keyboardType: keyboard,
+              // A phone typed on an Arabic keyboard (٠٥٩…) is read as 059….
+              inputFormatters: keyboard == TextInputType.phone ? const [LatinDigitsFormatter()] : null,
               obscureText: secret && _obscure,
               autocorrect: !ltr,
               textDirection: ltr ? TextDirection.ltr : null,

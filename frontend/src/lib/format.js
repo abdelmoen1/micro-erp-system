@@ -10,6 +10,14 @@ export function shekel(amount) {
   return `${negative ? "-" : ""}₪ ${grouped || "0"}.${fraction.padEnd(2, "0").slice(0, 2)}`;
 }
 
+/**
+ * "٢٫٥٠" → "2.50". Arabic keyboards type Arabic-Indic digits (and Persian ones on some phones) and
+ * the Arabic decimal separator; prices, quantities and phones are read with Western digits only.
+ * One character for one character, so the caret does not jump.
+ */
+export const latinDigits = (text) =>
+  String(text).replace(/[٠-٩۰-۹٫]/g, (c) => (c === "٫" ? "." : String(c.charCodeAt(0) & 0xf))); // ٠ U+0660, ۰ U+06F0
+
 /** For bar heights only (never for amounts shown to people). */
 export const amountNumber = (amount) => Number.parseFloat(amount ?? "0") || 0;
 

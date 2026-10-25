@@ -208,7 +208,7 @@ test("shared catalog: a barcode another store saved fills the name and unit; min
   await expect(page.getByLabel("اسم المنتج")).toHaveValue("عصير برتقال 1 لتر");
 
   await page.getByLabel("سعر البيع").fill("7.50");
-  await page.getByLabel("المخزون الآن").fill("6");
+  await page.getByLabel("الكمية الموجودة الآن").fill("6");
   await page.getByRole("button", { name: "حفظ المنتج" }).click();
   await expect.poll(() => sent).toMatchObject({ name: "عصير برتقال 1 لتر", barcode: "6291041500213", unit: "piece", selling_price: "7.50", current_stock: "6" });
 });
@@ -240,7 +240,7 @@ test("cartons: the form shows the price of one piece inside the carton and sends
   await page.goto("/products/new");
   await page.getByLabel("اسم المنتج").fill("ماء 600 مل");
   await page.getByLabel("سعر البيع").fill("2.50");
-  await page.getByLabel("المخزون الآن").fill("48");
+  await page.getByLabel("الكمية الموجودة الآن").fill("48");
   await page.getByLabel("يُباع بالكرتونة أيضاً (جملة)").check();
   await page.getByLabel("عدد القطع في الكرتونة").fill("24");
   await page.getByLabel("سعر الكرتونة كاملة").fill("54");
@@ -253,6 +253,31 @@ test("cartons: the form shows the price of one piece inside the carton and sends
 
   await page.getByRole("button", { name: "حفظ المنتج" }).click();
   await expect.poll(() => sent).toMatchObject({ unit: "piece", selling_price: "2.50", pack_size: "24", pack_price: "54", current_stock: "48" });
+});
+
+test("product form: plain price labels, Arabic-keyboard digits, and a refused field is marked and focused", async ({ page }) => {
+  await signIn(page);
+  let sent = null;
+  await page.route("**/api/v1/products", async (r) => {
+    sent = r.request().postDataJSON();
+    await r.fulfill({ status: 422, json: { message: "البيانات غير صالحة.", code: "VALIDATION_FAILED", errors: { selling_price: ["سعر البيع يجب أن يكون أكبر من صفر."] } } });
+  });
+
+  await page.goto("/products/new");
+  await expect(page.getByText("ما تدفعه أنت للمورّد. لا يظهر للزبون.")).toBeVisible();
+  await expect(page.getByLabel("اسم المنتج")).toHaveAttribute("aria-required", "true");
+  await page.getByLabel("اسم المنتج").fill("شاي أخضر");
+  await page.getByLabel("السعر للزبون (سعر البيع)").fill("٠٫٠٠");
+  await expect(page.getByLabel("السعر للزبون (سعر البيع)")).toHaveValue("0.00");
+  await page.getByLabel("تكلفة المنتج عليك (سعر الشراء)").fill("١٫٧٥");
+  await page.getByLabel("الكمية الموجودة الآن").fill("١٢");
+  await page.getByRole("button", { name: "حفظ المنتج" }).click();
+
+  await expect.poll(() => sent).toMatchObject({ selling_price: "0.00", cost_price: "1.75", current_stock: "12" });
+  const price = page.getByLabel("السعر للزبون (سعر البيع)");
+  await expect(price).toHaveAttribute("aria-invalid", "true");
+  await expect(price).toHaveAccessibleDescription("سعر البيع يجب أن يكون أكبر من صفر.");
+  await expect(price).toBeFocused();
 });
 
 test("cartons: a carton line says so, with its pieces, and is returned by the carton", async ({ page }) => {
