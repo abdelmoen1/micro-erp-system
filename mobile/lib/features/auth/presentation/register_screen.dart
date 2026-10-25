@@ -36,6 +36,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (f != RegistrationField.city) f: TextEditingController(),
   };
 
+  /// After a refused step, focus moves to the first field that needs fixing.
+  final _focus = {for (final f in RegistrationField.values) f: FocusNode()};
+
   int _step = 0;
   bool _submitting = false;
   bool _obscure = true;
@@ -50,6 +53,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _countdown?.cancel();
     for (final c in _controllers.values) {
       c.dispose();
+    }
+    for (final f in _focus.values) {
+      f.dispose();
     }
     super.dispose();
   }
@@ -88,12 +94,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       _errors = errors.map((field, e) => MapEntry(field, _message(e, t)));
       _outcome = null;
     });
-    if (errors.isNotEmpty) return;
+    if (errors.isNotEmpty) {
+      _focusFirstError();
+      return;
+    }
     if (_step < registrationSteps.length - 1) {
       setState(() => _step++);
+      // The next step's first field is ready for typing.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _focus[registrationSteps[_step].first]?.requestFocus());
       return;
     }
     await _submit(t);
+  }
+
+  /// Focus the first field (in the step's order) that has an error; it also scrolls it into view.
+  void _focusFirstError() {
+    final first = registrationSteps[_step].where(_errors.containsKey).firstOrNull;
+    if (first != null) WidgetsBinding.instance.addPostFrameCallback((_) => _focus[first]?.requestFocus());
   }
 
   Future<void> _submit(AppLocalizations t) async {
@@ -130,8 +147,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     setState(() {
       _errors = errors;
       if (errors.isNotEmpty) _step = errors.keys.map(stepOf).reduce(math.min);
-      _outcome = errors.length == 1 && errors.containsKey(RegistrationField.email) ? _Outcome.taken : _Outcome.validation;
+      _outcome = errors.length == 1 && errors.containsKey(RegistrationField.email)
+          ? _Outcome.taken
+          : _Outcome.validation;
     });
+    _focusFirstError();
   }
 
   void _startCountdown(int seconds) {
@@ -150,7 +170,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Widget? _banner(AppLocalizations t) {
     if (_throttled) {
-      return MessageBanner(icon: Icons.schedule, tone: StatusTone.pending, text: t.tooManyAttempts, trailing: _clock(_waitSeconds));
+      return MessageBanner(
+        icon: Icons.schedule,
+        tone: StatusTone.pending,
+        text: t.tooManyAttempts,
+        trailing: _clock(_waitSeconds),
+      );
     }
     return switch (_outcome) {
       _Outcome.taken => MessageBanner(icon: Icons.warning_amber_rounded, text: t.registerFailedTaken),
@@ -165,20 +190,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     };
   }
 
-  Widget _errorLine(String text) => Padding(
-    padding: const EdgeInsets.only(top: 8),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Icon(Icons.warning_amber_rounded, size: 16, color: StatusTone.error.fg),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(text, style: TextStyle(color: StatusTone.error.fg, fontSize: 14, fontWeight: FontWeight.w600)),
-        ),
-      ],
+  /// Announced when it appears; read together with the field it belongs to.
+  Widget _errorLine(String text) => Semantics(
+    liveRegion: true,
+    child: Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, size: 16, color: StatusTone.error.fg),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(color: StatusTone.error.fg, fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 
@@ -191,42 +223,48 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     String? hint,
     List<String>? autofill,
     TextInputAction action = TextInputAction.next,
+    VoidCallback? onDone,
   }) {
     final error = _errors[field];
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.labelMedium),
-          const SizedBox(height: 8),
-          TextField(
-            key: Key('register.${field.name}'),
-            controller: _controllers[field],
-            enabled: !_submitting,
-            keyboardType: keyboard,
-            obscureText: secret && _obscure,
-            autocorrect: !ltr,
-            textDirection: ltr ? TextDirection.ltr : null,
-            textInputAction: action,
-            autofillHints: autofill,
-            style: const TextStyle(fontSize: 16),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintTextDirection: ltr ? TextDirection.ltr : null,
-              enabledBorder: error == null
-                  ? null
-                  : OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(HisbahRadius.field),
-                      borderSide: BorderSide(color: StatusTone.error.fg, width: 2),
-                    ),
+      // The visible label, the field and its error are one node for screen readers.
+      child: MergeSemantics(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.labelMedium),
+            const SizedBox(height: 8),
+            TextField(
+              key: Key('register.${field.name}'),
+              controller: _controllers[field],
+              focusNode: _focus[field],
+              onSubmitted: onDone == null ? null : (_) => onDone(),
+              enabled: !_submitting,
+              keyboardType: keyboard,
+              obscureText: secret && _obscure,
+              autocorrect: !ltr,
+              textDirection: ltr ? TextDirection.ltr : null,
+              textInputAction: action,
+              autofillHints: autofill,
+              style: const TextStyle(fontSize: 16),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintTextDirection: ltr ? TextDirection.ltr : null,
+                enabledBorder: error == null
+                    ? null
+                    : OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(HisbahRadius.field),
+                        borderSide: BorderSide(color: StatusTone.error.fg, width: 2),
+                      ),
+              ),
+              onChanged: (_) {
+                if (_errors.containsKey(field)) setState(() => _errors = {..._errors}..remove(field));
+              },
             ),
-            onChanged: (_) {
-              if (_errors.containsKey(field)) setState(() => _errors = {..._errors}..remove(field));
-            },
-          ),
-          if (error != null) _errorLine(error),
-        ],
+            if (error != null) _errorLine(error),
+          ],
+        ),
       ),
     );
   }
@@ -242,6 +280,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             key: const Key('register.city'),
+            focusNode: _focus[RegistrationField.city],
             initialValue: _draft.city,
             isExpanded: true,
             hint: Text(t.cityHint),
@@ -300,6 +339,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         secret: true,
         action: TextInputAction.done,
         autofill: const [AutofillHints.newPassword],
+        onDone: () => _next(t),
       ),
       Align(
         alignment: AlignmentDirectional.centerStart,
@@ -336,91 +376,109 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             builder: (context, viewport) => SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: viewport.maxHeight),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Center(child: HisbahLogo(markSize: 64, color: HisbahColors.surface)),
-                    ),
-                    DecoratedBox(
-                      decoration: const BoxDecoration(
-                        color: HisbahColors.surface,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(HisbahRadius.sheet)),
+                // The form panel starts under the compact mark and fills the rest of the screen
+                // (no empty brand band above a short step); longer steps scroll.
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        child: Center(child: HisbahLogo(markSize: 40, color: HisbahColors.surface)),
                       ),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.paddingOf(context).bottom),
-                        child: AutofillGroup(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(t.registerTitle, style: theme.textTheme.headlineMedium),
-                              Text(t.registerHelper, style: const TextStyle(fontSize: 15, color: HisbahColors.inkMuted)),
-                              const SizedBox(height: 16),
-                              _StepBar(step: _step, total: registrationSteps.length, label: t.registerStepOf(_step + 1, registrationSteps.length)),
-                              const SizedBox(height: 16),
-                              Text(heading, style: theme.textTheme.titleLarge),
-                              Text(sub, style: const TextStyle(fontSize: 14, color: HisbahColors.inkMuted)),
-                              const SizedBox(height: 16),
-                              if (banner != null) ...[banner, const SizedBox(height: 16)],
-                              ..._stepFields(t),
-                              const SizedBox(height: 4),
-                              FilledButton(
-                                key: Key(last ? 'register.submit' : 'register.next'),
-                                onPressed: _submitting || _throttled ? null : () => _next(t),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (_submitting) ...[
-                                      const SizedBox.square(
-                                        dimension: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2.4, color: HisbahColors.disabledInk),
-                                      ),
-                                      const SizedBox(width: 10),
-                                    ],
-                                    Flexible(
-                                      child: Text(
-                                        _submitting
-                                            ? t.registerSubmitting
-                                            : _throttled
-                                            ? t.loginButtonWait(_clock(_waitSeconds))
-                                            : last
-                                            ? t.registerSubmit
-                                            : t.registerNext,
-                                        textAlign: TextAlign.center,
-                                      ),
+                      Expanded(
+                        child: DecoratedBox(
+                          decoration: const BoxDecoration(
+                            color: HisbahColors.surface,
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(HisbahRadius.sheet)),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.paddingOf(context).bottom),
+                            child: AutofillGroup(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Semantics(
+                                    header: true,
+                                    child: Text(t.registerTitle, style: theme.textTheme.headlineMedium),
+                                  ),
+                                  Text(
+                                    t.registerHelper,
+                                    style: const TextStyle(fontSize: 15, color: HisbahColors.inkMuted),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  // One line names the step and where it sits: «الخطوة 1 من 3: المتجر».
+                                  _StepBar(
+                                    step: _step,
+                                    total: registrationSteps.length,
+                                    label: '${t.registerStepOf(_step + 1, registrationSteps.length)}: $heading',
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(sub, style: const TextStyle(fontSize: 14, color: HisbahColors.inkMuted)),
+                                  const SizedBox(height: 20),
+                                  if (banner != null) ...[banner, const SizedBox(height: 16)],
+                                  ..._stepFields(t),
+                                  const SizedBox(height: 4),
+                                  FilledButton(
+                                    key: Key(last ? 'register.submit' : 'register.next'),
+                                    onPressed: _submitting || _throttled ? null : () => _next(t),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (_submitting) ...[
+                                          const SizedBox.square(
+                                            dimension: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.4,
+                                              color: HisbahColors.disabledInk,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                        ],
+                                        Flexible(
+                                          child: Text(
+                                            _submitting
+                                                ? t.registerSubmitting
+                                                : _throttled
+                                                ? t.loginButtonWait(_clock(_waitSeconds))
+                                                : last
+                                                ? t.registerSubmit
+                                                : t.registerNext,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (_step > 0) ...[
+                                    const SizedBox(height: 8),
+                                    OutlinedButton(
+                                      key: const Key('register.back'),
+                                      onPressed: _submitting ? null : () => setState(() => _step--),
+                                      child: Text(t.registerBack),
                                     ),
                                   ],
-                                ),
-                              ),
-                              if (_step > 0) ...[
-                                const SizedBox(height: 8),
-                                OutlinedButton(
-                                  key: const Key('register.back'),
-                                  onPressed: _submitting ? null : () => setState(() => _step--),
-                                  child: Text(t.registerBack),
-                                ),
-                              ],
-                              const SizedBox(height: 16),
-                              Wrap(
-                                alignment: WrapAlignment.center,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Text(t.registerHaveAccount, style: const TextStyle(color: HisbahColors.inkMuted)),
-                                  TextButton(
-                                    key: const Key('register.toLogin'),
-                                    onPressed: _submitting ? null : () => context.go(Routes.login),
-                                    child: Text(t.registerSignIn),
+                                  const SizedBox(height: 16),
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    children: [
+                                      Text(t.registerHaveAccount, style: const TextStyle(color: HisbahColors.inkMuted)),
+                                      TextButton(
+                                        key: const Key('register.toLogin'),
+                                        onPressed: _submitting ? null : () => context.go(Routes.login),
+                                        child: Text(t.registerSignIn),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -446,7 +504,10 @@ class _StepBar extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: HisbahColors.inkMuted)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: HisbahColors.ink),
+        ),
         const SizedBox(height: 8),
         Row(
           children: [

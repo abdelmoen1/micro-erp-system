@@ -109,9 +109,10 @@ test("the platform admin sees counts and stores, and filters by subscription sta
 
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "المتاجر" })).toBeVisible();
-  const counts = page.getByRole("region", { name: "ملخص المنصة" });
-  await expect(counts.getByText("حسابات موقوفة")).toBeVisible();
-  await expect(counts).toContainText("4");
+  const accounts = page.getByRole("group", { name: "حساب المتجر" });
+  await expect(accounts.getByRole("button", { name: /كل المتاجر/ })).toContainText("4");
+  await expect(accounts.getByRole("button", { name: /موقوفة/ })).toContainText("1");
+  await expect(accounts.getByRole("button", { name: /كل المتاجر/ })).toHaveAttribute("aria-pressed", "true");
 
   const table = page.getByRole("table", { name: "المتاجر المسجّلة" });
   await expect(table.getByRole("link", { name: "بقالة الأمانة" })).toBeVisible();
@@ -119,8 +120,15 @@ test("the platform admin sees counts and stores, and filters by subscription sta
   await expect(table.getByRole("switch", { name: "حساب بقالة الأمانة" })).toHaveAttribute("aria-checked", "true");
   await expect(table).toContainText("بلا اشتراك");
 
-  await page.getByRole("group", { name: "حالة الاشتراك" }).getByRole("button", { name: /منتهٍ/ }).click();
+  const expired = page.getByRole("group", { name: "الاشتراك" }).getByRole("button", { name: /منتهٍ/ });
+  await expired.click();
   await expect.poll(() => requests.at(-1)).toBe("expired");
+  await expect(expired).toHaveAttribute("aria-pressed", "true");
+
+  // «تحديث» fetches the list again (a store that just registered on the phone appears).
+  const before = requests.length;
+  await page.getByRole("button", { name: "تحديث" }).click();
+  await expect.poll(() => requests.length).toBeGreaterThan(before);
 });
 
 test("suspending the account and activating the subscription are separate requests", async ({ page }) => {

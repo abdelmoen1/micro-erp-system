@@ -254,6 +254,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    bool focused(WidgetTester tester, String key) =>
+        tester.widget<TextField>(find.byKey(Key(key))).focusNode?.hasFocus ?? false;
+
     Future<void> tapKey(WidgetTester tester, String key) async {
       await tester.ensureVisible(find.byKey(Key(key)));
       await tester.tap(find.byKey(Key(key)));
@@ -266,17 +269,19 @@ void main() {
 
       await tapKey(tester, 'login.register');
       expect(find.byType(RegisterScreen), findsOneWidget);
-      expect(find.text('الخطوة 1 من 3'), findsOneWidget);
+      expect(find.text('الخطوة 1 من 3: المتجر'), findsOneWidget);
 
-      // Step 1: empty fields are refused with the web wording.
+      // Step 1: empty fields are refused with the web wording, and focus goes to the first one.
       await tapKey(tester, 'register.next');
       expect(find.text('يرجى إدخال اسم المتجر.'), findsOneWidget);
+      expect(focused(tester, 'register.storeName'), isTrue);
       await tester.enterText(find.byKey(const Key('register.storeName')), 'بقالة الأمل');
       await tester.enterText(find.byKey(const Key('register.ownerName')), 'سامي');
       await tapKey(tester, 'register.next');
 
-      // Step 2.
-      expect(find.text('الخطوة 2 من 3'), findsOneWidget);
+      // Step 2: its first field is ready for typing.
+      expect(find.text('الخطوة 2 من 3: الموقع والتواصل'), findsOneWidget);
+      expect(focused(tester, 'register.phone'), isTrue);
       await tester.enterText(find.byKey(const Key('register.phone')), '1234');
       await tapKey(tester, 'register.next');
       expect(find.text('رقم الهاتف 9 أو 10 أرقام، مثل 0599123456.'), findsOneWidget);
@@ -289,7 +294,7 @@ void main() {
       await tapKey(tester, 'register.next');
 
       // Step 3.
-      expect(find.text('الخطوة 3 من 3'), findsOneWidget);
+      expect(find.text('الخطوة 3 من 3: بيانات الدخول'), findsOneWidget);
       await tester.enterText(find.byKey(const Key('register.email')), 'sami@shop.ps');
       await tester.enterText(find.byKey(const Key('register.password')), 'Password123');
       await tester.enterText(find.byKey(const Key('register.passwordConfirmation')), 'Password12');
@@ -337,7 +342,8 @@ void main() {
 
       expect(find.text('لم يُنشأ المتجر: البريد الإلكتروني مستخدم.'), findsOneWidget);
       expect(find.text('هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.'), findsOneWidget);
-      expect(find.text('الخطوة 3 من 3'), findsOneWidget);
+      expect(find.text('الخطوة 3 من 3: بيانات الدخول'), findsOneWidget);
+      expect(focused(tester, 'register.email'), isTrue);
     });
 
     testWidgets('an expired store lands on the Arabic renewal screen; WhatsApp opens with the store named', (tester) async {

@@ -2,7 +2,7 @@ import { useDeferredValue, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Icon from "../components/Icon";
 import { AccessSwitch } from "../components/platform";
-import { ROLE_LABEL, daysAgo } from "../lib/platform";
+import { ROLE_LABEL, daysAgo, daysLeftLabel } from "../lib/platform";
 import { Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, Field, MoneyText, PageHeader, Pager, QtyText, ReasonField, StatusBadge } from "../components/ui";
 import { dateOnly, dateTime } from "../lib/format";
 import { stockState } from "../lib/domain";
@@ -192,7 +192,7 @@ function SubscriptionPanel({ store, onActivate, onDeactivate }) {
             ? "مدفوع ومفعّل حتى تاريخ الانتهاء."
             : "مدفوع ومفعّل بلا تاريخ انتهاء."
           : sub.state === "trial"
-            ? "يعمل المتجر مجاناً حتى نهاية الفترة التجريبية، ثم يحتاج اشتراكاً."
+            ? `${sub.trial_ends_at ? `${daysLeftLabel(sub.trial_ends_at)} من الفترة المجانية` : "فترة مجانية"}، ثم يحتاج المتجر اشتراكاً ليستمر.`
             : sub.state === "expired"
               ? "انتهى الاشتراك: الأعضاء يرون شاشة التجديد فقط. جدّد بعد التحقق من الدفع."
               : "انتهت الفترة التجريبية بلا اشتراك: الأعضاء يرون شاشة التجديد فقط."}
