@@ -337,7 +337,7 @@ function VoidDialog({ sale, onClose }) {
     voidSale.mutate({ id: sale.id, reason: reason.trim(), key }, { onSuccess: onClose });
   };
   return (
-    <Dialog title={`إلغاء الفاتورة #${sale.id} نهائياً؟`} role="alertdialog" onClose={onClose}>
+    <Dialog title={`إلغاء الفاتورة #${sale.id} نهائياً؟`} role="alertdialog" tone="danger" onClose={onClose}>
       <form className="form-stack" onSubmit={submit} noValidate>
         <ConfirmSummary
           rows={[

@@ -154,7 +154,7 @@ export default function CustomerDetail() {
       {dialog === "opening" && c ? <OpeningDebtDialog customer={c} onClose={() => setDialog(null)} /> : null}
       {dialog === "edit" && c ? <CustomerFormDialog customer={c} canSetLimit={manager} onClose={() => setDialog(null)} /> : null}
       {dialog === "deactivate" && c ? (
-        <Dialog title={`إيقاف ${c.name}؟`} role="alertdialog" onClose={() => setDialog(null)}>
+        <Dialog title={`إيقاف ${c.name}؟`} role="alertdialog" tone="warning" icon="ban" onClose={() => setDialog(null)}>
           <p>الإيقاف يخفيه من البيع الجديد فقط:</p>
           <ul style={{ margin: 0, paddingRight: 20, lineHeight: 1.9 }}>
             <li>

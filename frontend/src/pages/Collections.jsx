@@ -235,7 +235,7 @@ function ReverseDialog({ operation, onClose }) {
     reverse.mutate({ operation, reason: reason.trim(), key }, { onSuccess: onClose });
   };
   return (
-    <Dialog title={group ? `عكس دفعة ${operation.customer?.name ?? ""} الجماعية؟` : `عكس دفعة ${operation.customer?.name ?? ""}؟`} role="alertdialog" onClose={onClose}>
+    <Dialog title={group ? `عكس دفعة ${operation.customer?.name ?? ""} الجماعية؟` : `عكس دفعة ${operation.customer?.name ?? ""}؟`} role="alertdialog" tone="warning" onClose={onClose}>
       <form className="form-stack" onSubmit={submit} noValidate>
         {group ? (
           <div role="note" className="banner tone-info">
