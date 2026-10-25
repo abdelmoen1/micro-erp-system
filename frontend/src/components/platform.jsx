@@ -61,7 +61,7 @@ export function AccessDialog({ store, onClose }) {
     save.mutate({ id: store.id, status: suspending ? "suspended" : "active", ...(suspending && reason.trim() ? { reason: reason.trim() } : {}) }, { onSuccess: onClose });
 
   return (
-    <Dialog title={suspending ? `إيقاف حساب ${store.name}؟` : `تفعيل حساب ${store.name}؟`} role="alertdialog" onClose={onClose}>
+    <Dialog title={suspending ? `إيقاف حساب ${store.name}؟` : `تفعيل حساب ${store.name}؟`} role="alertdialog" tone={suspending ? "warning" : "success"} icon={suspending ? "ban" : "ok"} onClose={onClose}>
       <p>
         {suspending
           ? "يُمنع المالك وكل الموظفين من الدخول فوراً، وتتوقف جلساتهم المفتوحة. لا تُحذف أي بيانات، والاشتراك يبقى كما هو."

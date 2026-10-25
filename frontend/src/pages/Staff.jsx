@@ -97,7 +97,7 @@ export default function Staff() {
 
       {inviting ? <InviteDialog onClose={() => setInviting(false)} /> : null}
       {deactivating ? (
-        <Dialog title={`إيقاف ${deactivating.name}؟`} role="alertdialog" onClose={() => setDeactivating(null)}>
+        <Dialog title={`إيقاف ${deactivating.name}؟`} role="alertdialog" tone="warning" icon="ban" onClose={() => setDeactivating(null)}>
           <p>يُسجَّل خروجه من كل الأجهزة فوراً ولن يستطيع الدخول. فواتيره ودفعاته تبقى باسمه في السجل.</p>
           <div className="dlg-actions">
             <button

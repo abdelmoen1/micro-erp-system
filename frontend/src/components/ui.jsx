@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import Icon from "./Icon";
 import { shekel, shortReference } from "../lib/format";
@@ -193,29 +194,76 @@ export function Pager({ meta, onPage }) {
   );
 }
 
-/** Modal dialog: focus moves in on open, Escape closes, focus returns to the opener. */
-export function Dialog({ title, onClose, children, role = "dialog", wide = false }) {
+const DIALOG_ICON = { danger: "alert", warning: "alert", success: "ok", info: "info" };
+const FOCUSABLE = 'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Modal dialog, rendered into <body> so no transformed ancestor can trap it inside the page.
+ * A confirmation (role="alertdialog") opens with a tone badge: danger (cannot be undone), warning
+ * (reversible stop), success (turning something on) or info. Focus moves to the first field, or to
+ * the first action, stays inside while open, and returns to the opener; Escape and the scrim close it.
+ */
+export function Dialog({ title, onClose, children, role = "dialog", wide = false, tone, icon }) {
   const titleId = useId();
   const box = useRef(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  const alert = role === "alertdialog";
+  const badge = tone ?? (alert ? "warning" : null);
+
   useEffect(() => {
     const opener = document.activeElement;
-    box.current?.querySelector("input, select, textarea, button")?.focus();
-    const onKey = (e) => e.key === "Escape" && onClose();
+    const el = box.current;
+    (el?.querySelector(".dlg-body :is(input, select, textarea):not(:disabled)") ?? el?.querySelector(".dlg-actions button:not(:disabled)") ?? el)?.focus();
+    const onKey = (e) => {
+      if (e.key === "Escape") return close.current();
+      if (e.key !== "Tab" || !el) return;
+      const items = [...el.querySelectorAll(FOCUSABLE)];
+      if (items.length === 0) return;
+      const target = e.shiftKey ? items[items.length - 1] : items[0];
+      const edge = e.shiftKey ? items[0] : items[items.length - 1];
+      if (document.activeElement === edge || !el.contains(document.activeElement)) {
+        e.preventDefault();
+        target.focus();
+      }
+    };
+    const scroll = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = scroll;
       opener?.focus?.();
     };
-  }, [onClose]);
-  return (
-    <div className="scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={box} className={`dlg${wide ? " wide" : ""}`} role={role} aria-modal="true" aria-labelledby={titleId}>
-        <h2 id={titleId} className="dlg-title">
-          {title}
-        </h2>
-        {children}
+  }, []);
+
+  return createPortal(
+    <div className="scrim" onMouseDown={(e) => e.target === e.currentTarget && close.current()}>
+      <div
+        ref={box}
+        tabIndex={-1}
+        className={`dlg${wide ? " wide" : ""}${alert ? " is-alert" : ""}${badge ? ` tone-${badge}` : ""}`}
+        role={role}
+        aria-modal="true"
+        aria-labelledby={titleId}
+      >
+        <div className="dlg-head">
+          {badge ? (
+            <span className="dlg-badge" aria-hidden="true">
+              <Icon name={icon ?? DIALOG_ICON[badge]} size={28} strokeWidth={2.2} />
+            </span>
+          ) : null}
+          <h2 id={titleId} className="dlg-title">
+            {title}
+          </h2>
+          <button type="button" className="dlg-close" aria-label="إغلاق" onClick={() => close.current()}>
+            <Icon name="close" size={20} />
+          </button>
+        </div>
+        <div className="dlg-body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -265,7 +313,8 @@ export function ReasonField({ id, value, onChange, error, label = "السبب" }
     <Field id={id} label={label} error={error}>
       <textarea
         id={id}
-        className={`fld area${error ? " err" : ""}`}
+        className={`fld fld-area${error ? " err" : ""}`}
+        rows={3}
         value={value}
         maxLength={500}
         onChange={(e) => onChange(e.target.value)}

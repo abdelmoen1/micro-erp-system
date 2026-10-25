@@ -301,7 +301,7 @@ function UnsubscribeDialog({ store, onClose }) {
   const save = useSetSubscription();
   const [note, setNote] = useState("");
   return (
-    <Dialog title={`إيقاف اشتراك ${store.name}؟`} role="alertdialog" onClose={onClose}>
+    <Dialog title={`إيقاف اشتراك ${store.name}؟`} role="alertdialog" tone="warning" icon="clock" onClose={onClose}>
       <p>يُسجَّل المتجر بلا اشتراك. حساب المتجر يبقى كما هو، ويستمر أعضاؤه في الدخول.</p>
       <ReasonField id="unsub-note" label="ملاحظة (اختياري)" value={note} onChange={setNote} error={save.error?.fieldError?.("note")} />
       <ErrorBanner error={save.error} />
@@ -337,7 +337,7 @@ function DeleteDialog({ store, onClose }) {
   };
 
   return (
-    <Dialog title={`حذف ${store.name} نهائياً؟`} role="alertdialog" onClose={onClose}>
+    <Dialog title={`حذف ${store.name} نهائياً؟`} role="alertdialog" tone="danger" icon="trash" onClose={onClose}>
       <form className="form-stack" onSubmit={submit}>
         <p>سيُحذف كل ما يخص هذا المتجر ولا يمكن استرجاعه:</p>
         <ul className="delete-list">

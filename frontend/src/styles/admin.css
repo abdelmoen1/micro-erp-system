@@ -84,23 +84,71 @@
 .tab[aria-selected="true"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--primary); }
 .tab:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--primary); }
 
-/* dialogs */
+/* dialogs: portalled to <body>, over the whole screen (sidebar and top bar included).
+   A confirmation (.is-alert) is centred under a tone badge; a form dialog keeps its title at the start. */
 .scrim {
-  position: fixed; inset: 0; z-index: 50; background: rgba(20, 38, 46, 0.48);
-  display: flex; justify-content: center; align-items: flex-start; padding: 64px 16px; overflow-y: auto;
+  position: fixed; inset: 0; z-index: 100; overflow-y: auto; padding: 24px 16px;
+  display: grid; place-items: center;
+  background: rgba(16, 36, 30, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  animation: scrim-in 0.18s ease-out both;
 }
 .dlg {
-  width: 100%; max-width: 540px; background: var(--surface); border-radius: 20px; padding: 24px;
-  box-shadow: 0 24px 60px rgba(20, 38, 46, 0.3); display: flex; flex-direction: column; gap: 16px;
+  --tone: var(--deep); --tone-bg: var(--brand-tint);
+  position: relative; width: 100%; max-width: 520px; background: var(--surface); border-radius: 22px; padding: 24px;
+  box-shadow: 0 0 0 1px rgba(30, 58, 50, 0.06), 0 28px 70px rgba(16, 36, 30, 0.32);
+  display: flex; flex-direction: column; gap: 18px; outline: none;
+  animation: dlg-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .dlg.wide { max-width: 680px; }
-.dlg-title { font-size: 20px; font-weight: 700; }
-.dlg-actions { display: flex; flex-direction: row-reverse; gap: 10px; }
+.dlg.tone-danger { --tone: var(--danger); --tone-bg: var(--debt-bg); }
+.dlg.tone-warning { --tone: var(--warning-fg); --tone-bg: var(--warning-bg); }
+.dlg.tone-success { --tone: var(--success-fg); --tone-bg: var(--success-bg); }
+.dlg.tone-info { --tone: var(--info-fg); --tone-bg: var(--info-bg); }
+
+.dlg-head { display: flex; align-items: flex-start; gap: 12px; padding-inline-end: 36px; }
+.dlg-title { font-size: 20px; font-weight: 700; line-height: 1.45; color: var(--ink); }
+.dlg-close {
+  position: absolute; top: 14px; inset-inline-end: 14px; width: 40px; height: 40px; border: 0; border-radius: 12px;
+  display: grid; place-items: center; background: transparent; color: var(--ink-muted); transition: background-color 0.15s, color 0.15s;
+}
+.dlg-close:hover { background: var(--segment); color: var(--ink); }
+.dlg-close:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--primary); }
+.dlg-body { display: flex; flex-direction: column; gap: 16px; font-size: 15px; line-height: 1.7; }
+
+/* the one moment: the badge settles in with a single ring pulse in the tone colour */
+.dlg-badge {
+  flex: none; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--tone-bg); color: var(--tone); box-shadow: 0 0 0 7px color-mix(in srgb, var(--tone-bg) 55%, transparent);
+  animation: badge-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
+}
+.dlg.is-alert { max-width: 460px; padding-top: 30px; }
+.dlg.is-alert .dlg-head { flex-direction: column; align-items: center; text-align: center; gap: 14px; padding-inline: 28px; }
+.dlg.is-alert .dlg-title { font-size: 21px; }
+.dlg.is-alert .dlg-body > p:first-child { text-align: center; color: var(--ink-muted); }
+
+/* the action comes first in reading order (on the right in RTL), "رجوع" after it */
+.dlg-actions { display: flex; gap: 10px; margin-top: 4px; }
+.dlg-actions .btn { min-height: 48px; }
 .dlg-actions .btn:first-child { flex: 1; }
+.dlg.is-alert .dlg-actions .btn { flex: 1; }
+/* a confirmation that is not ready yet (e.g. the store name is not typed) reads as waiting, not broken */
+.dlg-actions .btn-dd:disabled { background: var(--debt-bg); color: color-mix(in srgb, var(--danger) 55%, transparent); border-color: transparent; cursor: not-allowed; }
+.dlg-actions .btn-p:disabled { cursor: not-allowed; }
+
+@keyframes scrim-in { from { opacity: 0; } }
+@keyframes dlg-in { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
+@keyframes badge-in {
+  from { transform: scale(0.6); opacity: 0; box-shadow: 0 0 0 0 var(--tone-bg); }
+  60% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--tone-bg) 30%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scrim, .dlg, .dlg-badge { animation: none; }
+}
 .sum { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--ground); font-size: 15px; }
 .sum > div { display: flex; justify-content: space-between; gap: 12px; }
 .sum .sum-total { font-weight: 700; border-top: 1px solid var(--border); padding-top: 6px; }
-.fld.area { min-height: 72px; padding: 10px 12px; resize: vertical; }
+/* not `.area`: that is the dashboard chart (fixed height, LTR, crosshair) */
+.fld-area { min-height: 88px; padding: 10px 14px; line-height: 1.6; resize: vertical; }
 select.fld { padding-inline: 12px; }
 
 .dropzone {
@@ -125,5 +173,11 @@ select.fld { padding-inline: 12px; }
 @media (max-width: 640px) {
   .page-head h1 { font-size: 22px; }
   .date-fld { width: 100%; }
-  .dlg { padding: 20px 16px; }
+  /* phones: a bottom sheet, within thumb reach, scrolling inside when the content is long */
+  .scrim { place-items: end center; padding: 0; }
+  .dlg, .dlg.is-alert { max-width: none; max-height: 92vh; overflow-y: auto; border-radius: 22px 22px 0 0; padding: 22px 16px calc(18px + env(safe-area-inset-bottom)); animation-name: sheet-in; }
+  .dlg.is-alert { padding-top: 26px; }
+  .dlg.is-alert .dlg-head { padding-inline: 20px; }
+  .dlg.is-alert .dlg-actions { flex-direction: column; }
 }
+@keyframes sheet-in { from { transform: translateY(100%); } }
