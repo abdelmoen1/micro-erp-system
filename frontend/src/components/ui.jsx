@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import Icon from "./Icon";
@@ -289,20 +289,37 @@ export function ConfirmSummary({ rows, total }) {
   );
 }
 
-export function Field({ label, error, hint, optional, children, id }) {
+/**
+ * A labelled control with its error or hint. When the child is the control itself (it carries the
+ * field's id), it is linked to that message for screen readers, marked invalid, and gets the red
+ * border, so no form has to repeat that wiring. `required` adds the «*» and aria-required.
+ */
+export function Field({ label, error, hint, optional, required, children, id }) {
+  const messageId = error ? `${id}-error` : hint ? `${id}-hint` : null;
+  const control =
+    isValidElement(children) && children.props.id === id
+      ? cloneElement(children, {
+          "aria-invalid": error ? true : undefined,
+          "aria-describedby": [children.props["aria-describedby"], messageId].filter(Boolean).join(" ") || undefined,
+          "aria-required": required || undefined,
+          className: error && !/\berr\b/.test(children.props.className ?? "") ? `${children.props.className ?? ""} err`.trim() : children.props.className,
+        })
+      : children;
   return (
     <div className="field">
-      <label className="field-label" htmlFor={id}>
+      <label className={`field-label${required ? " req" : ""}`} htmlFor={id}>
         {label} {optional ? <span className="opt">(اختياري)</span> : null}
       </label>
-      {children}
+      {control}
       {error ? (
         <span className="field-error" id={`${id}-error`}>
           <Icon name="alert" size={16} />
           {error}
         </span>
       ) : hint ? (
-        <span className="field-hint">{hint}</span>
+        <span className="field-hint" id={`${id}-hint`}>
+          {hint}
+        </span>
       ) : null}
     </div>
   );

@@ -1360,16 +1360,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get formByKg => 'بالوزن (كغ)';
 
   @override
-  String get formPrice => 'سعر البيع';
+  String get formPrice => 'السعر للزبون (سعر البيع)';
 
   @override
-  String get formCost => 'سعر الشراء';
+  String get formCost => 'تكلفة المنتج عليك (سعر الشراء)';
 
   @override
   String get formStock => 'المخزون الآن';
 
   @override
-  String get formMin => 'تنبيه عند';
+  String get formMin => 'نبّهني عندما يصل المخزون إلى';
 
   @override
   String get formNameRequired => 'اكتب اسم المنتج.';
@@ -1770,4 +1770,59 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get invQtyPack => 'أدخل عدداً صحيحاً من الكراتين أكبر من صفر.';
+
+  @override
+  String get formPriceHelpPiece => 'ما يدفعه الزبون مقابل قطعة واحدة.';
+
+  @override
+  String get formPriceHelpKg => 'ما يدفعه الزبون مقابل كيلو واحد.';
+
+  @override
+  String get formCostHelp => 'ما تدفعه أنت للمورّد. لا يظهر للزبون.';
+
+  @override
+  String get formMinHelp =>
+      'يظهر المنتج في قائمة «منخفض» عندما يصل المخزون إلى هذا الرقم أو أقل.';
+
+  @override
+  String get formRequiredA11y => 'مطلوب';
+
+  @override
+  String get formFixErrors => 'راجع الحقول المعلَّمة باللون الأحمر.';
+
+  @override
+  String get subscriptionHowTo =>
+      'بعد الدفع تفعّل إدارة حسبة اشتراكك، ثم اضغط «تحقق من جديد» لتعود إلى متجرك.';
+
+  @override
+  String get subscriptionDetails => 'اذكر هذه البيانات عند التواصل:';
+
+  @override
+  String subscriptionStoreLine(String store) {
+    return 'المتجر: $store';
+  }
+
+  @override
+  String subscriptionEmailLine(String email) {
+    return 'البريد: $email';
+  }
+
+  @override
+  String get subscriptionCopy => 'نسخ البيانات';
+
+  @override
+  String get subscriptionCopied => 'نُسخت البيانات.';
+
+  @override
+  String get discardTitle => 'تجاهل ما كتبته؟';
+
+  @override
+  String get discardBody =>
+      'لم يُحفظ هذا المنتج بعد. إذا خرجت الآن ستضيع البيانات التي أدخلتها.';
+
+  @override
+  String get discardKeep => 'متابعة الإدخال';
+
+  @override
+  String get discardConfirm => 'تجاهل وخروج';
 }

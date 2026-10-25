@@ -9,6 +9,7 @@ import '../../../core/money/fixed_point.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/camera_tokens.dart';
 import '../../../core/theme/hisbah_tokens.dart';
+import '../../../core/widgets/latin_digits.dart';
 import '../../../core/widgets/ltr_value.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../sale/domain/repeat_scan_guard.dart';
@@ -174,6 +175,9 @@ class _InventoryScannerScreenState extends ConsumerState<InventoryScannerScreen>
 
   void _closeSheet() => setState(() => _sheet = null);
 
+  /// The open new-product form's «discard what you typed?» check, so a back gesture asks first.
+  Future<bool> Function()? _newProductGuard;
+
   void _done(String message) {
     unawaited(HapticFeedback.lightImpact());
     _changed = true;
@@ -199,11 +203,10 @@ class _InventoryScannerScreenState extends ConsumerState<InventoryScannerScreen>
 
     return PopScope(
       canPop: sheet == null,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        if (sheet != null) {
-          _closeSheet();
-        }
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || sheet == null) return;
+        final guard = sheet is _NewProduct ? _newProductGuard : null;
+        if (guard == null || await guard()) _closeSheet();
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: granted ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
@@ -277,6 +280,7 @@ class _InventoryScannerScreenState extends ConsumerState<InventoryScannerScreen>
                               sheet: sheet,
                               bottomInset: keyboard > 0 ? 0 : padding.bottom,
                               onClose: _closeSheet,
+                              onGuard: (guard) => _newProductGuard = guard,
                               onSaved: (product) => _done(t.savedTitle(product.name)),
                             ),
                           },
@@ -682,6 +686,7 @@ class _ExistingBodyState extends ConsumerState<_ExistingBody> {
             label: t.invAddStockQty(_byPack ? t.packWord : unitWord),
             controller: _quantity,
             number: true,
+            whole: _byPack || !p.isWeighed,
             autofocus: true,
             enabled: !_saving,
             error: _error,
@@ -719,12 +724,16 @@ class _NewProductBody extends ConsumerStatefulWidget {
     required this.sheet,
     required this.bottomInset,
     required this.onClose,
+    required this.onGuard,
     required this.onSaved,
   });
 
   final _NewProduct sheet;
   final double bottomInset;
   final VoidCallback onClose;
+
+  /// Receives this form's «may it close?» check, used by the screen's back gesture.
+  final void Function(Future<bool> Function() guard) onGuard;
   final void Function(Product product) onSaved;
 
   @override
@@ -762,6 +771,23 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
     _name.text = widget.sheet.catalogName ?? data?.name ?? '';
     _price.text = data?.sellingPrice ?? '';
     _unit = widget.sheet.catalogUnit ?? data?.unit ?? ProductUnit.piece;
+    _opened = (_name.text, _price.text, _unit);
+    widget.onGuard(_mayClose);
+  }
+
+  /// What the form held when it opened (prefilled from the code or the catalog).
+  late final (String, String, ProductUnit) _opened;
+
+  /// Something was typed or changed since the form opened.
+  bool get _edited =>
+      (_name.text, _price.text, _unit) != _opened ||
+      _pack ||
+      [_cost, _stock, _packSize, _packPrice].any((c) => c.text.trim().isNotEmpty);
+
+  /// Closing loses unsaved typing, so it asks first; never while a save is on its way.
+  Future<bool> _mayClose() async {
+    if (_saving) return false;
+    return !_edited || await confirmDiscard(context);
   }
 
   @override
@@ -869,7 +895,15 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
     final retry = _banner == t.formNetwork || _banner == t.invNetworkUncertain;
 
     return _SheetLayout(
-      title: _SheetTitle(title: t.formNewTitle, code: _barcode, onClose: _saving ? null : widget.onClose),
+      title: _SheetTitle(
+        title: t.formNewTitle,
+        code: _barcode,
+        onClose: _saving
+            ? null
+            : () async {
+                if (await _mayClose()) widget.onClose();
+              },
+      ),
       bottomInset: widget.bottomInset,
       action: FilledButton(
         key: const Key('form.save'),
@@ -944,6 +978,7 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
             final price = _QuickField(
               fieldKey: 'selling_price',
               label: t.formPrice,
+              helper: _unit == ProductUnit.kg ? t.formPriceHelpKg : t.formPriceHelpPiece,
               controller: _price,
               number: true,
               enabled: !_saving,
@@ -955,7 +990,9 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
             );
             final cost = _QuickField(
               fieldKey: 'cost_price',
-              label: '${t.formCost} (${t.formOptional})',
+              label: t.formCost,
+              helper: t.formCostHelp,
+              optional: true,
               controller: _cost,
               number: true,
               enabled: !_saving,
@@ -989,6 +1026,7 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
               label: label,
               controller: controller,
               number: true,
+              whole: key == 'pack_size',
               enabled: !_saving,
               error: _errors[key],
               action: TextInputAction.next,
@@ -1001,6 +1039,7 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
           hint: '0',
           controller: _stock,
           number: true,
+          whole: _unit == ProductUnit.piece,
           enabled: !_saving,
           error: _errors['current_stock'],
           action: TextInputAction.done,
@@ -1080,8 +1119,11 @@ class _QuickField extends StatelessWidget {
     required this.controller,
     required this.enabled,
     this.hint,
+    this.helper,
     this.error,
     this.number = false,
+    this.whole = false,
+    this.optional = false,
     this.fromCode = false,
     this.autofocus = false,
     this.action,
@@ -1092,10 +1134,17 @@ class _QuickField extends StatelessWidget {
   final String fieldKey;
   final String label;
   final String? hint;
+  final String? helper;
   final TextEditingController controller;
   final bool enabled;
   final String? error;
   final bool number;
+
+  /// A whole number (pieces, cartons): the plain digit keypad, without a decimal key.
+  final bool whole;
+
+  /// Marked «(اختياري)»; every other field gets the required «*».
+  final bool optional;
   final bool fromCode;
   final bool autofocus;
   final TextInputAction? action;
@@ -1104,20 +1153,12 @@ class _QuickField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 6,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              if (fromCode) FromCodeChip(label: t.addFromCode),
-            ],
-          ),
+          FieldLabel(label: label, required: !optional, fromCode: fromCode),
           const SizedBox(height: 4),
           TextField(
             key: Key('form.$fieldKey'),
@@ -1127,11 +1168,18 @@ class _QuickField extends StatelessWidget {
             textInputAction: action,
             onSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
             onChanged: onChanged == null ? null : (_) => onChanged!(),
-            keyboardType: number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+            keyboardType: !number
+                ? TextInputType.text
+                : whole
+                ? TextInputType.number
+                : const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: number ? const [LatinDigitsFormatter()] : null,
             textDirection: number ? TextDirection.ltr : null,
             textAlign: number ? TextAlign.left : TextAlign.start,
             decoration: InputDecoration(
               hintText: hint,
+              helperText: helper,
+              helperMaxLines: 3,
               errorText: error,
               errorMaxLines: 3,
               isDense: true,

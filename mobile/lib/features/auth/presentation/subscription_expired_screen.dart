@@ -35,6 +35,9 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
   bool _checking = false;
   bool _stillInactive = false;
   bool _whatsappFailed = false;
+
+  /// The first GET /subscription has answered (or failed), so a missing support number is real.
+  bool _answered = false;
   ApiFailure? _failure;
 
   @override
@@ -61,7 +64,12 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
     } on ApiFailure catch (failure) {
       if (mounted) setState(() => _failure = failure);
     } finally {
-      if (mounted) setState(() => _checking = false);
+      if (mounted) {
+        setState(() {
+          _checking = false;
+          _answered = true;
+        });
+      }
     }
   }
 
@@ -159,12 +167,26 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
                                     style: TextStyle(color: StatusTone.error.fg, fontWeight: FontWeight.w600),
                                   ),
                                 ),
-                            ] else
+                            ] else if (_answered) ...[
+                              // Only once the summary has answered: a support number may be on its way.
                               Text(
                                 t.subscriptionContactNoNumber,
                                 key: const Key('subscription.noNumber'),
                                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                               ),
+                              // Without a support number the owner still needs to say which store
+                              // to activate: the details, ready to copy into any message.
+                              if (user != null) ...[
+                                const SizedBox(height: 10),
+                                _ContactDetails(user: user),
+                              ],
+                            ],
+                            const SizedBox(height: 10),
+                            Text(
+                              t.subscriptionHowTo,
+                              key: const Key('subscription.howTo'),
+                              style: const TextStyle(fontSize: 14, height: 1.6, color: HisbahColors.inkMuted),
+                            ),
                             const SizedBox(height: 12),
                             OutlinedButton(
                               key: const Key('subscription.checkAgain'),
@@ -187,6 +209,51 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The store and the account email, selectable, with one button that copies both.
+class _ContactDetails extends StatelessWidget {
+  const _ContactDetails({required this.user});
+
+  final AppUser user;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final lines = [t.subscriptionStoreLine(user.storeName), t.subscriptionEmailLine(user.email)];
+    return Container(
+      key: const Key('subscription.details'),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+      decoration: BoxDecoration(
+        color: HisbahColors.raised,
+        borderRadius: BorderRadius.circular(HisbahRadius.field),
+        border: Border.all(color: HisbahColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(t.subscriptionDetails, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
+          const SizedBox(height: 4),
+          SelectableText(lines.join('\n'), style: const TextStyle(fontSize: 15, height: 1.6, fontWeight: FontWeight.w600)),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              key: const Key('subscription.copy'),
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: lines.join('\n')));
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(SnackBar(content: Text(t.subscriptionCopied)));
+              },
+              icon: const Icon(Icons.copy_rounded, size: 18),
+              label: Text(t.subscriptionCopy),
+            ),
+          ),
+        ],
       ),
     );
   }

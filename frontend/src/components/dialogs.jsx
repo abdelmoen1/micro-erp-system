@@ -2,7 +2,7 @@ import { useState } from "react";
 import { newIdempotencyKey } from "../services/apiClient";
 import { useOpeningDebt, usePayCustomer, useSaveCustomer } from "../services/backoffice";
 import { PAYMENT_METHODS } from "../lib/domain";
-import { shekel } from "../lib/format";
+import { latinDigits, shekel } from "../lib/format";
 import { ConfirmSummary, Dialog, ErrorBanner, Field } from "./ui";
 
 // Dialogs shared by several back-office screens (W-07, W-13, W-14).
@@ -57,8 +57,8 @@ export function RecordPaymentDialog({ customer, remaining, onClose, onDone }) {
           </button>
         </div>
         {!full ? (
-          <Field id="pay-amount" label="المبلغ" error={over ? `المبلغ أكبر من المتبقي (${shekel(remaining)}).` : amount && invalid ? "أدخل مبلغاً صحيحاً بخانتين عشريتين على الأكثر." : pay.error?.fieldError?.("amount")}>
-            <input id="pay-amount" className="fld ltr m" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} autoComplete="off" />
+          <Field id="pay-amount" label="المبلغ" required error={over ? `المبلغ أكبر من المتبقي (${shekel(remaining)}).` : amount && invalid ? "أدخل مبلغاً صحيحاً بخانتين عشريتين على الأكثر." : pay.error?.fieldError?.("amount")}>
+            <input id="pay-amount" className="fld ltr m" inputMode="decimal" value={amount} onChange={(e) => setAmount(latinDigits(e.target.value))} autoComplete="off" />
           </Field>
         ) : null}
         <div className="field">
@@ -125,7 +125,7 @@ export function OpeningDebtDialog({ customers, customer, onClose }) {
             الزبون: <b>{customer.name}</b>
           </p>
         ) : (
-          <Field id="od-customer" label="الزبون" error={save.error?.fieldError?.("customer_id")}>
+          <Field id="od-customer" label="الزبون" required error={save.error?.fieldError?.("customer_id")}>
             <select id="od-customer" className="fld" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
               <option value="">اختر الزبون</option>
               {(customers ?? []).map((c) => (
@@ -136,8 +136,8 @@ export function OpeningDebtDialog({ customers, customer, onClose }) {
             </select>
           </Field>
         )}
-        <Field id="od-amount" label="المبلغ" error={amount && invalid ? "أدخل مبلغاً صحيحاً." : save.error?.fieldError?.("amount")}>
-          <input id="od-amount" className="fld ltr m" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Field id="od-amount" label="المبلغ" required error={amount && invalid ? "أدخل مبلغاً صحيحاً." : save.error?.fieldError?.("amount")}>
+          <input id="od-amount" className="fld ltr m" inputMode="decimal" value={amount} onChange={(e) => setAmount(latinDigits(e.target.value))} />
         </Field>
         <Field id="od-due" label="تاريخ الاستحقاق" optional error={save.error?.fieldError?.("due_date")}>
           <div className="chips">
@@ -182,15 +182,15 @@ export function CustomerFormDialog({ customer, canSetLimit, onClose, onSaved }) 
   return (
     <Dialog title={customer ? `تعديل ${customer.name}` : "زبون جديد"} onClose={onClose}>
       <form className="form-stack" onSubmit={submit} noValidate>
-        <Field id="cf-name" label="الاسم" error={err("name")}>
-          <input id="cf-name" className={`fld${err("name") ? " err" : ""}`} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
+        <Field id="cf-name" label="الاسم" required error={err("name")}>
+          <input id="cf-name" className="fld" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
         </Field>
-        <Field id="cf-phone" label="رقم الهاتف" error={err("phone")} hint="10 أرقام، يبدأ بـ 05">
-          <input id="cf-phone" className={`fld ltr m${err("phone") ? " err" : ""}`} inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" />
+        <Field id="cf-phone" label="رقم الهاتف" required error={err("phone")} hint="10 أرقام، يبدأ بـ 05">
+          <input id="cf-phone" className="fld ltr m" inputMode="numeric" value={phone} onChange={(e) => setPhone(latinDigits(e.target.value))} autoComplete="off" />
         </Field>
         {canSetLimit ? (
           <Field id="cf-limit" label="حد الدين" optional error={err("credit_limit")} hint="فارغ = بلا حد">
-            <input id="cf-limit" className="fld ltr m" inputMode="decimal" value={limit ?? ""} onChange={(e) => setLimit(e.target.value)} />
+            <input id="cf-limit" className="fld ltr m" inputMode="decimal" value={limit ?? ""} onChange={(e) => setLimit(latinDigits(e.target.value))} />
           </Field>
         ) : null}
         <ErrorBanner error={save.error && !Object.keys(save.error.errors ?? {}).length ? save.error : null} />

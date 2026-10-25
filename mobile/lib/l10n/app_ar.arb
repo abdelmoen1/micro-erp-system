@@ -758,10 +758,10 @@
   "formSoldBy": "يُباع",
   "formByPiece": "بالقطعة",
   "formByKg": "بالوزن (كغ)",
-  "formPrice": "سعر البيع",
-  "formCost": "سعر الشراء",
+  "formPrice": "السعر للزبون (سعر البيع)",
+  "formCost": "تكلفة المنتج عليك (سعر الشراء)",
   "formStock": "المخزون الآن",
-  "formMin": "تنبيه عند",
+  "formMin": "نبّهني عندما يصل المخزون إلى",
   "formNameRequired": "اكتب اسم المنتج.",
   "formPriceInvalid": "أدخل سعراً صحيحاً.",
   "formStockPiece": "عدد صحيح للمنتج بالقطعة.",
@@ -1042,5 +1042,35 @@
       }
     }
   },
-  "invQtyPack": "أدخل عدداً صحيحاً من الكراتين أكبر من صفر."
+  "invQtyPack": "أدخل عدداً صحيحاً من الكراتين أكبر من صفر.",
+  "formPriceHelpPiece": "ما يدفعه الزبون مقابل قطعة واحدة.",
+  "formPriceHelpKg": "ما يدفعه الزبون مقابل كيلو واحد.",
+  "formCostHelp": "ما تدفعه أنت للمورّد. لا يظهر للزبون.",
+  "formMinHelp": "يظهر المنتج في قائمة «منخفض» عندما يصل المخزون إلى هذا الرقم أو أقل.",
+  "formRequiredA11y": "مطلوب",
+  "formFixErrors": "راجع الحقول المعلَّمة باللون الأحمر.",
+  "subscriptionHowTo": "بعد الدفع تفعّل إدارة حسبة اشتراكك، ثم اضغط «تحقق من جديد» لتعود إلى متجرك.",
+  "subscriptionDetails": "اذكر هذه البيانات عند التواصل:",
+  "subscriptionStoreLine": "المتجر: {store}",
+  "@subscriptionStoreLine": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionEmailLine": "البريد: {email}",
+  "@subscriptionEmailLine": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionCopy": "نسخ البيانات",
+  "subscriptionCopied": "نُسخت البيانات.",
+  "discardTitle": "تجاهل ما كتبته؟",
+  "discardBody": "لم يُحفظ هذا المنتج بعد. إذا خرجت الآن ستضيع البيانات التي أدخلتها.",
+  "discardKeep": "متابعة الإدخال",
+  "discardConfirm": "تجاهل وخروج"
 }

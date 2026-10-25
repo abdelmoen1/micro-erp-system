@@ -1365,16 +1365,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get formByKg => 'By weight (kg)';
 
   @override
-  String get formPrice => 'Selling price';
+  String get formPrice => 'Price to the customer (selling price)';
 
   @override
-  String get formCost => 'Cost price';
+  String get formCost => 'What it costs you (purchase price)';
 
   @override
   String get formStock => 'Stock now';
 
   @override
-  String get formMin => 'Alert at';
+  String get formMin => 'Alert me when stock reaches';
 
   @override
   String get formNameRequired => 'Enter the product name.';
@@ -1781,4 +1781,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invQtyPack => 'Enter a whole number of cartons above zero.';
+
+  @override
+  String get formPriceHelpPiece => 'What the customer pays for one piece.';
+
+  @override
+  String get formPriceHelpKg => 'What the customer pays for one kg.';
+
+  @override
+  String get formCostHelp =>
+      'What you pay your supplier. Customers never see it.';
+
+  @override
+  String get formMinHelp =>
+      'The product shows as low when stock reaches this number or less.';
+
+  @override
+  String get formRequiredA11y => 'required';
+
+  @override
+  String get formFixErrors => 'Check the fields marked in red.';
+
+  @override
+  String get subscriptionHowTo =>
+      'Once you pay, the Hisbah team activates your subscription; then tap Check again to return to your store.';
+
+  @override
+  String get subscriptionDetails =>
+      'Mention these details when you get in touch:';
+
+  @override
+  String subscriptionStoreLine(String store) {
+    return 'Store: $store';
+  }
+
+  @override
+  String subscriptionEmailLine(String email) {
+    return 'Email: $email';
+  }
+
+  @override
+  String get subscriptionCopy => 'Copy details';
+
+  @override
+  String get subscriptionCopied => 'Details copied.';
+
+  @override
+  String get discardTitle => 'Discard what you typed?';
+
+  @override
+  String get discardBody =>
+      'This product is not saved yet. Leaving now loses what you entered.';
+
+  @override
+  String get discardKeep => 'Keep editing';
+
+  @override
+  String get discardConfirm => 'Discard and leave';
 }

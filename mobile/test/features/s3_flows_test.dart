@@ -392,6 +392,78 @@ void main() {
       });
     });
 
+    testWidgets('digits typed on an Arabic keyboard are read as Western digits; closing a typed form asks first', (tester) async {
+      api.on('GET /products/catalog-lookup', const FakeResponse(200, {'data': {'barcode': '6281007041235', 'product': null, 'catalog_product': null}}));
+      api.on('POST /products', FakeResponse(201, {'message': 'تم إنشاء المنتج بنجاح', 'product': dates}));
+      await pumpApp(tester);
+      await scanCode(tester, '6281007041235');
+
+      await tester.enterText(find.byKey(const Key('form.name')), 'تمر مجهول 1 كغ');
+      await tester.enterText(find.byKey(const Key('form.selling_price')), '٤٥٫٥٠');
+      expect(tester.widget<TextField>(find.byKey(const Key('form.selling_price'))).controller!.text, '45.50');
+
+      // The close button (and the back gesture) ask before throwing the typing away.
+      await tap(tester, find.byKey(const Key('inventory.sheetClose')));
+      expect(find.text('تجاهل ما كتبته؟'), findsOneWidget);
+      await tap(tester, find.byKey(const Key('discard.keep')));
+      expect(find.byKey(const Key('inventory.sheet')), findsOneWidget);
+      expect(tester.widget<TextField>(find.byKey(const Key('form.name'))).controller!.text, 'تمر مجهول 1 كغ');
+
+      await tester.enterText(find.byKey(const Key('form.current_stock')), '١٢');
+      await tap(tester, find.byKey(const Key('form.save')));
+      expect(api.requestsTo('POST /products').single.data, {
+        'name': 'تمر مجهول 1 كغ',
+        'barcode': '6281007041235',
+        'unit': 'piece',
+        'selling_price': '45.50',
+        'current_stock': '12',
+      });
+    });
+
+    testWidgets('an untouched form closes at once; a back gesture on a typed one asks, and «discard» leaves', (tester) async {
+      api.on('GET /products/catalog-lookup', const FakeResponse(200, {'data': {'barcode': '6281007041235', 'product': null, 'catalog_product': null}}));
+      await pumpApp(tester);
+      await scanCode(tester, '6281007041235');
+      await tap(tester, find.byKey(const Key('inventory.sheetClose')));
+      expect(find.text('تجاهل ما كتبته؟'), findsNothing);
+      expect(find.byKey(const Key('inventory.sheet')), findsNothing);
+
+      api.on('GET /products/catalog-lookup', const FakeResponse(200, {'data': {'barcode': '6223000999992', 'product': null, 'catalog_product': null}}));
+      cameras.single.read('6223000999992');
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('form.name')), 'تمر');
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('تجاهل ما كتبته؟'), findsOneWidget);
+      await tap(tester, find.byKey(const Key('discard.leave')));
+      expect(find.byKey(const Key('inventory.sheet')), findsNothing);
+      expect(find.byKey(const Key('inventory.close')), findsOneWidget, reason: 'only the form closed; the camera stays');
+    });
+
+    testWidgets('the full form: clear price labels, the first wrong field gets the focus, back asks before discarding', (tester) async {
+      await pumpApp(tester);
+      await tap(tester, find.byKey(const Key('nav.products')));
+      await tap(tester, find.byKey(const Key('products.add')));
+      await tap(tester, find.byKey(const Key('addProduct.manual')));
+
+      expect(find.textContaining('السعر للزبون (سعر البيع)'), findsOneWidget);
+      expect(find.textContaining('تكلفة المنتج عليك (سعر الشراء)'), findsOneWidget);
+      expect(find.text('ما تدفعه أنت للمورّد. لا يظهر للزبون.'), findsOneWidget);
+
+      await tester.enterText(find.byKey(const Key('form.name')), 'شاي أخضر');
+      await tap(tester, find.byKey(const Key('form.save')));
+      expect(find.text('أدخل سعراً صحيحاً.'), findsOneWidget);
+      final price = tester.widget<TextField>(find.byKey(const Key('form.selling_price')));
+      expect(price.focusNode!.hasFocus, isTrue, reason: 'the first field with an error');
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('تجاهل ما كتبته؟'), findsOneWidget);
+      await tap(tester, find.byKey(const Key('discard.leave')));
+      expect(find.byKey(const Key('form.name')), findsNothing);
+      expect(api.requestsTo('POST /products'), isEmpty);
+    });
+
     testWidgets('an employee sees products without the add button', (tester) async {
       await pumpApp(tester, role: 'employee');
       await tap(tester, find.byKey(const Key('nav.products')));
