@@ -9,12 +9,16 @@ import { queryKeys } from "./queryClient";
 const page = (path) => ({ signal }) => apiGet(path, { signal });
 const data = (path) => ({ signal }) => apiGet(path, { signal }).then((r) => r.data);
 
-export const useAdminOverview = () => useQuery({ queryKey: queryKeys.admin.overview, queryFn: data("/admin/overview") });
+// Stores register from the web and the phone at any time: the admin's views refresh when the tab
+// is focused again, instead of keeping a 30-second-old list.
+const live = { refetchOnWindowFocus: true, staleTime: 5_000 };
+
+export const useAdminOverview = () => useQuery({ queryKey: queryKeys.admin.overview, queryFn: data("/admin/overview"), ...live });
 
 export const useAdminStores = (filters) =>
-  useQuery({ queryKey: queryKeys.admin.stores(filters), queryFn: page(`/admin/stores${qs(filters)}`), placeholderData: (p) => p });
+  useQuery({ queryKey: queryKeys.admin.stores(filters), queryFn: page(`/admin/stores${qs(filters)}`), placeholderData: (p) => p, ...live });
 
-export const useAdminStore = (id) => useQuery({ queryKey: queryKeys.admin.store(id), queryFn: data(`/admin/stores/${id}`) });
+export const useAdminStore = (id) => useQuery({ queryKey: queryKeys.admin.store(id), queryFn: data(`/admin/stores/${id}`), ...live });
 
 export const useAdminStoreProducts = (id, filters) =>
   useQuery({

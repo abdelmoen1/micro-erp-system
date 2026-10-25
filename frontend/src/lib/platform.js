@@ -22,3 +22,10 @@ export function daysAgo(days) {
 }
 
 export const ROLE_LABEL = { owner: "مالك", manager: "مدير", employee: "موظف" };
+
+/** "ينتهي اليوم", "متبقٍ يوم واحد", "متبقٍ 5 أيام" until an ISO time (whole days, rounded up). */
+export function daysLeftLabel(iso) {
+  const days = Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+  if (days <= 1) return days <= 0 ? "انتهت" : "ينتهي خلال يوم";
+  return `متبقٍ ${arCount(days, { one: "يوم واحد", two: "يومان", few: "أيام", many: "يوماً" })}`;
+}
