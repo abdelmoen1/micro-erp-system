@@ -21,7 +21,13 @@ class GoogleRegisterStoreRequest extends FormRequest
             'owner_phone' => ['nullable', 'string', 'max:10'],
             'phone' => ['nullable', 'string', 'max:10'],
             'address' => ['nullable', 'string', 'max:255'],
+            ...StoreLocation::rules(),
             'timezone' => ['nullable', 'timezone:all'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return StoreLocation::messages();
     }
 }

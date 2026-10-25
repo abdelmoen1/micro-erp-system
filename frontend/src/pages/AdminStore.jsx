@@ -56,6 +56,21 @@ export default function AdminStore() {
             <Fact label="هاتف المالك" value={s.owner?.phone} ltr />
             <Fact label="هاتف المتجر" value={s.phone} ltr />
             <Fact label="العنوان" value={s.address} />
+            <Fact label="المنطقة" value={s.area} />
+            <div>
+              <dt>الموقع على الخريطة</dt>
+              <dd>
+                {s.latitude != null && s.longitude != null ? (
+                  <a href={`https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=17/${s.latitude}/${s.longitude}`} target="_blank" rel="noreferrer">
+                    <span className="m">
+                      {s.latitude}, {s.longitude}
+                    </span>
+                  </a>
+                ) : (
+                  "لم يحدده المتجر"
+                )}
+              </dd>
+            </div>
             <Fact label="المنطقة الزمنية" value={s.timezone} ltr />
             <Fact label="المنتجات" value={`${s.products_count} (${s.active_products_count} نشطة)`} />
             <Fact label="الأعضاء" value={String(s.users_count)} />

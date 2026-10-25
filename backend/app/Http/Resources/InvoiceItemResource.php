@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Support\Money;
+use App\Support\Pack;
 use App\Support\Quantity;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -25,7 +26,12 @@ class InvoiceItemResource extends JsonResource
             'product_id' => $this->product_id,
             'item_name' => $this->item_name,
             'unit' => $this->unit,
+            // `pack` when sold by the carton: quantity, returned_quantity and unit_price are then per
+            // carton of pack_size pieces, and base_quantity is the pieces that left the stock.
+            'sale_unit' => $this->isPack() ? Pack::SALE_UNIT : $this->unit,
+            'pack_size' => $this->pack_size,
             'quantity' => Quantity::format($this->quantity, $this->unit),
+            'base_quantity' => Quantity::format($this->baseQuantity((string) $this->quantity), $this->unit),
             'returned_quantity' => Quantity::format($this->returned_quantity, $this->unit),
             'unit_price' => Money::of($this->unit_price),
             'line_total' => Money::of($this->total),

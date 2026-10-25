@@ -14,6 +14,8 @@ class Product {
     required this.isLowStock,
     required this.isActive,
     this.unit = ProductUnit.piece,
+    this.packSize,
+    this.packPrice,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
@@ -27,6 +29,8 @@ class Product {
     minimumStock: Quantity.parse(json['minimum_stock'] ?? 5),
     isLowStock: json['is_low_stock'] as bool? ?? false,
     isActive: json['status'] == 'active',
+    packSize: (json['pack_size'] as num?)?.toInt(),
+    packPrice: json['pack_price'] as String?,
   );
 
   final int id;
@@ -48,7 +52,16 @@ class Product {
   final bool isLowStock;
   final bool isActive;
 
+  /// Wholesale carton (piece products only): [packSize] pieces for [packPrice]. Stock stays in pieces.
+  final int? packSize;
+  final String? packPrice;
+
   Money get price => Money.parse(sellingPrice);
 
   bool get isWeighed => unit == ProductUnit.kg;
+
+  bool get hasPack => packSize != null && packPrice != null;
+
+  /// The price of one whole carton.
+  Money get packMoney => Money.parse(packPrice ?? '0');
 }

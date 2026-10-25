@@ -15,7 +15,10 @@ class UpdateStoreSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'timezone' => ['required', 'timezone:all'],
+            // Each field is optional; the ones sent are validated and saved.
+            'timezone' => ['sometimes', 'required', 'timezone:all'],
+            'address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            ...StoreLocation::rules(),
         ];
     }
 
@@ -24,6 +27,7 @@ class UpdateStoreSettingsRequest extends FormRequest
         return [
             'timezone.required' => 'يرجى تحديد المنطقة الزمنية.',
             'timezone.timezone' => 'المنطقة الزمنية غير صحيحة.',
+            ...StoreLocation::messages(),
         ];
     }
 }

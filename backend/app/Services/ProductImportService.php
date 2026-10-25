@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Support\Barcode;
 use App\Support\Money;
+use App\Support\Pack;
 use App\Support\Quantity;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,8 @@ use Illuminate\Validation\Rule;
  */
 class ProductImportService
 {
-    public const COLUMNS = ['name', 'barcode', 'unit', 'selling_price', 'cost_price', 'current_stock', 'minimum_stock'];
+    /** `pack_size` and `pack_price` (wholesale carton) are optional, like `barcode`; older files still import. */
+    public const COLUMNS = ['name', 'barcode', 'unit', 'selling_price', 'cost_price', 'pack_size', 'pack_price', 'current_stock', 'minimum_stock'];
 
     public const MAX_ROWS = 2000;
 
@@ -144,10 +146,17 @@ class ProductImportService
                 'cost_price' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:' . Money::MAX],
                 'current_stock' => ['required', ...ProductMessages::stockRules($unit)],
                 'minimum_stock' => ['nullable', ...ProductMessages::stockRules($unit)],
-            ], ProductMessages::all() + ['unit.in' => 'الوحدة يجب أن تكون piece أو kg.']);
+                ...Pack::rules(),
+            ], ProductMessages::all() + Pack::messages() + ['unit.in' => 'الوحدة يجب أن تكون piece أو kg.']);
 
             foreach ($validator->errors()->messages() as $column => $messages) {
                 $errors[] = ['row' => $row['line'], 'column' => $column, 'message' => $messages[0]];
+            }
+            $packProblems = Pack::problems($unit, $data['pack_size'] ?? null, $data['pack_price'] ?? null, $data['selling_price'] ?? null);
+            foreach ($packProblems as $column => $message) {
+                if (!$validator->errors()->has($column)) {
+                    $errors[] = ['row' => $row['line'], 'column' => $column, 'message' => $message];
+                }
             }
 
             $barcode = $data['barcode'] ?? null;

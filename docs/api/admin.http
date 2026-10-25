@@ -28,13 +28,13 @@ Accept: application/json
 #           subscriptions: { active, expired, inactive }, products: { store_rows, catalog_items }, generated_at } }
 
 ### 2. Stores — 200, paginated { data, links, meta }
-GET {{base}}/admin/stores?search=gaza&status=active&subscription=expired&sort=newest&per_page=20&page=1
+GET {{base}}/admin/stores?search=gaza&area=غزة&status=active&subscription=expired&sort=newest&per_page=20&page=1
 Authorization: Bearer {{token}}
 Accept: application/json
 
-# search: store name, phone, address, or a member's name / email. status: active | suspended.
+# search: store name, phone, address, area, or a member's name / email. area: exact match. status: active | suspended.
 # subscription: active | expired | inactive. sort: newest (default) | oldest | name. per_page ≤ 50.
-# Row: id, name, phone, address, timezone, created_at, days_since_registration, owner {id, name, email, phone, status},
+# Row: id, name, phone, address, area, latitude, longitude (numbers or null), timezone, created_at, days_since_registration, owner {id, name, email, phone, status},
 #      status, suspension_reason, status_changed_at, subscription {status, state, started_at, expires_at, changed_at},
 #      users_count, products_count.
 
@@ -92,12 +92,22 @@ Authorization: Bearer {{token}}
 Accept: application/json
 
 # One row per store product: name, barcode, unit, selling_price, cost_price, current_stock, minimum_stock,
-# is_low_stock, status, catalog_product {id, barcode, name, unit} | null, store {id, name, address, phone, status}.
-# Nothing is summed or merged across stores. search: product name or exact barcode; store: store name or address.
+# is_low_stock, status, catalog_product {id, barcode, name, unit} | null, store {id, name, address, area, phone, status}.
+# Nothing is summed or merged across stores. search: product name or exact barcode; store: store name, address or area.
 
-### 10. A shared catalog item and every store that carries it — 200 (404 unknown)
+### 10. The shared catalog — 200, paginated; most widely carried first
+GET {{base}}/admin/catalog-products?search=milk&per_page=20
+Authorization: Bearer {{token}}
+Accept: application/json
+
+# One row per barcode: id, barcode, name, unit, stores_count, active_stores_count, price_min, price_max (active store
+# rows only; null when no store sells it now), created_at. search: name or any spelling of the barcode.
+
+### 11. A shared catalog item and every store that carries it — 200 (404 unknown)
 GET {{base}}/admin/catalog-products/3
 Authorization: Bearer {{token}}
 Accept: application/json
 
-# { data: { id, barcode, name, unit, created_at, stores_count, offers: [ row as in 9, one per store ] } }
+# { data: { id, barcode, name, unit, created_at, stores_count,
+#           comparison: { active_stores_count, price_min, price_max, price_spread } (active rows; null prices when none),
+#           offers: [ row as in 9, one per store, cheapest first ] } }

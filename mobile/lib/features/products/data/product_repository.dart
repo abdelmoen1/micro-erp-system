@@ -91,6 +91,8 @@ class NewProduct {
     this.barcode,
     this.costPrice,
     this.minimumStock,
+    this.packSize,
+    this.packPrice,
   });
 
   final String name;
@@ -101,6 +103,12 @@ class NewProduct {
   final String currentStock;
   final String? minimumStock;
 
+  /// Wholesale carton, sent only as a pair (piece products): pieces per carton and the carton price.
+  final String? packSize;
+  final String? packPrice;
+
+  bool get _hasPack => (packSize?.trim().isNotEmpty ?? false) && (packPrice?.trim().isNotEmpty ?? false);
+
   Map<String, Object?> toJson() => {
     'name': name.trim(),
     'barcode': ?(barcode?.trim().isEmpty ?? true ? null : barcode!.trim()),
@@ -109,5 +117,6 @@ class NewProduct {
     'cost_price': ?(costPrice?.trim().isEmpty ?? true ? null : costPrice!.trim()),
     'current_stock': currentStock.trim(),
     'minimum_stock': ?(minimumStock?.trim().isEmpty ?? true ? null : minimumStock!.trim()),
+    if (_hasPack && unit == ProductUnit.piece) ...{'pack_size': packSize!.trim(), 'pack_price': packPrice!.trim()},
   };
 }

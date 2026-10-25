@@ -6,9 +6,11 @@ use App\Models\CatalogProduct;
 use App\Models\Product;
 use App\Support\Barcode;
 use App\Support\Money;
+use App\Support\Pack;
 use App\Support\Quantity;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 /** US-0401 AC1–AC2; CR-13: sold by the piece (whole quantities) or by the kg (up to 3 decimals). */
 class StoreProductRequest extends FormRequest
@@ -52,11 +54,32 @@ class StoreProductRequest extends FormRequest
             'cost_price' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:' . Money::MAX],
             'current_stock' => ['required', ...ProductMessages::stockRules($unit)],
             'minimum_stock' => ['sometimes', ...ProductMessages::stockRules($unit)],
+            ...Pack::rules(),
+        ];
+    }
+
+    /** The carton must be complete and unambiguous (App\Support\Pack). */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator) {
+                $problems = Pack::problems(
+                    $this->input('unit', Quantity::UNIT_PIECE),
+                    $this->input('pack_size'),
+                    $this->input('pack_price'),
+                    $this->input('selling_price'),
+                );
+                foreach ($problems as $field => $message) {
+                    if (!$validator->errors()->has($field)) {
+                        $validator->errors()->add($field, $message);
+                    }
+                }
+            },
         ];
     }
 
     public function messages(): array
     {
-        return ProductMessages::all();
+        return ProductMessages::all() + Pack::messages();
     }
 }

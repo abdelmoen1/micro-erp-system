@@ -95,10 +95,14 @@ class CartController extends Notifier<Cart> {
     return true;
   }
 
-  /// Weight sheet (kg) or stepper (pieces); zero removes the line.
-  void setQuantity(Product product, Quantity quantity) => state = state.setQuantity(product, quantity);
+  /// Weight sheet (kg) or stepper (pieces, or cartons with [pack]); zero removes the line.
+  void setQuantity(Product product, Quantity quantity, {bool pack = false}) =>
+      state = state.setQuantity(product, quantity, pack: pack);
 
-  void remove(int productId) => state = state.remove(productId);
+  /// «+ كرتونة»: one more carton of [product], on its own line next to the pieces.
+  void addPack(Product product) => state = state.addPack(product);
+
+  void remove(int productId, {bool pack = false}) => state = state.remove(productId, pack: pack);
 
   /// After a completed sale, or when the cashier empties the cart.
   void clear() {

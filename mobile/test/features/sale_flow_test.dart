@@ -113,12 +113,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// «مسح» → the camera reads [code] → back on the cart.
+  bool scannerOpen() => find.byKey(const Key('saleScan.panel')).evaluate().isNotEmpty;
+
+  /// «مسح» opens the sale scanner once; it stays open and every read goes into the cart panel.
   Future<void> scan(WidgetTester tester, String code) async {
-    await tap(tester, 'cart.scan');
+    if (!scannerOpen()) await tap(tester, 'cart.scan');
     cameras.last.read(code);
     await tester.pumpAndSettle();
   }
+
+  String textOf(WidgetTester tester, String key) =>
+      tester.widget<Text>(find.descendant(of: find.byKey(Key(key)), matching: find.byType(Text))).data!;
 
   Map<String, dynamic> lastSaleBody() => api.requestsTo('POST /sales').last.data as Map<String, dynamic>;
 
@@ -140,9 +145,13 @@ void main() {
       expect(find.byKey(const Key('cart.feedback.added')), findsOneWidget);
       expect(find.text('₪ 6.50'), findsWidgets);
 
+      // The camera repeats the same code many times a second: counted once, silently.
       await scan(tester, milkCode);
-      expect(find.byKey(const Key('cart.feedback.duplicate')), findsOneWidget);
+      await scan(tester, milkCode);
+      expect(find.byKey(const Key('cart.feedback.duplicate')), findsNothing);
       expect(api.requestsTo('GET /products/lookup'), hasLength(1));
+      expect(textOf(tester, 'cart.qty.7'), '1');
+      expect(scannerOpen(), isTrue, reason: 'the camera stays open between products');
 
       await tap(tester, 'cart.inc.7');
       await tap(tester, 'cart.inc.7');
@@ -275,6 +284,145 @@ void main() {
       final keys = api.requestsTo('POST /sales').map((r) => r.headers['Idempotency-Key']).toList();
       expect(keys, [firstKey, firstKey]);
       expect(find.byType(ReceiptScreen), findsOneWidget);
+    });
+  });
+
+  group('sale scanner (camera stays on, cart over it)', () {
+    final bread = productJson(id: 8, name: 'خبز عربي', barcode: '6223000111111', price: '3.00', stock: '20');
+
+    testWidgets('successive products go into the panel; quantities change and lines go without losing the cart', (tester) async {
+      api.onSequence('GET /products/lookup', [lookup(milk), lookup(bread)]);
+      await pumpApp(tester);
+
+      await scan(tester, milkCode);
+      await scan(tester, '6223000111111');
+      expect(find.byKey(const Key('cart.line.7')), findsOneWidget);
+      expect(find.byKey(const Key('cart.line.8')), findsOneWidget);
+      expect(cameras.single.pauses, 0, reason: 'the camera never stopped between the two products');
+
+      await tap(tester, 'cart.inc.8');
+      expect(textOf(tester, 'cart.qty.8'), '2');
+      await tap(tester, 'cart.dec.7'); // quantity 1: the stepper removes the line
+      expect(find.byKey(const Key('cart.line.7')), findsNothing);
+      expect(find.byKey(const Key('cart.line.8')), findsOneWidget);
+      expect(textOf(tester, 'cart.total'), '₪ 6.00');
+
+      // Closing the camera keeps the cart for the sale tab.
+      await tap(tester, 'saleScan.close');
+      expect(scannerOpen(), isFalse);
+      expect(textOf(tester, 'cart.total'), '₪ 6.00');
+    });
+
+    testWidgets('«إتمام البيع» only opens payment; the camera holds until «بيع جديد», then reads again', (tester) async {
+      api.on('GET /products/lookup', lookup(milk));
+      await pumpApp(tester);
+      await scan(tester, milkCode);
+
+      await tap(tester, 'cart.checkout');
+      expect(find.byType(CheckoutScreen), findsOneWidget);
+      expect(api.requestsTo('POST /sales'), isEmpty, reason: 'opening payment never creates the sale');
+      expect(cameras.single.pauses, 1);
+
+      // Frames under the payment screen and the receipt are not read.
+      cameras.single.read('6223000111111');
+      await tester.pumpAndSettle();
+      api.on('POST /sales', saleCreated(total: '6.50', paid: '6.50'));
+      await tap(tester, 'checkout.confirm');
+      expect(find.byType(ReceiptScreen), findsOneWidget);
+      cameras.single.read('6223000111111');
+      await tester.pumpAndSettle();
+      expect(api.requestsTo('GET /products/lookup'), hasLength(1));
+      expect(cameras.single.resumes, 0);
+
+      await tap(tester, 'receipt.newSale');
+      expect(scannerOpen(), isTrue, reason: 'back on the camera, ready for the next customer');
+      expect(find.text('امسح منتجاً للبدء'), findsOneWidget);
+      expect(cameras.single.resumes, 1);
+      await scan(tester, milkCode);
+      expect(find.byKey(const Key('cart.line.7')), findsOneWidget);
+    });
+
+    testWidgets('double taps open one payment screen and send one sale', (tester) async {
+      api.on('GET /products/lookup', lookup(milk));
+      await pumpApp(tester);
+      await scan(tester, milkCode);
+
+      await tester.tap(find.byKey(const Key('cart.checkout')));
+      await tester.tap(find.byKey(const Key('cart.checkout')), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.byType(CheckoutScreen, skipOffstage: false), findsOneWidget);
+
+      api.on('POST /sales', saleCreated(total: '6.50', paid: '6.50'));
+      await tester.ensureVisible(find.byKey(const Key('checkout.confirm')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('checkout.confirm')));
+      await tester.tap(find.byKey(const Key('checkout.confirm')), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(api.requestsTo('POST /sales'), hasLength(1));
+      expect(find.byType(ReceiptScreen), findsOneWidget);
+    });
+
+    testWidgets('a carton line next to the pieces: its own price, its pieces, sent as sale_unit pack', (tester) async {
+      final water = {
+        ...productJson(id: 12, name: 'ماء 600 مل', barcode: '6223000777777', price: '2.50', stock: '100'),
+        'pack_size': 24,
+        'pack_price': '54.00',
+      };
+      api.on('GET /products/lookup', lookup(water));
+      await pumpApp(tester);
+      await scan(tester, '6223000777777');
+
+      await tap(tester, 'cart.addPack.12');
+      await tap(tester, 'cart.inc.12.pack');
+      expect(find.byKey(const Key('cart.line.12.pack')), findsOneWidget);
+      expect(textOf(tester, 'cart.qty.12.pack'), '2');
+      expect(find.text('= 48 قطعة'), findsOneWidget);
+      expect(find.textContaining('/ كرتونة (24 قطعة)'), findsOneWidget);
+      // 1 × 2.50 + 2 × 54.00
+      expect(textOf(tester, 'cart.total'), '₪ 110.50');
+
+      await tap(tester, 'cart.checkout');
+      api.on('POST /sales', const FakeResponse(201, {
+        'message': 'تم حفظ عملية البيع بنجاح.',
+        'data': {
+          'id': 9002, 'status': 'active', 'total_amount': '110.50', 'paid_amount': '110.50', 'debt_amount': '0.00', 'payment_method': 'cash',
+          'items': [
+            {'item_name': 'ماء 600 مل', 'unit': 'piece', 'sale_unit': 'piece', 'pack_size': null, 'quantity': '1', 'unit_price': '2.50', 'line_total': '2.50'},
+            {'item_name': 'ماء 600 مل', 'unit': 'piece', 'sale_unit': 'pack', 'pack_size': 24, 'quantity': '2', 'base_quantity': '48', 'unit_price': '54.00', 'line_total': '108.00'},
+          ],
+          'customer': null, 'seller': {'id': 1, 'name': 'Demo owner'}, 'created_at': '2026-10-26T08:14:03.000000Z',
+        },
+        'flags': [],
+        'warnings': [],
+      }));
+      await tap(tester, 'checkout.confirm');
+
+      expect(lastSaleBody()['items'], [
+        {'product_id': 12, 'quantity': '1'},
+        {'product_id': 12, 'quantity': '2', 'sale_unit': 'pack'},
+      ]);
+      expect(find.byType(ReceiptScreen), findsOneWidget);
+      expect(find.textContaining('2 كرتونة × ₪ 54.00'), findsOneWidget);
+      expect(find.text('= 48 قطعة'), findsOneWidget);
+    });
+
+    testWidgets('an electronic method has its icon and is recorded only, never shown as verified', (tester) async {
+      api.on('GET /products/lookup', lookup(milk));
+      await pumpApp(tester);
+      await scan(tester, milkCode);
+      await tap(tester, 'cart.checkout');
+
+      expect(find.byKey(const Key('checkout.methodNote')), findsNothing, reason: 'cash needs no note');
+      for (final method in ['cash', 'jawwal_pay', 'palpay', 'bank_of_palestine']) {
+        expect(find.byKey(Key('checkout.method.$method')), findsOneWidget);
+      }
+      await tap(tester, 'checkout.method.jawwal_pay');
+      expect(find.textContaining('حسبة لا تتصل بهذه الخدمة ولا تتحقق من وصول المبلغ'), findsOneWidget);
+
+      api.on('POST /sales', saleCreated(total: '6.50', paid: '6.50'));
+      await tap(tester, 'checkout.confirm');
+      expect(lastSaleBody()['payment_method'], 'jawwal_pay');
+      expect(lastSaleBody()['paid_amount'], '6.50');
     });
   });
 

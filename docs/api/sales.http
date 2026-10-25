@@ -82,7 +82,13 @@ Idempotency-Key: 0b8f0c1e-6f3a-4b7e-9d1a-0c5e2f7a1b02
 # - due_date (YYYY-MM-DD) only when a debt results, never before today in the store timezone → errors.due_date
 # - piece quantities are whole; kg up to 3 decimals; > 0          → errors.items.N.quantity
 # - unknown / other store's / inactive product                    → errors.items.N.product_id
-# - the same product twice in one sale                            → errors.items.N.product_id (send one line)
+# - the same product twice in one unit                           → errors.items.N.product_id (send one line)
+# Cartons: "sale_unit": "pack" on an item sells whole cartons at the product's pack_price and takes
+# quantity × pack_size pieces from stock; pieces and cartons of one product are two lines. A fraction of a
+# carton → errors.items.N.quantity; a product without a carton → errors.items.N.sale_unit. Each line in the
+# response has sale_unit (piece | kg | pack), pack_size (null unless pack: a snapshot, later carton edits
+# never change it), quantity and unit_price in that unit, and base_quantity (the pieces that left stock).
+# Returns of a carton line are whole cartons, refunded at its unit_price; they put back quantity × its pack_size.
 
 ### 3. Full credit sale — 201: paid_amount "0", payment_method omitted (stored as null)
 POST {{base}}/sales

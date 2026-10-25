@@ -2923,6 +2923,252 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد».'**
   String get subscriptionStillInactive;
+
+  /// No description provided for @saleScanTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح منتجات البيع'**
+  String get saleScanTitle;
+
+  /// No description provided for @saleScanKeepGoing.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكاميرا شغّالة: امسح المنتج التالي'**
+  String get saleScanKeepGoing;
+
+  /// No description provided for @saleScanCloseA11y.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق الكاميرا والعودة إلى السلة'**
+  String get saleScanCloseA11y;
+
+  /// No description provided for @cartPanelTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'السلة'**
+  String get cartPanelTitle;
+
+  /// No description provided for @saleScanEmptyBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'وجّه الكاميرا إلى باركود المنتج. تبقى الكاميرا مفتوحة لتضيف المنتجات واحداً تلو الآخر.'**
+  String get saleScanEmptyBody;
+
+  /// No description provided for @completeSale.
+  ///
+  /// In ar, this message translates to:
+  /// **'إتمام البيع'**
+  String get completeSale;
+
+  /// No description provided for @methodRecordOnly.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُسجَّل فقط أن الزبون دفع عبر {method}. حسبة لا تتصل بهذه الخدمة ولا تتحقق من وصول المبلغ، فتأكد منه قبل تأكيد البيع.'**
+  String methodRecordOnly(String method);
+
+  /// No description provided for @invTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة منتجات بالمسح'**
+  String get invTitle;
+
+  /// No description provided for @invInstruction.
+  ///
+  /// In ar, this message translates to:
+  /// **'امسح باركود المنتج لإضافته إلى متجرك. لا يدخل سلة البيع.'**
+  String get invInstruction;
+
+  /// No description provided for @invWaiting.
+  ///
+  /// In ar, this message translates to:
+  /// **'أكمل النموذج أو أغلقه لمسح المنتج التالي'**
+  String get invWaiting;
+
+  /// No description provided for @invCloseA11y.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق الكاميرا والعودة إلى المنتجات'**
+  String get invCloseA11y;
+
+  /// No description provided for @invBackToScanning.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق والعودة إلى المسح'**
+  String get invBackToScanning;
+
+  /// No description provided for @invStockNow.
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون الآن {stock}'**
+  String invStockNow(String stock);
+
+  /// No description provided for @invExistsNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا المنتج في متجرك، فلن يُضاف مرة ثانية. لإدخال بضاعة جديدة منه اختر «إضافة كمية».'**
+  String get invExistsNote;
+
+  /// No description provided for @invAddStock.
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة كمية'**
+  String get invAddStock;
+
+  /// No description provided for @invAddStockQty.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكمية المستلمة ({unit})'**
+  String invAddStockQty(String unit);
+
+  /// No description provided for @invReason.
+  ///
+  /// In ar, this message translates to:
+  /// **'السبب'**
+  String get invReason;
+
+  /// No description provided for @invReasonDefault.
+  ///
+  /// In ar, this message translates to:
+  /// **'بضاعة واردة'**
+  String get invReasonDefault;
+
+  /// No description provided for @invReasonRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب سبب إضافة الكمية.'**
+  String get invReasonRequired;
+
+  /// No description provided for @invQtyPiece.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عدداً صحيحاً أكبر من صفر.'**
+  String get invQtyPiece;
+
+  /// No description provided for @invQtyKg.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل وزناً أكبر من صفر، حتى 3 خانات عشرية.'**
+  String get invQtyKg;
+
+  /// No description provided for @invAddStockSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة إلى المخزون'**
+  String get invAddStockSave;
+
+  /// No description provided for @invStockAdded.
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيفت الكمية إلى «{name}». المخزون الآن {stock}'**
+  String invStockAdded(String name, String stock);
+
+  /// No description provided for @invStockForbidden.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل المخزون للمالك أو المدير.'**
+  String get invStockForbidden;
+
+  /// No description provided for @invOpeningStock.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكمية الموجودة الآن ({unit})'**
+  String invOpeningStock(String unit);
+
+  /// No description provided for @invNetworkUncertain.
+  ///
+  /// In ar, this message translates to:
+  /// **'انقطع الاتصال قبل أن يصل رد الخادم، فقد يكون الحفظ تمّ. بياناتك باقية؛ اضغط «إعادة المحاولة» وسنتحقق دون تكرار المنتج.'**
+  String get invNetworkUncertain;
+
+  /// No description provided for @invFromCatalog.
+  ///
+  /// In ar, this message translates to:
+  /// **'معروف في حسبة: الاسم والوحدة جاهزان. أكمل أسعار متجرك والكمية.'**
+  String get invFromCatalog;
+
+  /// No description provided for @packWord.
+  ///
+  /// In ar, this message translates to:
+  /// **'كرتونة'**
+  String get packWord;
+
+  /// No description provided for @unitChipPack.
+  ///
+  /// In ar, this message translates to:
+  /// **'كرتونة ×{size}'**
+  String unitChipPack(int size);
+
+  /// No description provided for @packPer.
+  ///
+  /// In ar, this message translates to:
+  /// **'كرتونة ({size} قطعة)'**
+  String packPer(int size);
+
+  /// No description provided for @packEquals.
+  ///
+  /// In ar, this message translates to:
+  /// **'= {pieces} قطعة'**
+  String packEquals(String pieces);
+
+  /// No description provided for @addPackLine.
+  ///
+  /// In ar, this message translates to:
+  /// **'+ كرتونة ({size} قطعة) بـ {price}'**
+  String addPackLine(int size, String price);
+
+  /// No description provided for @packToggle.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُباع بالكرتونة أيضاً (جملة)'**
+  String get packToggle;
+
+  /// No description provided for @packToggleSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'المخزون يبقى بالقطعة؛ بيع كرتونة يخصم كل قطعها.'**
+  String get packToggleSub;
+
+  /// No description provided for @packSizeLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'عدد القطع في الكرتونة'**
+  String get packSizeLabel;
+
+  /// No description provided for @packPriceLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر الكرتونة كاملة'**
+  String get packPriceLabel;
+
+  /// No description provided for @packSizeInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'عدد صحيح من 2 إلى 10000.'**
+  String get packSizeInvalid;
+
+  /// No description provided for @packPriceNotAbovePiece.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر الكرتونة يجب أن يكون أعلى من سعر القطعة. هل أدخلت سعر القطعة هنا؟'**
+  String get packPriceNotAbovePiece;
+
+  /// No description provided for @packPerPiece.
+  ///
+  /// In ar, this message translates to:
+  /// **'القطعة داخل الكرتونة بـ {price}.'**
+  String packPerPiece(String price);
+
+  /// No description provided for @packPerPieceVs.
+  ///
+  /// In ar, this message translates to:
+  /// **'القطعة داخل الكرتونة بـ {pack} مقابل {piece} بالمفرد.'**
+  String packPerPieceVs(String pack, String piece);
+
+  /// No description provided for @invQtyPack.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عدداً صحيحاً من الكراتين أكبر من صفر.'**
+  String get invQtyPack;
 }
 
 class _AppLocalizationsDelegate

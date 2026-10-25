@@ -915,5 +915,132 @@
   },
   "subscriptionCheckAgain": "تحقق من جديد",
   "subscriptionChecking": "جارٍ التحقق…",
-  "subscriptionStillInactive": "لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد»."
+  "subscriptionStillInactive": "لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد».",
+  "saleScanTitle": "مسح منتجات البيع",
+  "saleScanKeepGoing": "الكاميرا شغّالة: امسح المنتج التالي",
+  "saleScanCloseA11y": "إغلاق الكاميرا والعودة إلى السلة",
+  "cartPanelTitle": "السلة",
+  "saleScanEmptyBody": "وجّه الكاميرا إلى باركود المنتج. تبقى الكاميرا مفتوحة لتضيف المنتجات واحداً تلو الآخر.",
+  "completeSale": "إتمام البيع",
+  "methodRecordOnly": "يُسجَّل فقط أن الزبون دفع عبر {method}. حسبة لا تتصل بهذه الخدمة ولا تتحقق من وصول المبلغ، فتأكد منه قبل تأكيد البيع.",
+  "@methodRecordOnly": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "invTitle": "إضافة منتجات بالمسح",
+  "invInstruction": "امسح باركود المنتج لإضافته إلى متجرك. لا يدخل سلة البيع.",
+  "invWaiting": "أكمل النموذج أو أغلقه لمسح المنتج التالي",
+  "invCloseA11y": "إغلاق الكاميرا والعودة إلى المنتجات",
+  "invBackToScanning": "إغلاق والعودة إلى المسح",
+  "invStockNow": "المخزون الآن {stock}",
+  "@invStockNow": {
+    "placeholders": {
+      "stock": {
+        "type": "String"
+      }
+    }
+  },
+  "invExistsNote": "هذا المنتج في متجرك، فلن يُضاف مرة ثانية. لإدخال بضاعة جديدة منه اختر «إضافة كمية».",
+  "invAddStock": "إضافة كمية",
+  "invAddStockQty": "الكمية المستلمة ({unit})",
+  "@invAddStockQty": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "invReason": "السبب",
+  "invReasonDefault": "بضاعة واردة",
+  "invReasonRequired": "اكتب سبب إضافة الكمية.",
+  "invQtyPiece": "أدخل عدداً صحيحاً أكبر من صفر.",
+  "invQtyKg": "أدخل وزناً أكبر من صفر، حتى 3 خانات عشرية.",
+  "invAddStockSave": "إضافة إلى المخزون",
+  "invStockAdded": "أُضيفت الكمية إلى «{name}». المخزون الآن {stock}",
+  "@invStockAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "stock": {
+        "type": "String"
+      }
+    }
+  },
+  "invStockForbidden": "تعديل المخزون للمالك أو المدير.",
+  "invOpeningStock": "الكمية الموجودة الآن ({unit})",
+  "@invOpeningStock": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "invNetworkUncertain": "انقطع الاتصال قبل أن يصل رد الخادم، فقد يكون الحفظ تمّ. بياناتك باقية؛ اضغط «إعادة المحاولة» وسنتحقق دون تكرار المنتج.",
+  "invFromCatalog": "معروف في حسبة: الاسم والوحدة جاهزان. أكمل أسعار متجرك والكمية.",
+  "packWord": "كرتونة",
+  "unitChipPack": "كرتونة ×{size}",
+  "@unitChipPack": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "packPer": "كرتونة ({size} قطعة)",
+  "@packPer": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "packEquals": "= {pieces} قطعة",
+  "@packEquals": {
+    "placeholders": {
+      "pieces": {
+        "type": "String"
+      }
+    }
+  },
+  "addPackLine": "+ كرتونة ({size} قطعة) بـ {price}",
+  "@addPackLine": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "packToggle": "يُباع بالكرتونة أيضاً (جملة)",
+  "packToggleSub": "المخزون يبقى بالقطعة؛ بيع كرتونة يخصم كل قطعها.",
+  "packSizeLabel": "عدد القطع في الكرتونة",
+  "packPriceLabel": "سعر الكرتونة كاملة",
+  "packSizeInvalid": "عدد صحيح من 2 إلى 10000.",
+  "packPriceNotAbovePiece": "سعر الكرتونة يجب أن يكون أعلى من سعر القطعة. هل أدخلت سعر القطعة هنا؟",
+  "packPerPiece": "القطعة داخل الكرتونة بـ {price}.",
+  "@packPerPiece": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "packPerPieceVs": "القطعة داخل الكرتونة بـ {pack} مقابل {piece} بالمفرد.",
+  "@packPerPieceVs": {
+    "placeholders": {
+      "pack": {
+        "type": "String"
+      },
+      "piece": {
+        "type": "String"
+      }
+    }
+  },
+  "invQtyPack": "أدخل عدداً صحيحاً من الكراتين أكبر من صفر."
 }

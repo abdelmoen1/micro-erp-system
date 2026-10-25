@@ -30,6 +30,8 @@ class Product extends Model
         'unit',
         'selling_price',
         'cost_price',
+        'pack_size',
+        'pack_price',
         'current_stock',
         'minimum_stock',
         'status',
@@ -40,6 +42,8 @@ class Product extends Model
         return [
             'selling_price' => 'decimal:2',
             'cost_price' => 'decimal:2',
+            'pack_size' => 'integer',
+            'pack_price' => 'decimal:2',
             // CR-13: DECIMAL(12,3); whole numbers for pieces (doc 15 §4).
             'current_stock' => 'decimal:3',
             'minimum_stock' => 'decimal:3',
@@ -70,5 +74,11 @@ class Product extends Model
     public function isActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
+    }
+
+    /** Sold and received by the carton too (pack_size pieces for pack_price). */
+    public function hasPack(): bool
+    {
+        return $this->pack_size !== null && $this->pack_price !== null;
     }
 }

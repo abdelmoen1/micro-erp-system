@@ -6,6 +6,7 @@ use App\Models\CatalogProduct;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Services\ProductService;
+use App\Services\SaleService;
 use App\Support\Barcode;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -220,5 +221,108 @@ class SharedCatalogTest extends TestCase
 
         $this->assertSame(6, Product::count());
         $this->assertSame(2, CatalogProduct::count());
+    }
+
+    /**
+     * The real race: this store's lookup finds no catalog item, and before its insert another store
+     * commits the same barcode. The insert is ignored and the product links to the winner's item.
+     */
+    public function test_losing_the_first_insert_race_links_to_the_winners_item(): void
+    {
+        $winner = $this->makeStore('Winner');
+        $owner = $this->makeUser($this->makeStore('Loser'));
+        $raced = false;
+        DB::listen(function ($query) use (&$raced, $winner) {
+            if (!$raced && str_starts_with(strtolower($query->sql), 'select') && str_contains($query->sql, 'catalog_products')) {
+                $raced = true;
+                DB::table('catalog_products')->insert(['barcode' => self::GTIN, 'name' => 'Juice (winner)', 'unit' => 'piece', 'created_by_store_id' => $winner->id]);
+            }
+        });
+
+        $product = app(ProductService::class)->create($owner, $this->newProduct());
+
+        $this->assertTrue($raced, 'The competing insert ran between the lookup and the insert.');
+        $item = CatalogProduct::sole();
+        $this->assertSame(['Juice (winner)', $winner->id], [$item->name, (int) $item->created_by_store_id], 'The winner\'s item is kept, not overwritten.');
+        $this->assertSame($item->id, (int) $product->catalog_product_id);
+        $this->assertSame(['Juice 1L', '8.00', '10.000'], [$product->name, $product->selling_price, $product->current_stock], 'The store keeps its own name, price and stock.');
+    }
+
+    public function test_platform_admin_compares_a_catalog_items_prices_and_stock_across_stores(): void
+    {
+        $admin = $this->makeUser($this->makeStore('Hisbah HQ'));
+        $admin->forceFill(['is_platform_admin' => true])->save();
+        $stores = ['Gaza' => ['8.00', 10], 'Rafah' => ['9.50', 3], 'Khan Younis' => ['7.25', 0], 'Closed' => ['5.00', 4]];
+        $ids = [];
+        foreach ($stores as $name => [$price, $stock]) {
+            $owner = $this->makeUser($this->makeStore($name, ['area' => $name]));
+            $ids[$name] = $this->actingAs($owner, 'sanctum')
+                ->postJson('/api/v1/products', $this->newProduct(['selling_price' => $price, 'current_stock' => $stock]))
+                ->assertCreated()->json('product.id');
+        }
+        Product::findOrFail($ids['Closed'])->update(['status' => Product::STATUS_INACTIVE]);
+        $water = $this->makeUser($this->makeStore('Water shop'));
+        $this->actingAs($water, 'sanctum')->postJson('/api/v1/products', $this->newProduct(['name' => 'Water', 'barcode' => '0012345678905', 'selling_price' => '2.00']))->assertCreated();
+        $item = CatalogProduct::where('barcode', self::GTIN)->sole();
+
+        // The list: one row per barcode, most widely carried first, price range over active rows only.
+        $this->actingAs($admin, 'sanctum')->getJson('/api/v1/admin/catalog-products')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.id', $item->id)
+            ->assertJsonPath('data.0.stores_count', 4)
+            ->assertJsonPath('data.0.active_stores_count', 3)
+            ->assertJsonPath('data.0.price_min', '7.25')
+            ->assertJsonPath('data.0.price_max', '9.50')
+            ->assertJsonPath('data.1.name', 'Water');
+        // Search by name or by any spelling of the barcode.
+        $this->actingAs($admin, 'sanctum')->getJson('/api/v1/admin/catalog-products?search=012345678905')
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'Water');
+
+        // One item: every store's own row, cheapest first, and the comparison.
+        $response = $this->actingAs($admin, 'sanctum')->getJson("/api/v1/admin/catalog-products/{$item->id}")
+            ->assertOk()
+            ->assertJsonPath('data.stores_count', 4)
+            ->assertJsonPath('data.comparison.active_stores_count', 3)
+            ->assertJsonPath('data.comparison.price_min', '7.25')
+            ->assertJsonPath('data.comparison.price_max', '9.50')
+            ->assertJsonPath('data.comparison.price_spread', '2.25');
+        $offers = collect($response->json('data.offers'));
+        $this->assertSame(['5.00', '7.25', '8.00', '9.50'], $offers->pluck('selling_price')->all());
+        $this->assertSame(['4', '0', '10', '3'], $offers->pluck('current_stock')->all(), 'Each store\'s stock, never summed.');
+        $this->assertSame(['Closed', 'Khan Younis', 'Gaza', 'Rafah'], $offers->pluck('store.area')->all());
+
+        // Store accounts cannot reach either view.
+        $this->actingAs($water, 'sanctum')->getJson('/api/v1/admin/catalog-products')->assertForbidden();
+        $this->actingAs($water, 'sanctum')->getJson("/api/v1/admin/catalog-products/{$item->id}")->assertForbidden();
+    }
+
+    /** Linking a second store to an item moves nothing: sales, returns and movements stay on each store's row. */
+    public function test_existing_history_stays_with_each_stores_own_product(): void
+    {
+        $storeA = $this->makeStore('A');
+        $ownerA = $this->makeUser($storeA);
+        $juiceA = $this->makeProduct($storeA, ['name' => 'Juice A', 'barcode' => self::GTIN, 'selling_price' => '8.00', 'current_stock' => 10]);
+        $sale = app(SaleService::class)->create($ownerA, ['items' => [['product_id' => $juiceA->id, 'quantity' => 3]], 'paid_amount' => '24.00', 'payment_method' => 'cash'])['invoice'];
+        $this->actingAs($ownerA, 'sanctum')
+            ->postJson("/api/v1/sales/{$sale->id}/returns", ['items' => [['invoice_item_id' => $sale->items[0]->id, 'quantity' => 1]], 'reason' => 'Damaged'], $this->idem())
+            ->assertCreated();
+        $this->app['auth']->forgetGuards();
+
+        // The pre-catalog row is linked by the backfill; then store B adds the same barcode.
+        $migration = require database_path('migrations/2026_10_24_000001_create_catalog_products_table.php');
+        (new ReflectionMethod($migration, 'backfill'))->invoke($migration);
+        $ownerB = $this->makeUser($this->makeStore('B'));
+        $juiceB = $this->actingAs($ownerB, 'sanctum')->postJson('/api/v1/products', ['barcode' => self::GTIN, 'selling_price' => '9.00', 'current_stock' => 5])
+            ->assertCreated()->json('product.id');
+
+        $item = CatalogProduct::sole();
+        $this->assertSame([$item->id, $item->id], [(int) $juiceA->fresh()->catalog_product_id, (int) Product::findOrFail($juiceB)->catalog_product_id]);
+        $this->assertSame([$juiceA->id], $sale->items()->pluck('product_id')->all(), 'Invoice lines still point at store A\'s own row.');
+        $this->assertSame(['opening', 'sale', 'sale_return'], StockMovement::where('product_id', $juiceA->id)->orderBy('id')->pluck('type')->all());
+        $this->assertSame('8.000', $juiceA->fresh()->current_stock);
+        $this->assertSame(['opening'], StockMovement::where('product_id', $juiceB)->pluck('type')->all());
+        $this->assertSame('5.000', Product::findOrFail($juiceB)->current_stock);
+        $this->assertSame($juiceA->id, (int) DB::table('sale_return_items')->value('product_id'));
     }
 }

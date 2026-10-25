@@ -42,6 +42,7 @@ Route::middleware(['auth:sanctum', 'active', 'platform.admin'])->prefix('admin')
     Route::post('stores/{store}/subscription', [AdminStoreController::class, 'updateSubscription']);
     Route::delete('stores/{store}', [AdminStoreController::class, 'destroy']);
     Route::get('products', [AdminProductController::class, 'index']);
+    Route::get('catalog-products', [AdminProductController::class, 'catalogIndex']);
     Route::get('catalog-products/{catalogProduct}', [AdminProductController::class, 'catalog']);
 });
 

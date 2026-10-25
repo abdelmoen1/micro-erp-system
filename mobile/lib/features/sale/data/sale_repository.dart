@@ -64,6 +64,7 @@ class SaleLine {
     required this.quantity,
     required this.unitPrice,
     required this.lineTotal,
+    this.packSize,
   });
 
   factory SaleLine.fromJson(Map<String, dynamic> json) => SaleLine(
@@ -72,6 +73,7 @@ class SaleLine {
     quantity: Quantity.parse(json['quantity'] ?? '0'),
     unitPrice: Money.parse(json['unit_price'] as String? ?? '0.00'),
     lineTotal: Money.parse((json['line_total'] ?? json['total']) as String? ?? '0.00'),
+    packSize: (json['pack_size'] as num?)?.toInt(),
   );
 
   final String name;
@@ -79,6 +81,14 @@ class SaleLine {
   final Quantity quantity;
   final Money unitPrice;
   final Money lineTotal;
+
+  /// Sold by the carton: [quantity] and [unitPrice] are per carton of [packSize] pieces.
+  final int? packSize;
+
+  bool get isPack => packSize != null;
+
+  /// The pieces behind a carton line (or the quantity itself).
+  Quantity get baseQuantity => isPack ? Quantity.milli(quantity.milli * packSize!) : quantity;
 }
 
 /// A recorded sale as the receipt (M-06) shows it: number, lines, totals, debt, who sold it, and

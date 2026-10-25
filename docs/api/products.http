@@ -27,12 +27,17 @@ Content-Type: application/json
 # Required: name, selling_price (> 0, max 2 decimals, per unit), current_stock (≥ 0; whole for piece, up to 3 decimals for kg).
 # Optional: unit (piece | kg, default piece).
 # Optional: barcode (unique in the store, max 64; "" = none), cost_price (≥ 0), minimum_stock (default 5).
+# Optional wholesale carton (piece products only), both or neither: pack_size (whole, 2–10000 pieces per carton)
+#   and pack_price (the whole carton, > selling_price). Stock stays in pieces. Refused with errors.pack_size /
+#   errors.pack_price: a carton on a kg product, one field without the other, size 1, or a carton price ≤ one piece.
+#   PATCH checks the carton as it would be saved (a new selling_price or unit alone can be refused); send both
+#   as null to remove it.
 # Response:
 # {
 #   "message": "تم إنشاء المنتج بنجاح",
 #   "product": {
 #     "id": 1, "name": "Milk 1L", "barcode": "7290000000017",
-#     "selling_price": "6.50", "cost_price": "5.00",
+#     "selling_price": "6.50", "cost_price": "5.00", "pack_size": null, "pack_price": null,
 #     "unit": "piece", "current_stock": "12", "minimum_stock": "5", "is_low_stock": false,
 #     "status": "active", "created_at": "…", "updated_at": "…"
 #   },
@@ -93,6 +98,8 @@ Accept: application/json
 ### 8. Stock adjustment (US-0402) — 201 { "message", "movement": { type: adjustment_in | adjustment_out, quantity, balance_after, … }, "product": { … } }
 # Owner / Manager (employee 403). quantity: signed, non-zero, in the product's unit ("-2", "-0.250"); reason required.
 # Would go below zero: 422 INSUFFICIENT_STOCK. Idempotency-Key required (428 without it).
+# Optional "unit": "pack" (product with a carton): quantity is whole cartons and the movement is quantity ×
+# pack_size pieces (3 cartons of 24 → adjustment_in 72). Product without a carton → 422 errors.unit.
 POST {{base}}/stock-adjustments
 Authorization: Bearer {{token}}
 Accept: application/json
