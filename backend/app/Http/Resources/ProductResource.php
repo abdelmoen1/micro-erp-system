@@ -21,6 +21,9 @@ class ProductResource extends JsonResource
             'unit' => $this->unit,
             'selling_price' => Money::of($this->selling_price),
             'cost_price' => $this->cost_price === null ? null : Money::of($this->cost_price),
+            // Wholesale carton (piece products only): pack_size pieces for pack_price; stock stays in pieces.
+            'pack_size' => $this->pack_size,
+            'pack_price' => $this->pack_price === null ? null : Money::of($this->pack_price),
             'current_stock' => Quantity::format($this->current_stock, $this->unit),
             'minimum_stock' => Quantity::format($this->minimum_stock, $this->unit),
             'is_low_stock' => Quantity::compare($this->current_stock, $this->minimum_stock) <= 0,

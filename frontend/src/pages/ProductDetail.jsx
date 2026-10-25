@@ -131,6 +131,9 @@ function ProductForm({ product, manager, onSaved }) {
     cost_price: product?.cost_price ?? "",
     current_stock: product ? product.current_stock : "0",
     minimum_stock: product?.minimum_stock ?? "",
+    has_pack: Boolean(product?.pack_size),
+    pack_size: product?.pack_size ? String(product.pack_size) : "",
+    pack_price: product?.pack_price ?? "",
   }));
   const [match, setMatch] = useState(null);
   const save = useSaveProduct();
@@ -163,6 +166,12 @@ function ProductForm({ product, manager, onSaved }) {
       selling_price: String(form.selling_price).trim(),
       cost_price: String(form.cost_price).trim() || null,
       ...(String(form.minimum_stock).trim() ? { minimum_stock: String(form.minimum_stock).trim() } : {}),
+      // A carton is sent whole or cleared whole (both null), so it can never be half-set.
+      ...(form.unit === "piece" && form.has_pack
+        ? { pack_size: String(form.pack_size).trim(), pack_price: String(form.pack_price).trim() }
+        : product?.pack_size
+          ? { pack_size: null, pack_price: null }
+          : {}),
       ...(product ? {} : { current_stock: String(form.current_stock).trim() || "0" }),
     };
     save.mutate(product ? { id: product.id, ...body } : body, { onSuccess: onSaved });
@@ -219,6 +228,7 @@ function ProductForm({ product, manager, onSaved }) {
           <input id="pf-min" className="fld ltr m" inputMode="decimal" value={form.minimum_stock} onChange={set("minimum_stock")} readOnly={readOnly} />
         </Field>
       </div>
+      {form.unit === "piece" ? <PackFields form={form} setForm={setForm} err={err} readOnly={readOnly} /> : null}
       <ErrorBanner error={save.error && !Object.keys(save.error.errors ?? {}).length ? save.error : null} />
       {save.isSuccess && product ? (
         <p role="status" className="banner tone-success">
@@ -241,6 +251,48 @@ function ProductForm({ product, manager, onSaved }) {
   );
 }
 
+/** Shekels → agorot, or null when not a valid price. */
+const toAgorot = (v) => (/^\d{1,8}(\.\d{1,2})?$/.test(String(v).trim()) ? Math.round(Number(v) * 100) : null);
+
+/**
+ * Wholesale carton (piece products only): how many pieces in one carton and the price of the whole
+ * carton. The hint shows what one piece costs inside the carton, so a per-piece price typed in the
+ * carton field is obvious before the server refuses it.
+ */
+function PackFields({ form, setForm, err, readOnly }) {
+  const size = /^\d{1,5}$/.test(String(form.pack_size).trim()) ? Number(form.pack_size) : null;
+  const packCents = toAgorot(form.pack_price);
+  const pieceCents = toAgorot(form.selling_price);
+  const perPiece = size && size > 1 && packCents ? packCents / size : null;
+  const hint =
+    perPiece === null
+      ? "سعر الكرتونة كاملة، وليس سعر القطعة. المخزون يبقى بالقطعة: بيع كرتونة واحدة يخصم كل قطعها."
+      : `القطعة داخل الكرتونة بـ ${(perPiece / 100).toFixed(2)} ₪${pieceCents ? ` مقابل ${(pieceCents / 100).toFixed(2)} ₪ بالمفرد` : ""}.`;
+  return (
+    <div className="field" style={{ gap: 10 }}>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={form.has_pack}
+          disabled={readOnly}
+          onChange={(e) => setForm({ ...form, has_pack: e.target.checked })}
+        />
+        <span>يُباع بالكرتونة أيضاً (جملة)</span>
+      </label>
+      {form.has_pack ? (
+        <div className="grid2">
+          <Field id="pf-pack-size" label="عدد القطع في الكرتونة" error={err("pack_size")}>
+            <input id="pf-pack-size" className="fld ltr m" inputMode="numeric" value={form.pack_size} onChange={(e) => setForm({ ...form, pack_size: e.target.value })} readOnly={readOnly} />
+          </Field>
+          <Field id="pf-pack-price" label="سعر الكرتونة كاملة" error={err("pack_price")} hint={err("pack_price") ? null : hint}>
+            <input id="pf-pack-price" className="fld ltr m" inputMode="decimal" value={form.pack_price} onChange={(e) => setForm({ ...form, pack_price: e.target.value })} readOnly={readOnly} />
+          </Field>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function AdjustDialog({ product, onClose }) {
   const [mode, setMode] = useState("count");
   const [value, setValue] = useState("");
@@ -248,15 +300,26 @@ function AdjustDialog({ product, onClose }) {
   const [key] = useState(newIdempotencyKey);
   const adjust = useAdjustStock();
   const unit = product.unit;
-  const pattern = unit === "kg" ? /^-?\d{1,7}(\.\d{1,3})?$/ : /^-?\d{1,7}$/;
-  const valid = pattern.test(value.trim()) && !(mode === "count" && value.trim().startsWith("-"));
-  const delta = valid ? (mode === "count" ? milli(value) - milli(product.current_stock) : milli(value)) : null;
+  // «cartons»: goods received by the carton; the server adds cartons × pack size pieces.
+  const cartons = mode === "cartons";
+  const pattern = cartons ? /^\d{1,5}$/ : unit === "kg" ? /^-?\d{1,7}(\.\d{1,3})?$/ : /^-?\d{1,7}$/;
+  const valid = pattern.test(value.trim()) && !(mode === "count" && value.trim().startsWith("-")) && !(cartons && Number(value) === 0);
+  const delta = valid
+    ? mode === "count"
+      ? milli(value) - milli(product.current_stock)
+      : cartons
+        ? Number(value) * product.pack_size * 1000
+        : milli(value)
+    : null;
   const after = delta === null ? null : milli(product.current_stock) + delta;
 
   const submit = (e) => {
     e.preventDefault();
     if (!delta) return;
-    adjust.mutate({ product_id: product.id, quantity: fromMilli(delta, unit).replace("−", "-").replace("+", ""), reason, key }, { onSuccess: onClose });
+    const body = cartons
+      ? { product_id: product.id, quantity: value.trim(), unit: "pack", reason, key }
+      : { product_id: product.id, quantity: fromMilli(delta, unit).replace("−", "-").replace("+", ""), reason, key };
+    adjust.mutate(body, { onSuccess: onClose });
   };
 
   return (
@@ -268,6 +331,7 @@ function AdjustDialog({ product, onClose }) {
           options={[
             ["count", "العدد الفعلي على الرف"],
             ["delta", "إضافة أو خصم كمية"],
+            ...(product.pack_size ? [["cartons", `استلام كراتين (${product.pack_size} قطعة)`]] : []),
           ]}
           onChange={(m) => {
             setMode(m);
@@ -276,8 +340,16 @@ function AdjustDialog({ product, onClose }) {
         />
         <Field
           id="adj-qty"
-          label={mode === "count" ? `العدد الفعلي${unit === "kg" ? " (كغ)" : ""}` : "الكمية (سالبة للخصم)"}
-          error={value && !valid ? (unit === "kg" ? "حتى 3 خانات عشرية." : "عدد صحيح للمنتج بالقطعة.") : adjust.error?.fieldError?.("quantity")}
+          label={mode === "count" ? `العدد الفعلي${unit === "kg" ? " (كغ)" : ""}` : cartons ? "عدد الكراتين المستلمة" : "الكمية (سالبة للخصم)"}
+          error={
+            value && !valid
+              ? cartons
+                ? "عدد صحيح من الكراتين أكبر من صفر."
+                : unit === "kg"
+                  ? "حتى 3 خانات عشرية."
+                  : "عدد صحيح للمنتج بالقطعة."
+              : adjust.error?.fieldError?.("quantity")
+          }
         >
           <input id="adj-qty" className="fld ltr m" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} style={{ fontSize: 20, fontWeight: 600 }} />
         </Field>
@@ -291,7 +363,9 @@ function AdjustDialog({ product, onClose }) {
         <ConfirmSummary
           rows={[
             ["المسجّل الآن", product.current_stock],
-            [mode === "count" ? "العدد الفعلي" : "التعديل", valid ? value : "—"],
+            cartons
+              ? ["الكراتين", valid ? `${value} × ${product.pack_size} قطعة` : "—"]
+              : [mode === "count" ? "العدد الفعلي" : "التعديل", valid ? value : "—"],
           ]}
           total={["الفرق الذي سيُسجَّل", delta === null ? "—" : fromMilli(delta, unit), delta < 0 ? "var(--debt-fg)" : "var(--success-fg)"]}
         />

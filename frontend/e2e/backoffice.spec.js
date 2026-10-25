@@ -225,3 +225,63 @@ test("shared catalog: a barcode already in my store links to it instead of addin
   await expect(page.getByText("هذا الباركود مسجّل في متجرك")).toBeVisible();
   await expect(page.getByRole("link", { name: "عصير برتقال" })).toHaveAttribute("href", "/products/9");
 });
+
+test("cartons: the form shows the price of one piece inside the carton and sends size and price together", async ({ page }) => {
+  await signIn(page);
+  let sent = null;
+  await page.route("**/api/v1/products", async (r) => {
+    sent = r.request().postDataJSON();
+    await r.fulfill({ status: 201, json: { message: "تم إنشاء المنتج بنجاح", product: { id: 31, ...sent, current_stock: "48", minimum_stock: "5", is_low_stock: false, status: "active" } } });
+  });
+  await page.route(/\/api\/v1\/products\/31(\/movements)?$/, (r) =>
+    r.fulfill({ json: { data: r.request().url().endsWith("/31") ? { id: 31, name: "ماء 600 مل", unit: "piece", current_stock: "48", minimum_stock: "5", pack_size: 24, pack_price: "54.00" } : [] } }),
+  );
+
+  await page.goto("/products/new");
+  await page.getByLabel("اسم المنتج").fill("ماء 600 مل");
+  await page.getByLabel("سعر البيع").fill("2.50");
+  await page.getByLabel("المخزون الآن").fill("48");
+  await page.getByLabel("يُباع بالكرتونة أيضاً (جملة)").check();
+  await page.getByLabel("عدد القطع في الكرتونة").fill("24");
+  await page.getByLabel("سعر الكرتونة كاملة").fill("54");
+  await expect(page.getByText("القطعة داخل الكرتونة بـ 2.25 ₪ مقابل 2.50 ₪ بالمفرد.")).toBeVisible();
+
+  // A weighed product has no carton: the fields go away and nothing about cartons is sent.
+  await page.getByRole("button", { name: "بالوزن (كغ)" }).click();
+  await expect(page.getByLabel("عدد القطع في الكرتونة")).toHaveCount(0);
+  await page.getByRole("button", { name: "بالقطعة" }).click();
+
+  await page.getByRole("button", { name: "حفظ المنتج" }).click();
+  await expect.poll(() => sent).toMatchObject({ unit: "piece", selling_price: "2.50", pack_size: "24", pack_price: "54", current_stock: "48" });
+});
+
+test("cartons: a carton line says so, with its pieces, and is returned by the carton", async ({ page }) => {
+  await signIn(page);
+  const cartonSale = {
+    ...sale,
+    has_debt: false,
+    debt: null,
+    returns: [],
+    total_amount: "115.50",
+    paid_amount: "115.50",
+    items: [
+      { id: 41, product_id: 6, item_name: "ماء 600 مل", unit: "piece", sale_unit: "pack", pack_size: 24, quantity: "2", base_quantity: "48", returned_quantity: "0", unit_price: "54.00", line_total: "108.00" },
+      { id: 42, product_id: 6, item_name: "ماء 600 مل", unit: "piece", sale_unit: "piece", pack_size: null, quantity: "3", base_quantity: "3", returned_quantity: "0", unit_price: "2.50", line_total: "7.50" },
+    ],
+  };
+  await page.route("**/api/v1/sales/12", (r) => r.fulfill({ json: { data: cartonSale } }));
+
+  await page.goto("/sales/12");
+  const carton = page.getByRole("row").filter({ hasText: "54.00" });
+  await expect(carton).toContainText("2 كرتونة");
+  await expect(carton).toContainText("48 قطعة");
+  await expect(carton).toContainText("/ كرتونة (24 قطعة)");
+
+  await page.getByRole("button", { name: "مرتجع" }).click();
+  const dialog = page.getByRole("dialog", { name: /مرتجع من الفاتورة/ });
+  await expect(dialog.getByText("(بالكرتونة، 24 قطعة)")).toBeVisible();
+  await dialog.getByRole("button", { name: "زيادة ماء 600 مل" }).first().click();
+  // One carton back at its own price, not one piece.
+  await expect(dialog.getByText("₪ 54.00").first()).toBeVisible();
+  await expect(dialog.getByText("₪ 2.50")).toHaveCount(0);
+});

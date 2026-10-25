@@ -119,14 +119,19 @@ export default function SaleDetail() {
                     <td style={{ fontWeight: 600 }}>{i.item_name}</td>
                     <td className="n m">
                       {i.quantity}
-                      {i.unit === "kg" ? " كغ" : ""}
+                      {i.unit === "kg" ? " كغ" : i.pack_size ? " كرتونة" : ""}
+                      {i.pack_size ? <span className="cell-sub">{i.base_quantity} قطعة</span> : null}
                     </td>
                     <td className="n m" style={{ color: "var(--warning-fg)", fontWeight: 600 }}>
                       {milli(i.returned_quantity) > 0 ? i.returned_quantity : "—"}
                     </td>
                     <td className="n">
                       <MoneyText value={i.unit_price} style={{ color: "var(--ink-muted)" }} />
-                      {i.unit === "kg" ? <span className="cell-sub" style={{ display: "inline" }}> / كغ</span> : null}
+                      {i.unit === "kg" || i.pack_size ? (
+                        <span className="cell-sub" style={{ display: "inline" }}>
+                          {i.pack_size ? ` / كرتونة (${i.pack_size} قطعة)` : " / كغ"}
+                        </span>
+                      ) : null}
                     </td>
                     <td className="n">
                       <MoneyText value={i.line_total} style={{ fontWeight: 700 }} />
@@ -270,7 +275,12 @@ function ReturnDialog({ sale, onClose }) {
               {checked.map((c) => (
                 <tr key={c.item.id}>
                   <td style={{ fontWeight: 600 }}>
-                    {c.item.item_name} {c.item.unit === "kg" ? <span className="field-hint">(كغ)</span> : null}
+                    {c.item.item_name}{" "}
+                    {c.item.unit === "kg" ? (
+                      <span className="field-hint">(كغ)</span>
+                    ) : c.item.pack_size ? (
+                      <span className="field-hint">(بالكرتونة، {c.item.pack_size} قطعة)</span>
+                    ) : null}
                   </td>
                   <td className="n m">{c.item.unit === "kg" ? (c.max / 1000).toFixed(3) : c.max / 1000}</td>
                   <td>

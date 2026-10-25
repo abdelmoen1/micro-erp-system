@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Product;
 use App\Support\Barcode;
 use App\Support\Money;
+use App\Support\Pack;
 use App\Support\Quantity;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -48,10 +49,16 @@ class UpdateProductRequest extends FormRequest
             // FR-16 activate / deactivate.
             'status' => ['sometimes', Rule::in([Product::STATUS_ACTIVE, Product::STATUS_INACTIVE])],
             'current_stock' => ['prohibited'],
+            'pack_size' => ['sometimes', ...Pack::rules()['pack_size']],
+            'pack_price' => ['sometimes', ...Pack::rules()['pack_price']],
         ];
     }
 
-    /** CR-13: a weighed product whose stock has a fraction cannot become a piece product. */
+    /**
+     * CR-13: a weighed product whose stock has a fraction cannot become a piece product. The carton
+     * is checked as it would be saved: what was sent, merged onto the stored product (so changing
+     * the unit or the piece price alone cannot leave an ambiguous carton behind).
+     */
     public function after(): array
     {
         return [
@@ -61,13 +68,21 @@ class UpdateProductRequest extends FormRequest
                 if ($this->input('unit') === Quantity::UNIT_PIECE && !Quantity::isWhole($product->current_stock)) {
                     $validator->errors()->add('unit', 'لا يمكن تحويل المنتج إلى قطع لأن مخزونه الحالي يحتوي على كسور.');
                 }
+
+                $value = fn(string $field) => $this->exists($field) ? $this->input($field) : $product->{$field};
+                $problems = Pack::problems($this->targetUnit(), $value('pack_size'), $value('pack_price'), $value('selling_price'));
+                foreach ($problems as $field => $message) {
+                    if (!$validator->errors()->has($field)) {
+                        $validator->errors()->add($field, $message);
+                    }
+                }
             },
         ];
     }
 
     public function messages(): array
     {
-        return ProductMessages::all();
+        return ProductMessages::all() + Pack::messages();
     }
 
     private function targetUnit(): string

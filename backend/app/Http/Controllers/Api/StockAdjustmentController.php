@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\StockMovement;
 use App\Services\AuditService;
 use App\Services\StockService;
+use App\Support\Pack;
 use App\Support\Quantity;
 use Illuminate\Support\Facades\DB;
 
@@ -31,6 +32,11 @@ class StockAdjustmentController extends Controller
 
         [$movement, $product] = DB::transaction(function () use ($request, $data, $quantity) {
             $product = Product::query()->forStore($request->user()->store_id)->findOrFail($data['product_id']);
+            // Received by the carton: stock is in pieces, so the movement is cartons × pack size.
+            $cartons = ($data['unit'] ?? null) === Pack::SALE_UNIT ? $quantity : null;
+            if ($cartons !== null) {
+                $quantity = Pack::baseQuantity($cartons, (int) $product->pack_size);
+            }
 
             $movement = $this->stock->move(
                 $product,
@@ -48,7 +54,7 @@ class StockAdjustmentController extends Controller
                 'balance_before' => Quantity::format(Quantity::sub($movement->balance_after, $quantity), $unit),
                 'balance_after' => Quantity::format($movement->balance_after, $unit),
                 'reason' => $data['reason'],
-            ]);
+            ] + ($cartons !== null ? ['cartons' => Quantity::format($cartons, Quantity::UNIT_PIECE), 'pack_size' => (int) $product->pack_size] : []));
 
             return [$movement, $product];
         });
