@@ -826,5 +826,94 @@
         "type": "String"
       }
     }
-  }
+  },
+  "loginNoAccount": "ليس لديك حساب؟",
+  "loginCreateStore": "إنشاء متجر جديد",
+  "storeSuspended": "حساب هذا المتجر موقوف. تواصل مع إدارة حسبة لإعادة تفعيله.",
+  "registerTitle": "إنشاء متجر جديد",
+  "registerHelper": "ثلاث خطوات، وتبدأ بفترة تجريبية مجانية 7 أيام.",
+  "registerStepOf": "الخطوة {current} من {total}",
+  "@registerStepOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "registerStepStore": "المتجر",
+  "registerStepStoreSub": "لنبدأ باسم متجرك واسم صاحبه المسؤول عنه.",
+  "registerStepContact": "الموقع والتواصل",
+  "registerStepContactSub": "الهاتف والعنوان يظهران على إيصال الزبون.",
+  "registerStepAccount": "بيانات الدخول",
+  "registerStepAccountSub": "اختر البريد وكلمة المرور التي تدخل بها إلى حسبة.",
+  "storeNameLabel": "اسم المتجر",
+  "ownerNameLabel": "اسم صاحب المتجر",
+  "storePhoneLabel": "رقم الهاتف",
+  "cityLabel": "المدينة",
+  "cityHint": "اختر المدينة",
+  "streetLabel": "العنوان (الشارع والمنطقة)",
+  "passwordConfirmLabel": "تأكيد كلمة المرور",
+  "passwordMinHint": "8 أحرف على الأقل",
+  "storeNameRequired": "يرجى إدخال اسم المتجر.",
+  "ownerNameRequired": "يرجى إدخال اسم صاحب المتجر.",
+  "phoneRequired": "يرجى إدخال رقم الهاتف.",
+  "phoneInvalid": "رقم الهاتف 9 أو 10 أرقام، مثل 0599123456.",
+  "cityRequired": "يرجى اختيار المدينة.",
+  "streetRequired": "يرجى إدخال عنوان المتجر.",
+  "registerEmailRequired": "يرجى إدخال البريد الإلكتروني.",
+  "registerEmailInvalid": "صيغة البريد الإلكتروني غير صحيحة.",
+  "passwordTooShort": "كلمة المرور 8 أحرف على الأقل.",
+  "passwordMismatch": "التأكيد لا يطابق كلمة المرور.",
+  "emailTaken": "هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.",
+  "registerFailedTaken": "لم يُنشأ المتجر: البريد الإلكتروني مستخدم.",
+  "registerFailedValidation": "لم يُنشأ المتجر. راجع الحقول المعلّمة.",
+  "registerNetworkError": "تعذّر الاتصال بالخادم. بياناتك باقية في النموذج، أعد المحاولة.",
+  "registerServerError": "حدث خطأ في الخادم ولم يُنشأ المتجر. أعد المحاولة بعد قليل.",
+  "registerNext": "التالي",
+  "registerBack": "رجوع",
+  "registerSubmit": "إنشاء المتجر",
+  "registerSubmitting": "جارٍ إنشاء المتجر…",
+  "registerHaveAccount": "لديك حساب؟",
+  "registerSignIn": "تسجيل الدخول",
+  "subscriptionTrialEndedTitle": "انتهت الفترة التجريبية",
+  "subscriptionPaidEndedTitle": "انتهى اشتراك متجرك",
+  "subscriptionEndedOn": "متجر «{store}»، انتهت في {date}",
+  "@subscriptionEndedOn": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionDataSafe": "بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والمنتجات. يعود كل شيء فور تفعيل الاشتراك.",
+  "subscriptionContactWhatsapp": "تواصل معنا عبر واتساب",
+  "subscriptionContactNoNumber": "تواصل مع إدارة حسبة لتفعيل الاشتراك.",
+  "subscriptionWhatsappMessage": "مرحباً، أريد تفعيل اشتراك متجر «{store}» على حسبة.\nالبريد: {email}",
+  "@subscriptionWhatsappMessage": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      },
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionWhatsappFailed": "تعذّر فتح واتساب. رقم الدعم: {number}",
+  "@subscriptionWhatsappFailed": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionCheckAgain": "تحقق من جديد",
+  "subscriptionChecking": "جارٍ التحقق…",
+  "subscriptionStillInactive": "لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد»."
 }

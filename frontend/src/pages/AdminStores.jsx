@@ -1,11 +1,13 @@
 import { useDeferredValue, useState } from "react";
-import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link, useLocation } from "react-router-dom";
 import Icon from "../components/Icon";
-import { AccessBadge, SubscriptionBadge } from "../components/platform";
-import { daysAgo } from "../lib/platform";
-import { DataTable, EmptyState, ErrorBanner, PageHeader, Pager, Segments } from "../components/ui";
+import { AccessSwitch, SubscriptionBadge } from "../components/platform";
+import { daysAgo, daysLeftLabel } from "../lib/platform";
+import { DataTable, EmptyState, ErrorBanner, PageHeader, Pager } from "../components/ui";
 import { dateOnly } from "../lib/format";
 import { useAdminOverview, useAdminStores } from "../services/admin";
+import { queryKeys } from "../services/queryClient";
 
 const SORTS = [
   ["newest", "الأحدث تسجيلاً"],
@@ -15,6 +17,8 @@ const SORTS = [
 
 /** Platform owner · every registered store: counts, search, the two state filters and paging. */
 export default function AdminStores() {
+  const queryClient = useQueryClient();
+  const deleted = useLocation().state?.deleted;
   const overview = useAdminOverview();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -37,6 +41,8 @@ export default function AdminStores() {
     setter(value);
     setPageNo(1);
   };
+  // New registrations from the web or the phone show up on demand (and on returning to the tab).
+  const refresh = () => queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
 
   const columns = [
     {
@@ -76,14 +82,25 @@ export default function AdminStores() {
         </>
       ),
     },
-    { key: "status", label: "الحساب", render: (s) => <AccessBadge status={s.status} /> },
+    { key: "status", label: "الحساب", render: (s) => <AccessSwitch store={s} compact /> },
     {
       key: "subscription",
       label: "الاشتراك",
       render: (s) => (
         <>
           <SubscriptionBadge state={s.subscription.state} />
-          {s.subscription.expires_at ? <span className="cell-sub">حتى <span className="m">{dateOnly(s.subscription.expires_at)}</span></span> : null}
+          {s.subscription.state === "trial" && s.subscription.trial_ends_at ? (
+            <>
+              <span className="cell-sub cell-strong">{daysLeftLabel(s.subscription.trial_ends_at)}</span>
+              <span className="cell-sub">
+                حتى <span className="m">{dateOnly(s.subscription.trial_ends_at)}</span>
+              </span>
+            </>
+          ) : s.subscription.expires_at ? (
+            <span className="cell-sub">
+              حتى <span className="m">{dateOnly(s.subscription.expires_at)}</span>
+            </span>
+          ) : null}
         </>
       ),
     },
@@ -91,20 +108,55 @@ export default function AdminStores() {
   ];
 
   const filtered = query || status !== "all" || subscription !== "all";
+  const updatedAt = Math.max(list.dataUpdatedAt || 0, overview.dataUpdatedAt || 0);
 
   return (
     <>
-      <PageHeader title="المتاجر" sub={o ? `${o.stores.total} متجراً مسجّلاً، ${o.stores.registered_last_30_days} منها خلال آخر 30 يوماً` : " "} />
+      <PageHeader title="المتاجر" sub={o ? `${o.stores.total} متجراً مسجّلاً، ${o.stores.registered_last_30_days} منها خلال آخر 30 يوماً` : " "}>
+        <span className="platform-updated" aria-live="polite">
+          {updatedAt ? (
+            <>
+              آخر تحديث <span className="m">{clockTime(updatedAt)}</span>
+            </>
+          ) : null}
+        </span>
+        <button type="button" className="btn btn-g btn-sm" onClick={refresh} disabled={list.isFetching || overview.isFetching} aria-busy={list.isFetching}>
+          <Icon name="spinner" size={16} className={list.isFetching ? "spin" : undefined} />
+          تحديث
+        </button>
+      </PageHeader>
 
+      {deleted ? (
+        <p role="status" className="banner tone-success">
+          <Icon name="ok" size={20} />
+          حُذف متجر «{deleted}» وكل بياناته نهائياً.
+        </p>
+      ) : null}
       <ErrorBanner error={overview.error} />
-      <section className="platform-counts" aria-label="ملخص المنصة">
-        <Count label="كل المتاجر" value={o?.stores.total} />
-        <Count label="حسابات مفعّلة" value={o?.stores.active} />
-        <Count label="حسابات موقوفة" value={o?.stores.suspended} tone="danger" />
-        <Count label="اشتراكات فعّالة" value={o?.subscriptions.active} tone="ok" />
-        <Count label="اشتراكات منتهية" value={o?.subscriptions.expired} tone="warn" />
-        <Count label="بلا اشتراك" value={o?.subscriptions.inactive} />
-      </section>
+      <div className="filter-groups">
+        <FilterTiles
+          label="حساب المتجر"
+          value={status}
+          onChange={reset(setStatus)}
+          tiles={[
+            ["all", "كل المتاجر", o?.stores.total],
+            ["active", "مفعّلة", o?.stores.active, "ok"],
+            ["suspended", "موقوفة", o?.stores.suspended, "danger"],
+          ]}
+        />
+        <FilterTiles
+          label="الاشتراك"
+          value={subscription}
+          onChange={reset(setSubscription)}
+          tiles={[
+            ["all", "الكل", o?.stores.total],
+            ["active", "فعّال", o?.subscriptions.active, "ok"],
+            ["trial", "تجريبي", o?.subscriptions.trial, "info"],
+            ["expired", "منتهٍ", o?.subscriptions.expired, "warn"],
+            ["inactive", "انتهت التجربة", o?.subscriptions.inactive, "danger"],
+          ]}
+        />
+      </div>
 
       <div className="toolbar">
         <label className="search grow">
@@ -129,29 +181,6 @@ export default function AdminStores() {
           </select>
         </label>
       </div>
-      <div className="platform-filters">
-        <Segments
-          label="حالة الحساب"
-          value={status}
-          onChange={reset(setStatus)}
-          options={[
-            ["all", "كل الحسابات"],
-            ["active", "مفعّلة", o?.stores.active],
-            ["suspended", "موقوفة", o?.stores.suspended],
-          ]}
-        />
-        <Segments
-          label="حالة الاشتراك"
-          value={subscription}
-          onChange={reset(setSubscription)}
-          options={[
-            ["all", "كل الاشتراكات"],
-            ["active", "فعّال", o?.subscriptions.active],
-            ["expired", "منتهٍ", o?.subscriptions.expired],
-            ["inactive", "بلا اشتراك", o?.subscriptions.inactive],
-          ]}
-        />
-      </div>
 
       <DataTable
         query={list}
@@ -161,23 +190,59 @@ export default function AdminStores() {
         minWidth={860}
         empty={
           filtered ? (
-            <EmptyState icon="search" title="لا متاجر تطابق هذا البحث" text="غيّر كلمة البحث أو اختر «كل الحسابات» و«كل الاشتراكات»." />
+            <EmptyState icon="search" title="لا متاجر تطابق هذا البحث" text="غيّر كلمة البحث، أو اختر «كل المتاجر» و«الكل» في الفلاتر.">
+              <button
+                type="button"
+                className="btn btn-s btn-sm"
+                onClick={() => {
+                  setSearch("");
+                  setStatus("all");
+                  setSubscription("all");
+                  setPageNo(1);
+                }}
+              >
+                عرض كل المتاجر
+              </button>
+            </EmptyState>
           ) : (
             <EmptyState icon="shop" title="لم يسجّل أي متجر بعد" text="تظهر المتاجر هنا فور تسجيلها من صفحة الانضمام أو من تطبيق الجوال." />
           )
         }
       />
       <Pager meta={list.data?.meta} onPage={setPageNo} />
-      <p className="data-note">الاشتراك لا يمنع الدخول حالياً؛ إيقاف الحساب وحده يمنع أعضاء المتجر من الدخول.</p>
+      <p className="data-note">
+        المتجر الجديد يبدأ بفترة تجريبية 7 أيام. بعد انتهائها، أو انتهاء الاشتراك، يدخل أعضاء المتجر ويرون شاشة التجديد فقط حتى يُفعَّل الاشتراك. إيقاف الحساب يمنع الدخول كلياً.
+      </p>
     </>
   );
 }
 
-function Count({ label, value, tone }) {
+const clockTime = (ms) => new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+
+/**
+ * A labelled group of filter tiles: each tile shows its count and filters the list when pressed
+ * (aria-pressed), so a number is shown once and is always actionable.
+ */
+function FilterTiles({ label, value, onChange, tiles }) {
   return (
-    <div className={`card mini platform-count${tone ? ` is-${tone}` : ""}`}>
-      <span className="label">{label}</span>
-      {value === undefined ? <span className="sk" style={{ height: 26, width: 48 }} /> : <span className="value m">{value}</span>}
+    <div className="filter-group" role="group" aria-label={label}>
+      <span className="filter-group-label" aria-hidden="true">
+        {label}
+      </span>
+      <div className="filter-tiles">
+        {tiles.map(([key, text, count, tone]) => (
+          <button
+            key={key}
+            type="button"
+            className={`filter-tile${tone ? ` is-${tone}` : ""}`}
+            aria-pressed={value === key}
+            onClick={() => onChange(key)}
+          >
+            {count === undefined ? <span className="sk" style={{ height: 24, width: 32 }} /> : <span className="filter-count m">{count}</span>}
+            <span className="filter-text">{text}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

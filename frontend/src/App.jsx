@@ -19,7 +19,9 @@ const Debts = lazy(() => import("./pages/Collections").then((m) => ({ default: m
 const Payments = lazy(() => import("./pages/Collections").then((m) => ({ default: m.Payments })));
 const Staff = lazy(() => import("./pages/Staff"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
+const SubscriptionExpired = lazy(() => import("./pages/SubscriptionExpired"));
 // Platform owner area: its own shell; the API refuses every /admin call from a store account.
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminShell = lazy(() => import("./pages/AdminShell"));
 const AdminStores = lazy(() => import("./pages/AdminStores"));
 const AdminStore = lazy(() => import("./pages/AdminStore"));
@@ -38,6 +40,7 @@ export default function App() {
           {/* Old links (and the mobile app) still point at /register. */}
           <Route path="/register" element={<Navigate to="/join" replace />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="/subscription-expired" element={<SubscriptionExpired />} />
             <Route element={<AppShell />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/customers" element={<Customers />} />
@@ -52,12 +55,14 @@ export default function App() {
               <Route path="/payments" element={<Payments />} />
               <Route path="/staff" element={<Staff />} />
             </Route>
-            <Route element={<AdminShell />}>
-              <Route path="/admin" element={<AdminStores />} />
-              <Route path="/admin/stores/:id" element={<AdminStore />} />
-              <Route path="/admin/products" element={<AdminProducts />} />
-              <Route path="/admin/catalog/:id" element={<AdminCatalogItem />} />
-            </Route>
+          </Route>
+          {/* AdminShell sends a visitor without a session to /admin/login. */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route element={<AdminShell />}>
+            <Route path="/admin" element={<AdminStores />} />
+            <Route path="/admin/stores/:id" element={<AdminStore />} />
+            <Route path="/admin/products" element={<AdminProducts />} />
+            <Route path="/admin/catalog/:id" element={<AdminCatalogItem />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

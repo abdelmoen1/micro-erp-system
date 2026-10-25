@@ -71,14 +71,33 @@ export const session = {
 
 let unauthorizedHandler = () => {
   // W-01 «انتهت الجلسة»: the login screen explains why the user is back there.
-  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-    window.location.assign("/login?expired=1");
+  if (typeof window === "undefined") return;
+  // The platform owner signs in on their own page.
+  const admin = window.location.pathname.startsWith("/admin");
+  const target = admin ? "/admin/login" : "/login";
+  if (window.location.pathname !== target) {
+    window.location.assign(`${target}?expired=1`);
   }
 };
 
 /** US-1201 AC2: what happens after any 401 (default: go to /login). The session is cleared first. */
 export function onUnauthorized(handler) {
   unauthorizedHandler = handler;
+}
+
+/** Path of the renewal screen a store lands on when its trial or subscription has ended. */
+export const SUBSCRIPTION_EXPIRED_PATH = "/subscription-expired";
+
+// 403 SUBSCRIPTION_EXPIRED on a store page: the session stays; the renewal screen explains it.
+// The server refuses every business call regardless of what the screens show.
+let subscriptionExpiredHandler = () => {
+  if (typeof window === "undefined") return;
+  const path = window.location.pathname;
+  if (path !== SUBSCRIPTION_EXPIRED_PATH && !path.startsWith("/admin")) window.location.assign(SUBSCRIPTION_EXPIRED_PATH);
+};
+
+export function onSubscriptionExpired(handler) {
+  subscriptionExpiredHandler = handler;
 }
 
 // ---------------------------------------------------------------- requests
@@ -130,6 +149,9 @@ export async function apiRequest(method, path, { body, idempotencyKey, signal, h
     if (response.status === 401 && token) {
       session.clear();
       unauthorizedHandler(error);
+    }
+    if (response.status === 403 && error.code === "SUBSCRIPTION_EXPIRED") {
+      subscriptionExpiredHandler(error);
     }
 
     throw error;

@@ -38,6 +38,20 @@ final class StoreRequired extends ApiFailure {
   const StoreRequired({super.message, super.correlationId});
 }
 
+/// 403 STORE_SUSPENDED: the platform admin suspended the store (sign-in and every store call).
+final class StoreSuspended extends ApiFailure {
+  const StoreSuspended({super.message, super.correlationId});
+}
+
+/// 403 SUBSCRIPTION_EXPIRED: the trial or paid subscription has ended. The session stays valid;
+/// only business calls are refused until the platform admin activates the subscription.
+final class SubscriptionExpired extends ApiFailure {
+  const SubscriptionExpired({this.supportWhatsapp, super.message, super.correlationId});
+
+  /// Digits of the support WhatsApp number from the server (null when not configured).
+  final String? supportWhatsapp;
+}
+
 /// 403 FORBIDDEN: the role may not perform this action.
 final class Forbidden extends ApiFailure {
   const Forbidden({super.message, super.correlationId});

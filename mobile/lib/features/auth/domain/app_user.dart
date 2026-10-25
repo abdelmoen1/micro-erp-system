@@ -22,6 +22,9 @@ class AppUser {
     required this.storeTimezone,
     this.storePhone,
     this.storeAddress,
+    this.hasAccess = true,
+    this.subscriptionState,
+    this.trialEndsAt,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
@@ -36,6 +39,10 @@ class AppUser {
       storeTimezone: store['timezone'] as String? ?? 'Asia/Gaza',
       storePhone: store['phone'] as String?,
       storeAddress: store['address'] as String?,
+      // Older servers and cached sessions do not send it; the server enforces access anyway.
+      hasAccess: store['has_access'] as bool? ?? true,
+      subscriptionState: store['subscription_state'] as String?,
+      trialEndsAt: DateTime.tryParse(store['trial_ends_at'] as String? ?? ''),
     );
   }
 
@@ -51,6 +58,13 @@ class AppUser {
   final String? storePhone;
   final String? storeAddress;
 
+  /// False once the store's trial or paid subscription has ended (renewal screen only).
+  final bool hasAccess;
+
+  /// active | trial | expired | inactive, as the server computed it at sign-in.
+  final String? subscriptionState;
+  final DateTime? trialEndsAt;
+
   /// D-26 / D-06: only an owner or manager may override a credit limit or void a sale.
   bool get canOverride => role != UserRole.employee;
 
@@ -60,6 +74,42 @@ class AppUser {
     'email': email,
     'role': role.name,
     'store_id': storeId,
-    'store': {'name': storeName, 'timezone': storeTimezone, 'phone': storePhone, 'address': storeAddress},
+    'store': {
+      'name': storeName,
+      'timezone': storeTimezone,
+      'phone': storePhone,
+      'address': storeAddress,
+      'has_access': hasAccess,
+      'subscription_state': subscriptionState,
+      'trial_ends_at': trialEndsAt?.toIso8601String(),
+    },
   };
+}
+
+/// `GET /subscription`: the store's trial / paid subscription and the support contact.
+class SubscriptionSummary {
+  const SubscriptionSummary({
+    required this.state,
+    required this.hasAccess,
+    this.trialEndsAt,
+    this.subscriptionExpiresAt,
+    this.supportWhatsapp,
+  });
+
+  factory SubscriptionSummary.fromJson(Map<String, dynamic> json) => SubscriptionSummary(
+    state: json['state'] as String? ?? 'inactive',
+    hasAccess: json['has_access'] as bool? ?? false,
+    trialEndsAt: DateTime.tryParse(json['trial_ends_at'] as String? ?? ''),
+    subscriptionExpiresAt: DateTime.tryParse(json['subscription_expires_at'] as String? ?? ''),
+    supportWhatsapp: (json['support_whatsapp'] as String?)?.isNotEmpty == true ? json['support_whatsapp'] as String : null,
+  );
+
+  final String state;
+  final bool hasAccess;
+  final DateTime? trialEndsAt;
+  final DateTime? subscriptionExpiresAt;
+  final String? supportWhatsapp;
+
+  /// A paid subscription that passed its expiry (vs. a trial that ended without one).
+  bool get paidExpired => state == 'expired';
 }

@@ -24,6 +24,7 @@ class OverviewController extends Controller
                 ],
                 'subscriptions' => [
                     'active' => $count(fn($q) => $q->subscriptionState(Store::SUBSCRIPTION_ACTIVE)),
+                    'trial' => $count(fn($q) => $q->subscriptionState(Store::SUBSCRIPTION_TRIAL)),
                     'expired' => $count(fn($q) => $q->subscriptionState(Store::SUBSCRIPTION_EXPIRED)),
                     'inactive' => $count(fn($q) => $q->subscriptionState(Store::SUBSCRIPTION_INACTIVE)),
                 ],
