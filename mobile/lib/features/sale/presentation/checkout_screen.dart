@@ -28,6 +28,17 @@ String paymentMethodLabel(AppLocalizations t, String? method) => switch (method)
   _ => t.methodNone,
 };
 
+/// A plain pictogram per method (cash, a phone wallet, a wallet, a bank) with the name written next
+/// to it. Not the providers' logos: the app has no official assets and no integration with them.
+/// From the icon font the release already ships (no new asset file, so it stays patchable OTA).
+(IconData, Color) paymentMethodIcon(String method) => switch (method) {
+  'cash' => (Icons.payments_outlined, const Color(0xFF1F6B3A)),
+  'jawwal_pay' => (Icons.phone_iphone_rounded, const Color(0xFF7A3E9D)),
+  'palpay' => (Icons.account_balance_wallet_outlined, const Color(0xFF1E5A8A)),
+  'bank_of_palestine' => (Icons.account_balance_outlined, const Color(0xFF14262E)),
+  _ => (Icons.help_outline_rounded, HisbahColors.inkMuted),
+};
+
 /// SCR-M-04 · checkout (US-0506): sale mode, paid amount, method, customer, due date, the
 /// warnings that let the sale continue and the restrictions that stop it, then one confirm.
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -152,17 +163,42 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       GroupLabel(t.paymentMethodLabel),
                       const SizedBox(height: 8),
                       for (var row = 0; row < 2; row++) ...[
-                        if (row > 0) const SizedBox(height: 6),
+                        if (row > 0) const SizedBox(height: 8),
                         OptionRow(
                           children: [
                             for (final method in paymentMethods.skip(row * 2).take(2))
-                              OptionButton(
+                              _MethodTile(
+                                key: Key('checkout.method.$method'),
+                                method: method,
                                 label: paymentMethodLabel(t, method),
                                 selected: state.method == method,
-                                showCheck: true,
                                 onTap: locked ? null : () => _controller.setMethod(method),
                               ),
                           ],
+                        ),
+                      ],
+                      if (state.method != 'cash') ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          key: const Key('checkout.methodNote'),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(color: StatusTone.info.bg, borderRadius: BorderRadius.circular(12)),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Icon(Icons.info_outline_rounded, size: 18, color: StatusTone.info.fg),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  t.methodRecordOnly(paymentMethodLabel(t, state.method)),
+                                  style: TextStyle(fontSize: 13, height: 1.6, color: StatusTone.info.fg),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ],
@@ -296,6 +332,77 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 }
 
+/// One payment method: its pictogram in a tinted square, its name, and a check when chosen.
+class _MethodTile extends StatelessWidget {
+  const _MethodTile({
+    super.key,
+    required this.method,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String method;
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, color) = paymentMethodIcon(method);
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        color: selected ? HisbahColors.primaryTint : HisbahColors.raised,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: selected
+              ? const BorderSide(color: HisbahColors.primary, width: 2)
+              : const BorderSide(color: HisbahColors.borderStrong, width: 1.5),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 56),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 20, color: color),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 2,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.3,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: HisbahColors.ink,
+                    ),
+                  ),
+                ),
+                if (selected) const Icon(Icons.check_circle_rounded, size: 18, color: HisbahColors.primary),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.title, required this.subtitle, required this.backLabel, required this.onBack});
 
@@ -384,7 +491,9 @@ class _OrderSummary extends StatelessWidget {
                             text: line.product.name,
                             children: [
                               TextSpan(
-                                text: ' · ${line.quantity.format(line.product.unit)} ${line.product.isWeighed ? t.kgShort : t.pieceWord}',
+                                text: line.pack
+                                    ? ' · ${line.quantity.format(ProductUnit.piece)} ${t.packWord} (${t.packEquals(line.baseQuantity.format(ProductUnit.piece))})'
+                                    : ' · ${line.quantity.format(line.product.unit)} ${line.product.isWeighed ? t.kgShort : t.pieceWord}',
                                 style: const TextStyle(color: HisbahColors.inkMuted),
                               ),
                             ],

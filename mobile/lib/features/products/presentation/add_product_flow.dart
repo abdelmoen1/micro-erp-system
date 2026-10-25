@@ -13,6 +13,7 @@ import '../../scanner/presentation/scanner_screen.dart';
 import '../data/product_repository.dart';
 import '../domain/product.dart';
 import '../domain/product_code_payload.dart';
+import 'inventory_scanner_screen.dart';
 
 /// S3 · add a product: choose «scan» or «manual» (sheet), then the form. True when one was added.
 Future<bool> showAddProduct(BuildContext context) async {
@@ -22,11 +23,8 @@ Future<bool> showAddProduct(BuildContext context) async {
   return _scanAndOpen(context);
 }
 
-Future<bool> _scanAndOpen(BuildContext context) async {
-  final raw = await scanProductCode(context);
-  if (raw == null || !context.mounted) return false;
-  return _openForm(context, parseProductCode(raw));
-}
+/// «scan»: the inventory scanner, whose camera stays on while a compact form opens over it.
+Future<bool> _scanAndOpen(BuildContext context) => openInventoryScanner(context);
 
 Future<bool> _openForm(BuildContext context, ProductCodePayload? payload) async {
   final added = await Navigator.of(
@@ -110,6 +108,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _cost = TextEditingController();
   final _stock = TextEditingController(text: '0');
   final _minimum = TextEditingController();
+  final _packSize = TextEditingController();
+  final _packPrice = TextEditingController();
+  bool _pack = false;
   ProductUnit _unit = ProductUnit.piece;
   _Stage _stage = _Stage.form;
   Product? _existing;
@@ -139,7 +140,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   @override
   void dispose() {
-    for (final c in [_name, _barcode, _price, _cost, _stock, _minimum]) {
+    for (final c in [_name, _barcode, _price, _cost, _stock, _minimum, _packSize, _packPrice]) {
       c.dispose();
     }
     super.dispose();
@@ -170,19 +171,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
   }
 
-  Map<String, String> _validate(AppLocalizations t) {
-    final quantity = _unit == ProductUnit.kg ? RegExp(r'^\d{1,7}(\.\d{1,3})?$') : RegExp(r'^\d{1,7}$');
-    final money = RegExp(r'^\d{1,8}(\.\d{1,2})?$');
-    final stockMessage = _unit == ProductUnit.kg ? t.formStockKg : t.formStockPiece;
-    return {
-      if (_name.text.trim().isEmpty) 'name': t.formNameRequired,
-      if (!money.hasMatch(_price.text.trim()) || !Money.parse(_price.text.trim()).isPositive)
-        'selling_price': t.formPriceInvalid,
-      if (_cost.text.trim().isNotEmpty && !money.hasMatch(_cost.text.trim())) 'cost_price': t.formPriceInvalid,
-      if (!quantity.hasMatch(_stock.text.trim())) 'current_stock': stockMessage,
-      if (_minimum.text.trim().isNotEmpty && !quantity.hasMatch(_minimum.text.trim())) 'minimum_stock': stockMessage,
-    };
-  }
+  Map<String, String> _validate(AppLocalizations t) => productFormErrors(
+    t,
+    unit: _unit,
+    name: _name.text,
+    price: _price.text,
+    cost: _cost.text,
+    stock: _stock.text,
+    minimum: _minimum.text,
+    pack: _pack,
+    packSize: _packSize.text,
+    packPrice: _packPrice.text,
+  );
 
   Future<void> _save(AppLocalizations t) async {
     final errors = _validate(t);
@@ -204,6 +204,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               costPrice: _cost.text,
               currentStock: _stock.text,
               minimumStock: _minimum.text,
+              packSize: _pack ? _packSize.text : null,
+              packPrice: _pack ? _packPrice.text : null,
             ),
           );
       if (!mounted) return;
@@ -357,21 +359,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
-  /// What the code gave: one sentence naming the filled fields, or why nothing was used.
-  (StatusTone, String)? _codeNote(AppLocalizations t) {
-    final payload = widget.payload;
-    if (payload == null) return (StatusTone.info, t.addManualNote);
-    if (payload is UnreadableCode) return (StatusTone.warning, t.addUnreadable);
-    final filled = (payload as ProductCodeData).fromCode;
-    if (filled.length == 1 && filled.contains('barcode')) return (StatusTone.info, t.addBarcodeOnly);
-    final names = [
-      if (filled.contains('name')) t.addFieldName,
-      if (filled.contains('barcode')) t.addFieldBarcode,
-      if (filled.contains('selling_price')) t.addFieldPrice,
-      if (filled.contains('unit')) t.addFieldUnit,
-    ];
-    return (StatusTone.info, t.addReadFields(names.join('، ')));
-  }
+  (StatusTone, String)? _codeNote(AppLocalizations t) => productCodeNote(t, widget.payload);
 
   Widget _form(AppLocalizations t) {
     final saving = _stage == _Stage.saving;
@@ -398,7 +386,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               if (optional)
                 Text('  (${t.formOptional})', style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
-              if (fromCode.contains(key)) ...[const SizedBox(width: 6), _FromCodeChip(label: t.addFromCode)],
+              if (fromCode.contains(key)) ...[const SizedBox(width: 6), FromCodeChip(label: t.addFromCode)],
             ],
           ),
           const SizedBox(height: 6),
@@ -459,7 +447,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               Row(
                 children: [
                   Text(t.formSoldBy, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  if (fromCode.contains('unit')) ...[const SizedBox(width: 6), _FromCodeChip(label: t.addFromCode)],
+                  if (fromCode.contains('unit')) ...[const SizedBox(width: 6), FromCodeChip(label: t.addFromCode)],
                 ],
               ),
               const SizedBox(height: 6),
@@ -482,6 +470,21 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               const SizedBox(height: 12),
               field('selling_price', t.formPrice, _price, number: true),
               field('cost_price', t.formCost, _cost, optional: true, number: true),
+              if (_unit == ProductUnit.piece)
+                // The per-piece hint follows what is typed in the three price / size fields.
+                ListenableBuilder(
+                  listenable: Listenable.merge([_price, _packSize, _packPrice]),
+                  builder: (context, _) => PackSection(
+                    enabled: !saving,
+                    open: _pack,
+                    onOpen: (open) => setState(() => _pack = open),
+                    size: _packSize,
+                    price: _packPrice,
+                    piecePrice: _price.text,
+                    errors: _errors,
+                    fieldBuilder: (key, label, controller) => field(key, label, controller, number: true),
+                  ),
+                ),
               field('current_stock', t.formStock, _stock, number: true),
               field('minimum_stock', t.formMin, _minimum, optional: true, number: true),
             ],
@@ -503,8 +506,131 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 }
 
-class _FromCodeChip extends StatelessWidget {
-  const _FromCodeChip({required this.label});
+/// The new-product rules the server applies, checked before sending (same Arabic messages on the
+/// full form and the quick sheet over the scanner).
+Map<String, String> productFormErrors(
+  AppLocalizations t, {
+  required ProductUnit unit,
+  required String name,
+  required String price,
+  required String cost,
+  required String stock,
+  String minimum = '',
+  bool pack = false,
+  String packSize = '',
+  String packPrice = '',
+}) {
+  final quantity = unit == ProductUnit.kg ? RegExp(r'^\d{1,7}(\.\d{1,3})?$') : RegExp(r'^\d{1,7}$');
+  final money = RegExp(r'^\d{1,8}(\.\d{1,2})?$');
+  final stockMessage = unit == ProductUnit.kg ? t.formStockKg : t.formStockPiece;
+  final size = int.tryParse(packSize.trim());
+  final priceOk = money.hasMatch(price.trim());
+  final packPriceOk = money.hasMatch(packPrice.trim()) && Money.parse(packPrice.trim()).isPositive;
+  // Same carton rules as the server (App\Support\Pack): pieces only, 2+ per carton, dearer than a piece.
+  final checkPack = pack && unit == ProductUnit.piece;
+  return {
+    if (name.trim().isEmpty) 'name': t.formNameRequired,
+    if (!priceOk || !Money.parse(price.trim()).isPositive) 'selling_price': t.formPriceInvalid,
+    if (cost.trim().isNotEmpty && !money.hasMatch(cost.trim())) 'cost_price': t.formPriceInvalid,
+    if (!quantity.hasMatch(stock.trim())) 'current_stock': stockMessage,
+    if (minimum.trim().isNotEmpty && !quantity.hasMatch(minimum.trim())) 'minimum_stock': stockMessage,
+    if (checkPack && (size == null || size < 2 || size > 10000 || !RegExp(r'^\d+$').hasMatch(packSize.trim())))
+      'pack_size': t.packSizeInvalid,
+    if (checkPack && !packPriceOk) 'pack_price': t.formPriceInvalid,
+    if (checkPack && packPriceOk && priceOk && !(Money.parse(packPrice.trim()) > Money.parse(price.trim())))
+      'pack_price': t.packPriceNotAbovePiece,
+  };
+}
+
+/// «يُباع بالكرتونة أيضاً»: a switch that opens the carton's two fields, with one line saying what a
+/// piece costs inside the carton (so a per-piece price typed as the carton price shows at once).
+class PackSection extends StatelessWidget {
+  const PackSection({
+    super.key,
+    required this.enabled,
+    required this.open,
+    required this.onOpen,
+    required this.size,
+    required this.price,
+    required this.piecePrice,
+    required this.errors,
+    required this.fieldBuilder,
+  });
+
+  final bool enabled;
+  final bool open;
+  final ValueChanged<bool> onOpen;
+  final TextEditingController size;
+  final TextEditingController price;
+  final String piecePrice;
+  final Map<String, String> errors;
+
+  /// Builds one labelled numeric field in the caller's style: (key, label, controller).
+  final Widget Function(String key, String label, TextEditingController controller) fieldBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final pieces = int.tryParse(size.text.trim());
+    final cartonPrice = RegExp(r'^\d{1,8}(\.\d{1,2})?$').hasMatch(price.text.trim())
+        ? Money.parse(price.text.trim())
+        : null;
+    final perPiece = pieces != null && pieces >= 2 && cartonPrice != null && cartonPrice.isPositive
+        ? Money.cents((cartonPrice.cents / pieces).round())
+        : null;
+    final piece = RegExp(r'^\d{1,8}(\.\d{1,2})?$').hasMatch(piecePrice.trim()) ? Money.parse(piecePrice.trim()) : null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile.adaptive(
+          key: const Key('form.pack'),
+          contentPadding: EdgeInsets.zero,
+          value: open,
+          onChanged: enabled ? onOpen : null,
+          title: Text(t.packToggle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          subtitle: Text(t.packToggleSub, style: const TextStyle(fontSize: 12, color: HisbahColors.inkMuted)),
+        ),
+        if (open) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: fieldBuilder('pack_size', t.packSizeLabel, size)),
+              const SizedBox(width: 10),
+              Expanded(child: fieldBuilder('pack_price', t.packPriceLabel, price)),
+            ],
+          ),
+          if (perPiece != null && errors['pack_price'] == null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                piece == null ? t.packPerPiece(shekel(perPiece)) : t.packPerPieceVs(shekel(perPiece), shekel(piece)),
+                key: const Key('form.packHint'),
+                style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+/// What a scanned code gave: one sentence naming the filled fields, or why nothing was used.
+(StatusTone, String)? productCodeNote(AppLocalizations t, ProductCodePayload? payload) {
+  if (payload == null) return (StatusTone.info, t.addManualNote);
+  if (payload is UnreadableCode) return (StatusTone.warning, t.addUnreadable);
+  final filled = (payload as ProductCodeData).fromCode;
+  if (filled.length == 1 && filled.contains('barcode')) return (StatusTone.info, t.addBarcodeOnly);
+  final names = [
+    if (filled.contains('name')) t.addFieldName,
+    if (filled.contains('barcode')) t.addFieldBarcode,
+    if (filled.contains('selling_price')) t.addFieldPrice,
+    if (filled.contains('unit')) t.addFieldUnit,
+  ];
+  return (StatusTone.info, t.addReadFields(names.join('، ')));
+}
+
+class FromCodeChip extends StatelessWidget {
+  const FromCodeChip({super.key, required this.label});
 
   final String label;
 

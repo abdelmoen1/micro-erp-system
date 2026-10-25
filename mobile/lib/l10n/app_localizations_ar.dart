@@ -1619,4 +1619,155 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get subscriptionStillInactive =>
       'لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد».';
+
+  @override
+  String get saleScanTitle => 'مسح منتجات البيع';
+
+  @override
+  String get saleScanKeepGoing => 'الكاميرا شغّالة: امسح المنتج التالي';
+
+  @override
+  String get saleScanCloseA11y => 'إغلاق الكاميرا والعودة إلى السلة';
+
+  @override
+  String get cartPanelTitle => 'السلة';
+
+  @override
+  String get saleScanEmptyBody =>
+      'وجّه الكاميرا إلى باركود المنتج. تبقى الكاميرا مفتوحة لتضيف المنتجات واحداً تلو الآخر.';
+
+  @override
+  String get completeSale => 'إتمام البيع';
+
+  @override
+  String methodRecordOnly(String method) {
+    return 'يُسجَّل فقط أن الزبون دفع عبر $method. حسبة لا تتصل بهذه الخدمة ولا تتحقق من وصول المبلغ، فتأكد منه قبل تأكيد البيع.';
+  }
+
+  @override
+  String get invTitle => 'إضافة منتجات بالمسح';
+
+  @override
+  String get invInstruction =>
+      'امسح باركود المنتج لإضافته إلى متجرك. لا يدخل سلة البيع.';
+
+  @override
+  String get invWaiting => 'أكمل النموذج أو أغلقه لمسح المنتج التالي';
+
+  @override
+  String get invCloseA11y => 'إغلاق الكاميرا والعودة إلى المنتجات';
+
+  @override
+  String get invBackToScanning => 'إغلاق والعودة إلى المسح';
+
+  @override
+  String invStockNow(String stock) {
+    return 'المخزون الآن $stock';
+  }
+
+  @override
+  String get invExistsNote =>
+      'هذا المنتج في متجرك، فلن يُضاف مرة ثانية. لإدخال بضاعة جديدة منه اختر «إضافة كمية».';
+
+  @override
+  String get invAddStock => 'إضافة كمية';
+
+  @override
+  String invAddStockQty(String unit) {
+    return 'الكمية المستلمة ($unit)';
+  }
+
+  @override
+  String get invReason => 'السبب';
+
+  @override
+  String get invReasonDefault => 'بضاعة واردة';
+
+  @override
+  String get invReasonRequired => 'اكتب سبب إضافة الكمية.';
+
+  @override
+  String get invQtyPiece => 'أدخل عدداً صحيحاً أكبر من صفر.';
+
+  @override
+  String get invQtyKg => 'أدخل وزناً أكبر من صفر، حتى 3 خانات عشرية.';
+
+  @override
+  String get invAddStockSave => 'إضافة إلى المخزون';
+
+  @override
+  String invStockAdded(String name, String stock) {
+    return 'أُضيفت الكمية إلى «$name». المخزون الآن $stock';
+  }
+
+  @override
+  String get invStockForbidden => 'تعديل المخزون للمالك أو المدير.';
+
+  @override
+  String invOpeningStock(String unit) {
+    return 'الكمية الموجودة الآن ($unit)';
+  }
+
+  @override
+  String get invNetworkUncertain =>
+      'انقطع الاتصال قبل أن يصل رد الخادم، فقد يكون الحفظ تمّ. بياناتك باقية؛ اضغط «إعادة المحاولة» وسنتحقق دون تكرار المنتج.';
+
+  @override
+  String get invFromCatalog =>
+      'معروف في حسبة: الاسم والوحدة جاهزان. أكمل أسعار متجرك والكمية.';
+
+  @override
+  String get packWord => 'كرتونة';
+
+  @override
+  String unitChipPack(int size) {
+    return 'كرتونة ×$size';
+  }
+
+  @override
+  String packPer(int size) {
+    return 'كرتونة ($size قطعة)';
+  }
+
+  @override
+  String packEquals(String pieces) {
+    return '= $pieces قطعة';
+  }
+
+  @override
+  String addPackLine(int size, String price) {
+    return '+ كرتونة ($size قطعة) بـ $price';
+  }
+
+  @override
+  String get packToggle => 'يُباع بالكرتونة أيضاً (جملة)';
+
+  @override
+  String get packToggleSub => 'المخزون يبقى بالقطعة؛ بيع كرتونة يخصم كل قطعها.';
+
+  @override
+  String get packSizeLabel => 'عدد القطع في الكرتونة';
+
+  @override
+  String get packPriceLabel => 'سعر الكرتونة كاملة';
+
+  @override
+  String get packSizeInvalid => 'عدد صحيح من 2 إلى 10000.';
+
+  @override
+  String get packPriceNotAbovePiece =>
+      'سعر الكرتونة يجب أن يكون أعلى من سعر القطعة. هل أدخلت سعر القطعة هنا؟';
+
+  @override
+  String packPerPiece(String price) {
+    return 'القطعة داخل الكرتونة بـ $price.';
+  }
+
+  @override
+  String packPerPieceVs(String pack, String piece) {
+    return 'القطعة داخل الكرتونة بـ $pack مقابل $piece بالمفرد.';
+  }
+
+  @override
+  String get invQtyPack => 'أدخل عدداً صحيحاً من الكراتين أكبر من صفر.';
 }

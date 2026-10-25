@@ -224,6 +224,174 @@ void main() {
       expect(api.requestsTo('POST /products'), isEmpty);
     });
 
+    testWidgets('the camera stays on under the form; a save closes it, confirms at the top and the next code opens a fresh form', (tester) async {
+      api.on('GET /products/catalog-lookup', const FakeResponse(200, {'data': {'barcode': '6281007041235', 'product': null, 'catalog_product': null}}));
+      api.on('POST /products', FakeResponse(201, {'message': 'تم إنشاء المنتج بنجاح', 'product': dates}));
+      await pumpApp(tester);
+      await scanCode(tester, '6281007041235');
+
+      expect(find.byKey(const Key('inventory.sheet')), findsOneWidget);
+      expect(cameras.single.pauses, 0, reason: 'the preview keeps running under the form');
+      // A second code while the form is open is ignored: typing never opens another product.
+      cameras.single.read('6223000111111');
+      await tester.pumpAndSettle();
+      expect(api.requestsTo('GET /products/catalog-lookup'), hasLength(1));
+
+      await tester.enterText(find.byKey(const Key('form.name')), 'تمر مجهول 1 كغ');
+      await tester.enterText(find.byKey(const Key('form.selling_price')), '45');
+      await tester.enterText(find.byKey(const Key('form.cost_price')), '38.5');
+      await tester.enterText(find.byKey(const Key('form.current_stock')), '12');
+      await tap(tester, find.byKey(const Key('form.save')));
+
+      expect(api.requestsTo('POST /products').single.data, {
+        'name': 'تمر مجهول 1 كغ',
+        'barcode': '6281007041235',
+        'unit': 'piece',
+        'selling_price': '45',
+        'cost_price': '38.5',
+        'current_stock': '12',
+      });
+      expect(find.byKey(const Key('inventory.sheet')), findsNothing);
+      expect(find.byKey(const Key('addProduct.saved')), findsOneWidget);
+      expect(find.text('أُضيف «تمر مجهول 1 كغ»'), findsOneWidget);
+      expect(api.requestsTo('GET /products/lookup'), isEmpty, reason: 'nothing here goes through the sale cart');
+
+      // The next product: a fresh, empty form.
+      api.on('GET /products/catalog-lookup', const FakeResponse(200, {'data': {'barcode': '6223000999992', 'product': null, 'catalog_product': null}}));
+      cameras.single.read('6223000999992');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('inventory.sheet')), findsOneWidget);
+      expect(tester.widget<TextField>(find.byKey(const Key('form.name'))).controller!.text, isEmpty);
+
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('addProduct.saved')), findsNothing, reason: 'the confirmation goes away by itself');
+    });
+
+    testWidgets('a failed save keeps every value; after a timeout, «already in your store» means it was saved', (tester) async {
+      api.on('GET /products/catalog-lookup', const FakeResponse(200, {'data': {'barcode': '6281007041235', 'product': null, 'catalog_product': null}}));
+      await pumpApp(tester);
+      await scanCode(tester, '6281007041235');
+      await tester.enterText(find.byKey(const Key('form.name')), 'تمر مجهول 1 كغ');
+      await tester.enterText(find.byKey(const Key('form.selling_price')), '45');
+      await tester.enterText(find.byKey(const Key('form.current_stock')), '3');
+
+      api.offline('POST /products');
+      await tap(tester, find.byKey(const Key('form.save')));
+      expect(find.byKey(const Key('inventory.error')), findsOneWidget);
+      expect(find.textContaining('لا اتصال بالخادم'), findsOneWidget);
+      for (final (key, value) in [('form.name', 'تمر مجهول 1 كغ'), ('form.selling_price', '45'), ('form.current_stock', '3')]) {
+        expect(tester.widget<TextField>(find.byKey(Key(key))).controller!.text, value, reason: '$key kept');
+      }
+
+      // Sent, but the answer never came: it may be saved. The retry is refused as a duplicate barcode,
+      // and the lookup shows the product is in the store now, so it is reported as saved, once.
+      api
+        ..restore('POST /products')
+        ..timeout('POST /products');
+      await tap(tester, find.byKey(const Key('form.save')));
+      expect(find.textContaining('فقد يكون الحفظ تمّ'), findsOneWidget);
+
+      api
+        ..restore('POST /products')
+        ..on('POST /products', envelope(422, 'VALIDATION_FAILED', errors: {'barcode': ['الباركود مستخدم لمنتج آخر في متجرك']}))
+        ..on('GET /products/catalog-lookup', FakeResponse(200, {'data': {'barcode': '6281007041235', 'product': dates, 'catalog_product': null}}));
+      await tap(tester, find.byKey(const Key('form.save')));
+      expect(find.byKey(const Key('addProduct.saved')), findsOneWidget);
+      expect(find.byKey(const Key('inventory.sheet')), findsNothing);
+      expect(api.requestsTo('POST /products'), hasLength(3));
+    });
+
+    testWidgets('a product already in the store gets «إضافة كمية», sent once with its own key', (tester) async {
+      api.on('GET /products/catalog-lookup', FakeResponse(200, {'data': {'barcode': '6281007041235', 'product': dates, 'catalog_product': null}}));
+      await pumpApp(tester);
+      await scanCode(tester, '6281007041235');
+      expect(find.byKey(const Key('addProduct.existing')), findsOneWidget);
+
+      await tap(tester, find.byKey(const Key('inventory.addStock')));
+      expect(tester.widget<TextField>(find.byKey(const Key('form.stock.reason'))).controller!.text, 'بضاعة واردة');
+      await tap(tester, find.byKey(const Key('stock.save')));
+      expect(find.text('أدخل عدداً صحيحاً أكبر من صفر.'), findsOneWidget);
+      expect(api.requestsTo('POST /stock-adjustments'), isEmpty);
+
+      await tester.enterText(find.byKey(const Key('form.stock.quantity')), '24');
+      api.timeout('POST /stock-adjustments');
+      await tap(tester, find.byKey(const Key('stock.save')));
+      expect(find.byKey(const Key('inventory.sheet')), findsOneWidget);
+
+      api
+        ..restore('POST /stock-adjustments')
+        ..on('POST /stock-adjustments', FakeResponse(201, {
+          'message': 'تم تعديل المخزون بنجاح',
+          'product': productJson(id: 21, name: 'تمر مجهول 1 كغ', barcode: '6281007041235', price: '45.00', stock: '36'),
+        }));
+      await tap(tester, find.byKey(const Key('stock.save')));
+
+      final sent = api.requestsTo('POST /stock-adjustments');
+      expect(sent, hasLength(2));
+      expect(sent.last.headers['Idempotency-Key'], sent.first.headers['Idempotency-Key'], reason: 'the retry can never add 24 twice');
+      expect(sent.last.data, {'product_id': 21, 'quantity': '24', 'reason': 'بضاعة واردة'});
+      expect(find.text('أُضيفت الكمية إلى «تمر مجهول 1 كغ». المخزون الآن 36'), findsOneWidget);
+      expect(api.requestsTo('POST /products'), isEmpty);
+    });
+
+    testWidgets('goods received by the carton: cartons are counted, their pieces shown, unit pack sent', (tester) async {
+      final water = {
+        ...productJson(id: 22, name: 'ماء 600 مل', barcode: '6281007041235', price: '2.50', stock: '6'),
+        'pack_size': 24,
+        'pack_price': '54.00',
+      };
+      api.on('GET /products/catalog-lookup', FakeResponse(200, {'data': {'barcode': '6281007041235', 'product': water, 'catalog_product': null}}));
+      api.on('POST /stock-adjustments', FakeResponse(201, {
+        'message': 'تم تعديل المخزون بنجاح',
+        'product': {...water, 'current_stock': '78'},
+      }));
+      await pumpApp(tester);
+      await scanCode(tester, '6281007041235');
+
+      await tap(tester, find.byKey(const Key('inventory.addStock')));
+      await tap(tester, find.byKey(const Key('stock.byPack')));
+      await tester.enterText(find.byKey(const Key('form.stock.quantity')), '3');
+      await tester.pump();
+      expect(find.text('= 72 قطعة'), findsOneWidget);
+      await tap(tester, find.byKey(const Key('stock.save')));
+
+      expect(api.requestsTo('POST /stock-adjustments').single.data, {'product_id': 22, 'quantity': '3', 'reason': 'بضاعة واردة', 'unit': 'pack'});
+      expect(find.text('أُضيفت الكمية إلى «ماء 600 مل». المخزون الآن 78'), findsOneWidget);
+    });
+
+    testWidgets('a new product with a carton: the per-piece price is shown and a carton cheaper than a piece is stopped', (tester) async {
+      api.on('GET /products/catalog-lookup', const FakeResponse(200, {'data': {'barcode': '6281007041235', 'product': null, 'catalog_product': null}}));
+      api.on('POST /products', FakeResponse(201, {'message': 'تم إنشاء المنتج بنجاح', 'product': dates}));
+      await pumpApp(tester);
+      await scanCode(tester, '6281007041235');
+
+      await tester.enterText(find.byKey(const Key('form.name')), 'ماء 600 مل');
+      await tester.enterText(find.byKey(const Key('form.selling_price')), '2.50');
+      await tester.ensureVisible(find.byKey(const Key('form.pack')));
+      await tap(tester, find.byKey(const Key('form.pack')));
+      await tester.enterText(find.byKey(const Key('form.pack_size')), '24');
+      await tester.enterText(find.byKey(const Key('form.pack_price')), '2.50');
+      await tester.enterText(find.byKey(const Key('form.current_stock')), '48');
+      await tap(tester, find.byKey(const Key('form.save')));
+      expect(find.text('سعر الكرتونة يجب أن يكون أعلى من سعر القطعة. هل أدخلت سعر القطعة هنا؟'), findsOneWidget);
+      expect(api.requestsTo('POST /products'), isEmpty);
+
+      await tester.enterText(find.byKey(const Key('form.pack_price')), '54');
+      await tester.pump();
+      expect(find.text('القطعة داخل الكرتونة بـ ₪ 2.25 مقابل ₪ 2.50 بالمفرد.'), findsOneWidget);
+      await tap(tester, find.byKey(const Key('form.save')));
+      expect(api.requestsTo('POST /products').single.data, {
+        'name': 'ماء 600 مل',
+        'barcode': '6281007041235',
+        'unit': 'piece',
+        'selling_price': '2.50',
+        'current_stock': '48',
+        'pack_size': '24',
+        'pack_price': '54',
+      });
+    });
+
     testWidgets('an employee sees products without the add button', (tester) async {
       await pumpApp(tester, role: 'employee');
       await tap(tester, find.byKey(const Key('nav.products')));

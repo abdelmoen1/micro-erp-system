@@ -242,6 +242,8 @@ class _Paper extends StatelessWidget {
                               '${line.quantity.format(line.unit)} ${_unitWord(t, line)} × ${shekel(line.unitPrice)}',
                               style: muted,
                             ),
+                            if (line.isPack)
+                              Text(t.packEquals(line.baseQuantity.format(ProductUnit.piece)), style: muted),
                           ],
                         ),
                       ),
@@ -346,8 +348,11 @@ class _Paper extends StatelessWidget {
     );
   }
 
-  static String _unitWord(AppLocalizations t, SaleLine line) =>
-      line.unit == ProductUnit.kg ? t.kgShort : (line.quantity == Quantity.one ? t.pieceWord : t.piecesWord);
+  static String _unitWord(AppLocalizations t, SaleLine line) => line.isPack
+      ? t.packWord
+      : line.unit == ProductUnit.kg
+      ? t.kgShort
+      : (line.quantity == Quantity.one ? t.pieceWord : t.piecesWord);
 }
 
 class _Rule extends StatelessWidget {

@@ -29,11 +29,16 @@ Future<String?> scanBarcode(BuildContext context) => _pushScanner(context, pickM
 /// caller decides what it means. Null when the owner closes the scanner.
 Future<String?> scanProductCode(BuildContext context) => _pushScanner(context, pickMode: true, productCodes: true);
 
-Future<String?> _pushScanner(BuildContext context, {required bool pickMode, bool productCodes = false}) async {
+/// B: the permission is checked on every open; the Android dialog appears only now, never at launch.
+Future<CameraPermission> checkCameraPermission(BuildContext context) async {
   final permissions = ProviderScope.containerOf(context, listen: false).read(cameraPermissionsProvider);
-  var permission = await permissions.status();
+  final permission = await permissions.status();
   // TODO(U-10): no rationale screen before the first system dialog (rationale only after a denial).
-  if (permission == CameraPermission.denied) permission = await permissions.request();
+  return permission == CameraPermission.denied ? permissions.request() : permission;
+}
+
+Future<String?> _pushScanner(BuildContext context, {required bool pickMode, bool productCodes = false}) async {
+  final permission = await checkCameraPermission(context);
   if (!context.mounted) return null;
   // A page-less route on the root navigator, above the shell and its bottom bar. It is not a
   // go_router location, so after a 401 re-login returns to بيع without the scanner (spec H).
@@ -406,7 +411,7 @@ class _CameraLayer extends StatelessWidget {
               top: padding.top + 10,
               child: Row(
                 children: [
-                  _CameraControl(
+                  CameraControl(
                     key: const Key('scan.close'),
                     icon: Icons.close_rounded,
                     label: t.scanCloseA11y,
@@ -429,7 +434,7 @@ class _CameraLayer extends StatelessWidget {
                     builder: (_, torch, _) => torch == TorchMode.unavailable
                         // Hidden without a flash; the space keeps the title centred.
                         ? const SizedBox(width: CameraTokens.controlSize)
-                        : _CameraControl(
+                        : CameraControl(
                             key: const Key('scan.torch'),
                             icon: torch == TorchMode.on ? Icons.flash_on : Icons.flash_off,
                             label: torch == TorchMode.on ? t.scanTorchOffA11y : t.scanTorchOnA11y,
@@ -463,9 +468,9 @@ class _CameraLayer extends StatelessWidget {
   }
 }
 
-/// `camera.control`: 48 dp circle; "on" = white fill + ink icon (state by icon and fill too).
-class _CameraControl extends StatelessWidget {
-  const _CameraControl({
+/// `camera.control`: 48 dp circle (also on the sale scanner); "on" = white fill + ink icon (state by icon and fill too).
+class CameraControl extends StatelessWidget {
+  const CameraControl({
     super.key,
     required this.icon,
     required this.label,
