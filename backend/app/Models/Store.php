@@ -22,6 +22,9 @@ class Store extends Model
         'name',
         'phone',
         'address',
+        'area',
+        'latitude',
+        'longitude',
         'timezone',
     ];
 
@@ -68,6 +71,8 @@ class Store extends Model
             'subscription_expires_at' => 'datetime',
             'subscription_changed_at' => 'datetime',
             'trial_ends_at' => 'datetime',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
     }
 

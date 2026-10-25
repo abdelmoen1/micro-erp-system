@@ -68,7 +68,7 @@ export default function AdminStores() {
       render: (s) => (
         <>
           <span className="m">{s.phone || s.owner?.phone || "—"}</span>
-          <span className="cell-sub">{s.address || "لا عنوان"}</span>
+          <span className="cell-sub">{s.address || s.area || "لا عنوان"}</span>
         </>
       ),
     },

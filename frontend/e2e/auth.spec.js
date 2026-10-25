@@ -84,6 +84,7 @@ const registration = {
   owner_name: "علي أحمد",
   phone: "0599123456",
   address: "شارع السلام، الخليل",
+  area: "الخليل",
 };
 
 test("DEF-13: the three-step /join form creates the store through the API", async ({ page }) => {

@@ -309,3 +309,63 @@ test("the products monitor shows one row per store, each with its own price and 
   await page.getByPlaceholder("اسم المتجر أو عنوانه").fill("رفح");
   await expect.poll(() => lastQuery?.get("store")).toBe("رفح");
 });
+
+test("the shared catalog lists each barcode once and compares one item's prices across stores", async ({ page }) => {
+  await signIn(page, admin);
+  const offer = (id, storeId, storeName, area, price, stock, status = "active") => ({
+    id,
+    name: "حليب 1 لتر",
+    barcode: "6291041500213",
+    unit: "piece",
+    selling_price: price,
+    cost_price: "4.50",
+    current_stock: stock,
+    minimum_stock: "5",
+    is_low_stock: false,
+    status,
+    store: { id: storeId, name: storeName, address: null, area, phone: null, status: "active" },
+  });
+  let lastQuery = null;
+  await page.route(/\/api\/v1\/admin\/catalog-products(\?.*)?$/, (r) => {
+    lastQuery = new URL(r.request().url()).searchParams;
+    return r.fulfill({
+      json: {
+        data: [
+          { id: 3, barcode: "6291041500213", name: "حليب 1 لتر", unit: "piece", stores_count: 3, active_stores_count: 2, price_min: "6.00", price_max: "7.25" },
+          { id: 4, barcode: "0012345678905", name: "ماء 600 مل", unit: "piece", stores_count: 1, active_stores_count: 1, price_min: "2.00", price_max: "2.00" },
+        ],
+        meta: { ...meta, total: 2 },
+      },
+    });
+  });
+  await page.route("**/api/v1/admin/catalog-products/3", (r) =>
+    r.fulfill({
+      json: {
+        data: {
+          id: 3, barcode: "6291041500213", name: "حليب 1 لتر", unit: "piece", created_at: "2026-10-20T09:00:00Z", stores_count: 3,
+          comparison: { active_stores_count: 2, price_min: "6.00", price_max: "7.25", price_spread: "1.25" },
+          offers: [offer(9, 7, "ميني ماركت", "خان يونس", "5.00", "2", "inactive"), offer(1, 5, "بقالة الأمانة", "غزة", "6.00", "30"), offer(2, 6, "سوبرماركت النور", "رفح", "7.25", "4")],
+        },
+      },
+    }),
+  );
+
+  await page.goto("/admin");
+  await page.getByRole("link", { name: "الكتالوج المشترك" }).click();
+  const list = page.getByRole("table", { name: "الكتالوج المشترك" });
+  await expect(list.getByRole("row").nth(1)).toContainText("₪ 6.00 – ₪ 7.25");
+  await expect(list.getByRole("row").nth(1)).toContainText("2 تبيعه الآن");
+  await expect(list.getByRole("row").nth(2)).toContainText("₪ 2.00");
+  await page.getByPlaceholder("اسم المنتج أو الباركود").fill("6291041500213");
+  await expect.poll(() => lastQuery?.get("search")).toBe("6291041500213");
+
+  await list.getByRole("link", { name: "حليب 1 لتر" }).click();
+  await expect(page.getByRole("note")).toContainText("بفارق");
+  await expect(page.getByRole("note")).toContainText("₪ 1.25");
+  const offers = page.getByRole("table", { name: "المتاجر التي تبيع حليب 1 لتر" });
+  await expect(offers.getByRole("row").nth(1)).toContainText("خان يونس");
+  await expect(offers.getByRole("row").nth(1)).not.toContainText("الأقل");
+  await expect(offers.getByRole("row").nth(2)).toContainText("الأقل");
+  await expect(offers.getByRole("row").nth(3)).toContainText("الأعلى");
+  await expect(offers.getByRole("row").nth(2)).toContainText("30");
+});

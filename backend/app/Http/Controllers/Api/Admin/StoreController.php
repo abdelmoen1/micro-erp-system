@@ -26,11 +26,12 @@ class StoreController extends Controller
 {
     public function __construct(private readonly StoreAccessService $access) {}
 
-    /** Search by store name, phone, address or the owner's name / email. */
+    /** Search by store name, phone, address, area or the owner's name / email; `area` filters exactly. */
     public function index(Request $request)
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
+            'area' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', Rule::in([Store::STATUS_ACTIVE, Store::STATUS_SUSPENDED])],
             'subscription' => ['nullable', Rule::in([Store::SUBSCRIPTION_ACTIVE, Store::SUBSCRIPTION_TRIAL, Store::SUBSCRIPTION_EXPIRED, Store::SUBSCRIPTION_INACTIVE])],
             'sort' => ['nullable', Rule::in(['newest', 'oldest', 'name'])],
@@ -45,8 +46,10 @@ class StoreController extends Controller
                 $query->where(fn($q) => $q->where('name', 'like', $like)
                     ->orWhere('phone', 'like', $like)
                     ->orWhere('address', 'like', $like)
+                    ->orWhere('area', 'like', $like)
                     ->orWhereHas('users', fn($u) => $u->where('name', 'like', $like)->orWhere('email', 'like', $like)));
             })
+            ->when($filters['area'] ?? null, fn($query, string $area) => $query->where('area', $area))
             ->when($filters['status'] ?? null, fn($query, string $status) => $query->where('status', $status))
             ->when($filters['subscription'] ?? null, fn($query, string $state) => $query->subscriptionState($state))
             ->when(

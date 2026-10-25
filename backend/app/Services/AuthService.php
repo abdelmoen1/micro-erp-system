@@ -99,6 +99,9 @@ class AuthService
                 'name' => $data['store_name'],
                 'phone' => $data['phone'] ?? null,
                 'address' => $data['address'] ?? null,
+                'area' => $data['area'] ?? null,
+                'latitude' => $data['latitude'] ?? null,
+                'longitude' => $data['longitude'] ?? null,
                 'timezone' => $data['timezone'] ?? Store::DEFAULT_TIMEZONE,
             ]);
 

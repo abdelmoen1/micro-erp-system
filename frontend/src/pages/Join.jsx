@@ -28,8 +28,9 @@ const STEPS = [
   { title: "بيانات الدخول", heading: "بيانات الدخول", sub: "اختر البريد وكلمة المرور التي تدخل بها إلى حسبة.", fields: ["email", "password", "password_confirmation"] },
 ];
 
-// API field → the step that owns it (address covers city and street).
-const FIELD_STEP = { store_name: 0, owner_name: 0, phone: 1, address: 1, email: 2, password: 2, password_confirmation: 2 };
+// API field → the step that owns it (address covers city and street; area is the city).
+const FIELD_STEP = { store_name: 0, owner_name: 0, phone: 1, address: 1, area: 1, email: 2, password: 2, password_confirmation: 2 };
+const FIELD_INPUT = { address: "street", area: "city" };
 
 const digits = (s) => s.replace(/[\s-]/g, "");
 
@@ -54,12 +55,12 @@ function validate(step, v, sso) {
   return e;
 }
 
-/** API field errors placed on our fields (address → street); «email taken» gets its own wording. */
+/** API field errors placed on our fields (address → street, area → city); «email taken» gets its own wording. */
 function serverFieldErrors(error) {
   const e = {};
   for (const key of Object.keys(FIELD_STEP)) {
     const message = error.fieldError(key);
-    if (message) e[key === "address" ? "street" : key] = message;
+    if (message) e[FIELD_INPUT[key] ?? key] = message;
   }
   if (e.email && /taken|مستخدم|مسجّل/i.test(e.email)) e.email = "هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.";
   return e;
@@ -204,7 +205,7 @@ export default function Join() {
       if (error.fieldError("onboarding_token")) return setOutcome({ kind: "expired" });
       const fields = serverFieldErrors(error);
       setErrors(fields);
-      const steps = Object.keys(fields).map((k) => FIELD_STEP[k === "street" ? "address" : k] ?? 2);
+      const steps = Object.keys(fields).map((k) => FIELD_STEP[k] ?? (k === "street" || k === "city" ? 1 : 2));
       const first = Math.min(...steps, 2);
       if (first !== step) setStep(first);
       return setOutcome({ kind: fields.email && Object.keys(fields).length === 1 ? "taken" : "validation" });
@@ -218,6 +219,7 @@ export default function Join() {
       owner_name: v.owner_name.trim(),
       phone: digits(v.phone),
       address: `${v.street.trim()}، ${v.city}`,
+      area: v.city,
     };
     const done = { onSuccess: () => { setOutcome({ kind: "success" }); navigate("/dashboard", { replace: true }); }, onError: fail };
     if (sso) googleRegister.mutate({ onboarding_token: sso.token, ...base }, done);

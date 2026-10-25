@@ -70,5 +70,6 @@ export const queryKeys = {
     storeProducts: (id, filters) => ["admin", "store", id, "products", filters],
     products: (filters) => ["admin", "products", filters],
     catalog: (id) => ["admin", "catalog", id],
+    catalogList: (filters) => ["admin", "catalog-list", filters],
   },
 };
