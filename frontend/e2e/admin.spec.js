@@ -191,6 +191,48 @@ test("suspending the account and activating the subscription are separate reques
   ]);
 });
 
+test("deleting a store needs its exact name, then returns to the list without it", async ({ page }) => {
+  await signIn(page, admin);
+  const detail = { ...store, members: [{ id: 2, name: "علي أحمد", email: "ali@shop.ps", role: "owner", status: "active" }], active_products_count: 2, history: [] };
+  let deleted = false;
+  const deletes = [];
+
+  await page.route("**/api/v1/admin/stores/5", async (r) => {
+    if (r.request().method() === "DELETE") {
+      deletes.push(r.request().postDataJSON());
+      deleted = true;
+      return r.fulfill({ json: { message: "تم حذف المتجر وكل بياناته نهائياً", data: { id: 5, removed: { users: 2 } } } });
+    }
+    return deleted ? r.fulfill({ status: 404, json: { message: "غير موجود", code: "NOT_FOUND", errors: {} } }) : r.fulfill({ json: { data: detail } });
+  });
+  await page.route(/\/api\/v1\/admin\/stores\/5\/products(\?.*)?$/, (r) => r.fulfill({ json: { data: [], meta } }));
+  await page.route("**/api/v1/admin/overview", (r) => r.fulfill({ json: { data: overview } }));
+  await page.route(/\/api\/v1\/admin\/stores(\?.*)?$/, (r) => r.fulfill({ json: { data: deleted ? [] : [store], meta: { ...meta, total: deleted ? 0 : 1 } } }));
+
+  await page.goto("/admin/stores/5");
+  await page.getByRole("region", { name: "حذف المتجر نهائياً" }).getByRole("button", { name: "حذف المتجر" }).click();
+  const dialog = page.getByRole("alertdialog", { name: /حذف بقالة الأمانة نهائياً/ });
+  await expect(dialog).toContainText("حسابات الأعضاء (2)");
+  const confirm = dialog.getByRole("button", { name: "حذف نهائياً" });
+  const name = dialog.getByLabel(/اكتب اسم المتجر/);
+  await expect(name).toBeFocused();
+
+  await name.fill("بقالة");
+  await expect(confirm).toBeDisabled();
+  await dialog.getByRole("button", { name: "رجوع" }).click();
+  await expect(dialog).toBeHidden();
+  expect(deletes).toEqual([]);
+
+  await page.getByRole("button", { name: "حذف المتجر" }).click();
+  await dialog.getByLabel(/اكتب اسم المتجر/).fill("بقالة الأمانة");
+  await confirm.click();
+
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByRole("status").filter({ hasText: "حُذف متجر «بقالة الأمانة»" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "بقالة الأمانة" })).toHaveCount(0);
+  expect(deletes).toEqual([{ confirm_name: "بقالة الأمانة" }]);
+});
+
 test("the account switch in the stores list: switching on is immediate, switching off asks first", async ({ page }) => {
   await signIn(page, admin);
   let rows = [

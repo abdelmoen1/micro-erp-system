@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Icon from "../components/Icon";
 import { AccessSwitch, SubscriptionBadge } from "../components/platform";
 import { daysAgo, daysLeftLabel } from "../lib/platform";
@@ -18,6 +18,7 @@ const SORTS = [
 /** Platform owner · every registered store: counts, search, the two state filters and paging. */
 export default function AdminStores() {
   const queryClient = useQueryClient();
+  const deleted = useLocation().state?.deleted;
   const overview = useAdminOverview();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -125,6 +126,12 @@ export default function AdminStores() {
         </button>
       </PageHeader>
 
+      {deleted ? (
+        <p role="status" className="banner tone-success">
+          <Icon name="ok" size={20} />
+          حُذف متجر «{deleted}» وكل بياناته نهائياً.
+        </p>
+      ) : null}
       <ErrorBanner error={overview.error} />
       <div className="filter-groups">
         <FilterTiles

@@ -46,3 +46,15 @@ export const useSetStoreStatus = () => useStoreWrite("status");
 
 /** { id, status: "active" | "inactive", expires_at?: "YYYY-MM-DD", note? } */
 export const useSetSubscription = () => useStoreWrite("subscription");
+
+/**
+ * { id, confirm_name }: permanent, the store and everything in it. Lists are only marked stale (they
+ * refetch when shown), so the open store page does not refetch a store that no longer exists.
+ */
+export function useDeleteStore() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, confirm_name }) => apiSend("DELETE", `/admin/stores/${id}`, { confirm_name }).then((r) => r.data),
+    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.admin.all, refetchType: "none" }),
+  });
+}

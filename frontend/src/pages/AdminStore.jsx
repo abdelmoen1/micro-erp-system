@@ -1,12 +1,12 @@
 import { useDeferredValue, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Icon from "../components/Icon";
 import { AccessSwitch } from "../components/platform";
 import { ROLE_LABEL, daysAgo, daysLeftLabel } from "../lib/platform";
 import { Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, Field, MoneyText, PageHeader, Pager, QtyText, ReasonField, StatusBadge } from "../components/ui";
 import { dateOnly, dateTime } from "../lib/format";
 import { stockState } from "../lib/domain";
-import { useAdminStore, useAdminStoreProducts, useSetSubscription } from "../services/admin";
+import { useAdminStore, useAdminStoreProducts, useDeleteStore, useSetSubscription } from "../services/admin";
 
 const HISTORY = {
   "store.suspended": "أُوقف حساب المتجر",
@@ -111,8 +111,20 @@ export default function AdminStore() {
 
       <StoreProducts storeId={s.id} storeName={s.name} />
 
+      <section className="card panel danger-zone" aria-labelledby="store-delete">
+        <div>
+          <h2 id="store-delete">حذف المتجر نهائياً</h2>
+          <p className="cell-sub">يحذف المتجر وحسابات أعضائه وكل بياناته: المبيعات والديون والمدفوعات والمنتجات والمخزون. لا يمكن التراجع عنه.</p>
+        </div>
+        <button type="button" className="btn btn-dl" onClick={() => setDialog("delete")}>
+          <Icon name="trash" size={18} />
+          حذف المتجر
+        </button>
+      </section>
+
       {dialog === "subscribe" ? <SubscribeDialog store={s} onClose={() => setDialog(null)} /> : null}
       {dialog === "unsubscribe" ? <UnsubscribeDialog store={s} onClose={() => setDialog(null)} /> : null}
+      {dialog === "delete" ? <DeleteDialog store={s} onClose={() => setDialog(null)} /> : null}
     </>
   );
 }
@@ -306,6 +318,59 @@ function UnsubscribeDialog({ store, onClose }) {
           رجوع
         </button>
       </div>
+    </Dialog>
+  );
+}
+
+/** Permanent deletion: the button stays disabled until the store name is typed exactly. */
+function DeleteDialog({ store, onClose }) {
+  const remove = useDeleteStore();
+  const navigate = useNavigate();
+  const [typed, setTyped] = useState("");
+  const matches = typed.trim() === store.name.trim();
+  const fieldError = remove.error?.fieldError?.("confirm_name");
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!matches) return;
+    remove.mutate({ id: store.id, confirm_name: typed.trim() }, { onSuccess: () => navigate("/admin", { replace: true, state: { deleted: store.name } }) });
+  };
+
+  return (
+    <Dialog title={`حذف ${store.name} نهائياً؟`} role="alertdialog" onClose={onClose}>
+      <form className="form-stack" onSubmit={submit}>
+        <p>سيُحذف كل ما يخص هذا المتجر ولا يمكن استرجاعه:</p>
+        <ul className="delete-list">
+          <li>
+            حسابات الأعضاء (<span className="m">{store.users_count}</span>)، فلا يستطيع أحد منهم الدخول بعدها
+          </li>
+          <li>
+            المنتجات (<span className="m">{store.products_count}</span>) والمخزون
+          </li>
+          <li>العملاء والمبيعات والديون والمدفوعات والمرتجعات وسجل التغييرات</li>
+        </ul>
+        <p className="cell-sub">لإيقاف المتجر مؤقتاً مع الاحتفاظ ببياناته، استخدم مفتاح «حساب المتجر» بدلاً من الحذف.</p>
+        <Field id="delete-confirm" label={`اكتب اسم المتجر «${store.name}» للتأكيد`} error={fieldError}>
+          <input
+            id="delete-confirm"
+            className={`fld${fieldError ? " err" : ""}`}
+            autoComplete="off"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            aria-invalid={Boolean(fieldError)}
+            aria-describedby={fieldError ? "delete-confirm-error" : undefined}
+          />
+        </Field>
+        <ErrorBanner error={fieldError ? null : remove.error} />
+        <div className="dlg-actions">
+          <button type="submit" className="btn btn-dd" disabled={!matches || remove.isPending}>
+            {remove.isPending ? "جارٍ الحذف…" : "حذف نهائياً"}
+          </button>
+          <button type="button" className="btn btn-g" onClick={onClose}>
+            رجوع
+          </button>
+        </div>
+      </form>
     </Dialog>
   );
 }
