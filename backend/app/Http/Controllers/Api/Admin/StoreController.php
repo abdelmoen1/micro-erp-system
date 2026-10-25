@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DeleteStoreRequest;
 use App\Http\Requests\UpdateStoreStatusRequest;
 use App\Http\Requests\UpdateStoreSubscriptionRequest;
 use App\Http\Resources\AdminProductResource;
@@ -11,6 +12,7 @@ use App\Models\AuditLog;
 use App\Models\Product;
 use App\Models\Store;
 use App\Services\StoreAccessService;
+use App\Services\StoreDeletionService;
 use App\Support\Barcode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -137,6 +139,17 @@ class StoreController extends Controller
         return response()->json([
             'message' => $data['status'] === Store::SUBSCRIPTION_ACTIVE ? 'تم تفعيل الاشتراك' : 'تم إيقاف الاشتراك',
             'data' => new AdminStoreResource($store->load(['owner', 'statusChangedBy', 'subscriptionChangedBy'])),
+        ]);
+    }
+
+    /** Permanent: the store and everything in it. The admin types the store name to confirm. */
+    public function destroy(DeleteStoreRequest $request, Store $store, StoreDeletionService $deletion)
+    {
+        $removed = $deletion->delete($store, $request->user());
+
+        return response()->json([
+            'message' => 'تم حذف المتجر وكل بياناته نهائياً',
+            'data' => ['id' => $store->id, 'removed' => $removed],
         ]);
     }
 

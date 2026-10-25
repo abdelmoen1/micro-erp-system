@@ -7,7 +7,9 @@ use App\Models\CatalogProduct;
 use App\Models\Store;
 use App\Models\StoreInvitation;
 use App\Models\User;
+use App\Services\SaleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\BuildsShopData;
@@ -42,6 +44,8 @@ class PlatformAdminTest extends TestCase
             ['POST', "/api/v1/admin/stores/{$store->id}/subscription"],
             ['GET', '/api/v1/admin/products'],
             ['GET', "/api/v1/admin/catalog-products/{$catalog->id}"],
+            // Last: it deletes the store.
+            ['DELETE', "/api/v1/admin/stores/{$store->id}"],
         ];
     }
 
@@ -95,8 +99,13 @@ class PlatformAdminTest extends TestCase
         $this->makeUser($store, 'owner');
 
         foreach ($this->adminRoutes($store, $this->catalogItem()) as [$method, $uri]) {
-            $body = str_ends_with($uri, '/status') ? ['status' => 'active'] : ['status' => 'inactive'];
-            $this->actingAs($admin, 'sanctum')->json($method, $uri, $method === 'POST' ? $body : [])->assertOk();
+            $body = match (true) {
+                $method === 'DELETE' => ['confirm_name' => 'Shop'],
+                $method === 'GET' => [],
+                str_ends_with($uri, '/status') => ['status' => 'active'],
+                default => ['status' => 'inactive'],
+            };
+            $this->actingAs($admin, 'sanctum')->json($method, $uri, $body)->assertOk();
         }
     }
 
@@ -566,5 +575,123 @@ class PlatformAdminTest extends TestCase
 
         $this->artisan('hisbah:platform-admin', ['email' => 'gone@hisbah.ps'])->assertExitCode(1);
         $this->assertFalse($user->fresh()->isPlatformAdmin());
+    }
+
+    // ---------------------------------------------------------------- deleting a store
+
+    public function test_deleting_a_store_removes_everything_in_it_and_nothing_else(): void
+    {
+        $admin = $this->makeAdmin();
+        $store = $this->makeStore('Shop', ['phone' => '0599000111']);
+        $owner = $this->makeUser($store, 'owner', ['email' => 'owner@shop.ps']);
+        $employee = $this->makeUser($store, 'employee');
+        $token = $owner->createToken('phone')->plainTextToken;
+
+        // Real business rows: a credit sale with a partial payment, a return, stock movements, audit and idempotency rows.
+        $customer = $this->makeCustomer($store);
+        $oil = $this->makeProduct($store, ['selling_price' => '15.00']);
+        $sale = app(SaleService::class)->create($owner, [
+            'customer_id' => $customer->id,
+            'items' => [['product_id' => $oil->id, 'quantity' => 2]],
+            'paid_amount' => '25.00',
+            'payment_method' => 'cash',
+        ])['invoice'];
+        $this->actingAs($owner, 'sanctum')
+            ->postJson('/api/v1/payments', ['debt_id' => $sale->debt->id, 'amount' => 1, 'method' => 'cash'], $this->idem())
+            ->assertCreated();
+        $this->actingAs($owner, 'sanctum')
+            ->postJson("/api/v1/sales/{$sale->id}/returns", ['items' => [['invoice_item_id' => $sale->items[0]->id, 'quantity' => 1]], 'reason' => 'Damaged'], $this->idem())
+            ->assertCreated();
+        $this->app['auth']->forgetGuards();
+        StoreInvitation::create(['store_id' => $store->id, 'invited_by' => $owner->id, 'role' => 'employee', 'token_hash' => hash('sha256', 'x'), 'expires_at' => now()->addDay()]);
+        $this->actingAs($admin, 'sanctum')->postJson("/api/v1/admin/stores/{$store->id}/status", ['status' => 'suspended'])->assertOk();
+        $shared = CatalogProduct::create(['barcode' => '6291041500213', 'name' => 'Milk 1L', 'unit' => 'piece', 'created_by_store_id' => $store->id, 'created_by' => $owner->id]);
+
+        // Another store with its own data must survive untouched.
+        $other = $this->makeStore('Other');
+        $otherOwner = $this->makeUser($other, 'owner');
+        $otherInvoice = $this->makeCreditInvoice($other, $this->makeCustomer($other));
+        $this->makeProduct($other);
+
+        foreach (['payments', 'stock_movements', 'sale_returns', 'idempotency_keys', 'audit_logs'] as $table) {
+            $this->assertGreaterThan(0, DB::table($table)->where('store_id', $store->id)->count(), $table);
+        }
+
+        $this->actingAs($admin, 'sanctum')
+            ->deleteJson("/api/v1/admin/stores/{$store->id}", ['confirm_name' => ' Shop '])
+            ->assertOk()
+            ->assertJsonPath('data.id', $store->id)
+            ->assertJsonPath('data.removed.users', 2)
+            ->assertJsonPath('data.removed.invoices', 1);
+        $this->app['auth']->forgetGuards();
+
+        $this->assertNull(Store::find($store->id));
+        $this->assertSame(0, User::whereIn('id', [$owner->id, $employee->id])->count());
+        foreach (['customers', 'products', 'invoices', 'debts', 'payments', 'stock_movements', 'sale_returns', 'idempotency_keys', 'audit_logs', 'store_invitations'] as $table) {
+            $this->assertSame(0, DB::table($table)->where('store_id', $store->id)->count(), $table);
+        }
+        $this->assertSame(0, DB::table('invoice_items')->where('invoice_id', $sale->id)->count());
+        $this->assertSame(0, DB::table('sale_return_items')->count());
+        $this->assertSame(0, DB::table('personal_access_tokens')->whereIn('tokenable_id', [$owner->id, $employee->id])->count());
+
+        // The shared catalog item stays for the other stores; it just loses its creator.
+        $this->assertNull($shared->fresh()->created_by_store_id);
+        $this->assertNull($shared->fresh()->created_by);
+
+        // The old token and the old password both stop working.
+        $this->withHeader('Authorization', "Bearer {$token}")->getJson('/api/v1/me')->assertUnauthorized();
+        $this->postJson('/api/v1/login', ['email' => 'owner@shop.ps', 'password' => 'password'])
+            ->assertUnauthorized()
+            ->assertJsonPath('code', 'INVALID_CREDENTIALS');
+
+        // The other store keeps everything.
+        $this->assertNotNull($otherInvoice->fresh());
+        $this->assertSame(1, $other->products()->count());
+        $this->actingAs($otherOwner->fresh(), 'sanctum')->getJson('/api/v1/me')->assertOk();
+
+        // The deletion is recorded in the admin's own store, since the store's own history is gone.
+        $log = AuditLog::where('action', 'platform.store_deleted')->sole();
+        $this->assertSame($admin->store_id, $log->store_id);
+        $this->assertSame($admin->id, $log->user_id);
+        $this->assertSame((string) $store->id, $log->entity_id);
+        $this->assertSame('Shop', $log->metadata['name']);
+        $this->assertSame('owner@shop.ps', $log->metadata['owner']['email']);
+        $this->assertSame(2, $log->metadata['removed']['users']);
+    }
+
+    public function test_deleting_requires_the_exact_store_name(): void
+    {
+        $admin = $this->makeAdmin();
+        $store = $this->makeStore('بسطة أبو الأمير');
+        $this->makeUser($store, 'owner');
+
+        $this->actingAs($admin, 'sanctum')->deleteJson("/api/v1/admin/stores/{$store->id}")
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_FAILED')
+            ->assertJsonValidationErrors(['confirm_name']);
+        $this->actingAs($admin, 'sanctum')->deleteJson("/api/v1/admin/stores/{$store->id}", ['confirm_name' => 'بسطة'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['confirm_name' => 'اسم المتجر غير مطابق.']);
+
+        $this->assertNotNull($store->fresh());
+        $this->assertSame(1, $store->users()->count());
+        $this->assertSame(0, AuditLog::count());
+
+        $this->actingAs($admin, 'sanctum')->deleteJson("/api/v1/admin/stores/{$store->id}", ['confirm_name' => 'بسطة أبو الأمير'])->assertOk();
+        $this->assertNull($store->fresh());
+        $this->actingAs($admin, 'sanctum')->deleteJson("/api/v1/admin/stores/{$store->id}", ['confirm_name' => 'بسطة أبو الأمير'])->assertNotFound();
+    }
+
+    public function test_a_store_holding_a_platform_admin_cannot_be_deleted(): void
+    {
+        $admin = $this->makeAdmin($hq = $this->makeStore('Hisbah HQ'));
+
+        $this->actingAs($admin, 'sanctum')->deleteJson("/api/v1/admin/stores/{$hq->id}", ['confirm_name' => 'Hisbah HQ'])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'STORE_HAS_PLATFORM_ADMIN');
+
+        $this->assertNotNull($hq->fresh());
+        $this->assertNotNull($admin->fresh());
+        $this->assertSame(0, AuditLog::count());
     }
 }

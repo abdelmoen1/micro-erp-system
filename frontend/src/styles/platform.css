@@ -105,6 +105,16 @@
 .history li { align-items: flex-start; }
 .history li > span:last-child { flex: none; text-align: left; }
 
+/* store page: permanent deletion, last on the page and outlined in the danger colour */
+.danger-zone {
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 16px;
+  box-shadow: inset 0 0 0 1px var(--danger-line); border-inline-start: 6px solid var(--danger);
+}
+.danger-zone h2 { font-size: 16px; font-weight: 700; color: var(--danger); margin-bottom: 4px; }
+.danger-zone p { max-width: 62ch; }
+.danger-zone .btn { flex: none; }
+.delete-list { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+
 .platform-section { display: flex; flex-direction: column; gap: 12px; }
 .section-title { font-size: 19px; font-weight: 700; }
 .platform-inline-search { width: min(320px, 100%); }
@@ -122,6 +132,7 @@
   .filter-text { font-size: 12px; line-height: 1.35; }
   .state-word { font-size: 26px; }
   .platform-sort { width: 100%; }
+  .danger-zone { flex-direction: column; align-items: stretch; }
   .history li { flex-direction: column; }
   .history li > span:last-child { text-align: right; }
 }
