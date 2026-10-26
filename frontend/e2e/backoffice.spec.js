@@ -310,3 +310,96 @@ test("cartons: a carton line says so, with its pieces, and is returned by the ca
   await expect(dialog.getByText("₪ 54.00").first()).toBeVisible();
   await expect(dialog.getByText("₪ 2.50")).toHaveCount(0);
 });
+
+test("settings: the owner saves the store details and changes the password", async ({ page }) => {
+  await signIn(page);
+  let storeSent = null;
+  let passwordSent = null;
+  const store = { id: 1, name: "بقالة الأمانة", phone: null, address: "شارع الجامعة", area: "نابلس" };
+  await page.route("**/api/v1/subscription", (r) =>
+    r.fulfill({ json: { data: { state: "trial", has_access: true, trial_ends_at: "2026-11-20T10:00:00Z", subscription_expires_at: null, trial_days_left: 25, support_whatsapp: "970599000000" } } }),
+  );
+  await page.route("**/api/v1/my-store", async (r) => {
+    if (r.request().method() === "PATCH") {
+      storeSent = r.request().postDataJSON();
+      return r.fulfill({ json: { message: "ok", store: { ...store, ...storeSent } } });
+    }
+    return r.fulfill({ json: { user: owner.name, store } });
+  });
+  await page.route("**/api/v1/me/password", async (r) => {
+    passwordSent = r.request().postDataJSON();
+    if (passwordSent.current_password === "wrong-pass") {
+      return r.fulfill({ status: 422, json: { message: "invalid", errors: { current_password: ["كلمة المرور الحالية غير صحيحة."] } } });
+    }
+    return r.fulfill({ json: { message: "ok" } });
+  });
+
+  await page.goto("/settings");
+  await expect(page.getByText(/تجربة مجانية حتى/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "تواصل مع إدارة حسبة عبر واتساب" })).toHaveAttribute("href", /wa\.me\/970599000000/);
+
+  await page.getByLabel(/اسم المحل/).fill("بقالة الأمانة الجديدة");
+  await page.getByLabel(/هاتف المحل/).fill("٠٥٩٩١٢٣٤٥٦");
+  await page.getByLabel(/العنوان/).fill("");
+  await page.getByRole("button", { name: "حفظ التغييرات" }).click();
+  await expect(page.getByText("حُفظت بيانات المحل.")).toBeVisible();
+  expect(storeSent).toEqual({ name: "بقالة الأمانة الجديدة", phone: "0599123456", address: null, area: "نابلس" });
+  // The sidebar reads the saved session user.
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("user")).store.name)).toBe("بقالة الأمانة الجديدة");
+
+  await page.getByRole("button", { name: "تغيير كلمة المرور" }).click();
+  await expect(page.getByText("اكتب كلمة المرور الحالية.")).toBeVisible();
+  expect(passwordSent).toBeNull();
+  await page.getByLabel(/كلمة المرور الحالية/).fill("wrong-pass");
+  await page.getByLabel(/^كلمة المرور الجديدة/).fill("new-pass-123");
+  await page.getByLabel(/تأكيد كلمة المرور الجديدة/).fill("new-pass-123");
+  await page.getByRole("button", { name: "تغيير كلمة المرور" }).click();
+  await expect(page.getByText("كلمة المرور الحالية غير صحيحة.")).toBeVisible();
+  await page.getByLabel(/كلمة المرور الحالية/).fill("old-pass-123");
+  await page.getByRole("button", { name: "تغيير كلمة المرور" }).click();
+  await expect(page.getByText("تم تغيير كلمة المرور، وسُجّل الخروج من الأجهزة الأخرى.")).toBeVisible();
+  expect(passwordSent).toEqual({ current_password: "old-pass-123", password: "new-pass-123", password_confirmation: "new-pass-123" });
+});
+
+test("settings: a manager gets the subscription and password, not the store form", async ({ page }) => {
+  await signIn(page, { ...owner, role: "manager" });
+  await page.route("**/api/v1/subscription", (r) => r.fulfill({ json: { data: { state: "active", subscription_expires_at: "2027-01-01T10:00:00Z", support_whatsapp: null } } }));
+  await page.goto("/settings");
+  await expect(page.getByText(/مفعّل حتى/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "تغيير كلمة المرور" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "بيانات المحل" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /الموظفون/ })).toHaveCount(0);
+});
+
+test("products: stopping asks first and says it can be undone; a stopped product comes back with one button", async ({ page }) => {
+  await signIn(page);
+  let product = { id: 9, name: "أرز", barcode: "555", unit: "piece", selling_price: "10.00", cost_price: null, current_stock: "4", minimum_stock: "0", status: "active" };
+  const sent = [];
+  await page.route("**/api/v1/products/9/movements**", (r) => r.fulfill({ json: { data: [] } }));
+  await page.route("**/api/v1/products/9/deactivate", async (r) => {
+    sent.push("deactivate");
+    product = { ...product, status: "inactive" };
+    await r.fulfill({ json: { product } });
+  });
+  await page.route("**/api/v1/products/9", async (r) => {
+    if (r.request().method() === "PATCH") {
+      sent.push(r.request().postDataJSON());
+      product = { ...product, status: "active" };
+    }
+    await r.fulfill({ json: { data: product } });
+  });
+
+  await page.goto("/products/9");
+  await page.getByRole("button", { name: "إيقاف المنتج" }).click();
+  const confirm = page.getByRole("alertdialog", { name: "إيقاف «أرز»؟" });
+  await expect(confirm).toContainText("تستطيع إعادته متى شئت");
+  await confirm.getByRole("button", { name: "رجوع" }).click();
+  expect(sent).toEqual([]);
+
+  await page.getByRole("button", { name: "إيقاف المنتج" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "إيقاف المنتج" }).click();
+  await expect(page.getByText("هذا المنتج موقوف")).toBeVisible();
+  await page.getByRole("button", { name: "إعادة تفعيل المنتج" }).click();
+  await expect(page.getByRole("button", { name: "إيقاف المنتج" })).toBeVisible();
+  expect(sent).toEqual(["deactivate", { status: "active" }]);
+});

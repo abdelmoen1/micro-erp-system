@@ -18,6 +18,7 @@ const NAV = [
   { label: "الديون", icon: "debts", to: "/debts" },
   { label: "المدفوعات", icon: "payments", to: "/payments" },
   { label: "الموظفون", icon: "staff", to: "/staff", ownerOnly: true },
+  { label: "الإعدادات", icon: "settings", to: "/settings" },
 ];
 
 /** SCR-W-04 · application shell: white RTL sidebar, top bar and the canvas. */

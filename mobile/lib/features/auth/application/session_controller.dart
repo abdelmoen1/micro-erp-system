@@ -127,6 +127,11 @@ class SessionController extends Notifier<SessionState> {
     return summary;
   }
 
+  /// GET /me again after the store changed (name, phone, address shown on receipts).
+  Future<void> reloadUser() async {
+    state = _signedIn(await ref.read(authRepositoryProvider).me());
+  }
+
   Future<void> logout() async {
     await ref.read(authRepositoryProvider).logout();
     state = const SignedOut();

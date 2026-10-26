@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
 import '../../core/providers.dart';
 import '../../core/theme/hisbah_tokens.dart';
@@ -11,6 +12,14 @@ import '../auth/domain/app_user.dart';
 import '../customers/presentation/customers_screen.dart';
 import '../home/dashboard.dart';
 import '../home/home_dashboard.dart';
+import '../auth/presentation/subscription_expired_screen.dart' show externalLinkLauncherProvider;
+import '../more/presentation/change_password_screen.dart';
+import '../more/presentation/more_widgets.dart';
+import '../more/presentation/staff_screen.dart';
+import '../more/presentation/store_settings_screen.dart';
+import '../products/presentation/stock_lists_screen.dart';
+import '../sale/presentation/sale_widgets.dart' show GroupLabel, LineCard;
+import '../sale/presentation/sales_history_screen.dart';
 import '../products/presentation/products_screen.dart';
 import '../sale/presentation/cart_screen.dart';
 import 'app_shell.dart';
@@ -237,8 +246,73 @@ class _MoreTab extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: 14),
-        Text(t.moreNote, style: const TextStyle(fontSize: 13, height: 1.6, color: HisbahColors.inkMuted)),
+        // What the web back office offers, by role: the owner runs the store and its staff,
+        // owners and managers watch the stock, everyone sees the sales and their own account.
+        if (user.role == UserRole.owner)
+          _MoreSection(
+            title: t.moreSectionStore,
+            tiles: [
+              MoreTile(
+                key: const Key('more.staff'),
+                icon: Icons.groups_outlined,
+                title: t.moreStaff,
+                subtitle: t.moreStaffSub,
+                onTap: () => pushScreen<void>(context, const StaffScreen()),
+              ),
+              MoreTile(
+                key: const Key('more.store'),
+                icon: Icons.storefront_outlined,
+                title: t.moreStoreInfo,
+                subtitle: t.moreStoreInfoSub,
+                onTap: () => pushScreen<void>(context, const StoreSettingsScreen()),
+              ),
+            ],
+          ),
+        _MoreSection(
+          title: t.moreSectionStock,
+          tiles: [
+            MoreTile(
+              key: const Key('more.lowStock'),
+              icon: Icons.trending_down_rounded,
+              title: t.moreLowStock,
+              subtitle: t.moreLowStockSub,
+              onTap: () => pushScreen<void>(context, const LowStockScreen()),
+            ),
+            if (user.canOverride)
+              MoreTile(
+                key: const Key('more.negative'),
+                icon: Icons.report_gmailerrorred_outlined,
+                title: t.moreNegative,
+                subtitle: t.moreNegativeSub,
+                onTap: () => pushScreen<void>(context, const NegativeStockScreen()),
+              ),
+          ],
+        ),
+        _MoreSection(
+          title: t.moreSectionSales,
+          tiles: [
+            MoreTile(
+              key: const Key('more.sales'),
+              icon: Icons.receipt_long_outlined,
+              title: t.moreSalesHistory,
+              subtitle: t.moreSalesHistorySub,
+              onTap: () => pushScreen<void>(context, const SalesHistoryScreen()),
+            ),
+          ],
+        ),
+        _MoreSection(
+          title: t.moreSectionSettings,
+          tiles: [
+            const _SubscriptionTile(),
+            MoreTile(
+              key: const Key('more.password'),
+              icon: Icons.lock_reset_rounded,
+              title: t.morePassword,
+              subtitle: t.morePasswordSub,
+              onTap: () => pushScreen<void>(context, const ChangePasswordScreen()),
+            ),
+          ],
+        ),
         const SizedBox(height: 14),
         OutlinedButton.icon(
           key: const Key('more.logout'),
@@ -297,5 +371,74 @@ class _MoreTab extends ConsumerWidget {
       ),
     );
     if (confirmed == true) await ref.read(sessionProvider.notifier).logout();
+  }
+}
+
+/// A titled group of «More» entries in one card.
+class _MoreSection extends StatelessWidget {
+  const _MoreSection({required this.title, required this.tiles});
+
+  final String title;
+  final List<Widget> tiles;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 18),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GroupLabel(title),
+        const SizedBox(height: 8),
+        LineCard(
+          child: Column(
+            children: [
+              for (var i = 0; i < tiles.length; i++) ...[
+                if (i > 0) const Divider(height: 1, color: HisbahColors.border),
+                tiles[i],
+              ],
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+final _subscriptionProvider = FutureProvider.autoDispose<SubscriptionSummary>(
+  (ref) => ref.watch(authRepositoryProvider).subscription(),
+);
+
+final _day = DateFormat('dd/MM/yyyy', 'en');
+
+/// Where the store's subscription stands (trial or paid, until when), and a WhatsApp line to the
+/// Hisbah team when the platform has a support number.
+class _SubscriptionTile extends ConsumerWidget {
+  const _SubscriptionTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final summary = ref.watch(_subscriptionProvider).value;
+    final session = ref.watch(sessionProvider);
+    final storeName = session is SignedIn ? session.user.storeName : '';
+    final status = switch (summary) {
+      null => null,
+      SubscriptionSummary(state: 'trial', :final trialEndsAt?) => t.moreSubTrialUntil(_day.format(trialEndsAt.toLocal())),
+      SubscriptionSummary(state: 'active', :final subscriptionExpiresAt?) =>
+        t.moreSubActiveUntil(_day.format(subscriptionExpiresAt.toLocal())),
+      _ => t.moreSubActive,
+    };
+    final number = summary?.supportWhatsapp;
+    return MoreTile(
+      key: const Key('more.subscription'),
+      icon: Icons.workspace_premium_outlined,
+      title: t.moreSubscription,
+      subtitle: [?status, if (number != null) t.moreSubContact].join('\n'),
+      onTap: number == null
+          ? null
+          : () => ref.read(externalLinkLauncherProvider)(
+              Uri.parse('https://wa.me/$number?text=${Uri.encodeComponent(t.moreSubWhatsappText(storeName))}'),
+            ),
+    );
   }
 }

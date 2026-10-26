@@ -15,6 +15,7 @@ import '../../sale/presentation/sale_widgets.dart';
 import '../../shell/tab_screens.dart';
 import '../domain/product.dart';
 import 'add_product_flow.dart';
+import 'product_detail_screen.dart';
 
 /// SCR-M-11 · products tab: search, stock badge, low / negative filter (US-0406). Owners and
 /// managers add products here, by scanning the product's code or by hand (S3 · QR add).
@@ -175,7 +176,12 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           children: [
             for (var i = 0; i < _products.length; i++) ...[
               if (i > 0) const Divider(height: 1, color: HisbahColors.border),
-              _ProductRow(product: _products[i]),
+              _ProductRow(
+                product: _products[i],
+                onTap: () async {
+                  if (await openProduct(context, _products[i].id) && mounted) unawaited(_load());
+                },
+              ),
             ],
           ],
         ),
@@ -185,9 +191,12 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
 }
 
 class _ProductRow extends StatelessWidget {
-  const _ProductRow({required this.product});
+  const _ProductRow({required this.product, required this.onTap});
 
   final Product product;
+
+  /// Opens the product: its movements, and for owners and managers a count, an edit.
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -200,8 +209,10 @@ class _ProductRow extends StatelessWidget {
         : product.isLowStock
         ? (t.prodStockLow, StatusTone.warning)
         : (t.prodStockOk, StatusTone.success);
-    return Padding(
+    return InkWell(
       key: Key('products.row.${product.id}'),
+      onTap: onTap,
+      child: Padding(
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
@@ -231,6 +242,7 @@ class _ProductRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

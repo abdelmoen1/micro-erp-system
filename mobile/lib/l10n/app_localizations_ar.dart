@@ -164,10 +164,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get roleEmployee => 'موظف';
 
   @override
-  String get moreNote =>
-      '«المزيد» يحتوي الملف الشخصي وتسجيل الخروج فقط في R1. إدارة الموظفين على الويب.';
-
-  @override
   String get logout => 'تسجيل الخروج';
 
   @override
@@ -1825,4 +1821,505 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get discardConfirm => 'تجاهل وخروج';
+
+  @override
+  String get saleDetailError =>
+      'تعذّر تحميل الفاتورة. تحقق من الاتصال ثم أعد المحاولة.';
+
+  @override
+  String saleReturnedNote(String amount) {
+    return 'أُرجعت بضاعة من هذه الفاتورة بقيمة $amount.';
+  }
+
+  @override
+  String get moreSectionStore => 'المحل';
+
+  @override
+  String get moreStaff => 'الموظفون';
+
+  @override
+  String get moreStaffSub => 'دعوة موظف، تغيير الدور، الإيقاف';
+
+  @override
+  String get moreStoreInfo => 'بيانات المحل';
+
+  @override
+  String get moreStoreInfoSub => 'الاسم والهاتف والعنوان على الإيصال';
+
+  @override
+  String get moreSectionStock => 'المخزون';
+
+  @override
+  String get moreLowStock => 'منتجات قاربت على النفاد';
+
+  @override
+  String get moreLowStockSub => 'عند الحد الأدنى أو أقل';
+
+  @override
+  String get moreNegative => 'مخزون سالب للمراجعة';
+
+  @override
+  String get moreNegativeSub => 'بيعت بأكثر من الكمية المسجّلة';
+
+  @override
+  String get moreSectionSales => 'المبيعات';
+
+  @override
+  String get moreSalesHistory => 'سجل المبيعات';
+
+  @override
+  String get moreSalesHistorySub => 'كل الفواتير، وفتح أي فاتورة كاملة';
+
+  @override
+  String get moreSectionSettings => 'الإعدادات';
+
+  @override
+  String get morePassword => 'تغيير كلمة المرور';
+
+  @override
+  String get morePasswordSub => 'ويُسجَّل الخروج من الأجهزة الأخرى';
+
+  @override
+  String get moreSubscription => 'الاشتراك';
+
+  @override
+  String moreSubTrialUntil(String date) {
+    return 'تجربة مجانية حتى $date';
+  }
+
+  @override
+  String moreSubActiveUntil(String date) {
+    return 'مفعّل حتى $date';
+  }
+
+  @override
+  String get moreSubActive => 'مفعّل';
+
+  @override
+  String get moreSubContact => 'تواصل مع إدارة حسبة عبر واتساب';
+
+  @override
+  String moreSubWhatsappText(String store) {
+    return 'مرحباً، بخصوص اشتراك متجر «$store» على حسبة.';
+  }
+
+  @override
+  String get staffTitle => 'الموظفون';
+
+  @override
+  String get staffInvite => 'دعوة موظف';
+
+  @override
+  String get staffEmpty => 'لا موظفين بعد. ادعُ أول موظف برابط يفتحه من جواله.';
+
+  @override
+  String get staffYou => 'أنت';
+
+  @override
+  String get staffInactive => 'موقوف';
+
+  @override
+  String get staffMakeManager => 'جعله مديراً';
+
+  @override
+  String get staffMakeEmployee => 'جعله موظفاً';
+
+  @override
+  String get staffDeactivate => 'إيقاف الموظف';
+
+  @override
+  String staffDeactivateTitle(String name) {
+    return 'إيقاف $name؟';
+  }
+
+  @override
+  String get staffDeactivateBody =>
+      'يُسجَّل خروجه من كل الأجهزة فوراً ولن يستطيع الدخول. فواتيره ودفعاته تبقى باسمه في السجل.';
+
+  @override
+  String get staffRolesNote =>
+      'المدير: كل شيء عدا الموظفين وبيانات المحل. الموظف: البيع والزبائن وتسجيل الدفعات، بلا مرتجع أو إلغاء فاتورة أو تعديل مخزون أو تجاوز حد الدين.';
+
+  @override
+  String get staffLoadError =>
+      'تعذّر تحميل الموظفين. تحقق من الاتصال ثم أعد المحاولة.';
+
+  @override
+  String get staffActionError =>
+      'تعذّر تنفيذ الإجراء. تحقق من الاتصال ثم حاول مرة أخرى.';
+
+  @override
+  String get staffOwnerOnly => 'إدارة الموظفين للمالك فقط.';
+
+  @override
+  String staffRoleChanged(String name, String role) {
+    return 'أصبح $name $role.';
+  }
+
+  @override
+  String staffDeactivated(String name) {
+    return 'أُوقف $name.';
+  }
+
+  @override
+  String get inviteRole => 'الدور';
+
+  @override
+  String get inviteValid => 'صلاحية الرابط';
+
+  @override
+  String get invite24h => '24 ساعة';
+
+  @override
+  String get invite3d => '3 أيام';
+
+  @override
+  String get invite7d => '7 أيام';
+
+  @override
+  String get inviteEmail => 'بريده الإلكتروني';
+
+  @override
+  String get inviteEmailHint => 'إن كتبته، لا يُقبل الرابط إلا بهذا البريد.';
+
+  @override
+  String get inviteCreate => 'إنشاء رابط الدعوة';
+
+  @override
+  String get inviteCreating => 'جارٍ الإنشاء…';
+
+  @override
+  String get inviteReady =>
+      'الدعوة جاهزة. أرسل الرابط إلى الموظف؛ يظهر هنا مرة واحدة فقط.';
+
+  @override
+  String inviteExpires(String date) {
+    return 'ينتهي في $date';
+  }
+
+  @override
+  String get inviteHowTo =>
+      'يفتح الموظف الرابط، يكتب اسمه وبريده وكلمة مرور، ثم يدخل من تطبيق حسبة.';
+
+  @override
+  String get inviteCopy => 'نسخ الرابط';
+
+  @override
+  String get inviteCopied => 'نُسخ الرابط.';
+
+  @override
+  String get inviteWhatsapp => 'إرسال عبر واتساب';
+
+  @override
+  String inviteWhatsappText(String store, String role, String link) {
+    return 'دعوة للانضمام إلى متجر «$store» على حسبة كـ$role. افتح الرابط وأنشئ حسابك:\n$link';
+  }
+
+  @override
+  String get inviteWhatsappFailed =>
+      'تعذّر فتح واتساب. انسخ الرابط وأرسله بأي طريقة.';
+
+  @override
+  String get inviteDone => 'تم';
+
+  @override
+  String get storeTitle => 'بيانات المحل';
+
+  @override
+  String get storeName => 'اسم المحل';
+
+  @override
+  String get storePhone => 'هاتف المحل';
+
+  @override
+  String get storePhoneHint => 'مثل 0599123456';
+
+  @override
+  String get storeAddress => 'العنوان';
+
+  @override
+  String get storeArea => 'المنطقة أو المدينة';
+
+  @override
+  String get storeReceiptNote => 'تظهر هذه البيانات أعلى كل إيصال.';
+
+  @override
+  String get storeSave => 'حفظ التغييرات';
+
+  @override
+  String get storeSaved => 'حُفظت بيانات المحل.';
+
+  @override
+  String get storeOwnerOnly => 'تعديل بيانات المحل للمالك فقط.';
+
+  @override
+  String get storeLoadError =>
+      'تعذّر تحميل بيانات المحل. تحقق من الاتصال ثم أعد المحاولة.';
+
+  @override
+  String get pwTitle => 'تغيير كلمة المرور';
+
+  @override
+  String get pwCurrent => 'كلمة المرور الحالية';
+
+  @override
+  String get pwNew => 'كلمة المرور الجديدة';
+
+  @override
+  String get pwConfirm => 'تأكيد كلمة المرور الجديدة';
+
+  @override
+  String get pwHelp =>
+      '8 أحرف على الأقل. سيُسجَّل خروجك من الأجهزة الأخرى، ويبقى هذا الجوال داخلاً.';
+
+  @override
+  String get pwSave => 'تغيير كلمة المرور';
+
+  @override
+  String get pwDone => 'تم تغيير كلمة المرور، وسُجّل الخروج من الأجهزة الأخرى.';
+
+  @override
+  String get pwCurrentRequired => 'اكتب كلمة المرور الحالية.';
+
+  @override
+  String get pwShort => 'كلمة المرور 8 أحرف على الأقل.';
+
+  @override
+  String get pwMismatch => 'تأكيد كلمة المرور لا يطابقها.';
+
+  @override
+  String get salesTitle => 'سجل المبيعات';
+
+  @override
+  String get salesToday => 'اليوم';
+
+  @override
+  String get sales7 => 'آخر 7 أيام';
+
+  @override
+  String get sales30 => 'آخر 30 يوماً';
+
+  @override
+  String get salesAll => 'الكل';
+
+  @override
+  String get salesEmpty => 'لا مبيعات في هذه الفترة.';
+
+  @override
+  String get salesLoadError =>
+      'تعذّر تحميل المبيعات. تحقق من الاتصال ثم أعد المحاولة.';
+
+  @override
+  String get salesMore => 'عرض المزيد';
+
+  @override
+  String get salesMoreError => 'تعذّر تحميل المزيد. اضغط للمحاولة مرة أخرى.';
+
+  @override
+  String get salesWalkIn => 'بلا زبون';
+
+  @override
+  String salesItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count صنف',
+      many: '$count صنفاً',
+      few: '$count أصناف',
+      two: 'صنفان',
+      one: 'صنف واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get saleStatusPaid => 'مدفوعة';
+
+  @override
+  String get saleStatusCredit => 'دين';
+
+  @override
+  String get saleStatusPartial => 'دفع جزئي';
+
+  @override
+  String get prodDetailError =>
+      'تعذّر تحميل المنتج. تحقق من الاتصال ثم أعد المحاولة.';
+
+  @override
+  String get prodStockNowLabel => 'المخزون الآن';
+
+  @override
+  String prodMinimumLabel(String qty) {
+    return 'تنبيه عند $qty';
+  }
+
+  @override
+  String prodCostLabel(String price) {
+    return 'التكلفة $price';
+  }
+
+  @override
+  String prodPackLabel(int size, String price) {
+    return 'كرتونة $size قطعة بـ $price';
+  }
+
+  @override
+  String get prodEdit => 'تعديل المنتج';
+
+  @override
+  String get prodAdjust => 'جرد أو تعديل المخزون';
+
+  @override
+  String get prodMovements => 'حركات المخزون';
+
+  @override
+  String get prodNoMovements => 'لا حركات بعد.';
+
+  @override
+  String get prodDeactivate => 'إيقاف المنتج';
+
+  @override
+  String prodDeactivateTitle(String name) {
+    return 'إيقاف «$name»؟';
+  }
+
+  @override
+  String get prodDeactivateBody =>
+      'لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل.';
+
+  @override
+  String prodDeactivated(String name) {
+    return 'أُوقف «$name».';
+  }
+
+  @override
+  String get prodInactiveNote =>
+      'هذا المنتج موقوف: لا يُباع ولا يظهر في القائمة.';
+
+  @override
+  String get prodSaved => 'حُفظت التعديلات.';
+
+  @override
+  String get prodViewOnly => 'تعديل المنتجات والمخزون للمالك أو المدير.';
+
+  @override
+  String get moveOpening => 'رصيد افتتاحي';
+
+  @override
+  String get moveSale => 'بيع';
+
+  @override
+  String get moveVoid => 'إلغاء فاتورة';
+
+  @override
+  String get moveReturn => 'مرتجع';
+
+  @override
+  String get moveIn => 'تعديل: زيادة';
+
+  @override
+  String get moveOut => 'تعديل: خصم';
+
+  @override
+  String moveAfter(String qty) {
+    return 'بعدها $qty';
+  }
+
+  @override
+  String adjTitle(String name) {
+    return 'تعديل مخزون «$name»';
+  }
+
+  @override
+  String get adjCount => 'جرد الرف';
+
+  @override
+  String get adjDelta => 'إضافة أو خصم';
+
+  @override
+  String get adjCartons => 'استلام كراتين';
+
+  @override
+  String adjCountLabel(String unit) {
+    return 'كم يوجد الآن فعلياً؟ ($unit)';
+  }
+
+  @override
+  String adjDeltaLabel(String unit) {
+    return 'الكمية ($unit)، بإشارة سالبة للخصم';
+  }
+
+  @override
+  String adjCartonsLabel(int size) {
+    return 'عدد الكراتين المستلمة ($size قطعة لكل كرتونة)';
+  }
+
+  @override
+  String get adjReason => 'السبب';
+
+  @override
+  String get adjReasonCount => 'جرد الرف';
+
+  @override
+  String get adjReasonDamaged => 'تالف أو منتهي الصلاحية';
+
+  @override
+  String get adjReasonReceived => 'استلام بضاعة';
+
+  @override
+  String get adjReasonFix => 'تصحيح خطأ إدخال';
+
+  @override
+  String adjPreview(String from, String to) {
+    return 'المسجّل $from ← بعد التعديل $to';
+  }
+
+  @override
+  String get adjNoChange => 'العدد مطابق للمسجّل؛ لا شيء لتعديله.';
+
+  @override
+  String get adjNegative => 'المخزون لا يصبح سالباً بالتعديل.';
+
+  @override
+  String get adjInvalidPiece => 'عدد صحيح للمنتج بالقطعة.';
+
+  @override
+  String get adjInvalidKg => 'حتى 3 خانات عشرية.';
+
+  @override
+  String get adjSave => 'حفظ التعديل';
+
+  @override
+  String adjDone(String stock) {
+    return 'عُدّل المخزون. الآن $stock';
+  }
+
+  @override
+  String get lowTitle => 'منتجات قاربت على النفاد';
+
+  @override
+  String get lowEmpty => 'كل المنتجات فوق الحد الأدنى للتنبيه.';
+
+  @override
+  String lowRow(String stock, String min) {
+    return 'المخزون $stock · التنبيه عند $min';
+  }
+
+  @override
+  String get negTitle => 'مخزون سالب للمراجعة';
+
+  @override
+  String get negEmpty => 'لا منتجات بمخزون سالب.';
+
+  @override
+  String get negHelp =>
+      'بيعت هذه المنتجات بأكثر مما هو مسجّل. عُدّ الرف ثم صحّح المخزون من صفحة المنتج.';
+
+  @override
+  String negSale(int id, String qty) {
+    return 'فاتورة #$id · $qty';
+  }
+
+  @override
+  String get listLoadError => 'تعذّر التحميل. تحقق من الاتصال ثم أعد المحاولة.';
 }

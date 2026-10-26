@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/application/session_controller.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/customers/data/customer_repository.dart';
+import '../features/more/data/more_repository.dart';
 import '../features/products/data/product_repository.dart';
 import '../features/products/data/stock_repository.dart';
 import '../features/sale/data/sale_repository.dart';
@@ -76,5 +77,7 @@ final stockRepositoryProvider = Provider<StockRepository>(
 final customerRepositoryProvider = Provider<CustomerRepository>(
   (ref) => CustomerRepository(ref.watch(apiClientProvider)),
 );
+
+final moreRepositoryProvider = Provider<MoreRepository>((ref) => MoreRepository(ref.watch(apiClientProvider)));
 
 final sessionProvider = NotifierProvider<SessionController, SessionState>(SessionController.new);

@@ -37,6 +37,7 @@ const PATHS = {
   calendar: "M4 6h16v14H4zM4 10h16M8 3v5M16 3v5",
   trash: "M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6",
   close: "M6 6l12 12M18 6 6 18",
+  settings: "M4 6h9M17 6h3M15 4v4M4 12h3M11 12h9M9 10v4M4 18h11M19 18h1M17 16v4",
 };
 
 export default function Icon({ name, size = 20, color = "currentColor", strokeWidth = 2, className, title }) {

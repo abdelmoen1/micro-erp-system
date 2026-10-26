@@ -12,4 +12,7 @@ abstract final class Env {
   static const apiBaseUrl = _definedApiBaseUrl != ''
       ? _definedApiBaseUrl
       : (kReleaseMode ? '' : 'http://10.0.2.2:8000/api/v1');
+
+  /// The web back office: staff invitations open its /invite page to create the account.
+  static const webBaseUrl = String.fromEnvironment('WEB_BASE_URL', defaultValue: 'https://hisbah-web.vercel.app');
 }

@@ -112,6 +112,7 @@ class SaleReceipt {
     this.voidedAt,
     this.voidedByName,
     this.voidReason,
+    this.returned,
   });
 
   factory SaleReceipt.fromJson(Map<String, dynamic> body) {
@@ -126,7 +127,9 @@ class SaleReceipt {
       paid: Money.parse(data['paid_amount'] as String),
       debt: Money.parse(data['debt_amount'] as String? ?? '0.00'),
       paymentMethod: data['payment_method'] as String?,
-      lines: [for (final l in data['items'] as List<dynamic>? ?? const []) SaleLine.fromJson(l as Map<String, dynamic>)],
+      lines: [
+        for (final l in data['items'] as List<dynamic>? ?? const []) SaleLine.fromJson(l as Map<String, dynamic>),
+      ],
       customerName: customer?['name'] as String?,
       customerPhone: customer?['phone'] as String?,
       sellerName: seller?['name'] as String?,
@@ -135,6 +138,7 @@ class SaleReceipt {
       voidedAt: DateTime.tryParse(data['voided_at'] as String? ?? '')?.toLocal(),
       voidedByName: data['voided_by_name'] as String?,
       voidReason: data['void_reason'] as String?,
+      returned: data['returned_amount'] is String ? Money.parse(data['returned_amount'] as String) : null,
       flags: [for (final f in body['flags'] as List<dynamic>? ?? const []) f as String],
       warnings: [
         for (final w in body['warnings'] as List<dynamic>? ?? const [])
@@ -170,6 +174,9 @@ class SaleReceipt {
   final String? voidedByName;
   final String? voidReason;
 
+  /// Value of the goods returned against this sale (GET /sales/{id} only; null elsewhere).
+  final Money? returned;
+
   bool get isVoided => status == 'voided';
 
   /// Keeps the server's warnings from the sale itself when a void response (which has none) replaces it.
@@ -191,7 +198,16 @@ class SaleReceipt {
     voidedAt: voidedAt,
     voidedByName: voidedByName,
     voidReason: voidReason,
+    returned: returned,
   );
+}
+
+/// One page of sales, newest first.
+class SalesPage {
+  const SalesPage({required this.sales, required this.hasMore});
+
+  final List<SaleReceipt> sales;
+  final bool hasMore;
 }
 
 /// POST /sales with a persisted Idempotency-Key (US-0506 AC3, 05 §4.1).
@@ -204,6 +220,26 @@ class SaleRepository {
 
   final ApiClient _api;
   final IdempotencyKeyStore _keys;
+
+  /// GET /sales: the store's sales (voided ones too, marked), newest first, 20 a page. [from] and
+  /// [to] are store days `YYYY-MM-DD`; the server reads them in the store's timezone.
+  Future<SalesPage> history({String? from, String? to, int page = 1}) async {
+    final body = await _api.get(
+      '/sales',
+      query: {'source': 'sale', 'status': 'all', 'per_page': 20, 'page': page, 'from': ?from, 'to': ?to},
+    );
+    final meta = body['meta'] is Map<String, dynamic> ? body['meta'] as Map<String, dynamic> : const {};
+    return SalesPage(
+      sales: [
+        for (final row in body['data'] as List<dynamic>? ?? const [])
+          SaleReceipt.fromJson({'data': row as Map<String, dynamic>}),
+      ],
+      hasMore: ((meta['current_page'] as num?) ?? 1) < ((meta['last_page'] as num?) ?? 1),
+    );
+  }
+
+  /// GET /sales/{id}: one sale with its lines, payment, debt, void and returns.
+  Future<SaleReceipt> sale(int saleId) async => SaleReceipt.fromJson(await _api.get('/sales/$saleId'));
 
   Future<SaleReceipt> submit(SaleDraft draft, {required String operationId}) async {
     final key = await _keys.keyFor(operationId);

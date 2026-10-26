@@ -56,6 +56,11 @@ class ApiClient {
     auth,
   );
 
+  Future<Map<String, dynamic>> patch(String path, {Object? body}) => _send(
+    () => dio.patch<dynamic>(path, data: body ?? const <String, dynamic>{}, options: Options(extra: {'auth': true})),
+    true,
+  );
+
   Future<Map<String, dynamic>> _send(Future<Response<dynamic>> Function() request, bool auth) async {
     try {
       final response = await request();

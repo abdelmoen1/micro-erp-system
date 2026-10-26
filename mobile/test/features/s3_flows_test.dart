@@ -89,6 +89,64 @@ void main() {
       api.on('GET /payments', const FakeResponse(200, {'data': []}));
     });
 
+    Map<String, Object?> sale(int id, {String total = '45.00', String paid = '45.00', String status = 'active', List<Map<String, Object?>>? items}) => {
+      'id': id,
+      'status': status,
+      'total_amount': total,
+      'paid_amount': paid,
+      'debt_amount': (double.parse(total) - double.parse(paid)).toStringAsFixed(2),
+      'payment_method': 'cash',
+      'items': items ?? [
+        {'item_name': 'تمر مجهول 1 كغ', 'unit': 'piece', 'quantity': '1', 'unit_price': '45.00', 'line_total': '45.00'},
+      ],
+      'customer': {'id': 4, 'name': 'أبو محمد', 'phone': '0599123456'},
+      'seller': {'id': 1, 'name': 'Demo owner'},
+      'created_at': '2026-10-24T09:30:00.000000Z',
+    };
+
+    testWidgets('tapping a debt opens its invoice in full: every line with quantity and price, paid, debt, returns', (tester) async {
+      api.on('GET /sales/12', FakeResponse(200, {
+        'data': {
+          ...sale(12, total: '214.50', paid: '84.00', items: [
+            {'item_name': 'زيت زيتون 1 لتر', 'unit': 'piece', 'quantity': '3', 'unit_price': '45.00', 'line_total': '135.00'},
+            {'item_name': 'جبنة بيضاء', 'unit': 'kg', 'quantity': '1.250', 'unit_price': '36.00', 'line_total': '45.00'},
+            {'item_name': 'ماء 600 مل', 'unit': 'piece', 'sale_unit': 'pack', 'pack_size': 24, 'quantity': '1', 'base_quantity': '24', 'unit_price': '34.50', 'line_total': '34.50'},
+          ]),
+          'debt': {'due_date': '2026-10-12'},
+          'returned_amount': '45.00',
+        },
+      }));
+      await pumpApp(tester);
+      await tap(tester, find.byKey(const Key('nav.customers')));
+      await tap(tester, find.byKey(const Key('customers.row.4')));
+      expect(api.requestsTo('GET /sales'), isEmpty, reason: 'the customer page lists debts, not every invoice');
+
+      await tap(tester, find.byKey(const Key('customer.debt.1')));
+      expect(api.requestsTo('GET /sales/12'), hasLength(1));
+      expect(find.byKey(const Key('saleDetail.paper')), findsOneWidget);
+      expect(find.text('زيت زيتون 1 لتر'), findsOneWidget);
+      expect(find.textContaining('3 قطع × ₪ 45.00'), findsOneWidget);
+      expect(find.textContaining('1.250 كغ × ₪ 36.00'), findsOneWidget);
+      expect(find.textContaining('1 كرتونة × ₪ 34.50'), findsOneWidget);
+      expect(find.text('= 24 قطعة'), findsOneWidget);
+      expect(find.byKey(const Key('receipt.total')), findsOneWidget);
+      expect(find.text('₪ 130.50'), findsWidgets, reason: 'what stayed as debt');
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('saleDetail.returned')),
+        200,
+        scrollable: find.descendant(of: find.byKey(const Key('saleDetail.list')), matching: find.byType(Scrollable)),
+      );
+      expect(find.text('أُرجعت بضاعة من هذه الفاتورة بقيمة ₪ 45.00.'), findsOneWidget);
+
+      // Back on the customer, the second debt opens its own invoice.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      api.on('GET /sales/37', FakeResponse(200, {'data': sale(37)}));
+      await tap(tester, find.byKey(const Key('customer.debt.2')));
+      expect(find.text('فاتورة #37'), findsWidgets);
+      expect(find.text('تمر مجهول 1 كغ'), findsOneWidget);
+    });
+
     testWidgets('a custom payment survives a timeout: the retry reuses the same Idempotency-Key', (tester) async {
       await pumpApp(tester);
       await tap(tester, find.byKey(const Key('nav.customers')));
