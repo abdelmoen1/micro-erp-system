@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { newIdempotencyKey } from "../services/apiClient";
 import { useOpeningDebt, usePayCustomer, useSaveCustomer } from "../services/backoffice";
-import { PAYMENT_METHODS } from "../lib/domain";
+import { DEFAULT_PAYMENT_METHOD, PAYMENT_METHODS } from "../lib/domain";
 import { latinDigits, shekel } from "../lib/format";
 import { ConfirmSummary, Dialog, ErrorBanner, Field } from "./ui";
 
@@ -24,7 +24,7 @@ const fromCents = (n) => `${Math.floor(n / 100)}.${String(n % 100).padStart(2, "
 export function RecordPaymentDialog({ customer, remaining, onClose, onDone }) {
   const [full, setFull] = useState(true);
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState("cash");
+  const [method, setMethod] = useState(DEFAULT_PAYMENT_METHOD);
   const [key] = useState(newIdempotencyKey);
   const pay = usePayCustomer();
 

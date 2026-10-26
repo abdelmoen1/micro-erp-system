@@ -11,6 +11,8 @@ async function signIn(page, user = owner) {
     localStorage.setItem("token", "2|test-token");
     localStorage.setItem("user", JSON.stringify(u));
   }, user);
+  // Settings lists the store's complaints; a test that needs them routes its own.
+  await page.route("**/api/v1/support-tickets", (r) => r.fulfill({ json: { data: [] } }));
 }
 
 const customer = { id: 7, name: "أبو محمد", phone: "0599123456", credit_limit: "500.00", status: "active", debts_count: 3 };
@@ -57,7 +59,7 @@ test("W-07: statement shows a running balance and a custom payment is sent with 
   await expect(dialog.getByText("₪ 75.00")).toBeVisible();
   await dialog.getByRole("button", { name: "تسجيل الدفعة" }).click();
   await expect.poll(() => paid).not.toBeNull();
-  expect(paid.body).toEqual({ method: "cash", amount: "60" });
+  expect(paid.body).toEqual({ method: "palpay", amount: "60" }); // PalPay is the default method
   expect(paid.key).toMatch(/^[0-9a-f-]{36}$/);
 });
 
@@ -402,4 +404,60 @@ test("products: stopping asks first and says it can be undone; a stopped product
   await page.getByRole("button", { name: "إعادة تفعيل المنتج" }).click();
   await expect(page.getByRole("button", { name: "إيقاف المنتج" })).toBeVisible();
   expect(sent).toEqual(["deactivate", { status: "active" }]);
+});
+
+test("support: a complaint needs a type, subject and details; once sent it is listed with the team's reply", async ({ page }) => {
+  await signIn(page, { ...owner, role: "employee" });
+  let sent = null;
+  let tickets = [{ id: 1, type: "account", subject: "تجديد الاشتراك", details: "كيف أجدد؟", status: "closed", reply: "تواصلنا معك.", created_at: "2026-10-20T08:00:00Z", user: { id: 1, name: owner.name } }];
+  await page.route("**/api/v1/subscription", (r) => r.fulfill({ json: { data: { state: "active", subscription_expires_at: "2027-01-01T10:00:00Z", support_whatsapp: null } } }));
+  await page.route("**/api/v1/support-tickets", async (r) => {
+    if (r.request().method() === "POST") {
+      sent = r.request().postDataJSON();
+      tickets = [{ id: 2, ...sent, status: "open", reply: null, created_at: "2026-10-27T08:00:00Z", user: { id: 1, name: owner.name } }, ...tickets];
+      return r.fulfill({ status: 201, json: { data: tickets[0] } });
+    }
+    return r.fulfill({ json: { data: tickets } });
+  });
+
+  await page.goto("/settings");
+  await expect(page.getByText("تواصلنا معك.")).toBeVisible();
+  await page.getByRole("button", { name: "إرسال الشكوى" }).click();
+  await expect(page.getByText("اختر نوع الدعم.")).toBeVisible();
+  expect(sent).toBeNull();
+
+  await page.getByRole("button", { name: "مشكلة تقنية" }).click();
+  await page.getByLabel(/موضوع المشكلة/).fill("الطابعة لا تطبع");
+  await page.getByLabel(/تفاصيل المشكلة/).fill("بعد البيع تظهر رسالة خطأ.");
+  await page.getByRole("button", { name: "إرسال الشكوى" }).click();
+  await expect(page.getByText("وصلت شكواك إلى فريق حسبة")).toBeVisible();
+  expect(sent).toEqual({ type: "technical", subject: "الطابعة لا تطبع", details: "بعد البيع تظهر رسالة خطأ." });
+  await expect(page.getByRole("listitem").filter({ hasText: "الطابعة لا تطبع" })).toContainText("جديدة");
+});
+
+test("app download: the first visit opens the install guide with the newest APK; the dashboard keeps the card", async ({ page }) => {
+  await signIn(page);
+  await page.route("https://api.github.com/repos/abdelmoen1/micro-erp-system/releases/latest", (r) =>
+    r.fulfill({
+      json: {
+        tag_name: "android-1.2.0_4",
+        assets: [
+          { name: "hisbah-1.2.0_4.apk.sha256", size: 100, browser_download_url: "https://example.test/sha" },
+          { name: "hisbah-1.2.0_4.apk", size: 81_000_000, browser_download_url: "https://example.test/hisbah-1.2.0_4.apk" },
+        ],
+      },
+    }),
+  );
+
+  await page.goto("/dashboard");
+  const guide = page.getByRole("dialog", { name: "ابدأ بتطبيق حسبة على جوالك" });
+  await expect(guide.getByRole("link", { name: /تنزيل التطبيق/ })).toHaveAttribute("href", "https://example.test/hisbah-1.2.0_4.apk");
+  await expect(guide).toContainText("اسمح بالتثبيت");
+  await guide.getByRole("button", { name: "لاحقاً" }).click();
+
+  await page.reload();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const card = page.getByRole("region", { name: "تطبيق حسبة على الجوال" });
+  await expect(card).toContainText("1.2.0+4");
+  await expect(card.getByRole("link", { name: /تنزيل التطبيق/ })).toHaveAttribute("href", "https://example.test/hisbah-1.2.0_4.apk");
 });

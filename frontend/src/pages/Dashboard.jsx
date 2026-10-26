@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { AppDownloadCard, AppGuideDialog } from "../components/AppDownload";
 import Icon from "../components/Icon";
 import { amountNumber, arCount, dayMonthYear, isPositiveAmount, monthName, shekel, shortReference, weekdayName } from "../lib/format";
 import { session } from "../services/apiClient";
@@ -403,6 +404,9 @@ export default function Dashboard() {
           </button>
         ))}
       </div>
+
+      <AppDownloadCard />
+      <AppGuideDialog />
 
       {dashboard.isError ? (
         <div role="alert" className="card state-card">

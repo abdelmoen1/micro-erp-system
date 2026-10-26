@@ -11,6 +11,8 @@ async function signIn(page, user) {
     localStorage.setItem("token", "2|test-token");
     localStorage.setItem("user", JSON.stringify(u));
   }, user);
+  // The sidebar counts new complaints on every admin page; a test that needs them routes its own.
+  await page.route("**/api/v1/admin/support-tickets**", (r) => r.fulfill({ json: { data: [], meta: { current_page: 1, last_page: 1, total: 0, open_count: 0 } } }));
 }
 
 const store = {
@@ -368,4 +370,40 @@ test("the shared catalog lists each barcode once and compares one item's prices 
   await expect(offers.getByRole("row").nth(2)).toContainText("الأقل");
   await expect(offers.getByRole("row").nth(3)).toContainText("الأعلى");
   await expect(offers.getByRole("row").nth(2)).toContainText("30");
+});
+
+test("support: the admin sees new complaints from every store, replies and closes one", async ({ page }) => {
+  await signIn(page, admin);
+  let ticket = {
+    id: 3,
+    type: "technical",
+    subject: "الطابعة لا تطبع الإيصال",
+    details: "بعد البيع تظهر رسالة خطأ.",
+    status: "open",
+    reply: null,
+    replied_at: null,
+    created_at: "2026-10-27T08:00:00Z",
+    user: { id: 2, name: "علي أحمد", email: "ali@shop.ps" },
+    store: { id: 5, name: "بقالة الأمانة", phone: "0599123456" },
+  };
+  let answered = null;
+  await page.route("**/api/v1/admin/support-tickets**", (r) =>
+    r.fulfill({ json: { data: [ticket], meta: { current_page: 1, last_page: 1, total: 1, open_count: ticket.status === "open" ? 1 : 0 } } }),
+  );
+  await page.route("**/api/v1/admin/support-tickets/3", async (r) => {
+    answered = r.request().postDataJSON();
+    ticket = { ...ticket, ...answered, replied_at: "2026-10-27T09:00:00Z" };
+    await r.fulfill({ json: { data: ticket } });
+  });
+
+  await page.goto("/admin/support");
+  await expect(page.getByRole("link", { name: /الدعم الفني/ })).toContainText("1");
+  await expect(page.getByText("1 شكوى جديدة بانتظار الرد")).toBeVisible();
+  await expect(page.getByRole("link", { name: "بقالة الأمانة" })).toBeVisible();
+
+  await page.getByRole("button", { name: "الرد على الشكوى" }).click();
+  const dialog = page.getByRole("dialog", { name: /الرد على/ });
+  await dialog.getByLabel(/الرد/).fill("حدّث التطبيق ثم أعد المحاولة.");
+  await dialog.getByRole("button", { name: "حفظ" }).click();
+  await expect.poll(() => answered).toEqual({ status: "closed", reply: "حدّث التطبيق ثم أعد المحاولة." });
 });

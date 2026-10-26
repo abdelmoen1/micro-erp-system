@@ -20,6 +20,20 @@
             ]
         },
         {
+            // Same phone-sized window against the LIVE API (real store accounts; writes are real data).
+            "name": "mobile (Chrome phone, live API)",
+            "cwd": "mobile",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "chrome",
+            "args": [
+                "--dart-define=API_BASE_URL=https://hisbah-api-alur.onrender.com/api/v1",
+                "--web-port=5556",
+                "--web-browser-flag=--window-size=412,860",
+                "--web-browser-flag=--window-position=1110,0"
+            ]
+        },
+        {
             // Android emulator (reaches the API at 10.0.2.2:8000 by default).
             "name": "mobile",
             "preLaunchTask": "API: local (SQLite)",
