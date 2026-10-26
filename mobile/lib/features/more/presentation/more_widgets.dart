@@ -74,7 +74,11 @@ class MoreField extends StatelessWidget {
     this.onChanged,
     this.onSubmitted,
     this.autofillHints,
+    this.maxLines = 1,
   });
+
+  /// More than one for a paragraph (it grows from one line up to this many).
+  final int maxLines;
 
   final String fieldKey;
   final String label;
@@ -105,7 +109,9 @@ class MoreField extends StatelessWidget {
           controller: controller,
           enabled: enabled,
           obscureText: obscure,
-          keyboardType: keyboard,
+          minLines: maxLines > 1 ? 3 : null,
+          maxLines: maxLines,
+          keyboardType: maxLines > 1 ? TextInputType.multiline : keyboard,
           textInputAction: action,
           autofillHints: autofillHints,
           inputFormatters: ltr && !obscure ? const [LatinDigitsFormatter()] : null,
@@ -114,12 +120,12 @@ class MoreField extends StatelessWidget {
           onChanged: onChanged,
           onSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
           decoration: InputDecoration(
-            hintText: hint,
-            hintTextDirection: ltr ? TextDirection.ltr : null,
+            // What the field is for sits inside it, not as a note under it; only errors go below.
+            hintText: helper ?? hint,
+            hintMaxLines: 2,
+            hintTextDirection: Directionality.of(context),
             errorText: error,
             errorMaxLines: 3,
-            helperText: helper,
-            helperMaxLines: 3,
             filled: true,
             fillColor: HisbahColors.raised,
           ),

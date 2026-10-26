@@ -365,7 +365,7 @@ void main() {
 
       expect(cameras.last.pauses, 1);
       expect(find.text('المسح متوقف'), findsWidgets);
-      expect(find.text('اكتب الأرقام كما تظهر تحت خطوط الباركود.'), findsOneWidget);
+      expect(find.text('الأرقام كما تظهر تحت خطوط الباركود'), findsOneWidget, reason: 'what to type is the placeholder, not a note under the field');
 
       await tapKey(tester, 'manual.submit');
       expect(find.text('أدخل رقم الباركود'), findsOneWidget);

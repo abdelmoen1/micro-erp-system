@@ -110,6 +110,426 @@ abstract class AppLocalizations {
   /// **'جارٍ التحميل…'**
   String get loading;
 
+  /// No description provided for @guideTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'دليل الاستخدام'**
+  String get guideTitle;
+
+  /// No description provided for @guideCardTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جديد على حسبة؟'**
+  String get guideCardTitle;
+
+  /// No description provided for @guideCardBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'جرّب في دقيقتين: أضف منتجاً بالباركود، ثم بِعه في فاتورة.'**
+  String get guideCardBody;
+
+  /// No description provided for @guideStart.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ الدليل'**
+  String get guideStart;
+
+  /// No description provided for @guideLater.
+  ///
+  /// In ar, this message translates to:
+  /// **'لاحقاً'**
+  String get guideLater;
+
+  /// No description provided for @guideStep.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطوة {n} من {total}'**
+  String guideStep(int n, int total);
+
+  /// No description provided for @guideWelcomeTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أهلاً بك في حسبة'**
+  String get guideWelcomeTitle;
+
+  /// No description provided for @guideWelcomeBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'سنجرب معاً أهم شيئين في المحل: إضافة منتج بالباركود، وعمل فاتورة بالباركود. كل ما تفعله هنا حقيقي ويُحفظ في متجرك.'**
+  String get guideWelcomeBody;
+
+  /// No description provided for @guideAddTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف منتجك الأول بالباركود'**
+  String get guideAddTitle;
+
+  /// No description provided for @guideAdd1.
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط «امسح منتجاً الآن» ووجّه الكاميرا إلى باركود أي منتج في محلك.'**
+  String get guideAdd1;
+
+  /// No description provided for @guideAdd2.
+  ///
+  /// In ar, this message translates to:
+  /// **'إن كان المنتج معروفاً نملأ اسمه، وأنت تكتب السعر والكمية الموجودة.'**
+  String get guideAdd2;
+
+  /// No description provided for @guideAdd3.
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط «حفظ»، ثم ارجع لتكمل الدليل.'**
+  String get guideAdd3;
+
+  /// No description provided for @guideAddAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'امسح منتجاً الآن'**
+  String get guideAddAction;
+
+  /// No description provided for @guideAddDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضفت منتجك الأول. أحسنت!'**
+  String get guideAddDone;
+
+  /// No description provided for @guideSaleTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اعمل فاتورتك الأولى بالباركود'**
+  String get guideSaleTitle;
+
+  /// No description provided for @guideSale1.
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط «افتح شاشة البيع» ثم امسح المنتج؛ يدخل السلة فوراً.'**
+  String get guideSale1;
+
+  /// No description provided for @guideSale2.
+  ///
+  /// In ar, this message translates to:
+  /// **'امسح المنتج مرة ثانية لزيادة الكمية، أو امسح منتجات أخرى.'**
+  String get guideSale2;
+
+  /// No description provided for @guideSale3.
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط «إتمام البيع»، اختر نقداً أو ديناً على زبون، ثم احفظ الفاتورة.'**
+  String get guideSale3;
+
+  /// No description provided for @guideSaleAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح شاشة البيع'**
+  String get guideSaleAction;
+
+  /// No description provided for @guideDoneTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهز للعمل!'**
+  String get guideDoneTitle;
+
+  /// No description provided for @guideDoneBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «المنتجات». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.'**
+  String get guideDoneBody;
+
+  /// No description provided for @guideFinish.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ العمل'**
+  String get guideFinish;
+
+  /// No description provided for @guideNext.
+  ///
+  /// In ar, this message translates to:
+  /// **'التالي'**
+  String get guideNext;
+
+  /// No description provided for @guideSkip.
+  ///
+  /// In ar, this message translates to:
+  /// **'تخطَّ هذه الخطوة'**
+  String get guideSkip;
+
+  /// No description provided for @moreGuideSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'جرّب إضافة منتج وعمل فاتورة خطوة بخطوة'**
+  String get moreGuideSub;
+
+  /// No description provided for @moreSupport.
+  ///
+  /// In ar, this message translates to:
+  /// **'الدعم الفني'**
+  String get moreSupport;
+
+  /// No description provided for @moreSupportSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسل شكوى أو اقتراحاً لفريق حسبة'**
+  String get moreSupportSub;
+
+  /// No description provided for @supportType.
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع الدعم'**
+  String get supportType;
+
+  /// No description provided for @supportTypeTechnical.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشكلة تقنية'**
+  String get supportTypeTechnical;
+
+  /// No description provided for @supportTypeAccount.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحساب والاشتراك'**
+  String get supportTypeAccount;
+
+  /// No description provided for @supportTypeSuggestion.
+  ///
+  /// In ar, this message translates to:
+  /// **'اقتراح'**
+  String get supportTypeSuggestion;
+
+  /// No description provided for @supportTypeOther.
+  ///
+  /// In ar, this message translates to:
+  /// **'أخرى'**
+  String get supportTypeOther;
+
+  /// No description provided for @supportSubject.
+  ///
+  /// In ar, this message translates to:
+  /// **'موضوع المشكلة'**
+  String get supportSubject;
+
+  /// No description provided for @phSupportSubject.
+  ///
+  /// In ar, this message translates to:
+  /// **'بكلمات قليلة، مثل: الطابعة لا تطبع الإيصال'**
+  String get phSupportSubject;
+
+  /// No description provided for @supportDetails.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاصيل المشكلة'**
+  String get supportDetails;
+
+  /// No description provided for @phSupportDetails.
+  ///
+  /// In ar, this message translates to:
+  /// **'ماذا حدث، وأين، ومتى؟ كلما كتبت أكثر ساعدناك أسرع'**
+  String get phSupportDetails;
+
+  /// No description provided for @supportSend.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال الشكوى'**
+  String get supportSend;
+
+  /// No description provided for @supportSent.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت شكواك إلى فريق حسبة، وسنرد عليك هنا.'**
+  String get supportSent;
+
+  /// No description provided for @supportTypeRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر نوع الدعم.'**
+  String get supportTypeRequired;
+
+  /// No description provided for @supportSubjectRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب موضوع المشكلة.'**
+  String get supportSubjectRequired;
+
+  /// No description provided for @supportDetailsRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب تفاصيل المشكلة.'**
+  String get supportDetailsRequired;
+
+  /// No description provided for @supportMine.
+  ///
+  /// In ar, this message translates to:
+  /// **'شكاواي'**
+  String get supportMine;
+
+  /// No description provided for @supportNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم ترسل أي شكوى بعد.'**
+  String get supportNone;
+
+  /// No description provided for @supportStatusOpen.
+  ///
+  /// In ar, this message translates to:
+  /// **'جديدة'**
+  String get supportStatusOpen;
+
+  /// No description provided for @supportStatusInProgress.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيد المعالجة'**
+  String get supportStatusInProgress;
+
+  /// No description provided for @supportStatusClosed.
+  ///
+  /// In ar, this message translates to:
+  /// **'مغلقة'**
+  String get supportStatusClosed;
+
+  /// No description provided for @supportReply.
+  ///
+  /// In ar, this message translates to:
+  /// **'رد فريق حسبة'**
+  String get supportReply;
+
+  /// No description provided for @supportLoadError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تحميل الشكاوى. تحقق من الاتصال ثم أعد المحاولة.'**
+  String get supportLoadError;
+
+  /// No description provided for @phBarcode.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرقم تحت خطوط الباركود على العبوة'**
+  String get phBarcode;
+
+  /// No description provided for @phOpeningStock.
+  ///
+  /// In ar, this message translates to:
+  /// **'كم عندك منه على الرف الآن'**
+  String get phOpeningStock;
+
+  /// No description provided for @phPackSize.
+  ///
+  /// In ar, this message translates to:
+  /// **'كم قطعة في الكرتونة'**
+  String get phPackSize;
+
+  /// No description provided for @phPackPrice.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر الكرتونة كاملة للزبون'**
+  String get phPackPrice;
+
+  /// No description provided for @phAddQty.
+  ///
+  /// In ar, this message translates to:
+  /// **'كم وصلك من هذه البضاعة'**
+  String get phAddQty;
+
+  /// No description provided for @phReason.
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب تغيير المخزون، مثل: بضاعة واردة'**
+  String get phReason;
+
+  /// No description provided for @phAdjustQty.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكمية حسب نوع التعديل المختار أعلاه'**
+  String get phAdjustQty;
+
+  /// No description provided for @phStoreName.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم الذي يظهر أعلى الإيصال'**
+  String get phStoreName;
+
+  /// No description provided for @phAddress.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشارع أو أقرب معلم، يظهر على الإيصال'**
+  String get phAddress;
+
+  /// No description provided for @phArea.
+  ///
+  /// In ar, this message translates to:
+  /// **'المدينة أو المنطقة، مثل: نابلس'**
+  String get phArea;
+
+  /// No description provided for @phCurrentPw.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة المرور التي تدخل بها الآن'**
+  String get phCurrentPw;
+
+  /// No description provided for @phConfirmPw.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب كلمة المرور الجديدة مرة ثانية'**
+  String get phConfirmPw;
+
+  /// No description provided for @phLoginPw.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة مرور حسابك'**
+  String get phLoginPw;
+
+  /// No description provided for @phRegStoreName.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم المحل كما يعرفه الزبائن'**
+  String get phRegStoreName;
+
+  /// No description provided for @phOwnerName.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسمك الكامل'**
+  String get phOwnerName;
+
+  /// No description provided for @phStreet.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشارع أو أقرب معلم'**
+  String get phStreet;
+
+  /// No description provided for @phPhone.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم جوالك، مثل 0599123456'**
+  String get phPhone;
+
+  /// No description provided for @phEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'بريدك الذي تدخل به، مثل name@store.ps'**
+  String get phEmail;
+
+  /// No description provided for @phCustomerName.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم الزبون كما تناديه'**
+  String get phCustomerName;
+
+  /// No description provided for @phPaidNow.
+  ///
+  /// In ar, this message translates to:
+  /// **'كم دفع الزبون الآن بالشيكل'**
+  String get phPaidNow;
+
+  /// No description provided for @phPayAmount.
+  ///
+  /// In ar, this message translates to:
+  /// **'المبلغ الذي دفعه الزبون بالشيكل'**
+  String get phPayAmount;
+
+  /// No description provided for @phVoidReason.
+  ///
+  /// In ar, this message translates to:
+  /// **'لماذا تُلغى هذه الفاتورة'**
+  String get phVoidReason;
+
   /// No description provided for @splashTagline.
   ///
   /// In ar, this message translates to:
@@ -701,7 +1121,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualHint.
   ///
   /// In ar, this message translates to:
-  /// **'الأرقام أسفل الخطوط'**
+  /// **'الأرقام كما تظهر تحت خطوط الباركود'**
   String get manualHint;
 
   /// No description provided for @manualHelper.
@@ -1679,7 +2099,7 @@ abstract class AppLocalizations {
   /// No description provided for @newCustomerPhoneHint.
   ///
   /// In ar, this message translates to:
-  /// **'10 أرقام. سقف الدين يحدده المالك أو المدير لاحقاً.'**
+  /// **'رقم جوال الزبون، 10 أرقام'**
   String get newCustomerPhoneHint;
 
   /// No description provided for @newCustomerNameRequired.
@@ -2723,7 +3143,7 @@ abstract class AppLocalizations {
   /// No description provided for @passwordMinHint.
   ///
   /// In ar, this message translates to:
-  /// **'8 أحرف على الأقل'**
+  /// **'كلمة مرور للدخول، 8 أحرف على الأقل'**
   String get passwordMinHint;
 
   /// No description provided for @storeNameRequired.
@@ -3179,13 +3599,13 @@ abstract class AppLocalizations {
   /// No description provided for @formCostHelp.
   ///
   /// In ar, this message translates to:
-  /// **'ما تدفعه أنت للمورّد. لا يظهر للزبون.'**
+  /// **'ما تدفعه للمورّد، لا يراه الزبون'**
   String get formCostHelp;
 
   /// No description provided for @formMinHelp.
   ///
   /// In ar, this message translates to:
-  /// **'يظهر المنتج في قائمة «منخفض» عندما يصل المخزون إلى هذا الرقم أو أقل.'**
+  /// **'عند هذا العدد أو أقل يظهر في «منخفض»'**
   String get formMinHelp;
 
   /// No description provided for @formRequiredA11y.
@@ -3539,7 +3959,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteEmailHint.
   ///
   /// In ar, this message translates to:
-  /// **'إن كتبته، لا يُقبل الرابط إلا بهذا البريد.'**
+  /// **'إن كتبته، لا يعمل الرابط إلا بهذا البريد'**
   String get inviteEmailHint;
 
   /// No description provided for @inviteCreate.
@@ -3629,7 +4049,7 @@ abstract class AppLocalizations {
   /// No description provided for @storePhoneHint.
   ///
   /// In ar, this message translates to:
-  /// **'مثل 0599123456'**
+  /// **'هاتف المحل على الإيصال، مثل 0599123456'**
   String get storePhoneHint;
 
   /// No description provided for @storeAddress.
@@ -3701,7 +4121,7 @@ abstract class AppLocalizations {
   /// No description provided for @pwHelp.
   ///
   /// In ar, this message translates to:
-  /// **'8 أحرف على الأقل. سيُسجَّل خروجك من الأجهزة الأخرى، ويبقى هذا الجوال داخلاً.'**
+  /// **'8 أحرف على الأقل، والأجهزة الأخرى تُسجَّل خارجاً'**
   String get pwHelp;
 
   /// No description provided for @pwSave.
@@ -3887,7 +4307,7 @@ abstract class AppLocalizations {
   /// No description provided for @prodDeactivateBody.
   ///
   /// In ar, this message translates to:
-  /// **'لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل.'**
+  /// **'لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».'**
   String get prodDeactivateBody;
 
   /// No description provided for @prodDeactivated.
@@ -3901,6 +4321,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'هذا المنتج موقوف: لا يُباع ولا يظهر في القائمة.'**
   String get prodInactiveNote;
+
+  /// No description provided for @prodFilterInactive.
+  ///
+  /// In ar, this message translates to:
+  /// **'موقوفة'**
+  String get prodFilterInactive;
+
+  /// No description provided for @prodReactivate.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة تفعيل المنتج'**
+  String get prodReactivate;
+
+  /// No description provided for @prodReactivated.
+  ///
+  /// In ar, this message translates to:
+  /// **'رجع المنتج إلى البيع والقائمة كما كان.'**
+  String get prodReactivated;
+
+  /// No description provided for @invOpenProduct.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل السعر والتفاصيل'**
+  String get invOpenProduct;
 
   /// No description provided for @prodSaved.
   ///

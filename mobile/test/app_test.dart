@@ -212,8 +212,8 @@ void main() {
     expect(find.text('زبون نقدي'), findsOneWidget);
     expect(find.text('4 زبائن مدينون'), findsOneWidget);
 
-    // Scroll the shortcuts out from under the bottom bar before tapping.
-    await tester.drag(find.byKey(const Key('home.today')), const Offset(0, -300));
+    // Scroll the shortcuts (below the first-time guide card) out from under the bottom bar before tapping.
+    await tester.drag(find.byKey(const Key('home.today')), const Offset(0, -460));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('home.shortcut.pos')));
     await tester.pumpAndSettle();

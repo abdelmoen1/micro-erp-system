@@ -12,7 +12,8 @@ import '../../sale/presentation/sale_widgets.dart';
 import '../domain/customer.dart';
 import '../domain/ledger.dart';
 
-const paymentMethods = ['cash', 'jawwal_pay', 'palpay', 'bank_of_palestine'];
+// PalPay first and selected by default; cash last.
+const paymentMethods = ['palpay', 'jawwal_pay', 'bank_of_palestine', 'cash'];
 
 String methodLabel(AppLocalizations t, String method) => switch (method) {
   'jawwal_pay' => t.methodJawwalPay,
@@ -42,7 +43,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   final _amount = TextEditingController();
   late final _fullAmount = TextEditingController(text: widget.remaining.toApi());
   bool _full = true;
-  String _method = 'cash';
+  String _method = paymentMethods.first;
   _Phase _phase = _Phase.form;
   String? _error;
   PaymentReceipt? _receipt;
@@ -206,7 +207,14 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                 textDirection: TextDirection.ltr,
                 textAlign: TextAlign.left,
                 style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
-                decoration: InputDecoration(errorText: _fieldError(t), filled: true, fillColor: HisbahColors.raised),
+                decoration: InputDecoration(
+                  hintText: t.phPayAmount,
+                  hintTextDirection: Directionality.of(context),
+                  hintStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: HisbahColors.inkMuted),
+                  errorText: _fieldError(t),
+                  filled: true,
+                  fillColor: HisbahColors.raised,
+                ),
               ),
               const SizedBox(height: 6),
               Text(

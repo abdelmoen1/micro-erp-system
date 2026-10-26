@@ -494,6 +494,7 @@ class _VoidSheetState extends ConsumerState<VoidSheet> {
                 if (_reasonMissing) setState(() => _reasonMissing = false);
               },
               decoration: InputDecoration(
+                hintText: t.phVoidReason,
                 filled: true,
                 fillColor: HisbahColors.raised,
                 counterText: '',

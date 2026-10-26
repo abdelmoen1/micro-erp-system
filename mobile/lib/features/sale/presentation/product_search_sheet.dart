@@ -7,6 +7,7 @@ import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../products/domain/product.dart';
 import 'sale_widgets.dart';
@@ -241,53 +242,6 @@ class _SkeletonRows extends StatelessWidget {
       ],
     ),
   );
-}
-
-/// One placeholder row at the real row height (64), not a spinner (hi-fi M-05).
-class SkeletonRow extends StatelessWidget {
-  const SkeletonRow({super.key, required this.widthFactor, required this.divider, this.avatar = false});
-
-  final double widthFactor;
-  final bool divider;
-  final bool avatar;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 64,
-    padding: const EdgeInsets.symmetric(horizontal: 12),
-    decoration: BoxDecoration(border: divider ? const Border(top: BorderSide(color: HisbahColors.border)) : null),
-    child: Row(
-      children: [
-        if (avatar) ...[
-          const CircleAvatar(radius: 20, backgroundColor: HisbahColors.skeleton),
-          const SizedBox(width: 12),
-        ],
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FractionallySizedBox(widthFactor: widthFactor, child: const _Bar(height: 12, color: HisbahColors.skeleton)),
-              const SizedBox(height: 8),
-              const SizedBox(width: 90, child: _Bar(height: 10, color: HisbahColors.ground)),
-            ],
-          ),
-        ),
-        const SizedBox(width: 64, child: _Bar(height: 12, color: HisbahColors.skeleton)),
-      ],
-    ),
-  );
-}
-
-class _Bar extends StatelessWidget {
-  const _Bar({required this.height, required this.color});
-
-  final double height;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) =>
-      Container(height: height, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)));
 }
 
 class _CenteredState extends StatelessWidget {

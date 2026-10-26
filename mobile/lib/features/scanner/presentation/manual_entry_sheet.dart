@@ -119,9 +119,6 @@ class _ManualEntrySheetState extends State<ManualEntrySheet> {
               hintText: t.manualHint,
               hintTextDirection: TextDirection.rtl,
               counterText: '',
-              helperText: _emptyError ? null : t.manualHelper,
-              helperMaxLines: 3,
-              helperStyle: const TextStyle(fontSize: 13, height: 1.5, color: HisbahColors.inkMuted),
               error: _emptyError
                   ? Row(
                       children: [

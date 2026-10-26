@@ -237,9 +237,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 textInputAction: TextInputAction.next,
                                 autofillHints: const [AutofillHints.username, AutofillHints.email],
                                 style: const TextStyle(fontSize: 16),
-                                decoration: const InputDecoration(
-                                  hintText: 'name@store.ps',
-                                  hintTextDirection: TextDirection.ltr,
+                                decoration: InputDecoration(
+                                  hintText: t.phEmail,
+                                  hintTextDirection: Directionality.of(context),
                                 ),
                                 validator: (v) => _validateEmail(v, t),
                                 errorBuilder: (_, error) => _errorLine(error),
@@ -259,6 +259,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 autofillHints: const [AutofillHints.password],
                                 style: const TextStyle(fontSize: 16),
                                 decoration: InputDecoration(
+                                  hintText: t.phLoginPw,
+                                  hintTextDirection: Directionality.of(context),
                                   suffixIcon: Padding(
                                     padding: const EdgeInsetsDirectional.only(end: 4),
                                     child: Semantics(

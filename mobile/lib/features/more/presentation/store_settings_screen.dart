@@ -23,7 +23,7 @@ class StoreSettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(t.storeTitle)),
       body: profile.when(
-        loading: () => const LoadingView(),
+        loading: () => const LoadingView.detail(),
         error: (_, _) => ErrorView(message: t.storeLoadError, onRetry: () => ref.invalidate(storeProfileProvider)),
         data: (store) => _StoreForm(store: store),
       ),
@@ -104,14 +104,13 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             children: [
-              Text(t.storeReceiptNote, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
-              const SizedBox(height: 12),
               if (_banner != null) ...[
                 ToneCard(tone: StatusTone.error, icon: Icons.error_outline_rounded, title: _banner!, alert: true),
                 const SizedBox(height: 12),
               ],
               MoreField(
                 fieldKey: 'store.name',
+                hint: t.phStoreName,
                 label: t.storeName,
                 controller: _name,
                 required: true,
@@ -130,6 +129,7 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
               ),
               MoreField(
                 fieldKey: 'store.address',
+                hint: t.phAddress,
                 label: t.storeAddress,
                 controller: _address,
                 error: _errors['address'],
@@ -137,6 +137,7 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
               ),
               MoreField(
                 fieldKey: 'store.area',
+                hint: t.phArea,
                 label: t.storeArea,
                 controller: _area,
                 error: _errors['area'],
