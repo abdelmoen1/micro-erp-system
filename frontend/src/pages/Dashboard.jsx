@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { AppDownloadCard, AppGuideDialog } from "../components/AppDownload";
 import Icon from "../components/Icon";
 import { amountNumber, arCount, dayMonthYear, isPositiveAmount, monthName, shekel, shortReference, weekdayName } from "../lib/format";
@@ -371,7 +371,12 @@ export default function Dashboard() {
   const invoices = s?.invoices_count ?? 0;
   const payments = data?.payments?.count ?? 0;
   const debtors = data?.customers?.with_outstanding_debts ?? 0;
-  const actions = role === "employee" ? ["زبون جديد", "تسجيل دفعة"] : ["منتج جديد", "زبون جديد", "تسجيل دفعة"];
+  // Shortcuts to the screens that do these (products are the owner's and managers').
+  const actions = [
+    ...(role === "employee" ? [] : [["منتج جديد", "أضفه بسعره ومخزونه", "products", "/products/new"]]),
+    ["زبون جديد", "للبيع بالدين وكشف الحساب", "customers", "/customers?new=1"],
+    ["تسجيل دفعة", "من الديون المفتوحة", "payments", "/debts"],
+  ];
   // Before S2 the API had no collected/new-debt split; cash and credit sales are the same idea.
   const cashPart = s?.collected_at_sale ?? s?.cash_sales;
   const debtPart = s?.new_debt ?? s?.credit_sales;
@@ -396,14 +401,20 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="actions">
-        {actions.map((label) => (
-          <button key={label} type="button" className="btn btn-s btn-sm" disabled title="تُضاف مع شاشات الإدارة القادمة">
-            <Icon name="plus" size={16} strokeWidth={2.2} />
-            {label}
-          </button>
+      <nav className="quick-cards" aria-label="اختصارات">
+        {actions.map(([label, sub, icon, to]) => (
+          <Link key={label} className="card quick-card" to={to}>
+            <span className="quick-ic" aria-hidden="true">
+              <Icon name={icon} size={20} strokeWidth={1.8} />
+            </span>
+            <span>
+              <b>{label}</b>
+              <small>{sub}</small>
+            </span>
+            <Icon name="arrow" size={18} />
+          </Link>
         ))}
-      </div>
+      </nav>
 
       <AppDownloadCard />
       <AppGuideDialog />
