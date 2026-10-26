@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiIdempotent, apiSend } from "./apiClient";
+import { apiGet, apiIdempotent, apiSend, session } from "./apiClient";
 import { queryKeys } from "./queryClient";
 
 // S3 back-office data (W-06 … W-15). Reads return the API page as is ({ data, meta }); writes
@@ -85,10 +85,11 @@ export function useSaveProduct() {
   });
 }
 
-export function useDeactivateProduct() {
+/** Stop a product (hidden from sale and the list) or bring it back as it was (FR-16). */
+export function useProductStatus() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (id) => apiSend("POST", `/products/${id}/deactivate`),
+    mutationFn: ({ id, active }) => (active ? apiSend("PATCH", `/products/${id}`, { status: "active" }) : apiSend("POST", `/products/${id}/deactivate`)),
     onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.products.all }),
   });
 }
@@ -188,3 +189,22 @@ export function useStaffAction() {
 }
 
 export const useInvite = () => useMutation({ mutationFn: (body) => apiSend("POST", "/invitations", body).then((r) => r.invitation) });
+
+// ---------------------------------------------------------------- settings (store details, password)
+export const useMyStore = () => useQuery({ queryKey: queryKeys.myStore, queryFn: ({ signal }) => apiGet("/my-store", { signal }).then((r) => r.store) });
+
+/** PATCH /my-store (owner only). The sidebar and receipts read the store from the saved session user. */
+export function useSaveStore() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => apiSend("PATCH", "/my-store", body).then((r) => r.store),
+    onSuccess: (store) => {
+      client.setQueryData(queryKeys.myStore, store);
+      const user = session.user();
+      if (user) session.save(session.token(), { ...user, store: { ...user.store, ...store } });
+    },
+  });
+}
+
+/** PATCH /me/password: this browser stays signed in, every other device is signed out. */
+export const useChangePassword = () => useMutation({ mutationFn: (body) => apiSend("PATCH", "/me/password", body) });

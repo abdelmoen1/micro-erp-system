@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import Icon from "../components/Icon";
 import { ConfirmSummary, Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, Field, Segments, StatusBadge } from "../components/ui";
 import { newIdempotencyKey, session } from "../services/apiClient";
-import { lookupCatalog, useAdjustStock, useDeactivateProduct, useMovements, useProduct, useSaveProduct } from "../services/backoffice";
+import { lookupCatalog, useAdjustStock, useMovements, useProduct, useProductStatus, useSaveProduct } from "../services/backoffice";
 import { canManage, stockState } from "../lib/domain";
 import { dateTime, latinDigits } from "../lib/format";
 
@@ -40,7 +41,8 @@ export default function ProductDetail() {
   const manager = canManage(session.user());
   const product = useProduct(isNew ? null : id);
   const movements = useMovements(isNew ? null : id);
-  const deactivate = useDeactivateProduct();
+  const status = useProductStatus();
+  const [confirmStop, setConfirmStop] = useState(false);
 
   if (!isNew && product.isError) return <ErrorState error={product.error} title="تعذّر فتح المنتج" onRetry={() => product.refetch()} />;
   if (!isNew && product.isPending) return <div className="card sk" style={{ height: 320 }} />;
@@ -70,8 +72,18 @@ export default function ProductDetail() {
                 {p.current_stock}
               </b>
               <span>{p.unit === "kg" ? "كغ" : "قطعة"}</span>
-              <StatusBadge status={stockState(p)} />
+              {p.status === "inactive" ? <StatusBadge status="inactive" label="موقوف" /> : <StatusBadge status={stockState(p)} />}
             </div>
+            {p.status === "inactive" ? (
+              <div role="status" className="banner tone-pending">
+                <Icon name="ban" size={20} />
+                <span>
+                  هذا المنتج موقوف: لا يظهر في البيع ولا في قائمة المنتجات.
+                  {manager ? <span className="sub">أعِده ليرجع كما كان بسعره ومخزونه.</span> : null}
+                </span>
+              </div>
+            ) : null}
+            <ErrorBanner error={status.error} />
             <DataTable
               query={movements}
               rows={movements.data ?? []}
@@ -109,8 +121,12 @@ export default function ProductDetail() {
               ]}
               empty={<EmptyState icon="products" title="لا حركات بعد" />}
             />
-            {manager && p.status === "active" ? (
-              <button type="button" className="btn btn-t danger" disabled={deactivate.isPending} onClick={() => deactivate.mutate(p.id)} style={{ alignSelf: "flex-start" }}>
+            {manager && p.status === "inactive" ? (
+              <button type="button" className="btn btn-p btn-sm" disabled={status.isPending} onClick={() => status.mutate({ id: p.id, active: true })} style={{ alignSelf: "flex-start" }}>
+                {status.isPending ? "جارٍ الإعادة…" : "إعادة تفعيل المنتج"}
+              </button>
+            ) : manager ? (
+              <button type="button" className="btn btn-t danger" onClick={() => setConfirmStop(true)} style={{ alignSelf: "flex-start" }}>
                 إيقاف المنتج
               </button>
             ) : null}
@@ -118,6 +134,25 @@ export default function ProductDetail() {
         ) : null}
       </div>
       {adjusting ? <AdjustDialog product={p} onClose={() => setParams({})} /> : null}
+      {confirmStop ? (
+        <Dialog title={`إيقاف «${p.name}»؟`} role="alertdialog" tone="warning" icon="ban" onClose={() => setConfirmStop(false)}>
+          <p>لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل.</p>
+          <p className="field-hint">تستطيع إعادته متى شئت من «المنتجات ← موقوفة»، فيرجع كما كان.</p>
+          <div className="dlg-actions">
+            <button
+              type="button"
+              className="btn btn-dd"
+              disabled={status.isPending}
+              onClick={() => status.mutate({ id: p.id, active: false }, { onSuccess: () => setConfirmStop(false) })}
+            >
+              {status.isPending ? "جارٍ الإيقاف…" : "إيقاف المنتج"}
+            </button>
+            <button type="button" className="btn btn-g" onClick={() => setConfirmStop(false)}>
+              رجوع
+            </button>
+          </div>
+        </Dialog>
+      ) : null}
     </>
   );
 }
