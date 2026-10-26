@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AcceptInvitationRequest;
+use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\GoogleRegisterStoreRequest;
 use App\Http\Requests\RegisterStoreRequest;
 use App\Models\User;
+use App\Services\AuditService;
 use App\Services\AuthService;
 use App\Services\GoogleIdTokenVerifier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -92,6 +95,24 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json(['user' => $request->user()->load('store')]);
+    }
+
+    /**
+     * PATCH /me/password: a new password for the signed-in account. This session stays signed in;
+     * every other device is signed out, so a lost phone loses its access too.
+     */
+    public function changePassword(ChangePasswordRequest $request, AuditService $audit)
+    {
+        $user = $request->user();
+        $current = $user->currentAccessToken();
+
+        DB::transaction(function () use ($user, $current, $request, $audit) {
+            $user->update(['password' => $request->validated('password')]);
+            $user->tokens()->when($current?->id, fn($tokens, $id) => $tokens->whereKeyNot($id))->delete();
+            $audit->record('user.password_changed', $user);
+        });
+
+        return response()->json(['message' => 'تم تغيير كلمة المرور. سُجّل الخروج من الأجهزة الأخرى.']);
     }
 
     private function authenticatedResponse(User $user, string $message, int $status, ?string $token = null)
