@@ -163,10 +163,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roleEmployee => 'Employee';
 
   @override
-  String get moreNote =>
-      'In R1, More has only the profile and sign out. Staff management is on the web.';
-
-  @override
   String get logout => 'Sign out';
 
   @override
@@ -1838,4 +1834,507 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discardConfirm => 'Discard and leave';
+
+  @override
+  String get saleDetailError =>
+      'Could not load the invoice. Check the connection and try again.';
+
+  @override
+  String saleReturnedNote(String amount) {
+    return 'Goods worth $amount were returned from this invoice.';
+  }
+
+  @override
+  String get moreSectionStore => 'Store';
+
+  @override
+  String get moreStaff => 'Staff';
+
+  @override
+  String get moreStaffSub => 'Invite, change roles, deactivate';
+
+  @override
+  String get moreStoreInfo => 'Store details';
+
+  @override
+  String get moreStoreInfoSub => 'Name, phone and address on receipts';
+
+  @override
+  String get moreSectionStock => 'Stock';
+
+  @override
+  String get moreLowStock => 'Running low';
+
+  @override
+  String get moreLowStockSub => 'At or below their alert level';
+
+  @override
+  String get moreNegative => 'Negative stock to review';
+
+  @override
+  String get moreNegativeSub => 'Sold beyond the recorded quantity';
+
+  @override
+  String get moreSectionSales => 'Sales';
+
+  @override
+  String get moreSalesHistory => 'Sales history';
+
+  @override
+  String get moreSalesHistorySub => 'Every invoice, each one in full';
+
+  @override
+  String get moreSectionSettings => 'Settings';
+
+  @override
+  String get morePassword => 'Change password';
+
+  @override
+  String get morePasswordSub => 'Other devices are signed out';
+
+  @override
+  String get moreSubscription => 'Subscription';
+
+  @override
+  String moreSubTrialUntil(String date) {
+    return 'Free trial until $date';
+  }
+
+  @override
+  String moreSubActiveUntil(String date) {
+    return 'Active until $date';
+  }
+
+  @override
+  String get moreSubActive => 'Active';
+
+  @override
+  String get moreSubContact => 'Contact the Hisbah team on WhatsApp';
+
+  @override
+  String moreSubWhatsappText(String store) {
+    return 'Hello, about the Hisbah subscription of «$store».';
+  }
+
+  @override
+  String get staffTitle => 'Staff';
+
+  @override
+  String get staffInvite => 'Invite staff';
+
+  @override
+  String get staffEmpty =>
+      'No staff yet. Invite the first one with a link they open on their phone.';
+
+  @override
+  String get staffYou => 'You';
+
+  @override
+  String get staffInactive => 'Deactivated';
+
+  @override
+  String get staffMakeManager => 'Make manager';
+
+  @override
+  String get staffMakeEmployee => 'Make employee';
+
+  @override
+  String get staffDeactivate => 'Deactivate';
+
+  @override
+  String staffDeactivateTitle(String name) {
+    return 'Deactivate $name?';
+  }
+
+  @override
+  String get staffDeactivateBody =>
+      'They are signed out everywhere at once and cannot sign in. Their sales and payments stay in their name.';
+
+  @override
+  String get staffRolesNote =>
+      'Manager: everything except staff and store details. Employee: sales, customers and payments; no returns, voids, stock changes or credit-limit overrides.';
+
+  @override
+  String get staffLoadError =>
+      'Could not load the staff. Check the connection and try again.';
+
+  @override
+  String get staffActionError =>
+      'That did not go through. Check the connection and try again.';
+
+  @override
+  String get staffOwnerOnly => 'Only the owner manages staff.';
+
+  @override
+  String staffRoleChanged(String name, String role) {
+    return '$name is now $role.';
+  }
+
+  @override
+  String staffDeactivated(String name) {
+    return '$name was deactivated.';
+  }
+
+  @override
+  String get inviteRole => 'Role';
+
+  @override
+  String get inviteValid => 'Link valid for';
+
+  @override
+  String get invite24h => '24 hours';
+
+  @override
+  String get invite3d => '3 days';
+
+  @override
+  String get invite7d => '7 days';
+
+  @override
+  String get inviteEmail => 'Their email';
+
+  @override
+  String get inviteEmailHint =>
+      'If you type it, the link only works with this email.';
+
+  @override
+  String get inviteCreate => 'Create invite link';
+
+  @override
+  String get inviteCreating => 'Creating…';
+
+  @override
+  String get inviteReady =>
+      'The invite is ready. Send the link to your staff member; it is shown here only once.';
+
+  @override
+  String inviteExpires(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String get inviteHowTo =>
+      'They open the link, enter their name, email and a password, then sign in to the Hisbah app.';
+
+  @override
+  String get inviteCopy => 'Copy link';
+
+  @override
+  String get inviteCopied => 'Link copied.';
+
+  @override
+  String get inviteWhatsapp => 'Send on WhatsApp';
+
+  @override
+  String inviteWhatsappText(String store, String role, String link) {
+    return 'You are invited to join «$store» on Hisbah as $role. Open the link to create your account:\n$link';
+  }
+
+  @override
+  String get inviteWhatsappFailed =>
+      'Could not open WhatsApp. Copy the link and send it any way you like.';
+
+  @override
+  String get inviteDone => 'Done';
+
+  @override
+  String get storeTitle => 'Store details';
+
+  @override
+  String get storeName => 'Store name';
+
+  @override
+  String get storePhone => 'Store phone';
+
+  @override
+  String get storePhoneHint => 'e.g. 0599123456';
+
+  @override
+  String get storeAddress => 'Address';
+
+  @override
+  String get storeArea => 'Area or city';
+
+  @override
+  String get storeReceiptNote =>
+      'These details are printed at the top of every receipt.';
+
+  @override
+  String get storeSave => 'Save changes';
+
+  @override
+  String get storeSaved => 'Store details saved.';
+
+  @override
+  String get storeOwnerOnly => 'Only the owner edits the store details.';
+
+  @override
+  String get storeLoadError =>
+      'Could not load the store details. Check the connection and try again.';
+
+  @override
+  String get pwTitle => 'Change password';
+
+  @override
+  String get pwCurrent => 'Current password';
+
+  @override
+  String get pwNew => 'New password';
+
+  @override
+  String get pwConfirm => 'Confirm the new password';
+
+  @override
+  String get pwHelp =>
+      'At least 8 characters. Other devices are signed out; this phone stays signed in.';
+
+  @override
+  String get pwSave => 'Change password';
+
+  @override
+  String get pwDone => 'Password changed; other devices were signed out.';
+
+  @override
+  String get pwCurrentRequired => 'Enter your current password.';
+
+  @override
+  String get pwShort => 'At least 8 characters.';
+
+  @override
+  String get pwMismatch => 'The confirmation does not match.';
+
+  @override
+  String get salesTitle => 'Sales history';
+
+  @override
+  String get salesToday => 'Today';
+
+  @override
+  String get sales7 => 'Last 7 days';
+
+  @override
+  String get sales30 => 'Last 30 days';
+
+  @override
+  String get salesAll => 'All';
+
+  @override
+  String get salesEmpty => 'No sales in this period.';
+
+  @override
+  String get salesLoadError =>
+      'Could not load the sales. Check the connection and try again.';
+
+  @override
+  String get salesMore => 'Show more';
+
+  @override
+  String get salesMoreError => 'Could not load more. Tap to try again.';
+
+  @override
+  String get salesWalkIn => 'Walk-in';
+
+  @override
+  String salesItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get saleStatusPaid => 'Paid';
+
+  @override
+  String get saleStatusCredit => 'On credit';
+
+  @override
+  String get saleStatusPartial => 'Part paid';
+
+  @override
+  String get prodDetailError =>
+      'Could not load the product. Check the connection and try again.';
+
+  @override
+  String get prodStockNowLabel => 'In stock';
+
+  @override
+  String prodMinimumLabel(String qty) {
+    return 'Alert at $qty';
+  }
+
+  @override
+  String prodCostLabel(String price) {
+    return 'Cost $price';
+  }
+
+  @override
+  String prodPackLabel(int size, String price) {
+    return 'Carton of $size for $price';
+  }
+
+  @override
+  String get prodEdit => 'Edit product';
+
+  @override
+  String get prodAdjust => 'Count or adjust stock';
+
+  @override
+  String get prodMovements => 'Stock movements';
+
+  @override
+  String get prodNoMovements => 'No movements yet.';
+
+  @override
+  String get prodDeactivate => 'Deactivate product';
+
+  @override
+  String prodDeactivateTitle(String name) {
+    return 'Deactivate «$name»?';
+  }
+
+  @override
+  String get prodDeactivateBody =>
+      'It leaves the till and the product list. Its movements and past sales stay on record.';
+
+  @override
+  String prodDeactivated(String name) {
+    return '«$name» was deactivated.';
+  }
+
+  @override
+  String get prodInactiveNote =>
+      'This product is deactivated: it is not sold and not listed.';
+
+  @override
+  String get prodSaved => 'Changes saved.';
+
+  @override
+  String get prodViewOnly =>
+      'Only the owner or a manager edits products and stock.';
+
+  @override
+  String get moveOpening => 'Opening stock';
+
+  @override
+  String get moveSale => 'Sale';
+
+  @override
+  String get moveVoid => 'Voided sale';
+
+  @override
+  String get moveReturn => 'Return';
+
+  @override
+  String get moveIn => 'Adjustment in';
+
+  @override
+  String get moveOut => 'Adjustment out';
+
+  @override
+  String moveAfter(String qty) {
+    return 'then $qty';
+  }
+
+  @override
+  String adjTitle(String name) {
+    return 'Adjust «$name»';
+  }
+
+  @override
+  String get adjCount => 'Shelf count';
+
+  @override
+  String get adjDelta => 'Add or remove';
+
+  @override
+  String get adjCartons => 'Receive cartons';
+
+  @override
+  String adjCountLabel(String unit) {
+    return 'How many are there now? ($unit)';
+  }
+
+  @override
+  String adjDeltaLabel(String unit) {
+    return 'Quantity ($unit); negative to remove';
+  }
+
+  @override
+  String adjCartonsLabel(int size) {
+    return 'Cartons received ($size pieces each)';
+  }
+
+  @override
+  String get adjReason => 'Reason';
+
+  @override
+  String get adjReasonCount => 'Shelf count';
+
+  @override
+  String get adjReasonDamaged => 'Damaged or expired';
+
+  @override
+  String get adjReasonReceived => 'Goods received';
+
+  @override
+  String get adjReasonFix => 'Fixing an entry mistake';
+
+  @override
+  String adjPreview(String from, String to) {
+    return 'Recorded $from → after $to';
+  }
+
+  @override
+  String get adjNoChange => 'That matches the record; nothing to change.';
+
+  @override
+  String get adjNegative => 'An adjustment cannot make the stock negative.';
+
+  @override
+  String get adjInvalidPiece => 'A whole number for a piece product.';
+
+  @override
+  String get adjInvalidKg => 'Up to 3 decimal places.';
+
+  @override
+  String get adjSave => 'Save adjustment';
+
+  @override
+  String adjDone(String stock) {
+    return 'Stock adjusted. Now $stock';
+  }
+
+  @override
+  String get lowTitle => 'Running low';
+
+  @override
+  String get lowEmpty => 'Every product is above its alert level.';
+
+  @override
+  String lowRow(String stock, String min) {
+    return 'Stock $stock · alert at $min';
+  }
+
+  @override
+  String get negTitle => 'Negative stock to review';
+
+  @override
+  String get negEmpty => 'No products below zero.';
+
+  @override
+  String get negHelp =>
+      'These were sold beyond the recorded stock. Count the shelf, then correct the stock on the product page.';
+
+  @override
+  String negSale(int id, String qty) {
+    return 'Invoice #$id · $qty';
+  }
+
+  @override
+  String get listLoadError =>
+      'Could not load. Check the connection and try again.';
 }

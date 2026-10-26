@@ -107,7 +107,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _Paper(receipt: r, user: user, strike: strike),
+                    ReceiptPaper(receipt: r, user: user, strike: strike),
                     if (voided) ...[
                       const SizedBox(height: 12),
                       Container(
@@ -183,8 +183,8 @@ String _phone(String p) => p.length == 10 ? '${p.substring(0, 3)} ${p.substring(
 String _time(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
 /// The printed part: store, invoice facts, lines, totals. Notes about the sale stay outside it.
-class _Paper extends StatelessWidget {
-  const _Paper({required this.receipt, required this.user, required this.strike});
+class ReceiptPaper extends StatelessWidget {
+  const ReceiptPaper({super.key, required this.receipt, required this.user, required this.strike});
 
   final SaleReceipt receipt;
   final AppUser? user;

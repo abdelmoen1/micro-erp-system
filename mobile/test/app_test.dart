@@ -160,6 +160,9 @@ void main() {
 
     await tester.tap(find.byKey(const Key('nav.more')));
     await tester.pumpAndSettle();
+    // Below the «More» sections: scroll to it first.
+    await tester.ensureVisible(find.byKey(const Key('more.logout')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('more.logout')));
     await tester.pumpAndSettle();
     // The confirm sheet puts "stay" first; staying keeps the session.
@@ -167,6 +170,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.requestsTo('POST /logout'), isEmpty);
 
+    // Below the «More» sections: scroll to it first.
+    await tester.ensureVisible(find.byKey(const Key('more.logout')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('more.logout')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('logout.confirm')));

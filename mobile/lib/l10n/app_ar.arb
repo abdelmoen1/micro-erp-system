@@ -62,7 +62,6 @@
   "roleOwner": "مالك",
   "roleManager": "مدير",
   "roleEmployee": "موظف",
-  "moreNote": "«المزيد» يحتوي الملف الشخصي وتسجيل الخروج فقط في R1. إدارة الموظفين على الويب.",
   "logout": "تسجيل الخروج",
   "logoutConfirmTitle": "تسجيل الخروج؟",
   "logoutConfirmBody": "ستحتاج إلى البريد الإلكتروني وكلمة المرور للدخول مجدداً.",
@@ -1072,5 +1071,337 @@
   "discardTitle": "تجاهل ما كتبته؟",
   "discardBody": "لم يُحفظ هذا المنتج بعد. إذا خرجت الآن ستضيع البيانات التي أدخلتها.",
   "discardKeep": "متابعة الإدخال",
-  "discardConfirm": "تجاهل وخروج"
+  "discardConfirm": "تجاهل وخروج",
+  "saleDetailError": "تعذّر تحميل الفاتورة. تحقق من الاتصال ثم أعد المحاولة.",
+  "saleReturnedNote": "أُرجعت بضاعة من هذه الفاتورة بقيمة {amount}.",
+  "@saleReturnedNote": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "moreSectionStore": "المحل",
+  "moreStaff": "الموظفون",
+  "moreStaffSub": "دعوة موظف، تغيير الدور، الإيقاف",
+  "moreStoreInfo": "بيانات المحل",
+  "moreStoreInfoSub": "الاسم والهاتف والعنوان على الإيصال",
+  "moreSectionStock": "المخزون",
+  "moreLowStock": "منتجات قاربت على النفاد",
+  "moreLowStockSub": "عند الحد الأدنى أو أقل",
+  "moreNegative": "مخزون سالب للمراجعة",
+  "moreNegativeSub": "بيعت بأكثر من الكمية المسجّلة",
+  "moreSectionSales": "المبيعات",
+  "moreSalesHistory": "سجل المبيعات",
+  "moreSalesHistorySub": "كل الفواتير، وفتح أي فاتورة كاملة",
+  "moreSectionSettings": "الإعدادات",
+  "morePassword": "تغيير كلمة المرور",
+  "morePasswordSub": "ويُسجَّل الخروج من الأجهزة الأخرى",
+  "moreSubscription": "الاشتراك",
+  "moreSubTrialUntil": "تجربة مجانية حتى {date}",
+  "@moreSubTrialUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moreSubActiveUntil": "مفعّل حتى {date}",
+  "@moreSubActiveUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moreSubActive": "مفعّل",
+  "moreSubContact": "تواصل مع إدارة حسبة عبر واتساب",
+  "moreSubWhatsappText": "مرحباً، بخصوص اشتراك متجر «{store}» على حسبة.",
+  "@moreSubWhatsappText": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+  "staffTitle": "الموظفون",
+  "staffInvite": "دعوة موظف",
+  "staffEmpty": "لا موظفين بعد. ادعُ أول موظف برابط يفتحه من جواله.",
+  "staffYou": "أنت",
+  "staffInactive": "موقوف",
+  "staffMakeManager": "جعله مديراً",
+  "staffMakeEmployee": "جعله موظفاً",
+  "staffDeactivate": "إيقاف الموظف",
+  "staffDeactivateTitle": "إيقاف {name}؟",
+  "@staffDeactivateTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "staffDeactivateBody": "يُسجَّل خروجه من كل الأجهزة فوراً ولن يستطيع الدخول. فواتيره ودفعاته تبقى باسمه في السجل.",
+  "staffRolesNote": "المدير: كل شيء عدا الموظفين وبيانات المحل. الموظف: البيع والزبائن وتسجيل الدفعات، بلا مرتجع أو إلغاء فاتورة أو تعديل مخزون أو تجاوز حد الدين.",
+  "staffLoadError": "تعذّر تحميل الموظفين. تحقق من الاتصال ثم أعد المحاولة.",
+  "staffActionError": "تعذّر تنفيذ الإجراء. تحقق من الاتصال ثم حاول مرة أخرى.",
+  "staffOwnerOnly": "إدارة الموظفين للمالك فقط.",
+  "staffRoleChanged": "أصبح {name} {role}.",
+  "@staffRoleChanged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "staffDeactivated": "أُوقف {name}.",
+  "@staffDeactivated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteRole": "الدور",
+  "inviteValid": "صلاحية الرابط",
+  "invite24h": "24 ساعة",
+  "invite3d": "3 أيام",
+  "invite7d": "7 أيام",
+  "inviteEmail": "بريده الإلكتروني",
+  "inviteEmailHint": "إن كتبته، لا يُقبل الرابط إلا بهذا البريد.",
+  "inviteCreate": "إنشاء رابط الدعوة",
+  "inviteCreating": "جارٍ الإنشاء…",
+  "inviteReady": "الدعوة جاهزة. أرسل الرابط إلى الموظف؛ يظهر هنا مرة واحدة فقط.",
+  "inviteExpires": "ينتهي في {date}",
+  "@inviteExpires": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteHowTo": "يفتح الموظف الرابط، يكتب اسمه وبريده وكلمة مرور، ثم يدخل من تطبيق حسبة.",
+  "inviteCopy": "نسخ الرابط",
+  "inviteCopied": "نُسخ الرابط.",
+  "inviteWhatsapp": "إرسال عبر واتساب",
+  "inviteWhatsappText": "دعوة للانضمام إلى متجر «{store}» على حسبة كـ{role}. افتح الرابط وأنشئ حسابك:\n{link}",
+  "@inviteWhatsappText": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteWhatsappFailed": "تعذّر فتح واتساب. انسخ الرابط وأرسله بأي طريقة.",
+  "inviteDone": "تم",
+  "storeTitle": "بيانات المحل",
+  "storeName": "اسم المحل",
+  "storePhone": "هاتف المحل",
+  "storePhoneHint": "مثل 0599123456",
+  "storeAddress": "العنوان",
+  "storeArea": "المنطقة أو المدينة",
+  "storeReceiptNote": "تظهر هذه البيانات أعلى كل إيصال.",
+  "storeSave": "حفظ التغييرات",
+  "storeSaved": "حُفظت بيانات المحل.",
+  "storeOwnerOnly": "تعديل بيانات المحل للمالك فقط.",
+  "storeLoadError": "تعذّر تحميل بيانات المحل. تحقق من الاتصال ثم أعد المحاولة.",
+  "pwTitle": "تغيير كلمة المرور",
+  "pwCurrent": "كلمة المرور الحالية",
+  "pwNew": "كلمة المرور الجديدة",
+  "pwConfirm": "تأكيد كلمة المرور الجديدة",
+  "pwHelp": "8 أحرف على الأقل. سيُسجَّل خروجك من الأجهزة الأخرى، ويبقى هذا الجوال داخلاً.",
+  "pwSave": "تغيير كلمة المرور",
+  "pwDone": "تم تغيير كلمة المرور، وسُجّل الخروج من الأجهزة الأخرى.",
+  "pwCurrentRequired": "اكتب كلمة المرور الحالية.",
+  "pwShort": "كلمة المرور 8 أحرف على الأقل.",
+  "pwMismatch": "تأكيد كلمة المرور لا يطابقها.",
+  "salesTitle": "سجل المبيعات",
+  "salesToday": "اليوم",
+  "sales7": "آخر 7 أيام",
+  "sales30": "آخر 30 يوماً",
+  "salesAll": "الكل",
+  "salesEmpty": "لا مبيعات في هذه الفترة.",
+  "salesLoadError": "تعذّر تحميل المبيعات. تحقق من الاتصال ثم أعد المحاولة.",
+  "salesMore": "عرض المزيد",
+  "salesMoreError": "تعذّر تحميل المزيد. اضغط للمحاولة مرة أخرى.",
+  "salesWalkIn": "بلا زبون",
+  "salesItems": "{count, plural, =1{صنف واحد} =2{صنفان} few{{count} أصناف} many{{count} صنفاً} other{{count} صنف}}",
+  "@salesItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "saleStatusPaid": "مدفوعة",
+  "saleStatusCredit": "دين",
+  "saleStatusPartial": "دفع جزئي",
+  "prodDetailError": "تعذّر تحميل المنتج. تحقق من الاتصال ثم أعد المحاولة.",
+  "prodStockNowLabel": "المخزون الآن",
+  "prodMinimumLabel": "تنبيه عند {qty}",
+  "@prodMinimumLabel": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "prodCostLabel": "التكلفة {price}",
+  "@prodCostLabel": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "prodPackLabel": "كرتونة {size} قطعة بـ {price}",
+  "@prodPackLabel": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "prodEdit": "تعديل المنتج",
+  "prodAdjust": "جرد أو تعديل المخزون",
+  "prodMovements": "حركات المخزون",
+  "prodNoMovements": "لا حركات بعد.",
+  "prodDeactivate": "إيقاف المنتج",
+  "prodDeactivateTitle": "إيقاف «{name}»؟",
+  "@prodDeactivateTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "prodDeactivateBody": "لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل.",
+  "prodDeactivated": "أُوقف «{name}».",
+  "@prodDeactivated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "prodInactiveNote": "هذا المنتج موقوف: لا يُباع ولا يظهر في القائمة.",
+  "prodSaved": "حُفظت التعديلات.",
+  "prodViewOnly": "تعديل المنتجات والمخزون للمالك أو المدير.",
+  "moveOpening": "رصيد افتتاحي",
+  "moveSale": "بيع",
+  "moveVoid": "إلغاء فاتورة",
+  "moveReturn": "مرتجع",
+  "moveIn": "تعديل: زيادة",
+  "moveOut": "تعديل: خصم",
+  "moveAfter": "بعدها {qty}",
+  "@moveAfter": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "adjTitle": "تعديل مخزون «{name}»",
+  "@adjTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "adjCount": "جرد الرف",
+  "adjDelta": "إضافة أو خصم",
+  "adjCartons": "استلام كراتين",
+  "adjCountLabel": "كم يوجد الآن فعلياً؟ ({unit})",
+  "@adjCountLabel": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "adjDeltaLabel": "الكمية ({unit})، بإشارة سالبة للخصم",
+  "@adjDeltaLabel": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "adjCartonsLabel": "عدد الكراتين المستلمة ({size} قطعة لكل كرتونة)",
+  "@adjCartonsLabel": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "adjReason": "السبب",
+  "adjReasonCount": "جرد الرف",
+  "adjReasonDamaged": "تالف أو منتهي الصلاحية",
+  "adjReasonReceived": "استلام بضاعة",
+  "adjReasonFix": "تصحيح خطأ إدخال",
+  "adjPreview": "المسجّل {from} ← بعد التعديل {to}",
+  "@adjPreview": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "adjNoChange": "العدد مطابق للمسجّل؛ لا شيء لتعديله.",
+  "adjNegative": "المخزون لا يصبح سالباً بالتعديل.",
+  "adjInvalidPiece": "عدد صحيح للمنتج بالقطعة.",
+  "adjInvalidKg": "حتى 3 خانات عشرية.",
+  "adjSave": "حفظ التعديل",
+  "adjDone": "عُدّل المخزون. الآن {stock}",
+  "@adjDone": {
+    "placeholders": {
+      "stock": {
+        "type": "String"
+      }
+    }
+  },
+  "lowTitle": "منتجات قاربت على النفاد",
+  "lowEmpty": "كل المنتجات فوق الحد الأدنى للتنبيه.",
+  "lowRow": "المخزون {stock} · التنبيه عند {min}",
+  "@lowRow": {
+    "placeholders": {
+      "stock": {
+        "type": "String"
+      },
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "negTitle": "مخزون سالب للمراجعة",
+  "negEmpty": "لا منتجات بمخزون سالب.",
+  "negHelp": "بيعت هذه المنتجات بأكثر مما هو مسجّل. عُدّ الرف ثم صحّح المخزون من صفحة المنتج.",
+  "negSale": "فاتورة #{id} · {qty}",
+  "@negSale": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      },
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "listLoadError": "تعذّر التحميل. تحقق من الاتصال ثم أعد المحاولة."
 }
