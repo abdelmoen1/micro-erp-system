@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Icon from "../components/Icon";
 import { ConfirmSummary, Crumbs, Dialog, ErrorBanner, ErrorState, MoneyText, ReasonField, StatusBadge } from "../components/ui";
-import { dateOnly, dateTime, isPositiveAmount, shekel } from "../lib/format";
+import { dateOnly, dateTime, isPositiveAmount, latinDigits, shekel } from "../lib/format";
 import { newIdempotencyKey, session } from "../services/apiClient";
 import { useReturnSale, useSale, useVoidSale } from "../services/backoffice";
 import { canManage, saleType } from "../lib/domain";
@@ -291,7 +291,7 @@ function ReturnDialog({ sale, onClose }) {
                         inputMode="decimal"
                         aria-label={`الكمية المرتجعة من ${c.item.item_name} بالكغ`}
                         value={c.text}
-                        onChange={(e) => setQty({ ...qty, [c.item.id]: e.target.value })}
+                        onChange={(e) => setQty({ ...qty, [c.item.id]: latinDigits(e.target.value) })}
                       />
                     ) : (
                       <div className="qty">

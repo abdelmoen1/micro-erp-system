@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import Icon from "../components/Icon";
 import { ConfirmSummary, Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, Field, Segments, StatusBadge } from "../components/ui";
 import { newIdempotencyKey, session } from "../services/apiClient";
-import { lookupCatalog, useAdjustStock, useDeactivateProduct, useMovements, useProduct, useSaveProduct } from "../services/backoffice";
+import { lookupCatalog, useAdjustStock, useMovements, useProduct, useProductStatus, useSaveProduct } from "../services/backoffice";
 import { canManage, stockState } from "../lib/domain";
-import { dateTime } from "../lib/format";
+import { dateTime, latinDigits } from "../lib/format";
 
 const MOVEMENT = {
   opening: "رصيد افتتاحي",
@@ -40,7 +41,8 @@ export default function ProductDetail() {
   const manager = canManage(session.user());
   const product = useProduct(isNew ? null : id);
   const movements = useMovements(isNew ? null : id);
-  const deactivate = useDeactivateProduct();
+  const status = useProductStatus();
+  const [confirmStop, setConfirmStop] = useState(false);
 
   if (!isNew && product.isError) return <ErrorState error={product.error} title="تعذّر فتح المنتج" onRetry={() => product.refetch()} />;
   if (!isNew && product.isPending) return <div className="card sk" style={{ height: 320 }} />;
@@ -70,8 +72,18 @@ export default function ProductDetail() {
                 {p.current_stock}
               </b>
               <span>{p.unit === "kg" ? "كغ" : "قطعة"}</span>
-              <StatusBadge status={stockState(p)} />
+              {p.status === "inactive" ? <StatusBadge status="inactive" label="موقوف" /> : <StatusBadge status={stockState(p)} />}
             </div>
+            {p.status === "inactive" ? (
+              <div role="status" className="banner tone-pending">
+                <Icon name="ban" size={20} />
+                <span>
+                  هذا المنتج موقوف: لا يظهر في البيع ولا في قائمة المنتجات.
+                  {manager ? <span className="sub">أعِده ليرجع كما كان بسعره ومخزونه.</span> : null}
+                </span>
+              </div>
+            ) : null}
+            <ErrorBanner error={status.error} />
             <DataTable
               query={movements}
               rows={movements.data ?? []}
@@ -109,8 +121,12 @@ export default function ProductDetail() {
               ]}
               empty={<EmptyState icon="products" title="لا حركات بعد" />}
             />
-            {manager && p.status === "active" ? (
-              <button type="button" className="btn btn-t danger" disabled={deactivate.isPending} onClick={() => deactivate.mutate(p.id)} style={{ alignSelf: "flex-start" }}>
+            {manager && p.status === "inactive" ? (
+              <button type="button" className="btn btn-p btn-sm" disabled={status.isPending} onClick={() => status.mutate({ id: p.id, active: true })} style={{ alignSelf: "flex-start" }}>
+                {status.isPending ? "جارٍ الإعادة…" : "إعادة تفعيل المنتج"}
+              </button>
+            ) : manager ? (
+              <button type="button" className="btn btn-t danger" onClick={() => setConfirmStop(true)} style={{ alignSelf: "flex-start" }}>
                 إيقاف المنتج
               </button>
             ) : null}
@@ -118,6 +134,25 @@ export default function ProductDetail() {
         ) : null}
       </div>
       {adjusting ? <AdjustDialog product={p} onClose={() => setParams({})} /> : null}
+      {confirmStop ? (
+        <Dialog title={`إيقاف «${p.name}»؟`} role="alertdialog" tone="warning" icon="ban" onClose={() => setConfirmStop(false)}>
+          <p>لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل.</p>
+          <p className="field-hint">تستطيع إعادته متى شئت من «المنتجات ← موقوفة»، فيرجع كما كان.</p>
+          <div className="dlg-actions">
+            <button
+              type="button"
+              className="btn btn-dd"
+              disabled={status.isPending}
+              onClick={() => status.mutate({ id: p.id, active: false }, { onSuccess: () => setConfirmStop(false) })}
+            >
+              {status.isPending ? "جارٍ الإيقاف…" : "إيقاف المنتج"}
+            </button>
+            <button type="button" className="btn btn-g" onClick={() => setConfirmStop(false)}>
+              رجوع
+            </button>
+          </div>
+        </Dialog>
+      ) : null}
     </>
   );
 }
@@ -155,7 +190,16 @@ function ProductForm({ product, manager, onSaved }) {
   };
   const err = (field) => save.error?.fieldError?.(field);
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  // Numbers typed on an Arabic keyboard (٢٫٥) are kept as 2.5.
+  const setNumber = (field) => (e) => setForm({ ...form, [field]: latinDigits(e.target.value) });
   const readOnly = !manager;
+  const formRef = useRef(null);
+  const priceUnit = form.unit === "kg" ? "كيلو واحد" : "قطعة واحدة";
+
+  // A refused save moves to the first field the server marked, so the message is never off-screen.
+  useEffect(() => {
+    if (save.error && Object.keys(save.error.errors ?? {}).length) formRef.current?.querySelector('[aria-invalid="true"]')?.focus();
+  }, [save.error]);
 
   const submit = (e) => {
     e.preventDefault();
@@ -178,13 +222,13 @@ function ProductForm({ product, manager, onSaved }) {
   };
 
   return (
-    <form className="card panel form-stack" style={{ flex: "1 1 420px" }} onSubmit={submit} noValidate>
+    <form ref={formRef} className="card panel form-stack" style={{ flex: "1 1 420px" }} onSubmit={submit} noValidate>
       <h1 style={{ fontSize: 22 }}>{product ? product.name : "منتج جديد"}</h1>
-      <Field id="pf-name" label="اسم المنتج" error={err("name")}>
-        <input id="pf-name" className={`fld${err("name") ? " err" : ""}`} value={form.name} onChange={set("name")} readOnly={readOnly} />
+      <Field id="pf-name" label="اسم المنتج" required={!readOnly} error={err("name")}>
+        <input id="pf-name" className="fld" value={form.name} onChange={set("name")} readOnly={readOnly} />
       </Field>
       <Field id="pf-barcode" label="الباركود" optional error={err("barcode")}>
-        <input id="pf-barcode" className={`fld ltr m${err("barcode") ? " err" : ""}`} value={form.barcode} onChange={set("barcode")} onBlur={checkCatalog} readOnly={readOnly} />
+        <input id="pf-barcode" className="fld ltr m" value={form.barcode} onChange={setNumber("barcode")} onBlur={checkCatalog} readOnly={readOnly} />
       </Field>
       {match?.product ? (
         <p role="status" className="banner tone-pending">
@@ -212,20 +256,26 @@ function ProductForm({ product, manager, onSaved }) {
           ]}
           onChange={(unit) => !readOnly && setForm({ ...form, unit })}
         />
-        {err("unit") ? <span className="field-error">{err("unit")}</span> : <span className="field-hint">السعر لكل {form.unit === "kg" ? "كغ، والكمية حتى 3 خانات عشرية" : "قطعة"}.</span>}
+        {err("unit") ? <span className="field-error">{err("unit")}</span> : <span className="field-hint">{form.unit === "kg" ? "الأسعار لكل كيلو، والكمية حتى 3 خانات عشرية." : "الأسعار والكمية بالقطعة."}</span>}
       </div>
       <div className="grid2">
-        <Field id="pf-price" label={form.unit === "kg" ? "سعر البيع لكل كغ" : "سعر البيع"} error={err("selling_price")}>
-          <input id="pf-price" className="fld ltr m" inputMode="decimal" value={form.selling_price} onChange={set("selling_price")} readOnly={readOnly} />
+        <Field id="pf-price" label="السعر للزبون (سعر البيع)" required={!readOnly} error={err("selling_price")} hint={`ما يدفعه الزبون مقابل ${priceUnit}.`}>
+          <input id="pf-price" className="fld ltr m" inputMode="decimal" value={form.selling_price} onChange={setNumber("selling_price")} readOnly={readOnly} />
         </Field>
-        <Field id="pf-cost" label="سعر الشراء" optional error={err("cost_price")}>
-          <input id="pf-cost" className="fld ltr m" inputMode="decimal" value={form.cost_price ?? ""} onChange={set("cost_price")} readOnly={readOnly} />
+        <Field id="pf-cost" label="تكلفة المنتج عليك (سعر الشراء)" optional error={err("cost_price")} hint="ما تدفعه أنت للمورّد. لا يظهر للزبون.">
+          <input id="pf-cost" className="fld ltr m" inputMode="decimal" value={form.cost_price ?? ""} onChange={setNumber("cost_price")} readOnly={readOnly} />
         </Field>
-        <Field id="pf-stock" label={product ? "المخزون الحالي" : "المخزون الآن"} error={err("current_stock")} hint={product ? "يتغير بالبيع أو بتعديل المخزون مع سبب." : null}>
-          <input id="pf-stock" className="fld ltr m" inputMode="decimal" value={form.current_stock} onChange={set("current_stock")} readOnly={Boolean(product) || readOnly} />
+        <Field
+          id="pf-stock"
+          label={product ? "المخزون الحالي" : "الكمية الموجودة الآن"}
+          required={!product && !readOnly}
+          error={err("current_stock")}
+          hint={product ? "يتغير بالبيع أو بتعديل المخزون مع سبب." : null}
+        >
+          <input id="pf-stock" className="fld ltr m" inputMode={form.unit === "kg" ? "decimal" : "numeric"} value={form.current_stock} onChange={setNumber("current_stock")} readOnly={Boolean(product) || readOnly} />
         </Field>
-        <Field id="pf-min" label="الحد الأدنى للتنبيه" optional error={err("minimum_stock")}>
-          <input id="pf-min" className="fld ltr m" inputMode="decimal" value={form.minimum_stock} onChange={set("minimum_stock")} readOnly={readOnly} />
+        <Field id="pf-min" label="نبّهني عندما يصل المخزون إلى" optional error={err("minimum_stock")} hint="يظهر المنتج في «مخزون منخفض» عند هذا الرقم أو أقل.">
+          <input id="pf-min" className="fld ltr m" inputMode={form.unit === "kg" ? "decimal" : "numeric"} value={form.minimum_stock} onChange={setNumber("minimum_stock")} readOnly={readOnly} />
         </Field>
       </div>
       {form.unit === "piece" ? <PackFields form={form} setForm={setForm} err={err} readOnly={readOnly} /> : null}
@@ -282,10 +332,10 @@ function PackFields({ form, setForm, err, readOnly }) {
       {form.has_pack ? (
         <div className="grid2">
           <Field id="pf-pack-size" label="عدد القطع في الكرتونة" error={err("pack_size")}>
-            <input id="pf-pack-size" className="fld ltr m" inputMode="numeric" value={form.pack_size} onChange={(e) => setForm({ ...form, pack_size: e.target.value })} readOnly={readOnly} />
+            <input id="pf-pack-size" className="fld ltr m" inputMode="numeric" value={form.pack_size} onChange={(e) => setForm({ ...form, pack_size: latinDigits(e.target.value) })} readOnly={readOnly} />
           </Field>
           <Field id="pf-pack-price" label="سعر الكرتونة كاملة" error={err("pack_price")} hint={err("pack_price") ? null : hint}>
-            <input id="pf-pack-price" className="fld ltr m" inputMode="decimal" value={form.pack_price} onChange={(e) => setForm({ ...form, pack_price: e.target.value })} readOnly={readOnly} />
+            <input id="pf-pack-price" className="fld ltr m" inputMode="decimal" value={form.pack_price} onChange={(e) => setForm({ ...form, pack_price: latinDigits(e.target.value) })} readOnly={readOnly} />
           </Field>
         </div>
       ) : null}
@@ -351,7 +401,7 @@ function AdjustDialog({ product, onClose }) {
               : adjust.error?.fieldError?.("quantity")
           }
         >
-          <input id="adj-qty" className="fld ltr m" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} style={{ fontSize: 20, fontWeight: 600 }} />
+          <input id="adj-qty" className="fld ltr m" inputMode="decimal" value={value} onChange={(e) => setValue(latinDigits(e.target.value))} style={{ fontSize: 20, fontWeight: 600 }} />
         </Field>
         <Field id="adj-reason" label="السبب" error={adjust.error?.fieldError?.("reason")}>
           <select id="adj-reason" className="fld" value={reason} onChange={(e) => setReason(e.target.value)}>

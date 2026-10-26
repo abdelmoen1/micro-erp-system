@@ -7,6 +7,7 @@ import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/ltr_value.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../sale/presentation/sale_detail_screen.dart';
 import '../../sale/presentation/sale_widgets.dart';
 import '../domain/customer.dart';
 import '../domain/ledger.dart';
@@ -189,10 +190,20 @@ class _DebtRow extends StatelessWidget {
     final t = AppLocalizations.of(context);
     final overdue = debt.isOverdue(DateTime.now());
     final due = debt.dueDate;
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
+    // A sale's debt opens that invoice in full; an opening debt has no lines to show.
+    final invoiceId = debt.isOpening ? null : debt.invoiceId;
+    return InkWell(
+      key: Key('customer.debt.${debt.id}'),
+      onTap: invoiceId == null
+          ? null
+          : () => Navigator.of(
+              context,
+              rootNavigator: true,
+            ).push(MaterialPageRoute<void>(builder: (_) => SaleDetailScreen(saleId: invoiceId))),
+      child: Padding(
+        padding: EdgeInsetsDirectional.fromSTEB(12, 12, invoiceId == null ? 12 : 4, 12),
+        child: Row(
+          children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +229,9 @@ class _DebtRow extends StatelessWidget {
               ),
             ],
           ),
-        ],
+            if (invoiceId != null) const Icon(Icons.chevron_left_rounded, color: HisbahColors.inkMuted),
+          ],
+        ),
       ),
     );
   }

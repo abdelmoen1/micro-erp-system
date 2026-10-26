@@ -266,6 +266,10 @@ a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border
 .note { padding: 12px 14px; border-radius: 12px; background: var(--ground); font-size: 13px; line-height: 1.7; color: var(--ink-muted); }
 .note.ok { display: flex; gap: 10px; align-items: flex-start; background: var(--success-bg); color: var(--success-fg); }
 .note.ok svg { flex: none; margin-top: 2px; }
+/* Renewal without a support number: what to tell the Hisbah team, selectable and copyable. */
+.contact-details { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--raised); }
+.contact-details .contact-lines { margin: 0; font-size: 14px; line-height: 1.8; user-select: text; }
+.ltr-inline { direction: ltr; unicode-bidi: isolate; }
 .join-actions { display: flex; flex-direction: row-reverse; gap: 12px; }
 .join-actions .btn-p { flex: 1; }
 .join-actions .btn-ghost { flex: none; }

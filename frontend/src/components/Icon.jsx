@@ -6,6 +6,7 @@ const PATHS = {
   ban: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM5.6 5.6l12.8 12.8",
   ok: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM8 12l3 3 5-6",
   check: "M20 6 9 17l-5-5",
+  copy: "M9 9h11v11H9zM5 15H4V4h11v1",
   dot: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
   eye: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
   eyeOff: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 3l18 18",
@@ -36,6 +37,7 @@ const PATHS = {
   calendar: "M4 6h16v14H4zM4 10h16M8 3v5M16 3v5",
   trash: "M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6",
   close: "M6 6l12 12M18 6 6 18",
+  settings: "M4 6h9M17 6h3M15 4v4M4 12h3M11 12h9M9 10v4M4 18h11M19 18h1M17 16v4",
 };
 
 export default function Icon({ name, size = 20, color = "currentColor", strokeWidth = 2, className, title }) {

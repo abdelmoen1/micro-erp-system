@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshop/app.dart';
@@ -376,6 +377,21 @@ void main() {
 
       expect(find.byKey(const Key('subscription.whatsapp')), findsNothing);
       expect(find.byKey(const Key('subscription.noNumber')), findsOneWidget);
+      expect(find.byKey(const Key('subscription.howTo')), findsOneWidget);
+
+      // Never a dead end: the store and the email to quote, copied with one tap.
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+        if (call.method == 'Clipboard.setData') copied = (call.arguments as Map)['text'] as String;
+        return null;
+      });
+      addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
+      expect(find.text('المتجر: Demo Shop\nالبريد: owner@demo.test'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('subscription.copy')));
+      await tester.tap(find.byKey(const Key('subscription.copy')));
+      await tester.pump();
+      expect(copied, 'المتجر: Demo Shop\nالبريد: owner@demo.test');
+      expect(find.text('نُسخت البيانات.'), findsOneWidget);
     });
 
     testWidgets('check again after the admin activates the subscription returns to the app', (tester) async {

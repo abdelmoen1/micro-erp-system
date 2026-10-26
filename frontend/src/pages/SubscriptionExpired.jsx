@@ -15,6 +15,40 @@ function whatsappLink(number, user) {
 }
 
 /**
+ * Without a support number the owner still has to say which store to activate: the store and the
+ * account email, ready to copy into any message.
+ */
+function ContactDetails({ user }) {
+  const [copied, setCopied] = useState(false);
+  const text = `المتجر: ${user.store?.name ?? ""}\nالبريد: ${user.email ?? ""}`;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch {
+      setCopied(false); // The details stay selectable on the page.
+    }
+  };
+  return (
+    <div className="contact-details">
+      <p className="field-hint">اذكر هذه البيانات عند التواصل:</p>
+      <p className="contact-lines">
+        المتجر: <b>{user.store?.name}</b>
+        <br />
+        البريد: <b className="ltr-inline">{user.email}</b>
+      </p>
+      <button type="button" className="btn btn-g btn-sm" onClick={copy}>
+        <Icon name={copied ? "check" : "copy"} size={16} />
+        <span>{copied ? "نُسخت البيانات" : "نسخ البيانات"}</span>
+      </button>
+      <span role="status" className="sr-only">
+        {copied ? "نُسخت البيانات." : ""}
+      </span>
+    </div>
+  );
+}
+
+/**
  * The renewal screen: the store's trial or paid subscription has ended. The session is kept and the
  * data is untouched; every business call is refused by the server (403 SUBSCRIPTION_EXPIRED) until
  * the platform admin activates the subscription. "Check again" returns to the dashboard once it is.
@@ -67,7 +101,7 @@ export default function SubscriptionExpired() {
               <h1 className="signin-title">{paid ? "انتهى اشتراك متجرك" : "انتهت الفترة التجريبية"}</h1>
               <p className="signin-sub">
                 {user?.store?.name ? `متجر «${user.store.name}»` : "متجرك"}
-                {endedOn ? `، منذ ${dateOnly(endedOn)}` : ""}
+                {endedOn ? `، انتهت في ${dateOnly(endedOn)}` : ""}
               </p>
             </div>
 
@@ -87,9 +121,14 @@ export default function SubscriptionExpired() {
               <a className="btn btn-p" href={whatsappLink(number, user)} target="_blank" rel="noopener noreferrer">
                 تواصل معنا عبر واتساب
               </a>
-            ) : (
-              <p className="signin-sub">تواصل مع إدارة حسبة لتفعيل الاشتراك.</p>
+            ) : sub.isPending ? null : (
+              // Only once the summary has answered: a support number may still be on its way.
+              <>
+                <p className="signin-sub">تواصل مع إدارة حسبة لتفعيل الاشتراك.</p>
+                {user ? <ContactDetails user={user} /> : null}
+              </>
             )}
+            <p className="field-hint">بعد الدفع تفعّل إدارة حسبة اشتراكك، ثم اضغط «تحقق من جديد» لتعود إلى متجرك.</p>
 
             <button type="button" className="btn btn-ghost" onClick={checkAgain} disabled={sub.isFetching} aria-busy={sub.isFetching}>
               {sub.isFetching ? <Spinner /> : null}

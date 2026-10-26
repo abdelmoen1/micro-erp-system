@@ -54,6 +54,7 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     // see why, and recover as soon as the platform admin activates the subscription.
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::patch('/me/password', [AuthController::class, 'changePassword'])->middleware('throttle:6,1');
     Route::get('/subscription', [SubscriptionController::class, 'show']);
 
     // Business routes: need a running trial or a valid paid subscription (403 SUBSCRIPTION_EXPIRED).

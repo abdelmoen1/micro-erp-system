@@ -78,7 +78,7 @@ Accept: application/json
 # Every new store gets a 7-day trial from its registration time (stores.trial_ends_at; HISBAH_TRIAL_DAYS).
 # The login / me responses carry user.store.has_access, user.store.subscription_state and user.store.trial_ends_at.
 # Once has_access is false (trial over without a paid subscription, or a paid one past its expiry), sign-in,
-# GET /me, GET /subscription and POST /logout still work; every other store route returns
+# GET /me, GET /subscription, PATCH /me/password and POST /logout still work; every other store route returns
 # 403 SUBSCRIPTION_EXPIRED with the same summary in `details`. Nothing is deleted; access returns as soon as the
 # platform admin activates the subscription (POST /admin/stores/{id}/subscription). A suspended store gets
 # 403 STORE_SUSPENDED instead (it wins over the subscription).
@@ -89,6 +89,28 @@ Accept: application/json
 # { "data": { "state": "trial|active|expired|inactive", "has_access": true, "trial_ends_at": "2026-11-01T09:30:15+00:00",
 #             "subscription_expires_at": null, "trial_days_left": 7, "support_whatsapp": "970599000000" } }
 # support_whatsapp comes from SUPPORT_WHATSAPP (digits; null when not set: the clients then hide the WhatsApp button).
+
+### 7c. Change my password — 200 (any role; 6 a minute)
+# The current password is required. This token stays signed in; every other token of the account is revoked.
+# 422 VALIDATION_FAILED: errors.current_password «كلمة المرور الحالية غير صحيحة.» (or, for a Google-only account
+# with no password, «حسابك يدخل بحساب Google، فليس له كلمة مرور لتغييرها.»); errors.password for a short,
+# unconfirmed or unchanged password.
+PATCH http://127.0.0.1:8000/api/v1/me/password
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{ "current_password": "Secret-pass-2026", "password": "New-pass-2026", "password_confirmation": "New-pass-2026" }
+
+### 7d. Store details — PATCH /my-store (owner only; 403 for managers and employees)
+# Every field is optional: name (required when sent), phone (0 + 8–9 digits, or null), address, area,
+# latitude/longitude (a pair), timezone. The name and phone are printed on receipts.
+PATCH http://127.0.0.1:8000/api/v1/my-store
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{ "name": "بقالة الأمانة", "phone": "0599123456", "address": "شارع عمر المختار", "area": "غزة" }
 
 ### 8. Old prefix is gone — 404 (no /api/* route outside /api/v1)
 POST http://127.0.0.1:8000/api/login

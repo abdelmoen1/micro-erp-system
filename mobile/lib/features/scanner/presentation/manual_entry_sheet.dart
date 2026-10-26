@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/hisbah_tokens.dart';
+import '../../../core/widgets/latin_digits.dart';
 import '../../../l10n/app_localizations.dart';
 import 'scan_sheets.dart';
 
@@ -104,6 +105,7 @@ class _ManualEntrySheetState extends State<ManualEntrySheet> {
             autofocus: true,
             enabled: !widget.busy,
             keyboardType: TextInputType.number,
+            inputFormatters: const [LatinDigitsFormatter()],
             textInputAction: TextInputAction.search,
             // Barcodes are LTR, typed exactly as printed under the bars.
             textDirection: TextDirection.ltr,

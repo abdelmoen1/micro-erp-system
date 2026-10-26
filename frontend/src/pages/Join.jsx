@@ -7,7 +7,7 @@ import HisbahLogo from "../components/HisbahLogo";
 import Icon from "../components/Icon";
 import { GOOGLE_CLIENT_ID } from "../lib/google";
 import { landingPath } from "../lib/domain";
-import { shortReference } from "../lib/format";
+import { latinDigits, shortReference } from "../lib/format";
 import { ApiError, NetworkError } from "../services/apiClient";
 import { useGoogleMutation, useGoogleRegisterMutation, useRegisterMutation } from "../services/useAuth";
 
@@ -173,7 +173,8 @@ export default function Join() {
   const last = step === STEPS.length - 1;
 
   const set = (key) => (event) => {
-    const value = event.target.value;
+    // A phone typed on an Arabic keyboard (٠٥٩…) is kept as 059….
+    const value = key === "phone" ? latinDigits(event.target.value) : event.target.value;
     setV((old) => ({ ...old, [key]: value }));
     setErrors((old) => ({ ...old, [key]: undefined }));
   };

@@ -5,6 +5,7 @@ import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
+import '../../../core/widgets/latin_digits.dart';
 import '../../../core/widgets/ltr_value.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../l10n/app_localizations.dart';
@@ -112,6 +113,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _packPrice = TextEditingController();
   bool _pack = false;
   ProductUnit _unit = ProductUnit.piece;
+
+  /// In screen order: a failed check focuses the first field with an error, which also scrolls it
+  /// into view above the keyboard.
+  final _focus = {
+    for (final key in const [
+      'name',
+      'barcode',
+      'selling_price',
+      'cost_price',
+      'pack_size',
+      'pack_price',
+      'current_stock',
+      'minimum_stock',
+    ])
+      key: FocusNode(),
+  };
   _Stage _stage = _Stage.form;
   Product? _existing;
   Product? _saved;
@@ -119,6 +136,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   bool _fromCatalog = false;
   String? _banner;
   Map<String, String> _errors = const {};
+
+  /// The person typed or changed something: leaving asks first.
+  bool _edited = false;
 
   ProductCodeData? get _data => widget.payload is ProductCodeData ? widget.payload as ProductCodeData : null;
 
@@ -142,6 +162,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   void dispose() {
     for (final c in [_name, _barcode, _price, _cost, _stock, _minimum, _packSize, _packPrice]) {
       c.dispose();
+    }
+    for (final node in _focus.values) {
+      node.dispose();
     }
     super.dispose();
   }
@@ -190,7 +213,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       _errors = errors;
       _banner = null;
     });
-    if (errors.isNotEmpty) return;
+    if (errors.isNotEmpty) return _focusFirstError();
     setState(() => _stage = _Stage.saving);
     try {
       final product = await ref
@@ -223,6 +246,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         };
         if (_errors.isEmpty) _banner = failure.message ?? t.formFailed;
       });
+      _focusFirstError();
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       setState(() {
@@ -233,6 +257,23 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           _ => failure.message ?? t.formFailed,
         };
       });
+    }
+  }
+
+  void _setUnit(ProductUnit unit) => setState(() {
+    _unit = unit;
+    _edited = true;
+  });
+
+  void _focusFirstError() {
+    for (final entry in _focus.entries) {
+      if (_errors.containsKey(entry.key)) {
+        // After the frame that shows the errors (and the fields of an opened carton section).
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && entry.value.context != null) entry.value.requestFocus();
+        });
+        return;
+      }
     }
   }
 
@@ -248,8 +289,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final guarded = _stage == _Stage.form && _edited;
     return PopScope(
-      canPop: _stage != _Stage.saving,
+      canPop: _stage != _Stage.saving && !guarded,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || !guarded) return;
+        final navigator = Navigator.of(context);
+        if (await confirmDiscard(context)) navigator.pop(false);
+      },
       child: Scaffold(
         appBar: AppBar(title: Text(_stage == _Stage.duplicate ? t.addExistsTitle : t.formNewTitle)),
         body: SafeArea(
@@ -373,33 +420,39 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       TextEditingController controller, {
       bool optional = false,
       bool number = false,
+      bool whole = false,
       String? hint,
+      String? helper,
     }) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Wraps on narrow screens: label, «optional» and the «from code» chip can all be present.
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              if (optional)
-                Text('  (${t.formOptional})', style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
-              if (fromCode.contains(key)) ...[const SizedBox(width: 6), FromCodeChip(label: t.addFromCode)],
-            ],
-          ),
+          FieldLabel(label: label, required: !optional, fromCode: fromCode.contains(key)),
           const SizedBox(height: 6),
           TextField(
             key: Key('form.$key'),
             controller: controller,
+            focusNode: _focus[key],
             enabled: !saving,
-            keyboardType: number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+            onChanged: (_) {
+              if (!_edited) setState(() => _edited = true);
+            },
+            textInputAction: TextInputAction.next,
+            keyboardType: !number
+                ? TextInputType.text
+                : whole
+                ? TextInputType.number
+                : const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: number || key == 'barcode' ? const [LatinDigitsFormatter()] : null,
             textDirection: number || key == 'barcode' ? TextDirection.ltr : null,
             textAlign: number || key == 'barcode' ? TextAlign.left : TextAlign.start,
             decoration: InputDecoration(
               hintText: hint,
+              helperText: helper,
+              helperMaxLines: 3,
               errorText: _errors[key],
+              errorMaxLines: 3,
               filled: true,
               fillColor: HisbahColors.raised,
             ),
@@ -456,20 +509,26 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   OptionButton(
                     label: t.formByPiece,
                     selected: _unit == ProductUnit.piece,
-                    onTap: saving ? null : () => setState(() => _unit = ProductUnit.piece),
+                    onTap: saving ? null : () => _setUnit(ProductUnit.piece),
                   ),
                   OptionButton(
                     label: t.formByKg,
                     selected: _unit == ProductUnit.kg,
-                    onTap: saving ? null : () => setState(() => _unit = ProductUnit.kg),
+                    onTap: saving ? null : () => _setUnit(ProductUnit.kg),
                   ),
                 ],
               ),
               if (_errors['unit'] != null)
                 Text(_errors['unit']!, style: TextStyle(color: StatusTone.error.fg, fontSize: 13)),
               const SizedBox(height: 12),
-              field('selling_price', t.formPrice, _price, number: true),
-              field('cost_price', t.formCost, _cost, optional: true, number: true),
+              field(
+                'selling_price',
+                t.formPrice,
+                _price,
+                number: true,
+                helper: _unit == ProductUnit.kg ? t.formPriceHelpKg : t.formPriceHelpPiece,
+              ),
+              field('cost_price', t.formCost, _cost, optional: true, number: true, helper: t.formCostHelp),
               if (_unit == ProductUnit.piece)
                 // The per-piece hint follows what is typed in the three price / size fields.
                 ListenableBuilder(
@@ -482,11 +541,26 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     price: _packPrice,
                     piecePrice: _price.text,
                     errors: _errors,
-                    fieldBuilder: (key, label, controller) => field(key, label, controller, number: true),
+                    fieldBuilder: (key, label, controller) =>
+                        field(key, label, controller, number: true, whole: key == 'pack_size'),
                   ),
                 ),
-              field('current_stock', t.formStock, _stock, number: true),
-              field('minimum_stock', t.formMin, _minimum, optional: true, number: true),
+              field(
+                'current_stock',
+                t.invOpeningStock(_unit == ProductUnit.kg ? t.prodPerKg : t.prodPerPiece),
+                _stock,
+                number: true,
+                whole: _unit == ProductUnit.piece,
+              ),
+              field(
+                'minimum_stock',
+                t.formMin,
+                _minimum,
+                optional: true,
+                number: true,
+                whole: _unit == ProductUnit.piece,
+                helper: t.formMinHelp,
+              ),
             ],
           ),
         ),
@@ -627,6 +701,74 @@ class PackSection extends StatelessWidget {
     if (filled.contains('unit')) t.addFieldUnit,
   ];
   return (StatusTone.info, t.addReadFields(names.join('، ')));
+}
+
+/// «Discard what you typed?» before a back gesture or a close throws away an unsaved product.
+/// True when the person chose to leave.
+Future<bool> confirmDiscard(BuildContext context) async {
+  final t = AppLocalizations.of(context);
+  final leave = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(t.discardTitle),
+      content: Text(t.discardBody),
+      actions: [
+        TextButton(
+          key: const Key('discard.keep'),
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(t.discardKeep),
+        ),
+        TextButton(
+          key: const Key('discard.leave'),
+          onPressed: () => Navigator.of(context).pop(true),
+          style: TextButton.styleFrom(foregroundColor: StatusTone.error.fg),
+          child: Text(t.discardConfirm),
+        ),
+      ],
+    ),
+  );
+  return leave ?? false;
+}
+
+/// A field's label: «*» on the fields the server requires (read as «مطلوب»), «(اختياري)» on the
+/// others, and the «from the code» chip when the scan filled it. Wraps on narrow screens.
+class FieldLabel extends StatelessWidget {
+  const FieldLabel({super.key, required this.label, this.required = false, this.fromCode = false});
+
+  final String label;
+  final bool required;
+  final bool fromCode;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 6,
+      children: [
+        Text.rich(
+          TextSpan(
+            text: label,
+            children: [
+              if (required)
+                TextSpan(
+                  text: ' *',
+                  semanticsLabel: ' ${t.formRequiredA11y}',
+                  style: TextStyle(color: StatusTone.error.fg),
+                ),
+              if (!required)
+                TextSpan(
+                  text: '  (${t.formOptional})',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: HisbahColors.inkMuted),
+                ),
+            ],
+          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        if (fromCode) FromCodeChip(label: t.addFromCode),
+      ],
+    );
+  }
 }
 
 class FromCodeChip extends StatelessWidget {

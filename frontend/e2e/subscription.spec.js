@@ -71,4 +71,9 @@ test("a 403 SUBSCRIPTION_EXPIRED on any store page goes to the renewal screen; n
   await expect(page.getByRole("heading", { name: "انتهى اشتراك متجرك" })).toBeVisible();
   await expect(page.getByRole("link", { name: "تواصل معنا عبر واتساب" })).toHaveCount(0);
   await expect(page.getByText("تواصل مع إدارة حسبة لتفعيل الاشتراك.")).toBeVisible();
+  // Never a dead end: the store to name, and what happens after paying.
+  await expect(page.getByText("اذكر هذه البيانات عند التواصل:")).toBeVisible();
+  await expect(page.getByText(expiredUser.email)).toBeVisible();
+  await expect(page.getByRole("button", { name: "نسخ البيانات" })).toBeVisible();
+  await expect(page.getByText("ثم اضغط «تحقق من جديد» لتعود إلى متجرك.", { exact: false })).toBeVisible();
 });

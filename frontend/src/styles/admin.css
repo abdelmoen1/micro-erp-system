@@ -70,6 +70,11 @@
 .state-text { font-size: 15px; color: var(--ink-muted); max-width: 52ch; line-height: 1.7; }
 .split { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
 .split > * { min-width: 0; }
+/* Settings: a row that opens another back-office page. */
+.settings-link { flex-direction: row; align-items: center; gap: 14px; color: var(--ink); text-decoration: none; }
+.settings-link > span { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.settings-link small { font-size: 13px; color: var(--ink-muted); }
+.settings-link:hover { box-shadow: 0 0 0 1px var(--accent-600), var(--sh-sm); }
 .profile { padding: 20px; display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; justify-content: space-between; }
 .avatar-lg {
   width: 52px; height: 52px; border-radius: 50%; background: var(--primary-tint); color: var(--primary);

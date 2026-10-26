@@ -61,6 +61,36 @@ class ProductRepository {
     return [for (final row in data) Product.fromJson(row as Map<String, dynamic>)];
   }
 
+  Future<Product> product(int id) async {
+    final body = await _api.get('/products/$id');
+    return Product.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  /// The product's stock ledger, newest first (every role may read it). First 20 movements.
+  Future<List<StockMove>> movements(int productId) async {
+    final body = await _api.get('/products/$productId/movements');
+    return [for (final row in body['data'] as List<dynamic>? ?? const []) StockMove.fromJson(row as Map<String, dynamic>)];
+  }
+
+  /// PATCH /products/{id} (Owner / Manager): only the fields given change; the stock never does
+  /// (it moves by sales and adjustments only).
+  Future<Product> update(int id, Map<String, Object?> fields) async {
+    final body = await _api.patch('/products/$id', body: fields);
+    return Product.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  /// Stops selling the product; its history stays.
+  Future<void> deactivate(int id) => _api.post('/products/$id/deactivate');
+
+  /// Products sold below zero, with their last sales, for the owner's review (D-27).
+  Future<List<NegativeStockItem>> negativeStock() async {
+    final body = await _api.get('/products/negative-stock');
+    return [
+      for (final row in body['data'] as List<dynamic>? ?? const [])
+        NegativeStockItem.fromJson(row as Map<String, dynamic>),
+    ];
+  }
+
   /// S3 · QR add: POST /products (Owner / Manager). Field problems come back as `ValidationFailed`
   /// (a barcode already used, a fraction for a piece product, …) and an employee gets `Forbidden`.
   Future<Product> create(NewProduct draft) async {
@@ -119,4 +149,56 @@ class NewProduct {
     'minimum_stock': ?(minimumStock?.trim().isEmpty ?? true ? null : minimumStock!.trim()),
     if (_hasPack && unit == ProductUnit.piece) ...{'pack_size': packSize!.trim(), 'pack_price': packPrice!.trim()},
   };
+}
+
+/// One line of a product's stock ledger (GET /products/{id}/movements).
+class StockMove {
+  const StockMove({
+    required this.type,
+    required this.quantity,
+    required this.balanceAfter,
+    this.reason,
+    this.invoiceId,
+    this.createdAt,
+  });
+
+  factory StockMove.fromJson(Map<String, dynamic> json) => StockMove(
+    type: json['type'] as String? ?? '',
+    quantity: Quantity.parse(json['quantity'] ?? '0'),
+    balanceAfter: Quantity.parse(json['balance_after'] ?? '0'),
+    reason: json['reason'] as String?,
+    invoiceId: json['reference_type'] == 'invoice' ? (json['reference_id'] as num?)?.toInt() : null,
+    createdAt: DateTime.tryParse(json['created_at'] as String? ?? '')?.toLocal(),
+  );
+
+  /// `opening`, `sale`, `sale_void`, `sale_return`, `adjustment_in`, `adjustment_out`.
+  final String type;
+
+  /// Signed: negative when stock left the shelf.
+  final Quantity quantity;
+  final Quantity balanceAfter;
+  final String? reason;
+  final int? invoiceId;
+  final DateTime? createdAt;
+}
+
+/// A product sold below zero and its latest sales (who sold how much, the balance after).
+class NegativeStockItem {
+  const NegativeStockItem({required this.product, required this.sales});
+
+  factory NegativeStockItem.fromJson(Map<String, dynamic> json) => NegativeStockItem(
+    product: Product.fromJson(json['product'] as Map<String, dynamic>),
+    sales: [
+      for (final s in json['sales'] as List<dynamic>? ?? const [])
+        (
+          invoiceId: ((s as Map<String, dynamic>)['invoice_id'] as num?)?.toInt(),
+          quantity: s['quantity'] as String? ?? '',
+          by: s['created_by'] as String?,
+          at: DateTime.tryParse(s['created_at'] as String? ?? '')?.toLocal(),
+        ),
+    ],
+  );
+
+  final Product product;
+  final List<({int? invoiceId, String quantity, String? by, DateTime? at})> sales;
 }

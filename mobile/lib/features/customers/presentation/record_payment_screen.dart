@@ -5,6 +5,7 @@ import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
+import '../../../core/widgets/latin_digits.dart';
 import '../../../core/widgets/ltr_value.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../sale/presentation/sale_widgets.dart';
@@ -201,6 +202,7 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                 readOnly: _full || busy,
                 onChanged: (_) => setState(() {}),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const [LatinDigitsFormatter()],
                 textDirection: TextDirection.ltr,
                 textAlign: TextAlign.left,
                 style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
