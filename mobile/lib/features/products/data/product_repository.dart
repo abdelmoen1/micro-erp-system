@@ -54,9 +54,13 @@ class ProductRepository {
   }
 
   /// M-11: active products by name or barcode; [stock] narrows to `low` or `negative`.
-  Future<List<Product>> list({String query = '', String? stock}) async {
+  /// `stock`: low / negative. `inactive`: the stopped products instead of the active ones.
+  Future<List<Product>> list({String query = '', String? stock, bool inactive = false}) async {
     final q = query.trim();
-    final body = await _api.get('/products', query: {'per_page': 50, if (q.isNotEmpty) 'search': q, 'stock': ?stock});
+    final body = await _api.get(
+      '/products',
+      query: {'per_page': 50, if (q.isNotEmpty) 'search': q, 'stock': ?stock, if (inactive) 'status': 'inactive'},
+    );
     final data = body['data'] as List<dynamic>? ?? const [];
     return [for (final row in data) Product.fromJson(row as Map<String, dynamic>)];
   }
@@ -81,6 +85,9 @@ class ProductRepository {
 
   /// Stops selling the product; its history stays.
   Future<void> deactivate(int id) => _api.post('/products/$id/deactivate');
+
+  /// FR-16: a stopped product comes back as it was (price, stock, carton).
+  Future<void> reactivate(int id) => _api.patch('/products/$id', body: {'status': 'active'});
 
   /// Products sold below zero, with their last sales, for the owner's review (D-27).
   Future<List<NegativeStockItem>> negativeStock() async {

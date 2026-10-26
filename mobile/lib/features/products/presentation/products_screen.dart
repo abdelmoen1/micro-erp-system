@@ -55,7 +55,10 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       _failed = false;
     });
     try {
-      final rows = await ref.read(productRepositoryProvider).list(query: _query.text, stock: _stock);
+      final inactive = _stock == 'inactive';
+      final rows = await ref
+          .read(productRepositoryProvider)
+          .list(query: _query.text, stock: inactive ? null : _stock, inactive: inactive);
       if (!mounted || generation != _generation) return;
       setState(() {
         _products = rows;
@@ -131,6 +134,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                     (null, t.prodFilterAll),
                     ('low', t.prodFilterLow),
                     ('negative', t.prodFilterNegative),
+                    // Only the owner or a manager can bring a stopped product back.
+                    if (canAdd) ('inactive', t.prodFilterInactive),
                   ])
                     ChoiceChip(
                       label: Text(label),
@@ -153,7 +158,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
 
   List<Widget> _content(AppLocalizations t, bool canAdd) {
     if (_loading && _products.isEmpty) {
-      return const [Padding(padding: EdgeInsets.symmetric(vertical: 48), child: LoadingView())];
+      return const [Padding(padding: EdgeInsets.only(top: 4), child: LoadingView(padding: EdgeInsets.zero))];
     }
     if (_failed) return [ErrorView(message: t.prodLoadError, onRetry: _load)];
     if (_products.isEmpty) {

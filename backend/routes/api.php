@@ -15,9 +15,11 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StockAdjustmentController;
 use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\SupportTicketController;
 use App\Http\Controllers\Api\Admin\OverviewController as AdminOverviewController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\StoreController as AdminStoreController;
+use App\Http\Controllers\Api\Admin\SupportTicketController as AdminSupportTicketController;
 
 // All routes are served under /api/v1 (bootstrap/app.php, D-22).
 
@@ -44,6 +46,8 @@ Route::middleware(['auth:sanctum', 'active', 'platform.admin'])->prefix('admin')
     Route::get('products', [AdminProductController::class, 'index']);
     Route::get('catalog-products', [AdminProductController::class, 'catalogIndex']);
     Route::get('catalog-products/{catalogProduct}', [AdminProductController::class, 'catalog']);
+    Route::get('support-tickets', [AdminSupportTicketController::class, 'index']);
+    Route::patch('support-tickets/{ticket}', [AdminSupportTicketController::class, 'update']);
 });
 
 // Protected API
@@ -56,6 +60,9 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::patch('/me/password', [AuthController::class, 'changePassword'])->middleware('throttle:6,1');
     Route::get('/subscription', [SubscriptionController::class, 'show']);
+    // Technical support: reachable after the subscription ends, when the store needs it most.
+    Route::get('/support-tickets', [SupportTicketController::class, 'index']);
+    Route::post('/support-tickets', [SupportTicketController::class, 'store'])->middleware('throttle:10,1');
 
     // Business routes: need a running trial or a valid paid subscription (403 SUBSCRIPTION_EXPIRED).
     Route::middleware('subscribed')->group(function () {

@@ -206,5 +206,17 @@ export function useSaveStore() {
   });
 }
 
+/** Technical support: this store's complaints (an employee's own), with the admin's reply. */
+export const useSupportTickets = () => useQuery({ queryKey: queryKeys.support, queryFn: data("/support-tickets"), refetchOnWindowFocus: true });
+
+/** POST /support-tickets { type, subject, details }. */
+export function useSendTicket() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => apiSend("POST", "/support-tickets", body).then((r) => r.data),
+    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.support }),
+  });
+}
+
 /** PATCH /me/password: this browser stays signed in, every other device is signed out. */
 export const useChangePassword = () => useMutation({ mutationFn: (body) => apiSend("PATCH", "/me/password", body) });

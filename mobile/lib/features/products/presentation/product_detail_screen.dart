@@ -84,6 +84,18 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     }
   }
 
+  Future<void> _reactivate(Product product) async {
+    final t = AppLocalizations.of(context);
+    try {
+      await ref.read(productRepositoryProvider).reactivate(product.id);
+      if (!mounted) return;
+      _refresh();
+      showNote(context, t.prodReactivated);
+    } on ApiFailure catch (failure) {
+      if (mounted) showNote(context, failure is Forbidden ? t.prodViewOnly : (failure.message ?? t.staffActionError));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -99,7 +111,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       child: Scaffold(
         appBar: AppBar(title: Text(page.value?.$1.name ?? '')),
         body: page.when(
-          loading: () => const LoadingView(),
+          loading: () => const LoadingView.detail(),
           error: (_, _) => ErrorView(message: t.prodDetailError, onRetry: () => ref.invalidate(productDetailProvider(widget.productId))),
           data: (data) {
             final (p, moves) = data;
@@ -129,7 +141,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       icon: const Icon(Icons.edit_outlined),
                       label: Text(t.prodEdit),
                     ),
-                  ] else if (!manager)
+                  ] else if (manager)
+                    FilledButton.icon(
+                      key: const Key('product.reactivate'),
+                      onPressed: () => _reactivate(p),
+                      icon: const Icon(Icons.restore_rounded),
+                      label: Text(t.prodReactivate),
+                    )
+                  else
                     Text(t.prodViewOnly, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
                   const SizedBox(height: 18),
                   GroupLabel(t.prodMovements),
@@ -442,6 +461,7 @@ class _AdjustStockSheetState extends ConsumerState<AdjustStockSheet> {
             const SizedBox(height: 14),
             MoreField(
               fieldKey: 'adjust.quantity',
+              hint: t.phAdjustQty,
               label: switch (_mode) {
                 _AdjustMode.count => t.adjCountLabel(unit),
                 _AdjustMode.delta => t.adjDeltaLabel(unit),
@@ -597,7 +617,7 @@ class _EditProductSheetState extends ConsumerState<EditProductSheet> {
               ToneCard(tone: StatusTone.error, icon: Icons.error_outline_rounded, title: _banner!, alert: true),
               const SizedBox(height: 12),
             ],
-            MoreField(fieldKey: 'edit.name', label: t.formName, controller: _name, required: true, error: _errors['name'], enabled: !_saving),
+            MoreField(fieldKey: 'edit.name', label: t.formName, controller: _name, hint: t.formNameHint, required: true, error: _errors['name'], enabled: !_saving),
             MoreField(
               fieldKey: 'edit.selling_price',
               label: t.formPrice,
@@ -642,6 +662,7 @@ class _EditProductSheetState extends ConsumerState<EditProductSheet> {
                   errors: _errors,
                   fieldBuilder: (key, label, controller) => MoreField(
                     fieldKey: 'form.$key',
+                    hint: key == 'pack_size' ? t.phPackSize : t.phPackPrice,
                     label: label,
                     controller: controller,
                     required: true,

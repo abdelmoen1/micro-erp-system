@@ -89,6 +89,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   ],
                   MoreField(
                     fieldKey: 'pw.current',
+                    hint: t.phCurrentPw,
                     label: t.pwCurrent,
                     controller: _current,
                     required: true,
@@ -112,6 +113,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   ),
                   MoreField(
                     fieldKey: 'pw.confirm',
+                    hint: t.phConfirmPw,
                     label: t.pwConfirm,
                     controller: _confirmation,
                     required: true,

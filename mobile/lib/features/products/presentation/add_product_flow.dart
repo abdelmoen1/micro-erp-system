@@ -301,8 +301,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         appBar: AppBar(title: Text(_stage == _Stage.duplicate ? t.addExistsTitle : t.formNewTitle)),
         body: SafeArea(
           child: switch (_stage) {
-            _Stage.checking => Center(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [const LoadingView(), Text(t.addChecking)]),
+            _Stage.checking => ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text(t.addChecking, style: const TextStyle(color: HisbahColors.inkMuted)),
+                const SizedBox(height: 12),
+                const LoadingView.detail(padding: EdgeInsets.zero),
+              ],
             ),
             _Stage.duplicate => _duplicate(t),
             _Stage.saved => _done(t),
@@ -413,6 +418,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final fromCode = _data?.fromCode ?? const <String>{};
     final note = _codeNote(t);
     final raw = widget.payload is UnreadableCode ? (widget.payload as UnreadableCode).raw : null;
+    final placeholders = {
+      'barcode': t.phBarcode,
+      'current_stock': t.phOpeningStock,
+      'pack_size': t.phPackSize,
+      'pack_price': t.phPackPrice,
+    };
 
     Widget field(
       String key,
@@ -448,9 +459,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             textDirection: number || key == 'barcode' ? TextDirection.ltr : null,
             textAlign: number || key == 'barcode' ? TextAlign.left : TextAlign.start,
             decoration: InputDecoration(
-              hintText: hint,
-              helperText: helper,
-              helperMaxLines: 3,
+              // What the field is for sits inside it, not as a note under it; only errors go below.
+              hintText: helper ?? hint ?? placeholders[key],
+              hintMaxLines: 2,
+              hintTextDirection: Directionality.of(context),
               errorText: _errors[key],
               errorMaxLines: 3,
               filled: true,

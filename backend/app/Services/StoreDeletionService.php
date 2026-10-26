@@ -57,6 +57,7 @@ class StoreDeletionService
             DB::table('idempotency_keys')->where('store_id', $locked->id)->delete();
             DB::table('audit_logs')->where('store_id', $locked->id)->delete();
             DB::table('store_invitations')->where('store_id', $locked->id)->delete();
+            DB::table('support_tickets')->where('store_id', $locked->id)->delete();
             DB::table('personal_access_tokens')
                 ->where('tokenable_type', (new User())->getMorphClass())
                 ->whereIn('tokenable_id', $userIds)

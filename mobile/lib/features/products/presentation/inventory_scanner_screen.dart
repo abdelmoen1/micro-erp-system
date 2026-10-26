@@ -23,6 +23,7 @@ import '../data/product_repository.dart';
 import '../domain/product.dart';
 import '../domain/product_code_payload.dart';
 import 'add_product_flow.dart';
+import 'product_detail_screen.dart' show openProduct;
 
 /// S3 · add products by scanning (Owner / Manager). Its own camera, separate from the sale: a code
 /// read here never touches the cart. A compact form opens over the live camera; after a save the
@@ -274,6 +275,7 @@ class _InventoryScannerScreenState extends ConsumerState<InventoryScannerScreen>
                               onClose: _closeSheet,
                               onAdded: (updated) =>
                                   _done(t.invStockAdded(updated.name, updated.currentStock.format(updated.unit))),
+                              onUpdated: (updated) => setState(() => _sheet = _Existing(updated)),
                             ),
                             _NewProduct() => _NewProductBody(
                               key: ValueKey(sheet),
@@ -496,12 +498,21 @@ class _CheckingBody extends StatelessWidget {
 
 /// Already in the store: never added twice. «إضافة كمية» records goods received (a stock movement).
 class _ExistingBody extends ConsumerStatefulWidget {
-  const _ExistingBody({required this.product, required this.bottomInset, required this.onClose, required this.onAdded});
+  const _ExistingBody({
+    required this.product,
+    required this.bottomInset,
+    required this.onClose,
+    required this.onAdded,
+    required this.onUpdated,
+  });
 
   final Product product;
   final double bottomInset;
   final VoidCallback onClose;
   final void Function(Product updated) onAdded;
+
+  /// The product page changed it (price, stock, carton): show the new values here.
+  final void Function(Product updated) onUpdated;
 
   @override
   ConsumerState<_ExistingBody> createState() => _ExistingBodyState();
@@ -539,6 +550,18 @@ class _ExistingBodyState extends ConsumerState<_ExistingBody> {
   }
 
   void _edited() => _operationId = null;
+
+  /// The full product page (price, stock, movements). Reads under the open sheet are ignored, so
+  /// the camera does not act while it is open; coming back shows what changed.
+  Future<void> _openProduct() async {
+    final repository = ref.read(productRepositoryProvider);
+    if (!await openProduct(context, widget.product.id) || !mounted) return;
+    try {
+      widget.onUpdated(await repository.product(widget.product.id));
+    } on ApiFailure {
+      // The sheet keeps the values it had; the product page already saved the change.
+    }
+  }
 
   @override
   void dispose() {
@@ -645,6 +668,16 @@ class _ExistingBodyState extends ConsumerState<_ExistingBody> {
         ),
         const SizedBox(height: 6),
         Text(t.invExistsNote, style: const TextStyle(fontSize: 13, height: 1.6, color: HisbahColors.inkMuted)),
+        if (!_adding)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              key: const Key('inventory.openProduct'),
+              onPressed: _openProduct,
+              icon: const Icon(Icons.edit_outlined),
+              label: Text(t.invOpenProduct),
+            ),
+          ),
         const SizedBox(height: 12),
         if (_adding) ...[
           if (_banner != null) ...[
@@ -683,6 +716,7 @@ class _ExistingBodyState extends ConsumerState<_ExistingBody> {
           ],
           _QuickField(
             fieldKey: 'stock.quantity',
+            hint: t.phAddQty,
             label: t.invAddStockQty(_byPack ? t.packWord : unitWord),
             controller: _quantity,
             number: true,
@@ -704,6 +738,7 @@ class _ExistingBodyState extends ConsumerState<_ExistingBody> {
             ),
           _QuickField(
             fieldKey: 'stock.reason',
+            hint: t.phReason,
             label: t.invReason,
             controller: _reason,
             enabled: !_saving,
@@ -1022,6 +1057,7 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
             piecePrice: _price.text,
             errors: _errors,
             fieldBuilder: (key, label, controller) => _QuickField(
+              hint: key == 'pack_size' ? t.phPackSize : t.phPackPrice,
               fieldKey: key,
               label: label,
               controller: controller,
@@ -1036,7 +1072,7 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
         _QuickField(
           fieldKey: 'current_stock',
           label: t.invOpeningStock(_unit == ProductUnit.kg ? t.prodPerKg : t.prodPerPiece),
-          hint: '0',
+          hint: t.phOpeningStock,
           controller: _stock,
           number: true,
           whole: _unit == ProductUnit.piece,
@@ -1177,9 +1213,10 @@ class _QuickField extends StatelessWidget {
             textDirection: number ? TextDirection.ltr : null,
             textAlign: number ? TextAlign.left : TextAlign.start,
             decoration: InputDecoration(
-              hintText: hint,
-              helperText: helper,
-              helperMaxLines: 3,
+              // What the field is for sits inside it, not as a note under it; only errors go below.
+              hintText: helper ?? hint,
+              hintMaxLines: 2,
+              hintTextDirection: Directionality.of(context),
               errorText: error,
               errorMaxLines: 3,
               isDense: true,

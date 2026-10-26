@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import 'skeleton.dart';
 
 /// Shared loading / empty / error views (every screen has these states, 06 §1).
+///
+/// Loading is a skeleton of the page's shape: rows for a list ([LoadingView.new]), a summary and
+/// rows for one item ([LoadingView.detail]). Screen readers hear «جارٍ التحميل…».
 class LoadingView extends StatelessWidget {
-  const LoadingView({super.key});
+  const LoadingView({super.key, this.rows = 5, this.padding = const EdgeInsets.all(16)}) : detail = false;
+
+  const LoadingView.detail({super.key, this.padding = const EdgeInsets.all(16)}) : detail = true, rows = 0;
+
+  final bool detail;
+  final int rows;
+
+  /// Inside a list that already has its own side padding, pass [EdgeInsets.zero].
+  final EdgeInsets padding;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const CircularProgressIndicator(),
-        const SizedBox(height: 12),
-        Text(AppLocalizations.of(context).loading),
-      ],
+  Widget build(BuildContext context) => Semantics(
+    label: AppLocalizations.of(context).loading,
+    liveRegion: true,
+    child: ExcludeSemantics(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ClipRect(
+          child: Padding(
+            padding: padding,
+            child: detail ? const SkeletonDetail() : SkeletonCard(rows: rows),
+          ),
+        ),
+      ),
     ),
   );
 }

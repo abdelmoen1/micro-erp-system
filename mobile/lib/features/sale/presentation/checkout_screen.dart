@@ -19,7 +19,8 @@ import 'receipt_screen.dart';
 import 'sale_widgets.dart';
 
 /// Payment method labels, in the order of the 2 × 2 grid (05 §3.1).
-const paymentMethods = ['cash', 'jawwal_pay', 'palpay', 'bank_of_palestine'];
+// PalPay first and selected by default; cash last.
+const paymentMethods = ['palpay', 'jawwal_pay', 'bank_of_palestine', 'cash'];
 
 String paymentMethodLabel(AppLocalizations t, String? method) => switch (method) {
   'cash' => t.methodCash,
@@ -554,7 +555,9 @@ class _PaidField extends StatelessWidget {
           inputFormatters: [const LatinDigitsFormatter(), FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, fontFeatures: [FontFeature.tabularFigures()]),
           decoration: InputDecoration(
-            hintText: '0.00',
+            hintText: t.phPaidNow,
+            hintTextDirection: Directionality.of(context),
+            hintStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: HisbahColors.inkMuted),
             filled: true,
             fillColor: error != null ? HisbahColors.raised : null,
             suffixIcon: const Padding(

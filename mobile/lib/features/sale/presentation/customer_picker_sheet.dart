@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../core/widgets/latin_digits.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../customers/domain/customer.dart';
@@ -300,7 +301,12 @@ class _CustomerPickerSheetState extends ConsumerState<CustomerPickerSheet> {
           enabled: !_saving,
           autocorrect: false,
           onChanged: (_) => setState(() => _nameError = null),
-          decoration: InputDecoration(filled: true, fillColor: HisbahColors.raised, errorText: _nameError),
+          decoration: InputDecoration(
+            hintText: t.phCustomerName,
+            filled: true,
+            fillColor: HisbahColors.raised,
+            errorText: _nameError,
+          ),
         ),
       ),
       const SizedBox(height: 14),
@@ -321,9 +327,9 @@ class _CustomerPickerSheetState extends ConsumerState<CustomerPickerSheet> {
           decoration: InputDecoration(
             filled: true,
             fillColor: HisbahColors.raised,
-            hintText: '05XXXXXXXX',
+            hintText: t.newCustomerPhoneHint,
+            hintTextDirection: Directionality.of(context),
             errorText: _phoneError,
-            helperText: _phoneError == null ? t.newCustomerPhoneHint : null,
           ),
         ),
       ),

@@ -152,9 +152,10 @@ class SubscriptionTrialTest extends TestCase
             ->map(fn(RouteDefinition $r) => implode('|', array_diff($r->methods(), ['HEAD'])) . ' ' . $r->uri())
             ->sort()->values()->all();
 
-        // The account itself stays usable without a subscription: sign out, see why, change the password.
-        $this->assertSame(['GET api/v1/me', 'GET api/v1/subscription', 'PATCH api/v1/me/password', 'POST api/v1/logout'], $open);
-        $this->assertGreaterThan(40, $storeRoutes->count() - 4);
+        // The account itself stays usable without a subscription: sign out, see why, change the password,
+        // and reach technical support.
+        $this->assertSame(['GET api/v1/me', 'GET api/v1/subscription', 'GET api/v1/support-tickets', 'PATCH api/v1/me/password', 'POST api/v1/logout', 'POST api/v1/support-tickets'], $open);
+        $this->assertGreaterThan(40, $storeRoutes->count() - 6);
 
         // A sample of reads and writes, including idempotent financial writes.
         foreach ([['GET', '/dashboard'], ['GET', '/customers'], ['POST', '/customers'], ['GET', '/sales'], ['POST', '/sales'],

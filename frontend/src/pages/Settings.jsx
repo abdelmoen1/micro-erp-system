@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon";
-import { ErrorBanner, ErrorState, Field, PageHeader } from "../components/ui";
+import { ErrorBanner, ErrorState, Field, PageHeader, StatusBadge } from "../components/ui";
 import { roleOf } from "../lib/domain";
-import { dateOnly, latinDigits } from "../lib/format";
+import { dateOnly, dateTime, latinDigits } from "../lib/format";
+import { TICKET_STATUS, TICKET_TYPES, ticketTypeLabel } from "../lib/support";
 import { ApiError, session } from "../services/apiClient";
-import { useChangePassword, useMyStore, useSaveStore } from "../services/backoffice";
+import { useChangePassword, useMyStore, useSaveStore, useSendTicket, useSupportTickets } from "../services/backoffice";
 import { useSubscription } from "../services/dashboard";
 
 /** Server field messages as { field: first message }; empty when the error is not about fields. */
@@ -40,7 +41,142 @@ export default function Settings() {
           ) : null}
         </div>
       </div>
+      <SupportSection />
     </>
+  );
+}
+
+const EMPTY_TICKET = { type: "", subject: "", details: "" };
+
+/** Technical support: a complaint (type, subject, details) to the Hisbah team, and the replies. */
+function SupportSection() {
+  const [form, setForm] = useState(EMPTY_TICKET);
+  const [local, setLocal] = useState({});
+  const send = useSendTicket();
+  const tickets = useSupportTickets();
+  const errors = { ...fieldErrors(send.error), ...local };
+  const set = (key) => (e) => {
+    setForm({ ...form, [key]: e.target.value });
+    if (send.isSuccess) send.reset();
+  };
+
+  const submit = (e) => {
+    e.preventDefault();
+    const found = {};
+    if (!form.type) found.type = "اختر نوع الدعم.";
+    if (!form.subject.trim()) found.subject = "اكتب موضوع المشكلة.";
+    if (!form.details.trim()) found.details = "اكتب تفاصيل المشكلة.";
+    setLocal(found);
+    send.reset();
+    if (Object.keys(found).length > 0) return;
+    send.mutate({ type: form.type, subject: form.subject.trim(), details: form.details.trim() }, { onSuccess: () => setForm(EMPTY_TICKET) });
+  };
+
+  return (
+    <div className="split" style={{ marginTop: 16 }}>
+      <form className="card panel form-stack" style={{ flex: "1 1 420px" }} onSubmit={submit} noValidate>
+        <div className="panel-head">
+          <h2>الدعم الفني</h2>
+        </div>
+        <div className="field">
+          <span className="field-label req" id="tk-type">
+            نوع الدعم
+          </span>
+          <div className="chips" role="group" aria-labelledby="tk-type">
+            {TICKET_TYPES.map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                className="chip"
+                aria-pressed={form.type === key}
+                onClick={() => {
+                  setForm({ ...form, type: key });
+                  setLocal({ ...local, type: undefined });
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {errors.type ? (
+            <span className="field-error">
+              <Icon name="alert" size={16} />
+              {errors.type}
+            </span>
+          ) : null}
+        </div>
+        <Field id="tk-subject" label="موضوع المشكلة" required error={errors.subject}>
+          <input id="tk-subject" className="fld" value={form.subject} onChange={set("subject")} maxLength={150} placeholder="بكلمات قليلة، مثل: الطابعة لا تطبع الإيصال" />
+        </Field>
+        <Field id="tk-details" label="تفاصيل المشكلة" required error={errors.details}>
+          <textarea
+            id="tk-details"
+            className="fld fld-area"
+            rows={5}
+            value={form.details}
+            onChange={set("details")}
+            maxLength={3000}
+            placeholder="ماذا حدث، وأين، ومتى؟ كلما كتبت أكثر ساعدناك أسرع."
+          />
+        </Field>
+        <ErrorBanner error={send.error && Object.keys(fieldErrors(send.error)).length === 0 ? send.error : null} />
+        {send.isSuccess ? (
+          <p role="status" className="banner tone-success">
+            <Icon name="ok" size={20} />
+            <span>وصلت شكواك إلى فريق حسبة، وسنرد عليك هنا.</span>
+          </p>
+        ) : null}
+        <div>
+          <button type="submit" className="btn btn-p" disabled={send.isPending}>
+            {send.isPending ? "جارٍ الإرسال…" : "إرسال الشكوى"}
+          </button>
+        </div>
+      </form>
+
+      <section className="card panel" style={{ flex: "1 1 380px" }} aria-labelledby="tk-list">
+        <div className="panel-head">
+          <h2 id="tk-list">شكاواي</h2>
+        </div>
+        {tickets.isPending ? (
+          <div className="sk" style={{ height: 120, borderRadius: 10 }} />
+        ) : tickets.isError ? (
+          <ErrorBanner error={tickets.error} />
+        ) : tickets.data.length === 0 ? (
+          <p className="field-hint" style={{ margin: 0 }}>
+            لم ترسل أي شكوى بعد.
+          </p>
+        ) : (
+          <ul className="ticket-list">
+            {tickets.data.map((ticket) => (
+              <TicketItem key={ticket.id} ticket={ticket} />
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function TicketItem({ ticket }) {
+  const [label, badge] = TICKET_STATUS[ticket.status] ?? [ticket.status, "unpaid"];
+  return (
+    <li className="ticket">
+      <div className="ticket-head">
+        <b>{ticket.subject}</b>
+        <StatusBadge status={badge} label={label} />
+      </div>
+      <span className="ticket-meta">
+        {ticketTypeLabel(ticket.type)} · <span className="m">{dateTime(ticket.created_at)}</span>
+        {ticket.user?.name ? ` · ${ticket.user.name}` : ""}
+      </span>
+      <p className="ticket-body">{ticket.details}</p>
+      {ticket.reply ? (
+        <div className="ticket-reply">
+          <small>رد فريق حسبة</small>
+          <p>{ticket.reply}</p>
+        </div>
+      ) : null}
+    </li>
   );
 }
 

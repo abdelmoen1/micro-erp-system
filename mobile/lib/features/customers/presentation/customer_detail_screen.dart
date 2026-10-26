@@ -46,7 +46,7 @@ class CustomerDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(customer.name)),
       body: ledger.when(
-        loading: () => const LoadingView(),
+        loading: () => const LoadingView.detail(),
         error: (_, _) =>
             ErrorView(message: t.custDetailError, onRetry: () => ref.invalidate(customerLedgerProvider(customer.id))),
         data: (data) => RefreshIndicator(

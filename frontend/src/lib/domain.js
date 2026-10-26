@@ -6,12 +6,15 @@ export const roleOf = (user) => user?.role ?? "employee";
 export const landingPath = (user) => (user?.store?.has_access === false ? "/subscription-expired" : "/dashboard");
 export const canManage = (user) => ["owner", "manager"].includes(roleOf(user));
 
+// PalPay first and selected by default; cash last.
 export const PAYMENT_METHODS = [
-  ["cash", "نقداً"],
-  ["jawwal_pay", "جوال باي"],
   ["palpay", "بال باي"],
+  ["jawwal_pay", "جوال باي"],
   ["bank_of_palestine", "بنك فلسطين"],
+  ["cash", "نقداً"],
 ];
+
+export const DEFAULT_PAYMENT_METHOD = PAYMENT_METHODS[0][0];
 
 export const methodLabel = (method) => PAYMENT_METHODS.find(([key]) => key === method)?.[1] ?? method;
 

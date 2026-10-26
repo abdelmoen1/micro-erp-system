@@ -48,6 +48,42 @@ class StoreProfile {
   final String? area;
 }
 
+/// A complaint sent to the Hisbah team, with its status and the team's reply.
+class SupportTicket {
+  const SupportTicket({
+    required this.id,
+    required this.type,
+    required this.subject,
+    required this.details,
+    required this.status,
+    this.reply,
+    this.createdAt,
+    this.senderName,
+  });
+
+  factory SupportTicket.fromJson(Map<String, dynamic> json) => SupportTicket(
+    id: (json['id'] as num).toInt(),
+    type: json['type'] as String? ?? 'other',
+    subject: json['subject'] as String? ?? '',
+    details: json['details'] as String? ?? '',
+    status: json['status'] as String? ?? 'open',
+    reply: json['reply'] as String?,
+    createdAt: DateTime.tryParse(json['created_at'] as String? ?? '')?.toLocal(),
+    senderName: (json['user'] as Map<String, dynamic>?)?['name'] as String?,
+  );
+
+  final int id;
+  final String type;
+  final String subject;
+  final String details;
+
+  /// open · in_progress · closed
+  final String status;
+  final String? reply;
+  final DateTime? createdAt;
+  final String? senderName;
+}
+
 /// The «More» tab's account and store screens. Field problems come back as `ValidationFailed`
 /// with the server's Arabic messages; a role without the right gets `Forbidden`.
 class MoreRepository {
@@ -95,6 +131,16 @@ class MoreRepository {
     );
     return StoreProfile.fromJson(body['store'] as Map<String, dynamic>);
   }
+
+  /// GET /support-tickets: the store's complaints (an employee's own), newest first.
+  Future<List<SupportTicket>> supportTickets() async {
+    final body = await _api.get('/support-tickets');
+    return [for (final row in body['data'] as List<dynamic>? ?? const []) SupportTicket.fromJson(row as Map<String, dynamic>)];
+  }
+
+  /// POST /support-tickets. Reachable after the subscription ends.
+  Future<void> sendSupportTicket({required String type, required String subject, required String details}) =>
+      _api.post('/support-tickets', body: {'type': type, 'subject': subject.trim(), 'details': details.trim()});
 
   /// PATCH /me/password: this phone stays signed in, every other device is signed out.
   Future<void> changePassword({required String current, required String password, required String confirmation}) =>

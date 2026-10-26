@@ -37,7 +37,9 @@ const PATHS = {
   calendar: "M4 6h16v14H4zM4 10h16M8 3v5M16 3v5",
   trash: "M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6",
   close: "M6 6l12 12M18 6 6 18",
-  settings: "M4 6h9M17 6h3M15 4v4M4 12h3M11 12h9M9 10v4M4 18h11M19 18h1M17 16v4",
+  phone: "M7 2.5h10a1 1 0 0 1 1 1v17a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1zM10.5 18.5h3",
+  download: "M12 3v12M7 10l5 5 5-5M4 19v2h16v-2",
+  settings:"M4 6h9M17 6h3M15 4v4M4 12h3M11 12h9M9 10v4M4 18h11M19 18h1M17 16v4",
 };
 
 export default function Icon({ name, size = 20, color = "currentColor", strokeWidth = 2, className, title }) {
