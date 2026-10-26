@@ -80,6 +80,8 @@
 
 /* The mobile app: download card on the dashboard and the first-visit guide. */
 .app-card { margin-block: 16px; }
+.app-card-folded { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--accent-600); }
+.app-card-folded > span { flex: 1; font-weight: 600; color: var(--ink); }
 .app-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; }
 .app-card-head > span:nth-child(2) { flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px; }
 .app-card-head h2 { font-size: 17px; font-weight: 700; }
