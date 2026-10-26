@@ -44,6 +44,7 @@ class PlatformAdminTest extends TestCase
             ['POST', "/api/v1/admin/stores/{$store->id}/subscription"],
             ['GET', '/api/v1/admin/products'],
             ['GET', "/api/v1/admin/catalog-products/{$catalog->id}"],
+            ['GET', '/api/v1/admin/support-tickets'],
             // Last: it deletes the store.
             ['DELETE', "/api/v1/admin/stores/{$store->id}"],
         ];

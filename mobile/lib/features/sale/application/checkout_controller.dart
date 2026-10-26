@@ -53,7 +53,7 @@ class CheckoutState {
   const CheckoutState({
     this.mode = SaleMode.cash,
     this.paidText = '',
-    this.method = 'cash',
+    this.method = 'palpay',
     this.customer,
     this.due = DueChoice.none,
     this.itemsOpen = false,

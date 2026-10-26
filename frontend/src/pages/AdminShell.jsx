@@ -5,6 +5,7 @@ import HisbahLogo from "../components/HisbahLogo";
 import Icon from "../components/Icon";
 import { initialOf } from "../lib/format";
 import { session } from "../services/apiClient";
+import { useOpenTicketCount } from "../services/admin";
 import { logout } from "../services/dashboard";
 import "../styles/platform.css";
 
@@ -12,6 +13,7 @@ const NAV = [
   { label: "المتاجر", icon: "shop", to: "/admin", end: true },
   { label: "المنتجات في المتاجر", icon: "products", to: "/admin/products" },
   { label: "الكتالوج المشترك", icon: "barcode", to: "/admin/catalog" },
+  { label: "الدعم الفني", icon: "mail", to: "/admin/support", count: true },
 ];
 
 /**
@@ -25,6 +27,7 @@ export default function AdminShell() {
   const [open, setOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const user = session.user() ?? {};
+  const openTickets = useOpenTicketCount(Boolean(session.token() && user.is_platform_admin));
 
   const signOut = async () => {
     setLeaving(true);
@@ -79,6 +82,11 @@ export default function AdminShell() {
               <NavLink key={item.to} to={item.to} end={item.end} onClick={() => setOpen(false)}>
                 <Icon name={item.icon} size={20} strokeWidth={1.7} />
                 <span>{item.label}</span>
+                {item.count && openTickets.data > 0 ? (
+                  <span className="nav-count" aria-label={`${openTickets.data} شكوى جديدة`}>
+                    {openTickets.data}
+                  </span>
+                ) : null}
               </NavLink>
             ))}
           </nav>

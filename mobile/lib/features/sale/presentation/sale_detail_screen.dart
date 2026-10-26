@@ -53,7 +53,7 @@ class SaleDetailScreen extends ConsumerWidget {
             )
           : null,
       body: sale.when(
-        loading: () => const LoadingView(),
+        loading: () => const LoadingView.detail(),
         error: (_, _) =>
             ErrorView(message: t.saleDetailError, onRetry: () => ref.invalidate(saleDetailProvider(saleId))),
         data: (r) {

@@ -17,6 +17,8 @@ import '../more/presentation/change_password_screen.dart';
 import '../more/presentation/more_widgets.dart';
 import '../more/presentation/staff_screen.dart';
 import '../more/presentation/store_settings_screen.dart';
+import '../more/presentation/support_screen.dart';
+import '../guide/usage_guide.dart';
 import '../products/presentation/stock_lists_screen.dart';
 import '../sale/presentation/sale_widgets.dart' show GroupLabel, LineCard;
 import '../sale/presentation/sales_history_screen.dart';
@@ -51,6 +53,7 @@ class TabRootScreen extends ConsumerWidget {
       children: [
         TabHeader(title: tab.label(t), storeName: storeName),
         const SizedBox(height: 14),
+        if (tab == AppTab.home) const GuideCard(),
         switch (tab) {
           AppTab.home => const HomeDashboard(),
           AppTab.more => const _MoreTab(),
@@ -310,6 +313,20 @@ class _MoreTab extends ConsumerWidget {
               title: t.morePassword,
               subtitle: t.morePasswordSub,
               onTap: () => pushScreen<void>(context, const ChangePasswordScreen()),
+            ),
+            MoreTile(
+              key: const Key('more.guide'),
+              icon: Icons.school_outlined,
+              title: t.guideTitle,
+              subtitle: t.moreGuideSub,
+              onTap: () => openUsageGuide(context),
+            ),
+            MoreTile(
+              key: const Key('more.support'),
+              icon: Icons.support_agent_rounded,
+              title: t.moreSupport,
+              subtitle: t.moreSupportSub,
+              onTap: () => pushScreen<void>(context, const SupportScreen()),
             ),
           ],
         ),

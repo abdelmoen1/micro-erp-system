@@ -182,7 +182,7 @@ void main() {
       expect(sent, hasLength(2));
       expect(sent.first.headers['Idempotency-Key'], isNotNull);
       expect(sent.last.headers['Idempotency-Key'], sent.first.headers['Idempotency-Key']);
-      expect(sent.last.data, {'method': 'cash', 'amount': '150.00'});
+      expect(sent.last.data, {'method': 'palpay', 'amount': '150.00'});
     });
   });
 
@@ -393,6 +393,30 @@ void main() {
       expect(api.requestsTo('POST /products'), isEmpty);
     });
 
+    testWidgets('a scanned product opens its page to change the price; back on the scanner the new price shows', (tester) async {
+      api
+        ..on('GET /products/catalog-lookup', FakeResponse(200, {'data': {'barcode': '6281007041235', 'product': dates, 'catalog_product': null}}))
+        ..on('GET /products/21', FakeResponse(200, {'data': dates}))
+        ..on('GET /products/21/movements', const FakeResponse(200, {'data': []}));
+      await pumpApp(tester);
+      await scanCode(tester, '6281007041235');
+
+      await tap(tester, find.byKey(const Key('inventory.openProduct')));
+      await tap(tester, find.byKey(const Key('product.edit')));
+      await tester.enterText(find.byKey(const Key('edit.selling_price')), '50');
+      final repriced = {...dates, 'selling_price': '50.00'};
+      api
+        ..on('PATCH /products/21', FakeResponse(200, {'data': repriced}))
+        ..on('GET /products/21', FakeResponse(200, {'data': repriced}));
+      await tap(tester, find.byKey(const Key('edit.save')));
+      expect((api.requestsTo('PATCH /products/21').single.data as Map)['selling_price'], '50');
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('addProduct.existing')), findsOneWidget);
+      expect(find.textContaining('50.00'), findsOneWidget);
+    });
+
     testWidgets('goods received by the carton: cartons are counted, their pieces shown, unit pack sent', (tester) async {
       final water = {
         ...productJson(id: 22, name: 'ماء 600 مل', barcode: '6281007041235', price: '2.50', stock: '6'),
@@ -506,7 +530,7 @@ void main() {
 
       expect(find.textContaining('السعر للزبون (سعر البيع)'), findsOneWidget);
       expect(find.textContaining('تكلفة المنتج عليك (سعر الشراء)'), findsOneWidget);
-      expect(find.text('ما تدفعه أنت للمورّد. لا يظهر للزبون.'), findsOneWidget);
+      expect(find.text('ما تدفعه للمورّد، لا يراه الزبون'), findsOneWidget);
 
       await tester.enterText(find.byKey(const Key('form.name')), 'شاي أخضر');
       await tap(tester, find.byKey(const Key('form.save')));

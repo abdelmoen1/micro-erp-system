@@ -16,6 +16,228 @@ class AppLocalizationsAr extends AppLocalizations {
   String get loading => 'جارٍ التحميل…';
 
   @override
+  String get guideTitle => 'دليل الاستخدام';
+
+  @override
+  String get guideCardTitle => 'جديد على حسبة؟';
+
+  @override
+  String get guideCardBody =>
+      'جرّب في دقيقتين: أضف منتجاً بالباركود، ثم بِعه في فاتورة.';
+
+  @override
+  String get guideStart => 'ابدأ الدليل';
+
+  @override
+  String get guideLater => 'لاحقاً';
+
+  @override
+  String guideStep(int n, int total) {
+    return 'الخطوة $n من $total';
+  }
+
+  @override
+  String get guideWelcomeTitle => 'أهلاً بك في حسبة';
+
+  @override
+  String get guideWelcomeBody =>
+      'سنجرب معاً أهم شيئين في المحل: إضافة منتج بالباركود، وعمل فاتورة بالباركود. كل ما تفعله هنا حقيقي ويُحفظ في متجرك.';
+
+  @override
+  String get guideAddTitle => 'أضف منتجك الأول بالباركود';
+
+  @override
+  String get guideAdd1 =>
+      'اضغط «امسح منتجاً الآن» ووجّه الكاميرا إلى باركود أي منتج في محلك.';
+
+  @override
+  String get guideAdd2 =>
+      'إن كان المنتج معروفاً نملأ اسمه، وأنت تكتب السعر والكمية الموجودة.';
+
+  @override
+  String get guideAdd3 => 'اضغط «حفظ»، ثم ارجع لتكمل الدليل.';
+
+  @override
+  String get guideAddAction => 'امسح منتجاً الآن';
+
+  @override
+  String get guideAddDone => 'أضفت منتجك الأول. أحسنت!';
+
+  @override
+  String get guideSaleTitle => 'اعمل فاتورتك الأولى بالباركود';
+
+  @override
+  String get guideSale1 =>
+      'اضغط «افتح شاشة البيع» ثم امسح المنتج؛ يدخل السلة فوراً.';
+
+  @override
+  String get guideSale2 =>
+      'امسح المنتج مرة ثانية لزيادة الكمية، أو امسح منتجات أخرى.';
+
+  @override
+  String get guideSale3 =>
+      'اضغط «إتمام البيع»، اختر نقداً أو ديناً على زبون، ثم احفظ الفاتورة.';
+
+  @override
+  String get guideSaleAction => 'افتح شاشة البيع';
+
+  @override
+  String get guideDoneTitle => 'جاهز للعمل!';
+
+  @override
+  String get guideDoneBody =>
+      'الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «المنتجات». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.';
+
+  @override
+  String get guideFinish => 'ابدأ العمل';
+
+  @override
+  String get guideNext => 'التالي';
+
+  @override
+  String get guideSkip => 'تخطَّ هذه الخطوة';
+
+  @override
+  String get moreGuideSub => 'جرّب إضافة منتج وعمل فاتورة خطوة بخطوة';
+
+  @override
+  String get moreSupport => 'الدعم الفني';
+
+  @override
+  String get moreSupportSub => 'أرسل شكوى أو اقتراحاً لفريق حسبة';
+
+  @override
+  String get supportType => 'نوع الدعم';
+
+  @override
+  String get supportTypeTechnical => 'مشكلة تقنية';
+
+  @override
+  String get supportTypeAccount => 'الحساب والاشتراك';
+
+  @override
+  String get supportTypeSuggestion => 'اقتراح';
+
+  @override
+  String get supportTypeOther => 'أخرى';
+
+  @override
+  String get supportSubject => 'موضوع المشكلة';
+
+  @override
+  String get phSupportSubject => 'بكلمات قليلة، مثل: الطابعة لا تطبع الإيصال';
+
+  @override
+  String get supportDetails => 'تفاصيل المشكلة';
+
+  @override
+  String get phSupportDetails =>
+      'ماذا حدث، وأين، ومتى؟ كلما كتبت أكثر ساعدناك أسرع';
+
+  @override
+  String get supportSend => 'إرسال الشكوى';
+
+  @override
+  String get supportSent => 'وصلت شكواك إلى فريق حسبة، وسنرد عليك هنا.';
+
+  @override
+  String get supportTypeRequired => 'اختر نوع الدعم.';
+
+  @override
+  String get supportSubjectRequired => 'اكتب موضوع المشكلة.';
+
+  @override
+  String get supportDetailsRequired => 'اكتب تفاصيل المشكلة.';
+
+  @override
+  String get supportMine => 'شكاواي';
+
+  @override
+  String get supportNone => 'لم ترسل أي شكوى بعد.';
+
+  @override
+  String get supportStatusOpen => 'جديدة';
+
+  @override
+  String get supportStatusInProgress => 'قيد المعالجة';
+
+  @override
+  String get supportStatusClosed => 'مغلقة';
+
+  @override
+  String get supportReply => 'رد فريق حسبة';
+
+  @override
+  String get supportLoadError =>
+      'تعذّر تحميل الشكاوى. تحقق من الاتصال ثم أعد المحاولة.';
+
+  @override
+  String get phBarcode => 'الرقم تحت خطوط الباركود على العبوة';
+
+  @override
+  String get phOpeningStock => 'كم عندك منه على الرف الآن';
+
+  @override
+  String get phPackSize => 'كم قطعة في الكرتونة';
+
+  @override
+  String get phPackPrice => 'سعر الكرتونة كاملة للزبون';
+
+  @override
+  String get phAddQty => 'كم وصلك من هذه البضاعة';
+
+  @override
+  String get phReason => 'سبب تغيير المخزون، مثل: بضاعة واردة';
+
+  @override
+  String get phAdjustQty => 'الكمية حسب نوع التعديل المختار أعلاه';
+
+  @override
+  String get phStoreName => 'الاسم الذي يظهر أعلى الإيصال';
+
+  @override
+  String get phAddress => 'الشارع أو أقرب معلم، يظهر على الإيصال';
+
+  @override
+  String get phArea => 'المدينة أو المنطقة، مثل: نابلس';
+
+  @override
+  String get phCurrentPw => 'كلمة المرور التي تدخل بها الآن';
+
+  @override
+  String get phConfirmPw => 'اكتب كلمة المرور الجديدة مرة ثانية';
+
+  @override
+  String get phLoginPw => 'كلمة مرور حسابك';
+
+  @override
+  String get phRegStoreName => 'اسم المحل كما يعرفه الزبائن';
+
+  @override
+  String get phOwnerName => 'اسمك الكامل';
+
+  @override
+  String get phStreet => 'الشارع أو أقرب معلم';
+
+  @override
+  String get phPhone => 'رقم جوالك، مثل 0599123456';
+
+  @override
+  String get phEmail => 'بريدك الذي تدخل به، مثل name@store.ps';
+
+  @override
+  String get phCustomerName => 'اسم الزبون كما تناديه';
+
+  @override
+  String get phPaidNow => 'كم دفع الزبون الآن بالشيكل';
+
+  @override
+  String get phPayAmount => 'المبلغ الذي دفعه الزبون بالشيكل';
+
+  @override
+  String get phVoidReason => 'لماذا تُلغى هذه الفاتورة';
+
+  @override
   String get splashTagline => 'دفتر متجرك، في جيبك';
 
   @override
@@ -349,7 +571,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get manualLabel => 'رقم الباركود';
 
   @override
-  String get manualHint => 'الأرقام أسفل الخطوط';
+  String get manualHint => 'الأرقام كما تظهر تحت خطوط الباركود';
 
   @override
   String get manualHelper => 'اكتب الأرقام كما تظهر تحت خطوط الباركود.';
@@ -906,8 +1128,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get newCustomerPhone => 'رقم الهاتف';
 
   @override
-  String get newCustomerPhoneHint =>
-      '10 أرقام. سقف الدين يحدده المالك أو المدير لاحقاً.';
+  String get newCustomerPhoneHint => 'رقم جوال الزبون، 10 أرقام';
 
   @override
   String get newCustomerNameRequired => 'اكتب اسم الزبون';
@@ -1504,7 +1725,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get passwordConfirmLabel => 'تأكيد كلمة المرور';
 
   @override
-  String get passwordMinHint => '8 أحرف على الأقل';
+  String get passwordMinHint => 'كلمة مرور للدخول، 8 أحرف على الأقل';
 
   @override
   String get storeNameRequired => 'يرجى إدخال اسم المتجر.';
@@ -1774,11 +1995,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get formPriceHelpKg => 'ما يدفعه الزبون مقابل كيلو واحد.';
 
   @override
-  String get formCostHelp => 'ما تدفعه أنت للمورّد. لا يظهر للزبون.';
+  String get formCostHelp => 'ما تدفعه للمورّد، لا يراه الزبون';
 
   @override
-  String get formMinHelp =>
-      'يظهر المنتج في قائمة «منخفض» عندما يصل المخزون إلى هذا الرقم أو أقل.';
+  String get formMinHelp => 'عند هذا العدد أو أقل يظهر في «منخفض»';
 
   @override
   String get formRequiredA11y => 'مطلوب';
@@ -1980,7 +2200,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get inviteEmail => 'بريده الإلكتروني';
 
   @override
-  String get inviteEmailHint => 'إن كتبته، لا يُقبل الرابط إلا بهذا البريد.';
+  String get inviteEmailHint => 'إن كتبته، لا يعمل الرابط إلا بهذا البريد';
 
   @override
   String get inviteCreate => 'إنشاء رابط الدعوة';
@@ -2032,7 +2252,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get storePhone => 'هاتف المحل';
 
   @override
-  String get storePhoneHint => 'مثل 0599123456';
+  String get storePhoneHint => 'هاتف المحل على الإيصال، مثل 0599123456';
 
   @override
   String get storeAddress => 'العنوان';
@@ -2069,8 +2289,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pwConfirm => 'تأكيد كلمة المرور الجديدة';
 
   @override
-  String get pwHelp =>
-      '8 أحرف على الأقل. سيُسجَّل خروجك من الأجهزة الأخرى، ويبقى هذا الجوال داخلاً.';
+  String get pwHelp => '8 أحرف على الأقل، والأجهزة الأخرى تُسجَّل خارجاً';
 
   @override
   String get pwSave => 'تغيير كلمة المرور';
@@ -2185,7 +2404,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get prodDeactivateBody =>
-      'لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل.';
+      'لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».';
 
   @override
   String prodDeactivated(String name) {
@@ -2195,6 +2414,18 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get prodInactiveNote =>
       'هذا المنتج موقوف: لا يُباع ولا يظهر في القائمة.';
+
+  @override
+  String get prodFilterInactive => 'موقوفة';
+
+  @override
+  String get prodReactivate => 'إعادة تفعيل المنتج';
+
+  @override
+  String get prodReactivated => 'رجع المنتج إلى البيع والقائمة كما كان.';
+
+  @override
+  String get invOpenProduct => 'تعديل السعر والتفاصيل';
 
   @override
   String get prodSaved => 'حُفظت التعديلات.';

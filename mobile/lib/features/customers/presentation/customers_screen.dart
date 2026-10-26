@@ -146,7 +146,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
 
   List<Widget> _content(AppLocalizations t) {
     if (_loading && _customers.isEmpty) {
-      return const [Padding(padding: EdgeInsets.symmetric(vertical: 48), child: LoadingView())];
+      return const [Padding(padding: EdgeInsets.only(top: 4), child: LoadingView(padding: EdgeInsets.zero))];
     }
     if (_failed) return [ErrorView(message: t.custLoadError, onRetry: _load)];
     if (_customers.isEmpty) {

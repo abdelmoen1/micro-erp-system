@@ -70,6 +70,33 @@
 .state-text { font-size: 15px; color: var(--ink-muted); max-width: 52ch; line-height: 1.7; }
 .split { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
 .split > * { min-width: 0; }
+/* The mobile app: download card on the dashboard and the first-visit guide. */
+.app-card { margin-block: 16px; }
+.app-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; }
+.app-card-head > span:nth-child(2) { flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px; }
+.app-card-head h2 { font-size: 17px; font-weight: 700; }
+.app-card-head small { font-size: 14px; color: var(--ink-muted); line-height: 1.6; }
+.app-card-ic { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; background: var(--brand-tint); color: var(--accent-600); }
+.app-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.app-steps li { display: flex; gap: 10px; align-items: flex-start; }
+.app-steps li > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.app-steps small { font-size: 13px; color: var(--ink-muted); line-height: 1.6; }
+.app-step-n { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-600); color: #fff; font-size: 13px; font-weight: 700; }
+.dlg .app-steps { grid-template-columns: 1fr; margin-bottom: 8px; }
+
+/* Technical support complaints (settings and the admin's section). */
+.ticket-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ticket { padding: 14px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.ticket:first-child { border-top: 0; padding-top: 0; }
+.ticket-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ticket-meta { font-size: 13px; color: var(--ink-muted); }
+.ticket-body { margin: 0; white-space: pre-line; line-height: 1.7; overflow-wrap: anywhere; }
+.ticket-reply { background: var(--brand-tint); border-radius: 10px; padding: 10px 12px; }
+.ticket-reply small { font-size: 12px; font-weight: 600; color: var(--accent-600); }
+.ticket-reply p { margin: 4px 0 0; white-space: pre-line; line-height: 1.7; overflow-wrap: anywhere; }
+.ticket-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.nav-count { margin-inline-start: auto; min-width: 22px; padding: 0 6px; border-radius: 999px; background: var(--mint, #a7d7c5); color: #0b2a24; font-size: 12px; font-weight: 700; text-align: center; line-height: 20px; }
+
 /* Settings: a row that opens another back-office page. */
 .settings-link { flex-direction: row; align-items: center; gap: 14px; color: var(--ink); text-decoration: none; }
 .settings-link > span { flex: 1; display: flex; flex-direction: column; gap: 2px; }

@@ -58,7 +58,7 @@ void main() {
   testWidgets('the owner sees every section; an employee sees no staff, store details or negative stock', (tester) async {
     await pumpApp(tester);
     await openMore(tester);
-    for (final key in ['more.staff', 'more.store', 'more.lowStock', 'more.negative', 'more.sales', 'more.password', 'more.subscription']) {
+    for (final key in ['more.staff', 'more.store', 'more.lowStock', 'more.negative', 'more.sales', 'more.password', 'more.subscription', 'more.support']) {
       expect(find.byKey(Key(key)), findsOneWidget, reason: key);
     }
     expect(find.textContaining('تجربة مجانية حتى 20/10/2026'), findsOneWidget);
@@ -175,6 +175,67 @@ void main() {
     expect(api.requestsTo('PATCH /my-store').last.data, containsPair('name', 'بقالة الأمل'));
     expect(api.requestsTo('GET /me').length, meCalls + 1, reason: 'the receipt header reads the new name');
     expect(find.text('حُفظت بيانات المحل.'), findsOneWidget);
+  });
+
+  testWidgets('user guide: offered on Home until finished, walks the add-product and sale steps, then reopens from More', (tester) async {
+    await pumpApp(tester);
+    expect(find.byKey(const Key('guide.card')), findsOneWidget);
+
+    await tap(tester, find.byKey(const Key('guide.start')));
+    expect(find.text('الخطوة 1 من 4'), findsOneWidget);
+    await tap(tester, find.byKey(const Key('guide.next')));
+    expect(find.byKey(const Key('guide.step.addProduct')), findsOneWidget);
+    expect(find.byKey(const Key('guide.addProduct')), findsOneWidget);
+    await tap(tester, find.byKey(const Key('guide.skip')));
+    expect(find.byKey(const Key('guide.step.sale')), findsOneWidget);
+    expect(find.byKey(const Key('guide.sell')), findsOneWidget);
+    await tap(tester, find.byKey(const Key('guide.skip')));
+    await tap(tester, find.byKey(const Key('guide.finish')));
+
+    expect(find.byKey(const Key('guide.card')), findsNothing, reason: 'finished: not offered again');
+    await openMore(tester);
+    await tap(tester, find.byKey(const Key('more.guide')));
+    expect(find.byKey(const Key('guide.step.welcome')), findsOneWidget);
+  });
+
+  testWidgets('user guide: an employee gets the sale step only; «later» hides the card', (tester) async {
+    await pumpApp(tester, role: 'employee');
+    await openMore(tester);
+    await tap(tester, find.byKey(const Key('more.guide')));
+    expect(find.text('الخطوة 1 من 3'), findsOneWidget);
+    await tap(tester, find.byKey(const Key('guide.next')));
+    expect(find.byKey(const Key('guide.step.sale')), findsOneWidget);
+  });
+
+  testWidgets('support: type, subject and details are required; a sent complaint is listed with the team’s reply', (tester) async {
+    api.on('GET /support-tickets', const FakeResponse(200, {
+      'data': [
+        {'id': 1, 'type': 'account', 'subject': 'تجديد الاشتراك', 'details': 'كيف أجدد؟', 'status': 'closed', 'reply': 'تواصلنا معك.', 'created_at': '2026-10-20T08:00:00Z'},
+      ],
+    }));
+    await pumpApp(tester, role: 'employee');
+    await openMore(tester);
+    await tap(tester, find.byKey(const Key('more.support')));
+    expect(find.text('تواصلنا معك.'), findsOneWidget);
+    expect(find.text('مغلقة'), findsOneWidget);
+
+    await tap(tester, find.byKey(const Key('support.send')));
+    expect(find.text('اختر نوع الدعم.'), findsOneWidget);
+    expect(find.text('اكتب موضوع المشكلة.'), findsOneWidget);
+    expect(api.requestsTo('POST /support-tickets'), isEmpty);
+
+    await tap(tester, find.byKey(const Key('support.type.technical')));
+    await tester.enterText(find.byKey(const Key('support.subject')), 'الطابعة لا تطبع');
+    await tester.enterText(find.byKey(const Key('support.details')), 'بعد البيع تظهر رسالة خطأ.');
+    api.on('POST /support-tickets', const FakeResponse(201, {'message': 'ok', 'data': {'id': 2}}));
+    await tap(tester, find.byKey(const Key('support.send')));
+    expect(api.requestsTo('POST /support-tickets').single.data, {
+      'type': 'technical',
+      'subject': 'الطابعة لا تطبع',
+      'details': 'بعد البيع تظهر رسالة خطأ.',
+    });
+    expect(find.text('وصلت شكواك إلى فريق حسبة، وسنرد عليك هنا.'), findsOneWidget);
+    expect(api.requestsTo('GET /support-tickets'), hasLength(2), reason: 'the list reloads after sending');
   });
 
   testWidgets('password: checked before sending, the server’s «wrong current password» shown, success returns', (tester) async {
@@ -342,6 +403,27 @@ void main() {
       expect(find.byKey(const Key('product.adjust')), findsNothing);
       expect(find.byKey(const Key('product.edit')), findsNothing);
       expect(find.text('تعديل المنتجات والمخزون للمالك أو المدير.'), findsOneWidget);
+    });
+
+    testWidgets('a stopped product is listed under «موقوفة» and comes back with one button', (tester) async {
+      final stopped = {...water, 'status': 'inactive'};
+      await pumpApp(tester);
+      await tap(tester, find.byKey(const Key('nav.products')));
+      api
+        ..on('GET /products', FakeResponse(200, {'data': [stopped]}))
+        ..on('GET /products/12', FakeResponse(200, {'data': stopped}));
+      await tap(tester, find.text('موقوفة'));
+      expect(api.requestsTo('GET /products').last.queryParameters['status'], 'inactive');
+
+      await tap(tester, find.byKey(const Key('products.row.12')));
+      expect(find.byKey(const Key('product.adjust')), findsNothing);
+      api
+        ..on('PATCH /products/12', FakeResponse(200, {'data': water}))
+        ..on('GET /products/12', FakeResponse(200, {'data': water}));
+      await tap(tester, find.byKey(const Key('product.reactivate')));
+      expect(api.requestsTo('PATCH /products/12').single.data, {'status': 'active'});
+      expect(find.text('رجع المنتج إلى البيع والقائمة كما كان.'), findsOneWidget);
+      expect(find.byKey(const Key('product.adjust')), findsOneWidget);
     });
 
     testWidgets('low and negative stock lists open the product', (tester) async {

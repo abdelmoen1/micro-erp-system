@@ -16,6 +16,232 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loading => 'Loading…';
 
   @override
+  String get guideTitle => 'User guide';
+
+  @override
+  String get guideCardTitle => 'New to Hisbah?';
+
+  @override
+  String get guideCardBody =>
+      'Try it in two minutes: add a product by its barcode, then sell it on an invoice.';
+
+  @override
+  String get guideStart => 'Start the guide';
+
+  @override
+  String get guideLater => 'Later';
+
+  @override
+  String guideStep(int n, int total) {
+    return 'Step $n of $total';
+  }
+
+  @override
+  String get guideWelcomeTitle => 'Welcome to Hisbah';
+
+  @override
+  String get guideWelcomeBody =>
+      'Together we will try the two things a shop does most: adding a product by barcode and making an invoice by barcode. Everything here is real and saved in your store.';
+
+  @override
+  String get guideAddTitle => 'Add your first product by barcode';
+
+  @override
+  String get guideAdd1 =>
+      'Tap «Scan a product now» and point the camera at the barcode of any product in your shop.';
+
+  @override
+  String get guideAdd2 =>
+      'If the product is known we fill in its name; you type the price and the quantity on hand.';
+
+  @override
+  String get guideAdd3 => 'Tap «Save», then come back to continue the guide.';
+
+  @override
+  String get guideAddAction => 'Scan a product now';
+
+  @override
+  String get guideAddDone => 'You added your first product. Well done!';
+
+  @override
+  String get guideSaleTitle => 'Make your first invoice by barcode';
+
+  @override
+  String get guideSale1 =>
+      'Tap «Open the sale screen», then scan the product; it goes straight into the cart.';
+
+  @override
+  String get guideSale2 =>
+      'Scan it again to add one more, or scan other products.';
+
+  @override
+  String get guideSale3 =>
+      'Tap «Complete sale», choose cash or credit to a customer, then save the invoice.';
+
+  @override
+  String get guideSaleAction => 'Open the sale screen';
+
+  @override
+  String get guideDoneTitle => 'Ready to work!';
+
+  @override
+  String get guideDoneBody =>
+      'Invoices are under «Sales», debts under «Customers» and stock under «Products». Settings and support are under «More», where you can open this guide any time.';
+
+  @override
+  String get guideFinish => 'Start working';
+
+  @override
+  String get guideNext => 'Next';
+
+  @override
+  String get guideSkip => 'Skip this step';
+
+  @override
+  String get moreGuideSub =>
+      'Try adding a product and making an invoice, step by step';
+
+  @override
+  String get moreSupport => 'Technical support';
+
+  @override
+  String get moreSupportSub =>
+      'Send a complaint or a suggestion to the Hisbah team';
+
+  @override
+  String get supportType => 'Type of support';
+
+  @override
+  String get supportTypeTechnical => 'Technical problem';
+
+  @override
+  String get supportTypeAccount => 'Account and subscription';
+
+  @override
+  String get supportTypeSuggestion => 'Suggestion';
+
+  @override
+  String get supportTypeOther => 'Other';
+
+  @override
+  String get supportSubject => 'Subject';
+
+  @override
+  String get phSupportSubject =>
+      'In a few words, e.g. the printer does not print';
+
+  @override
+  String get supportDetails => 'Details';
+
+  @override
+  String get phSupportDetails =>
+      'What happened, where and when? The more you write, the faster we help';
+
+  @override
+  String get supportSend => 'Send';
+
+  @override
+  String get supportSent =>
+      'Your complaint reached the Hisbah team; we will reply here.';
+
+  @override
+  String get supportTypeRequired => 'Choose the type of support.';
+
+  @override
+  String get supportSubjectRequired => 'Write the subject.';
+
+  @override
+  String get supportDetailsRequired => 'Write the details.';
+
+  @override
+  String get supportMine => 'My complaints';
+
+  @override
+  String get supportNone => 'You have not sent any complaint yet.';
+
+  @override
+  String get supportStatusOpen => 'New';
+
+  @override
+  String get supportStatusInProgress => 'In progress';
+
+  @override
+  String get supportStatusClosed => 'Closed';
+
+  @override
+  String get supportReply => 'Reply from the Hisbah team';
+
+  @override
+  String get supportLoadError =>
+      'Could not load the complaints. Check the connection and try again.';
+
+  @override
+  String get phBarcode => 'The number under the barcode bars on the pack';
+
+  @override
+  String get phOpeningStock => 'How many you have on the shelf now';
+
+  @override
+  String get phPackSize => 'Pieces in one carton';
+
+  @override
+  String get phPackPrice => 'Price of a whole carton to the customer';
+
+  @override
+  String get phAddQty => 'How much of these goods arrived';
+
+  @override
+  String get phReason => 'Why the stock changes, e.g. goods received';
+
+  @override
+  String get phAdjustQty => 'The quantity for the change chosen above';
+
+  @override
+  String get phStoreName => 'The name printed on top of the receipt';
+
+  @override
+  String get phAddress => 'Street or nearest landmark, printed on the receipt';
+
+  @override
+  String get phArea => 'City or area, e.g. Nablus';
+
+  @override
+  String get phCurrentPw => 'The password you sign in with now';
+
+  @override
+  String get phConfirmPw => 'Type the new password again';
+
+  @override
+  String get phLoginPw => 'Your account password';
+
+  @override
+  String get phRegStoreName => 'Your shop\'s name as customers know it';
+
+  @override
+  String get phOwnerName => 'Your full name';
+
+  @override
+  String get phStreet => 'Street or nearest landmark';
+
+  @override
+  String get phPhone => 'Your mobile number, e.g. 0599123456';
+
+  @override
+  String get phEmail => 'The email you sign in with, e.g. name@store.ps';
+
+  @override
+  String get phCustomerName => 'The customer\'s name as you call them';
+
+  @override
+  String get phPaidNow => 'How much the customer paid now, in shekels';
+
+  @override
+  String get phPayAmount => 'The amount the customer paid, in shekels';
+
+  @override
+  String get phVoidReason => 'Why this invoice is voided';
+
+  @override
   String get splashTagline => 'Your shop ledger, in your pocket';
 
   @override
@@ -345,7 +571,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manualLabel => 'Barcode number';
 
   @override
-  String get manualHint => 'The digits under the bars';
+  String get manualHint => 'The digits as shown under the barcode bars';
 
   @override
   String get manualHelper =>
@@ -905,8 +1131,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newCustomerPhone => 'Phone number';
 
   @override
-  String get newCustomerPhoneHint =>
-      '10 digits. The owner or a manager sets the credit limit later.';
+  String get newCustomerPhoneHint => 'The customer\'s mobile, 10 digits';
 
   @override
   String get newCustomerNameRequired => 'Enter the customer\'s name';
@@ -1510,7 +1735,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordConfirmLabel => 'Confirm password';
 
   @override
-  String get passwordMinHint => 'At least 8 characters';
+  String get passwordMinHint => 'A sign-in password, at least 8 characters';
 
   @override
   String get storeNameRequired => 'Enter the store name.';
@@ -1786,11 +2011,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get formCostHelp =>
-      'What you pay your supplier. Customers never see it.';
+      'What you pay the supplier; customers never see it';
 
   @override
-  String get formMinHelp =>
-      'The product shows as low when stock reaches this number or less.';
+  String get formMinHelp => 'At this number or less it shows as low';
 
   @override
   String get formRequiredA11y => 'required';
@@ -1994,8 +2218,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteEmail => 'Their email';
 
   @override
-  String get inviteEmailHint =>
-      'If you type it, the link only works with this email.';
+  String get inviteEmailHint => 'If typed, the link only works with this email';
 
   @override
   String get inviteCreate => 'Create invite link';
@@ -2047,7 +2270,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get storePhone => 'Store phone';
 
   @override
-  String get storePhoneHint => 'e.g. 0599123456';
+  String get storePhoneHint => 'Shop phone on the receipt, e.g. 0599123456';
 
   @override
   String get storeAddress => 'Address';
@@ -2085,8 +2308,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pwConfirm => 'Confirm the new password';
 
   @override
-  String get pwHelp =>
-      'At least 8 characters. Other devices are signed out; this phone stays signed in.';
+  String get pwHelp => 'At least 8 characters; other devices are signed out';
 
   @override
   String get pwSave => 'Change password';
@@ -2198,7 +2420,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get prodDeactivateBody =>
-      'It leaves the till and the product list. Its movements and past sales stay on record.';
+      'It leaves the till and the product list. Its movements and past sales stay on record, and you can bring it back any time from «Stopped».';
 
   @override
   String prodDeactivated(String name) {
@@ -2208,6 +2430,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get prodInactiveNote =>
       'This product is deactivated: it is not sold and not listed.';
+
+  @override
+  String get prodFilterInactive => 'Stopped';
+
+  @override
+  String get prodReactivate => 'Bring the product back';
+
+  @override
+  String get prodReactivated =>
+      'The product is back on sale and in the list, as it was.';
+
+  @override
+  String get invOpenProduct => 'Edit price and details';
 
   @override
   String get prodSaved => 'Changes saved.';

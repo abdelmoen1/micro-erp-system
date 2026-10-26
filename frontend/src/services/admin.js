@@ -36,6 +36,29 @@ export const useCatalogItem = (id) => useQuery({ queryKey: queryKeys.admin.catal
 export const useAdminCatalog = (filters) =>
   useQuery({ queryKey: queryKeys.admin.catalogList(filters), queryFn: page(`/admin/catalog-products${qs(filters)}`), placeholderData: (p) => p });
 
+/** Every store's complaints, newest first; meta.open_count counts the new ones. */
+export const useAdminTickets = (filters) =>
+  useQuery({ queryKey: queryKeys.admin.tickets(filters), queryFn: page(`/admin/support-tickets${qs(filters)}`), placeholderData: (p) => p, ...live });
+
+/** How many complaints wait for a reply (the sidebar's count). */
+export const useOpenTicketCount = (enabled) =>
+  useQuery({
+    queryKey: queryKeys.admin.tickets({ status: "open", per_page: 1 }),
+    queryFn: page("/admin/support-tickets?status=open&per_page=1"),
+    select: (r) => r.meta?.open_count ?? 0,
+    enabled,
+    ...live,
+  });
+
+/** { id, status, reply } */
+export function useAnswerTicket() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }) => apiSend("PATCH", `/admin/support-tickets/${id}`, body).then((r) => r.data),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["admin", "tickets"] }),
+  });
+}
+
 /** After either write: the store page, the lists and the overview counts. */
 function useStoreWrite(path) {
   const client = useQueryClient();

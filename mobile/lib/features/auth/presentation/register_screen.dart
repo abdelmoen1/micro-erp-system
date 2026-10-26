@@ -253,7 +253,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               style: const TextStyle(fontSize: 16),
               decoration: InputDecoration(
                 hintText: hint,
-                hintTextDirection: ltr ? TextDirection.ltr : null,
+                hintTextDirection: Directionality.of(context),
                 enabledBorder: error == null
                     ? null
                     : OutlineInputBorder(
@@ -303,8 +303,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   List<Widget> _stepFields(AppLocalizations t) => switch (_step) {
     0 => [
-      _field(RegistrationField.storeName, t.storeNameLabel),
-      _field(RegistrationField.ownerName, t.ownerNameLabel, autofill: const [AutofillHints.name]),
+      _field(RegistrationField.storeName, t.storeNameLabel, hint: t.phRegStoreName),
+      _field(RegistrationField.ownerName, t.ownerNameLabel, hint: t.phOwnerName, autofill: const [AutofillHints.name]),
     ],
     1 => [
       _field(
@@ -312,11 +312,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         t.storePhoneLabel,
         keyboard: TextInputType.phone,
         ltr: true,
-        hint: '0599123456',
+        hint: t.phPhone,
         autofill: const [AutofillHints.telephoneNumber],
       ),
       _cityField(t),
-      _field(RegistrationField.street, t.streetLabel, autofill: const [AutofillHints.streetAddressLine1]),
+      _field(RegistrationField.street, t.streetLabel, hint: t.phStreet, autofill: const [AutofillHints.streetAddressLine1]),
     ],
     _ => [
       _field(
@@ -324,7 +324,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         t.emailLabel,
         keyboard: TextInputType.emailAddress,
         ltr: true,
-        hint: 'name@store.ps',
+        hint: t.phEmail,
         autofill: const [AutofillHints.email],
       ),
       _field(
@@ -337,6 +337,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       ),
       _field(
         RegistrationField.passwordConfirmation,
+        hint: t.phConfirmPw,
         t.passwordConfirmLabel,
         ltr: true,
         secret: true,

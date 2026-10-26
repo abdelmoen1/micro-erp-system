@@ -63,6 +63,7 @@ export const queryKeys = {
   },
   staff: { all: ["staff"] },
   myStore: ["my-store"],
+  support: ["support"],
   admin: {
     all: ["admin"],
     overview: ["admin", "overview"],
@@ -72,5 +73,6 @@ export const queryKeys = {
     products: (filters) => ["admin", "products", filters],
     catalog: (id) => ["admin", "catalog", id],
     catalogList: (filters) => ["admin", "catalog-list", filters],
+    tickets: (filters) => ["admin", "tickets", filters],
   },
 };

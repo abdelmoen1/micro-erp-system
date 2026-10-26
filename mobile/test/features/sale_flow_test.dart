@@ -211,7 +211,7 @@ void main() {
           {'product_id': 7, 'quantity': '3'},
         ],
         'paid_amount': '19.50',
-        'payment_method': 'cash',
+        'payment_method': 'palpay', // PalPay is selected by default
       });
       expect(api.requestsTo('POST /sales').single.headers['Idempotency-Key'], isNotNull);
       expect(find.byType(ReceiptScreen), findsOneWidget);
@@ -229,6 +229,8 @@ void main() {
       await tester.pumpAndSettle();
       await tap(tester, 'checkout.confirm');
 
+      // The default method's note (PalPay) sits above it: scroll it into view.
+      await tester.scrollUntilVisible(find.byKey(const Key('checkout.customerError')), 120, scrollable: find.byType(Scrollable).first);
       expect(find.byKey(const Key('checkout.customerError')), findsOneWidget);
       expect(find.text('أدخل مبلغاً أكبر من صفر، بخانتين عشريتين كحد أقصى.'), findsNothing);
       expect(find.text('المدفوع يساوي الإجمالي أو يزيد عليه. اختر «كاش كامل» بدلاً من «جزئي».'), findsOneWidget);

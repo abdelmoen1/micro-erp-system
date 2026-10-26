@@ -22,7 +22,7 @@ class HomeDashboard extends ConsumerWidget {
     final dashboard = ref.watch(dashboardProvider);
 
     return dashboard.when(
-      loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 64), child: LoadingView()),
+      loading: () => const Padding(padding: EdgeInsets.only(top: 8), child: LoadingView.detail(padding: EdgeInsets.zero)),
       error: (_, _) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 32),
         child: ErrorView(message: t.homeLoadError, onRetry: () => ref.invalidate(dashboardProvider)),
