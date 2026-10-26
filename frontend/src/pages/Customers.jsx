@@ -22,7 +22,8 @@ export default function Customers() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [pageNo, setPageNo] = useState(1);
-  const [creating, setCreating] = useState(false);
+  // The dashboard's «زبون جديد» opens /customers?new=1 with the form already open.
+  const [creating, setCreating] = useState(() => new URLSearchParams(window.location.search).has("new"));
   const query = useDeferredValue(search.trim());
 
   const params = {
