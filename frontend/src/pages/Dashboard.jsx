@@ -250,18 +250,18 @@ function LowStock({ loading }) {
       ) : low.isError ? (
         // A failed request is not «everything above the minimum».
         <div role="alert" className="state-card" style={{ padding: "24px 8px", gap: 8 }}>
-          <b>تعذّر تحميل المخزون</b>
+          <b>تعذّر تحميل البضاعة</b>
           <button type="button" className="btn btn-g btn-sm" onClick={() => low.refetch()}>
             إعادة المحاولة
           </button>
         </div>
       ) : rows.length === 0 ? (
         <div className="state-card" style={{ padding: "24px 8px", gap: 8 }}>
-          <b>{noProducts ? "لا منتجات بعد" : "لا منتجات تحت الحد الأدنى"}</b>
+          <b>{noProducts ? "ما في بضاعة لسّا" : "لا أصناف تحت الحد الأدنى"}</b>
           <span style={{ fontSize: 14, color: "var(--ink-muted)", lineHeight: 1.6 }}>
             {noProducts
-              ? "أضف منتجاتك وحدّد الحد الأدنى لكل منها لتظهر هنا عند انخفاضها."
-              : "كل المنتجات فوق الحد الأدنى الذي حددته."}
+              ? "أضف بضاعتك وحدّد الحد الأدنى لكل منها لتظهر هنا عند انخفاضها."
+              : "كل البضاعة فوق الحد الأدنى الذي حددته."}
           </span>
         </div>
       ) : (
@@ -373,7 +373,7 @@ export default function Dashboard() {
   const debtors = data?.customers?.with_outstanding_debts ?? 0;
   // Shortcuts to the screens that do these (products are the owner's and managers').
   const actions = [
-    ...(role === "employee" ? [] : [["منتج جديد", "أضفه بسعره ومخزونه", "products", "/products/new"]]),
+    ...(role === "employee" ? [] : [["صنف جديد", "أضفه بسعره ومخزونه", "products", "/products/new"]]),
     ["زبون جديد", "للبيع بالدين وكشف الحساب", "customers", "/customers?new=1"],
     ["تسجيل دفعة", "من الديون المفتوحة", "payments", "/debts"],
   ];

@@ -15,6 +15,7 @@ import '../../sale/presentation/sale_widgets.dart';
 import '../../shell/tab_screens.dart';
 import '../domain/customer.dart';
 import 'customer_detail_screen.dart';
+import 'legacy_debt_screen.dart';
 
 /// SCR-M-07 · customers tab: search from 2 characters, balance and overdue badge, quick-create
 /// (US-0304). Inactive customers are listed too: they stay payable (US-0301 AC4).
@@ -135,6 +136,14 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 const SizedBox(height: 6),
                 Text(t.custSearchMin, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
               ],
+              if (session is SignedIn && session.user.canOverride) ...[
+                const SizedBox(height: 12),
+                LegacyDebtAction(
+                  onTap: () async {
+                    if (await openLegacyDebt(context) && mounted) unawaited(_load());
+                  },
+                ),
+              ],
               const SizedBox(height: 12),
               ..._content(t),
             ],
@@ -146,7 +155,12 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
 
   List<Widget> _content(AppLocalizations t) {
     if (_loading && _customers.isEmpty) {
-      return const [Padding(padding: EdgeInsets.only(top: 4), child: LoadingView(padding: EdgeInsets.zero))];
+      return const [
+        Padding(
+          padding: EdgeInsets.only(top: 4),
+          child: LoadingView(padding: EdgeInsets.zero),
+        ),
+      ];
     }
     if (_failed) return [ErrorView(message: t.custLoadError, onRetry: _load)];
     if (_customers.isEmpty) {

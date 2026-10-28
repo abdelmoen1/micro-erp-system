@@ -1350,7 +1350,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get custDebtOpening => 'Opening debt';
+  String get custDebtOpening => 'Old debt';
 
   @override
   String custDue(String date) {
@@ -2572,4 +2572,112 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get listLoadError =>
       'Could not load. Check the connection and try again.';
+
+  @override
+  String get legacyAction => 'Record an old debt';
+
+  @override
+  String get legacyActionSub =>
+      'A customer\'s debt from before Hisbah, from your old notebook';
+
+  @override
+  String get legacyTitle => 'Record an old debt';
+
+  @override
+  String get legacyIntro =>
+      'Recorded as a debt on the customer only: not a sale, no stock change, no cash.';
+
+  @override
+  String get legacyCustomer => 'Customer';
+
+  @override
+  String get legacyPickCustomer => 'Choose the customer';
+
+  @override
+  String get legacyChange => 'Change';
+
+  @override
+  String get legacyAmount => 'Amount owed';
+
+  @override
+  String get legacyAmountHint => 'e.g. 150';
+
+  @override
+  String get legacyAmountInvalid =>
+      'Enter an amount above zero with at most two decimals.';
+
+  @override
+  String get legacyAmountTooBig => 'The amount is above the limit.';
+
+  @override
+  String get legacyPartlyPaid =>
+      'If the customer already paid part of it, enter only what is left.';
+
+  @override
+  String get legacyOrigin => 'Debt date';
+
+  @override
+  String get legacyOriginNone => 'Not set';
+
+  @override
+  String get legacyDue => 'Due date (optional)';
+
+  @override
+  String get legacyDueNone => 'No due date';
+
+  @override
+  String get legacyNote => 'Note (optional)';
+
+  @override
+  String get legacyNoteHint => 'e.g. from the old debt notebook';
+
+  @override
+  String get legacyClear => 'Clear';
+
+  @override
+  String get legacySave => 'Record the debt';
+
+  @override
+  String get legacySaving => 'Recording…';
+
+  @override
+  String get legacyRetry => 'Try again';
+
+  @override
+  String get legacyUncertain =>
+      'The connection dropped before the server answered; the debt may be recorded. Tap «Try again»: it will not be recorded twice.';
+
+  @override
+  String get legacyConfirmTitle => 'Confirm the old debt';
+
+  @override
+  String legacyConfirmBody(String name, String amount) {
+    return 'An old debt of $amount will be recorded on $name. You can edit or delete it later on the web.';
+  }
+
+  @override
+  String get legacyConfirmOk => 'Yes, record it';
+
+  @override
+  String get legacyBack => 'Back';
+
+  @override
+  String get legacyDone => 'Old debt recorded';
+
+  @override
+  String legacyDoneBody(String name, String amount) {
+    return '$name now has an old debt of $amount.';
+  }
+
+  @override
+  String get legacyDoneButton => 'Done';
+
+  @override
+  String get legacyForbidden =>
+      'Only the owner or a manager can record old debts.';
+
+  @override
+  String legacySince(String date) {
+    return 'Since $date';
+  }
 }

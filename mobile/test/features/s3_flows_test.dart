@@ -89,6 +89,77 @@ void main() {
       api.on('GET /payments', const FakeResponse(200, {'data': []}));
     });
 
+    const legacyCreated = FakeResponse(201, {
+      'data': {
+        'id': 90,
+        'source': 'opening_debt',
+        'debt': {'id': 3, 'remaining_amount': '120.00', 'source': 'opening_debt'},
+      },
+    });
+
+    testWidgets('old debt from the customer page: validated, confirmed, sent once, balances refreshed', (tester) async {
+      api.on('POST /debts', legacyCreated);
+      await pumpApp(tester);
+      await tap(tester, find.byKey(const Key('nav.customers')));
+      await tap(tester, find.byKey(const Key('customers.row.4')));
+      await tap(tester, find.byKey(const Key('customer.legacyDebt')));
+      expect(find.byKey(const Key('legacy.form')), findsOneWidget);
+      expect(find.text('أبو محمد'), findsWidgets, reason: 'the customer is preselected');
+
+      for (final bad in ['0', '12.345', '-5']) {
+        await tester.enterText(find.byKey(const Key('legacy.amount')), bad);
+        await tap(tester, find.byKey(const Key('legacy.save')));
+        expect(find.text('اكتب مبلغ صحيح أكبر من صفر، وبحد أقصى رقمين بعد الفاصلة.'), findsOneWidget);
+      }
+      expect(api.requestsTo('POST /debts'), isEmpty);
+
+      await tester.enterText(find.byKey(const Key('legacy.amount')), '120');
+      await tester.scrollUntilVisible(find.byKey(const Key('legacy.note')), 120, scrollable: find.descendant(of: find.byKey(const Key('legacy.form')), matching: find.byType(Scrollable)).first);
+      await tester.enterText(find.byKey(const Key('legacy.note')), 'من الدفتر القديم');
+      await tap(tester, find.byKey(const Key('legacy.save')));
+      expect(find.text('تأكيد الدين القديم'), findsOneWidget);
+      await tap(tester, find.byKey(const Key('legacy.confirm')));
+
+      final sent = api.requestsTo('POST /debts');
+      expect(sent, hasLength(1));
+      expect(sent.single.data, {'customer_id': 4, 'amount': '120.00', 'note': 'من الدفتر القديم'});
+      expect(sent.single.headers['Idempotency-Key'], isNotEmpty);
+      expect(find.byKey(const Key('legacy.done')), findsOneWidget);
+
+      final summaries = api.requestsTo('GET /customers/4/summary').length;
+      await tap(tester, find.text('تمام'));
+      expect(api.requestsTo('GET /customers/4/summary').length, summaries + 1, reason: 'the balance is reloaded');
+      expect(api.requestsTo('POST /sales'), isEmpty, reason: 'an old debt is never a sale');
+    });
+
+    testWidgets('old debt after a dropped connection: the retry reuses the same key', (tester) async {
+      api.offline('POST /debts');
+      await pumpApp(tester);
+      await tap(tester, find.byKey(const Key('nav.customers')));
+      await tap(tester, find.byKey(const Key('customers.row.4')));
+      await tap(tester, find.byKey(const Key('customer.legacyDebt')));
+      await tester.enterText(find.byKey(const Key('legacy.amount')), '75.5');
+      await tap(tester, find.byKey(const Key('legacy.save')));
+      await tap(tester, find.byKey(const Key('legacy.confirm')));
+      expect(find.text('أعد المحاولة'), findsOneWidget);
+
+      api.restore('POST /debts');
+      api.on('POST /debts', legacyCreated);
+      await tap(tester, find.byKey(const Key('legacy.save')));
+      final sent = api.requestsTo('POST /debts');
+      expect(sent, hasLength(2));
+      expect(sent.last.headers['Idempotency-Key'], sent.first.headers['Idempotency-Key']);
+      expect(find.byKey(const Key('legacy.done')), findsOneWidget);
+    });
+
+    testWidgets('an employee does not see «تسجيل دين قديم»', (tester) async {
+      await pumpApp(tester, role: 'employee');
+      await tap(tester, find.byKey(const Key('nav.customers')));
+      expect(find.byKey(const Key('customers.legacyDebt')), findsNothing);
+      await tap(tester, find.byKey(const Key('customers.row.4')));
+      expect(find.byKey(const Key('customer.legacyDebt')), findsNothing);
+    });
+
     Map<String, Object?> sale(int id, {String total = '45.00', String paid = '45.00', String status = 'active', List<Map<String, Object?>>? items}) => {
       'id': id,
       'status': status,
@@ -257,7 +328,7 @@ void main() {
       expect(api.requestsTo('GET /products/lookup'), isEmpty);
 
       await tap(tester, find.byKey(const Key('form.save')));
-      expect(find.textContaining('إضافة المنتجات للمالك أو المدير'), findsOneWidget);
+      expect(find.textContaining('إضافة البضاعة للمالك أو المدير'), findsOneWidget);
 
       await tap(tester, find.byKey(const Key('form.save')));
       expect(find.byKey(const Key('addProduct.saved')), findsOneWidget);
@@ -273,11 +344,11 @@ void main() {
       await pumpApp(tester);
       await scanCode(tester, 'https://example-brand.com/promo?id=88');
 
-      expect(find.textContaining('لا يحتوي بيانات منتج'), findsOneWidget);
+      expect(find.textContaining('لا يحتوي بيانات صنف'), findsOneWidget);
       expect(find.text('https://example-brand.com/promo?id=88'), findsOneWidget);
 
       await tap(tester, find.byKey(const Key('form.save')));
-      expect(find.text('اكتب اسم المنتج.'), findsOneWidget);
+      expect(find.text('اكتب اسم الصنف.'), findsOneWidget);
       expect(find.text('أدخل سعراً صحيحاً.'), findsOneWidget);
       expect(api.requestsTo('POST /products'), isEmpty);
     });
@@ -389,7 +460,7 @@ void main() {
       expect(sent, hasLength(2));
       expect(sent.last.headers['Idempotency-Key'], sent.first.headers['Idempotency-Key'], reason: 'the retry can never add 24 twice');
       expect(sent.last.data, {'product_id': 21, 'quantity': '24', 'reason': 'بضاعة واردة'});
-      expect(find.text('أُضيفت الكمية إلى «تمر مجهول 1 كغ». المخزون الآن 36'), findsOneWidget);
+      expect(find.text('أُضيفت الكمية إلى «تمر مجهول 1 كغ». الكمية الآن 36'), findsOneWidget);
       expect(api.requestsTo('POST /products'), isEmpty);
     });
 
@@ -439,7 +510,7 @@ void main() {
       await tap(tester, find.byKey(const Key('stock.save')));
 
       expect(api.requestsTo('POST /stock-adjustments').single.data, {'product_id': 22, 'quantity': '3', 'reason': 'بضاعة واردة', 'unit': 'pack'});
-      expect(find.text('أُضيفت الكمية إلى «ماء 600 مل». المخزون الآن 78'), findsOneWidget);
+      expect(find.text('أُضيفت الكمية إلى «ماء 600 مل». الكمية الآن 78'), findsOneWidget);
     });
 
     testWidgets('a new product with a carton: the per-piece price is shown and a carton cheaper than a piece is stopped', (tester) async {
@@ -529,7 +600,7 @@ void main() {
       await tap(tester, find.byKey(const Key('addProduct.manual')));
 
       expect(find.textContaining('السعر للزبون (سعر البيع)'), findsOneWidget);
-      expect(find.textContaining('تكلفة المنتج عليك (سعر الشراء)'), findsOneWidget);
+      expect(find.textContaining('تكلفة الصنف عليك (سعر الشراء)'), findsOneWidget);
       expect(find.text('ما تدفعه للمورّد، لا يراه الزبون'), findsOneWidget);
 
       await tester.enterText(find.byKey(const Key('form.name')), 'شاي أخضر');

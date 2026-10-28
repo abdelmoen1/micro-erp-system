@@ -381,6 +381,7 @@ class LineCard extends StatelessWidget {
       color: color,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(color: HisbahColors.border),
+      boxShadow: const [BoxShadow(color: HisbahColors.shadow, blurRadius: 8, offset: Offset(0, 2))],
     ),
     child: child,
   );

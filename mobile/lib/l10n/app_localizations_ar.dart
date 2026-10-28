@@ -23,7 +23,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get guideCardBody =>
-      'جرّب في دقيقتين: أضف منتجاً بالباركود، ثم بِعه في فاتورة.';
+      'جرّب في دقيقتين: أضف صنفاً بالباركود، ثم بِعه في فاتورة.';
 
   @override
   String get guideStart => 'ابدأ الدليل';
@@ -41,38 +41,38 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get guideWelcomeBody =>
-      'سنجرب معاً أهم شيئين في المحل: إضافة منتج بالباركود، وعمل فاتورة بالباركود. كل ما تفعله هنا حقيقي ويُحفظ في متجرك.';
+      'سنجرب معاً أهم شيئين في المحل: إضافة صنف بالباركود، وعمل فاتورة بالباركود. كل ما تفعله هنا حقيقي ويُحفظ في متجرك.';
 
   @override
-  String get guideAddTitle => 'أضف منتجك الأول بالباركود';
+  String get guideAddTitle => 'أضف صنفك الأول بالباركود';
 
   @override
   String get guideAdd1 =>
-      'اضغط «امسح منتجاً الآن» ووجّه الكاميرا إلى باركود أي منتج في محلك.';
+      'اضغط «امسح صنفاً الآن» ووجّه الكاميرا إلى باركود أي صنف في محلك.';
 
   @override
   String get guideAdd2 =>
-      'إن كان المنتج معروفاً نملأ اسمه، وأنت تكتب السعر والكمية الموجودة.';
+      'إن كان الصنف معروفاً نملأ اسمه، وأنت تكتب السعر والكمية الموجودة.';
 
   @override
   String get guideAdd3 => 'اضغط «حفظ»، ثم ارجع لتكمل الدليل.';
 
   @override
-  String get guideAddAction => 'امسح منتجاً الآن';
+  String get guideAddAction => 'امسح صنفاً الآن';
 
   @override
-  String get guideAddDone => 'أضفت منتجك الأول. أحسنت!';
+  String get guideAddDone => 'أضفت صنفك الأول. أحسنت!';
 
   @override
   String get guideSaleTitle => 'اعمل فاتورتك الأولى بالباركود';
 
   @override
   String get guideSale1 =>
-      'اضغط «افتح شاشة البيع» ثم امسح المنتج؛ يدخل السلة فوراً.';
+      'اضغط «افتح شاشة البيع» ثم امسح الصنف؛ يدخل السلة فوراً.';
 
   @override
   String get guideSale2 =>
-      'امسح المنتج مرة ثانية لزيادة الكمية، أو امسح منتجات أخرى.';
+      'امسح الصنف مرة ثانية لزيادة الكمية، أو امسح أصناف أخرى.';
 
   @override
   String get guideSale3 =>
@@ -86,7 +86,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get guideDoneBody =>
-      'الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «المنتجات». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.';
+      'الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «البضاعة». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.';
 
   @override
   String get guideFinish => 'ابدأ العمل';
@@ -98,7 +98,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get guideSkip => 'تخطَّ هذه الخطوة';
 
   @override
-  String get moreGuideSub => 'جرّب إضافة منتج وعمل فاتورة خطوة بخطوة';
+  String get moreGuideSub => 'جرّب إضافة صنف وعمل فاتورة خطوة بخطوة';
 
   @override
   String get moreSupport => 'الدعم الفني';
@@ -241,7 +241,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get splashTagline => 'دفتر متجرك، في جيبك';
 
   @override
-  String get splashSubline => 'المبيعات والديون والمخزون في مكان واحد';
+  String get splashSubline => 'المبيعات والديون والبضاعة في مكان واحد';
 
   @override
   String get splashChecking => 'جارٍ التحقق من الجلسة';
@@ -336,7 +336,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tabCustomers => 'الزبائن';
 
   @override
-  String get tabProducts => 'المنتجات';
+  String get tabProducts => 'البضاعة';
 
   @override
   String get tabMore => 'المزيد';
@@ -363,7 +363,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get placeholderCustomers => 'قائمة الزبائن';
 
   @override
-  String get placeholderProducts => 'المنتجات والمخزون المنخفض';
+  String get placeholderProducts => 'البضاعة والأصناف اللي قرّبت تخلص';
 
   @override
   String get placeholderPos => 'سلة البيع — شاشة هبوط الموظف';
@@ -471,7 +471,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get currencySymbol => '₪';
 
   @override
-  String get scanEntryTitle => 'عرض بيانات منتج';
+  String get scanEntryTitle => 'عرض بيانات صنف';
 
   @override
   String get scanEntryBody =>
@@ -502,38 +502,38 @@ class AppLocalizationsAr extends AppLocalizations {
   String get scanSearchingCode => 'جارٍ البحث عن باركود…';
 
   @override
-  String get scanSearchingProduct => 'جارٍ البحث عن المنتج…';
+  String get scanSearchingProduct => 'جارٍ البحث عن الصنف…';
 
   @override
   String get scanHintTitle => 'صعب القراءة؟';
 
   @override
   String get scanHintBody =>
-      'قرّب الباركود ببطء، أمِل المنتج لتجنب اللمعان، وشغّل الإضاءة. أو أدخله يدويًا.';
+      'قرّب الباركود ببطء، أمِل الصنف لتجنب اللمعان، وشغّل الإضاءة. أو أدخله يدويًا.';
 
   @override
   String get scanManual => 'إدخال الباركود يدويًا';
 
   @override
-  String get scanFound => 'تم العثور على المنتج';
+  String get scanFound => 'لقينا الصنف';
 
   @override
   String get scanPrice => 'سعر البيع';
 
   @override
-  String get scanStock => 'المخزون الحالي';
+  String get scanStock => 'الكمية الموجودة';
 
   @override
   String get scanBarcodeLabel => 'الباركود';
 
   @override
-  String get scanAnother => 'مسح منتج آخر';
+  String get scanAnother => 'امسح صنف ثاني';
 
   @override
   String get scanBackToSale => 'الرجوع إلى البيع';
 
   @override
-  String get scanNotFoundTitle => 'لا يوجد منتج بهذا الباركود';
+  String get scanNotFoundTitle => 'ما في صنف بهذا الباركود';
 
   @override
   String get scanNotFoundBody => 'تأكد من الرقم أو امسحه مرة أخرى.';
@@ -580,13 +580,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get manualEmpty => 'أدخل رقم الباركود';
 
   @override
-  String get manualSubmit => 'عرض المنتج';
+  String get manualSubmit => 'عرض الصنف';
 
   @override
   String get manualCancelA11y => 'إلغاء الإدخال اليدوي';
 
   @override
-  String get lookupFailedTitle => 'تعذّر عرض المنتج';
+  String get lookupFailedTitle => 'تعذّر عرض الصنف';
 
   @override
   String get lookupSavedForRetry => 'محفوظ لإعادة المحاولة.';
@@ -625,7 +625,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get scanLookingUp => 'جارٍ البحث عن المنتج…';
+  String get scanLookingUp => 'جارٍ البحث عن الصنف…';
 
   @override
   String get barcodeWord => 'الباركود';
@@ -657,20 +657,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get scanUnknown => 'باركود غير معروف';
 
   @override
-  String get scanUnknownBody => 'لا يوجد منتج بهذا الرقم في متجرك:';
+  String get scanUnknownBody => 'لا يوجد صنف بهذا الرقم في متجرك:';
 
   @override
-  String get scanLookupFailed => 'تعذّر البحث عن المنتج';
+  String get scanLookupFailed => 'تعذّر البحث عن الصنف';
 
   @override
   String get scanLookupFailedBody => 'تحقق من الاتصال ثم أعد المحاولة.';
 
   @override
-  String get cartEmptyTitle => 'امسح منتجاً للبدء';
+  String get cartEmptyTitle => 'امسح أول صنف لتبدأ';
 
   @override
   String get cartEmptyBody =>
-      'أو ابحث عنه بالاسم. المنتجات بالوزن تفتح شاشة إدخال الوزن.';
+      'أو ابحث عنه بالاسم. البضاعة بالوزن تفتح شاشة إدخال الوزن.';
 
   @override
   String get unitChipPiece => 'قطعة';
@@ -725,7 +725,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get stockWord => 'المخزون';
+  String get stockWord => 'الكمية';
 
   @override
   String get weightTitle => 'أدخل الوزن';
@@ -785,20 +785,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get keyDecimal => 'فاصلة عشرية';
 
   @override
-  String get productSearchTitle => 'بحث عن منتج';
+  String get productSearchTitle => 'بحث عن صنف';
 
   @override
-  String get productSearchHint => 'ابحث باسم المنتج أو الباركود';
+  String get productSearchHint => 'ابحث باسم الصنف أو الباركود';
 
   @override
-  String get productSearchEmpty => 'لا يوجد منتج بهذا الاسم';
+  String get productSearchEmpty => 'ما في صنف بهذا الاسم';
 
   @override
   String get productSearchEmptyBody =>
-      'تحقق من الكتابة. المنتجات تُضاف من لوحة الإدارة على الويب.';
+      'تحقق من الكتابة. البضاعة تُضاف من لوحة الإدارة على الويب.';
 
   @override
-  String get productSearchError => 'تعذّر تحميل المنتجات';
+  String get productSearchError => 'تعذّر تحميل البضاعة';
 
   @override
   String get listErrorBody => 'تحقق من الاتصال. البيع الحالي محفوظ كما هو.';
@@ -1273,7 +1273,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get custSearchMin => 'اكتب حرفين أو أكثر للبحث.';
 
   @override
-  String get custEmptyTitle => 'لا زبائن بعد';
+  String get custEmptyTitle => 'ما في زبائن لسّا';
 
   @override
   String get custEmptyBody => 'أضف زبائن الدين. البيع النقدي لا يحتاج زبوناً.';
@@ -1302,7 +1302,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get custInactive => 'موقوف';
 
   @override
-  String get custRemaining => 'المتبقي عليه';
+  String get custRemaining => 'الباقي عليه';
 
   @override
   String custOverdueAmount(String amount) {
@@ -1318,7 +1318,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get custNoLimit => 'بلا حد للدين';
 
   @override
-  String get custRecordPayment => 'تسجيل دفعة';
+  String get custRecordPayment => 'قبض دفعة';
 
   @override
   String custCall(String phone) {
@@ -1329,13 +1329,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get custOpenDebts => 'ديون مفتوحة';
 
   @override
-  String get custNoOpenDebts => 'لا ديون مفتوحة على هذا الزبون.';
+  String get custNoOpenDebts => 'ما عليه ديون مفتوحة.';
 
   @override
   String get custRecentPayments => 'آخر الدفعات';
 
   @override
-  String get custNoPayments => 'لا دفعات بعد.';
+  String get custNoPayments => 'ما في دفعات لسّا.';
 
   @override
   String custDebtSale(int id) {
@@ -1343,7 +1343,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get custDebtOpening => 'دين افتتاحي';
+  String get custDebtOpening => 'دين قديم';
 
   @override
   String custDue(String date) {
@@ -1375,7 +1375,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get payAmount => 'المبلغ';
 
   @override
-  String get payFull => 'كامل المتبقي';
+  String get payFull => 'كل الباقي';
 
   @override
   String get payOther => 'مبلغ آخر';
@@ -1389,13 +1389,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get payMethod => 'طريقة الدفع';
 
   @override
-  String get payNow => 'المتبقي الآن';
+  String get payNow => 'الباقي هلّأ';
 
   @override
   String get payThis => 'الدفعة';
 
   @override
-  String get payAfter => 'بعد الدفعة';
+  String get payAfter => 'الباقي بعد الدفعة';
 
   @override
   String get payOldestFirst => 'تُوزَّع على الديون من الأقدم استحقاقاً.';
@@ -1443,7 +1443,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get prodSearchHint => 'بحث بالاسم أو الباركود';
 
   @override
-  String get prodAdd => '+ منتج';
+  String get prodAdd => '+ صنف';
 
   @override
   String get prodFilterAll => 'الكل';
@@ -1455,17 +1455,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get prodFilterNegative => 'سالب';
 
   @override
-  String get prodEmptyTitle => 'لا منتجات بعد';
+  String get prodEmptyTitle => 'ما في بضاعة لسّا';
 
   @override
   String get prodEmptyBody =>
-      'امسح رمز المنتج أو الباركود لإضافته بسرعة، أو استورد قائمتك من الويب.';
+      'امسح رمز الصنف أو الباركود لإضافته بسرعة، أو استورد قائمتك من الويب.';
 
   @override
-  String get prodNoResults => 'لا منتجات تطابق هذا البحث.';
+  String get prodNoResults => 'ما في بضاعة بهذا الاسم.';
 
   @override
-  String get prodLoadError => 'تعذّر تحميل المنتجات.';
+  String get prodLoadError => 'تعذّر تحميل البضاعة.';
 
   @override
   String get prodStockOk => 'متوفر';
@@ -1486,7 +1486,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get prodPerKg => 'كغ';
 
   @override
-  String get addTitle => 'إضافة منتج';
+  String get addTitle => 'إضافة صنف';
 
   @override
   String get addScan => 'مسح رمز QR أو الباركود';
@@ -1498,13 +1498,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addManual => 'إدخال يدوي';
 
   @override
-  String get addManualSub => 'للمنتجات بلا رمز، مثل الموزون';
+  String get addManualSub => 'للأصناف بلا رمز، مثل الموزون';
 
   @override
   String get addChecking => 'جارٍ التحقق من الرمز…';
 
   @override
-  String get addExistsTitle => 'المنتج موجود';
+  String get addExistsTitle => 'الصنف موجود';
 
   @override
   String addExistsBody(String code) {
@@ -1539,24 +1539,24 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get addUnreadable =>
-      'هذا الرمز لا يحتوي بيانات منتج. أدخل المنتج يدوياً؛ لن نستخدم محتواه.';
+      'هذا الرمز لا يحتوي بيانات صنف. أدخل الصنف يدوياً؛ لن نستخدم محتواه.';
 
   @override
   String get addManualNote => 'إدخال يدوي. الاسم وسعر البيع مطلوبان.';
 
   @override
   String get addLookupFailed =>
-      'تعذّر التحقق من وجود المنتج الآن؛ سنتحقق عند الحفظ.';
+      'تعذّر التحقق من وجود الصنف الآن؛ سنتحقق عند الحفظ.';
 
   @override
   String get addFromCatalog =>
-      'هذا المنتج معروف في حسبة، فملأنا اسمه ووحدته. أدخل سعر البيع والتكلفة والكمية لمتجرك.';
+      'هذا الصنف معروف في حسبة، فملأنا اسمه ووحدته. أدخل سعر البيع والتكلفة والكمية لمتجرك.';
 
   @override
-  String get formNewTitle => 'منتج جديد';
+  String get formNewTitle => 'صنف جديد';
 
   @override
-  String get formName => 'اسم المنتج';
+  String get formName => 'اسم الصنف';
 
   @override
   String get formNameHint => 'مثال: تمر مجهول 1 كغ';
@@ -1580,28 +1580,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get formPrice => 'السعر للزبون (سعر البيع)';
 
   @override
-  String get formCost => 'تكلفة المنتج عليك (سعر الشراء)';
+  String get formCost => 'تكلفة الصنف عليك (سعر الشراء)';
 
   @override
-  String get formStock => 'المخزون الآن';
+  String get formStock => 'الكمية الموجودة الآن';
 
   @override
-  String get formMin => 'نبّهني عندما يصل المخزون إلى';
+  String get formMin => 'نبّهني لمّا توصل الكمية إلى';
 
   @override
-  String get formNameRequired => 'اكتب اسم المنتج.';
+  String get formNameRequired => 'اكتب اسم الصنف.';
 
   @override
   String get formPriceInvalid => 'أدخل سعراً صحيحاً.';
 
   @override
-  String get formStockPiece => 'عدد صحيح للمنتج بالقطعة.';
+  String get formStockPiece => 'عدد صحيح للصنف بالقطعة.';
 
   @override
   String get formStockKg => 'حتى 3 خانات عشرية.';
 
   @override
-  String get formSave => 'حفظ المنتج';
+  String get formSave => 'حفظ الصنف';
 
   @override
   String get formSaving => 'جارٍ الحفظ…';
@@ -1612,7 +1612,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get formForbidden =>
-      'إضافة المنتجات للمالك أو المدير. اطلب من المالك إضافته.';
+      'إضافة البضاعة للمالك أو المدير. اطلب من المالك إضافته.';
 
   @override
   String get formFailed => 'تعذّر الحفظ. حاول مرة أخرى.';
@@ -1623,10 +1623,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get savedScanNext => 'مسح منتج آخر';
+  String get savedScanNext => 'امسح صنف ثاني';
 
   @override
-  String get savedBack => 'العودة إلى المنتجات';
+  String get savedBack => 'الرجوع للبضاعة';
 
   @override
   String get homeAttention => 'يحتاج انتباهك';
@@ -1643,7 +1643,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String homeLowStockAlert(int count) {
-    return 'منتجات تحت الحد: $count';
+    return 'بضاعة تحت الحد: $count';
   }
 
   @override
@@ -1808,7 +1808,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get subscriptionDataSafe =>
-      'بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والمنتجات. يعود كل شيء فور تفعيل الاشتراك.';
+      'بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والبضاعة. يعود كل شيء فور تفعيل الاشتراك.';
 
   @override
   String get subscriptionContactWhatsapp => 'تواصل معنا عبر واتساب';
@@ -1838,10 +1838,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد».';
 
   @override
-  String get saleScanTitle => 'مسح منتجات البيع';
+  String get saleScanTitle => 'مسح أصناف البيع';
 
   @override
-  String get saleScanKeepGoing => 'الكاميرا شغّالة: امسح المنتج التالي';
+  String get saleScanKeepGoing => 'الكاميرا شغّالة: امسح الصنف اللي بعده';
 
   @override
   String get saleScanCloseA11y => 'إغلاق الكاميرا والعودة إلى السلة';
@@ -1851,7 +1851,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get saleScanEmptyBody =>
-      'وجّه الكاميرا إلى باركود المنتج. تبقى الكاميرا مفتوحة لتضيف المنتجات واحداً تلو الآخر.';
+      'وجّه الكاميرا إلى باركود الصنف. تبقى الكاميرا مفتوحة لتضيف البضاعة واحداً تلو الآخر.';
 
   @override
   String get completeSale => 'إتمام البيع';
@@ -1862,29 +1862,29 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get invTitle => 'إضافة منتجات بالمسح';
+  String get invTitle => 'إضافة بضاعة بالمسح';
 
   @override
   String get invInstruction =>
-      'امسح باركود المنتج لإضافته إلى متجرك. لا يدخل سلة البيع.';
+      'امسح باركود الصنف لإضافته إلى متجرك. لا يدخل سلة البيع.';
 
   @override
-  String get invWaiting => 'أكمل النموذج أو أغلقه لمسح المنتج التالي';
+  String get invWaiting => 'أكمل النموذج أو أغلقه لمسح الصنف التالي';
 
   @override
-  String get invCloseA11y => 'إغلاق الكاميرا والعودة إلى المنتجات';
+  String get invCloseA11y => 'إغلاق الكاميرا والرجوع للبضاعة';
 
   @override
   String get invBackToScanning => 'إغلاق والعودة إلى المسح';
 
   @override
   String invStockNow(String stock) {
-    return 'المخزون الآن $stock';
+    return 'الكمية الآن $stock';
   }
 
   @override
   String get invExistsNote =>
-      'هذا المنتج في متجرك، فلن يُضاف مرة ثانية. لإدخال بضاعة جديدة منه اختر «إضافة كمية».';
+      'هذا الصنف في متجرك، فلن يُضاف مرة ثانية. لإدخال بضاعة جديدة منه اختر «إضافة كمية».';
 
   @override
   String get invAddStock => 'إضافة كمية';
@@ -1910,11 +1910,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get invQtyKg => 'أدخل وزناً أكبر من صفر، حتى 3 خانات عشرية.';
 
   @override
-  String get invAddStockSave => 'إضافة إلى المخزون';
+  String get invAddStockSave => 'إضافة للكمية';
 
   @override
   String invStockAdded(String name, String stock) {
-    return 'أُضيفت الكمية إلى «$name». المخزون الآن $stock';
+    return 'أُضيفت الكمية إلى «$name». الكمية الآن $stock';
   }
 
   @override
@@ -1927,7 +1927,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get invNetworkUncertain =>
-      'انقطع الاتصال قبل أن يصل رد الخادم، فقد يكون الحفظ تمّ. بياناتك باقية؛ اضغط «إعادة المحاولة» وسنتحقق دون تكرار المنتج.';
+      'انقطع الاتصال قبل أن يصل رد الخادم، فقد يكون الحفظ تمّ. بياناتك باقية؛ اضغط «إعادة المحاولة» وسنتحقق دون تكرار الصنف.';
 
   @override
   String get invFromCatalog =>
@@ -2034,7 +2034,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get discardBody =>
-      'لم يُحفظ هذا المنتج بعد. إذا خرجت الآن ستضيع البيانات التي أدخلتها.';
+      'لم يُحفظ هذا الصنف بعد. إذا خرجت الآن ستضيع البيانات التي أدخلتها.';
 
   @override
   String get discardKeep => 'متابعة الإدخال';
@@ -2067,10 +2067,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get moreStoreInfoSub => 'الاسم والهاتف والعنوان على الإيصال';
 
   @override
-  String get moreSectionStock => 'المخزون';
+  String get moreSectionStock => 'البضاعة والكميات';
 
   @override
-  String get moreLowStock => 'منتجات قاربت على النفاد';
+  String get moreLowStock => 'بضاعة قرّبت تخلص';
 
   @override
   String get moreLowStockSub => 'عند الحد الأدنى أو أقل';
@@ -2362,10 +2362,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get prodDetailError =>
-      'تعذّر تحميل المنتج. تحقق من الاتصال ثم أعد المحاولة.';
+      'تعذّر تحميل الصنف. تحقق من الاتصال ثم أعد المحاولة.';
 
   @override
-  String get prodStockNowLabel => 'المخزون الآن';
+  String get prodStockNowLabel => 'الكمية الموجودة الآن';
 
   @override
   String prodMinimumLabel(String qty) {
@@ -2383,19 +2383,19 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get prodEdit => 'تعديل المنتج';
+  String get prodEdit => 'تعديل الصنف';
 
   @override
-  String get prodAdjust => 'جرد أو تعديل المخزون';
+  String get prodAdjust => 'جرد أو تعديل الكمية';
 
   @override
-  String get prodMovements => 'حركات المخزون';
+  String get prodMovements => 'حركات البضاعة';
 
   @override
   String get prodNoMovements => 'لا حركات بعد.';
 
   @override
-  String get prodDeactivate => 'إيقاف المنتج';
+  String get prodDeactivate => 'إيقاف الصنف';
 
   @override
   String prodDeactivateTitle(String name) {
@@ -2404,7 +2404,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get prodDeactivateBody =>
-      'لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».';
+      'لن يظهر في البيع ولا في قائمة البضاعة. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».';
 
   @override
   String prodDeactivated(String name) {
@@ -2413,16 +2413,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get prodInactiveNote =>
-      'هذا المنتج موقوف: لا يُباع ولا يظهر في القائمة.';
+      'هذا الصنف موقوف: لا يُباع ولا يظهر في القائمة.';
 
   @override
   String get prodFilterInactive => 'موقوفة';
 
   @override
-  String get prodReactivate => 'إعادة تفعيل المنتج';
+  String get prodReactivate => 'إعادة تفعيل الصنف';
 
   @override
-  String get prodReactivated => 'رجع المنتج إلى البيع والقائمة كما كان.';
+  String get prodReactivated => 'رجع الصنف إلى البيع والقائمة كما كان.';
 
   @override
   String get invOpenProduct => 'تعديل السعر والتفاصيل';
@@ -2431,7 +2431,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get prodSaved => 'حُفظت التعديلات.';
 
   @override
-  String get prodViewOnly => 'تعديل المنتجات والمخزون للمالك أو المدير.';
+  String get prodViewOnly => 'تعديل البضاعة والكمية للمالك أو المدير.';
 
   @override
   String get moveOpening => 'رصيد افتتاحي';
@@ -2458,7 +2458,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String adjTitle(String name) {
-    return 'تعديل مخزون «$name»';
+    return 'تعديل كمية «$name»';
   }
 
   @override
@@ -2512,7 +2512,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get adjNegative => 'المخزون لا يصبح سالباً بالتعديل.';
 
   @override
-  String get adjInvalidPiece => 'عدد صحيح للمنتج بالقطعة.';
+  String get adjInvalidPiece => 'عدد صحيح للصنف بالقطعة.';
 
   @override
   String get adjInvalidKg => 'حتى 3 خانات عشرية.';
@@ -2522,29 +2522,29 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String adjDone(String stock) {
-    return 'عُدّل المخزون. الآن $stock';
+    return 'تعدّلت الكمية. صارت $stock';
   }
 
   @override
-  String get lowTitle => 'منتجات قاربت على النفاد';
+  String get lowTitle => 'بضاعة قرّبت تخلص';
 
   @override
-  String get lowEmpty => 'كل المنتجات فوق الحد الأدنى للتنبيه.';
+  String get lowEmpty => 'كل البضاعة فوق حد التنبيه.';
 
   @override
   String lowRow(String stock, String min) {
-    return 'المخزون $stock · التنبيه عند $min';
+    return 'الكمية $stock · التنبيه عند $min';
   }
 
   @override
   String get negTitle => 'مخزون سالب للمراجعة';
 
   @override
-  String get negEmpty => 'لا منتجات بمخزون سالب.';
+  String get negEmpty => 'لا أصناف بمخزون سالب.';
 
   @override
   String get negHelp =>
-      'بيعت هذه المنتجات بأكثر مما هو مسجّل. عُدّ الرف ثم صحّح المخزون من صفحة المنتج.';
+      'بيعت هذه البضاعة بأكثر مما هو مسجّل. عُدّ الرف ثم صحّح المخزون من صفحة الصنف.';
 
   @override
   String negSale(int id, String qty) {
@@ -2553,4 +2553,111 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get listLoadError => 'تعذّر التحميل. تحقق من الاتصال ثم أعد المحاولة.';
+
+  @override
+  String get legacyAction => 'تسجيل دين قديم';
+
+  @override
+  String get legacyActionSub =>
+      'دين على زبون من قبل ما تستعمل حسبة، من دفترك القديم';
+
+  @override
+  String get legacyTitle => 'تسجيل دين قديم';
+
+  @override
+  String get legacyIntro =>
+      'بيتسجّل كدين على الزبون بس: ما بينحسب بيع، وما بينقص من البضاعة، وما بيدخل الصندوق.';
+
+  @override
+  String get legacyCustomer => 'الزبون';
+
+  @override
+  String get legacyPickCustomer => 'اختر الزبون';
+
+  @override
+  String get legacyChange => 'تغيير';
+
+  @override
+  String get legacyAmount => 'المبلغ اللي عليه';
+
+  @override
+  String get legacyAmountHint => 'مثلاً 150';
+
+  @override
+  String get legacyAmountInvalid =>
+      'اكتب مبلغ صحيح أكبر من صفر، وبحد أقصى رقمين بعد الفاصلة.';
+
+  @override
+  String get legacyAmountTooBig => 'المبلغ أكبر من المسموح.';
+
+  @override
+  String get legacyPartlyPaid =>
+      'إذا الزبون دفع جزء منه قبل، اكتب الباقي عليه بس.';
+
+  @override
+  String get legacyOrigin => 'تاريخ الدين';
+
+  @override
+  String get legacyOriginNone => 'مش محدد';
+
+  @override
+  String get legacyDue => 'موعد السداد (اختياري)';
+
+  @override
+  String get legacyDueNone => 'بدون موعد';
+
+  @override
+  String get legacyNote => 'ملاحظة (اختياري)';
+
+  @override
+  String get legacyNoteHint => 'مثلاً: من دفتر الديون القديم';
+
+  @override
+  String get legacyClear => 'مسح';
+
+  @override
+  String get legacySave => 'تسجيل الدين';
+
+  @override
+  String get legacySaving => 'جارٍ التسجيل…';
+
+  @override
+  String get legacyRetry => 'أعد المحاولة';
+
+  @override
+  String get legacyUncertain =>
+      'انقطع الاتصال قبل ما يوصل رد الخادم، ويمكن يكون الدين تسجّل. اضغط «أعد المحاولة» وما رح يتسجّل مرتين.';
+
+  @override
+  String get legacyConfirmTitle => 'تأكيد الدين القديم';
+
+  @override
+  String legacyConfirmBody(String name, String amount) {
+    return 'رح يتسجّل على $name دين قديم بقيمة $amount. بتقدر تعدّله أو تحذفه لاحقاً من لوحة الويب.';
+  }
+
+  @override
+  String get legacyConfirmOk => 'نعم، سجّل';
+
+  @override
+  String get legacyBack => 'رجوع';
+
+  @override
+  String get legacyDone => 'تسجّل الدين القديم';
+
+  @override
+  String legacyDoneBody(String name, String amount) {
+    return 'صار على $name دين قديم بقيمة $amount.';
+  }
+
+  @override
+  String get legacyDoneButton => 'تمام';
+
+  @override
+  String get legacyForbidden => 'تسجيل الديون القديمة للمالك أو المدير.';
+
+  @override
+  String legacySince(String date) {
+    return 'من $date';
+  }
 }

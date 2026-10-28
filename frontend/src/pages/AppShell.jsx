@@ -14,7 +14,7 @@ const NAV = [
   { label: "الرئيسية", icon: "home", to: "/dashboard" },
   { label: "المبيعات", icon: "sales", to: "/sales" },
   { label: "الزبائن", icon: "customers", to: "/customers" },
-  { label: "المنتجات", icon: "products", to: "/products" },
+  { label: "البضاعة", icon: "products", to: "/products" },
   { label: "الديون", icon: "debts", to: "/debts" },
   { label: "المدفوعات", icon: "payments", to: "/payments" },
   { label: "الموظفون", icon: "staff", to: "/staff", ownerOnly: true },

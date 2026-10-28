@@ -31,7 +31,7 @@ export default function Products() {
   const columns = [
     {
       key: "name",
-      label: "المنتج",
+      label: "الصنف",
       render: (p) => (
         <>
           <Link className="row-link" to={`/products/${p.id}`}>
@@ -62,16 +62,16 @@ export default function Products() {
 
   const empty =
     query || filter !== "all" ? (
-      <EmptyState icon="search" title={query ? `لا منتج يطابق «${query}»` : "لا منتجات في هذه القائمة"} />
+      <EmptyState icon="search" title={query ? `لا صنف يطابق «${query}»` : "لا أصناف في هذه القائمة"} />
     ) : (
-      <EmptyState icon="products" title="لا منتجات بعد" text="أسرع طريقة: استورد قائمتك من ملف CSV دفعة واحدة. أو أضف المنتجات واحداً واحداً، أو امسحها من الجوال.">
+      <EmptyState icon="products" title="ما في بضاعة لسّا" text="أسرع طريقة: استورد قائمتك من ملف CSV دفعة واحدة. أو أضف البضاعة واحداً واحداً، أو امسحها من الجوال.">
         {manager ? (
           <div className="chips">
             <button type="button" className="btn btn-p btn-sm" onClick={() => setImporting(true)}>
               استيراد من ملف CSV
             </button>
             <Link className="btn btn-s btn-sm" to="/products/new">
-              إضافة منتج
+              إضافة صنف
             </Link>
           </div>
         ) : null}
@@ -80,7 +80,7 @@ export default function Products() {
 
   return (
     <>
-      <PageHeader title="المنتجات" sub={list.data?.meta ? `${list.data.meta.total} منتجاً في هذه القائمة` : " "}>
+      <PageHeader title="البضاعة" sub={list.data?.meta ? `${list.data.meta.total} صنفاً في هذه القائمة` : " "}>
         {manager ? (
           <>
             <button type="button" className="btn btn-s btn-sm" onClick={() => setImporting(true)}>
@@ -88,7 +88,7 @@ export default function Products() {
             </button>
             <Link className="btn btn-p btn-sm" to="/products/new">
               <Icon name="plus" size={16} strokeWidth={2.2} />
-              منتج جديد
+              صنف جديد
             </Link>
           </>
         ) : null}
@@ -98,7 +98,7 @@ export default function Products() {
         <div role="status" className="banner" style={{ background: "var(--warning-bg)", color: "var(--warning-fg)" }}>
           <Icon name="low" size={20} />
           <span style={{ flex: 1, color: "var(--ink)" }}>
-            {negativeCount === 1 ? "منتج بيع" : `${negativeCount} منتجات بيعت`} بأكثر من المخزون المسجّل. راجع العدّ على الرف وصحّح المخزون.
+            {negativeCount === 1 ? "صنف بيع" : `${negativeCount} أصناف بيعت`} بأكثر من المخزون المسجّل. راجع العدّ على الرف وصحّح المخزون.
           </span>
           <Link className="btn btn-s btn-sm" to="/products/negative-stock">
             مراجعة المخزون السالب
@@ -137,7 +137,7 @@ export default function Products() {
         />
       </div>
 
-      <DataTable query={list} rows={rows} columns={columns} caption="قائمة المنتجات" empty={empty} minWidth={680} />
+      <DataTable query={list} rows={rows} columns={columns} caption="قائمة البضاعة" empty={empty} minWidth={680} />
       <Pager meta={list.data?.meta} onPage={setPageNo} />
 
       {importing ? <ImportDialog onClose={() => setImporting(false)} /> : null}
@@ -165,14 +165,14 @@ function ImportDialog({ onClose }) {
   };
 
   return (
-    <Dialog title="استيراد المنتجات من ملف CSV" onClose={onClose} wide>
+    <Dialog title="استيراد البضاعة من ملف CSV" onClose={onClose} wide>
       {done ? (
         <div className="state-card">
           <Icon name="ok" size={44} color="var(--success-fg)" strokeWidth={1.8} />
-          <b className="state-title">استُورد {done.imported} منتجاً</b>
-          <span className="state-text">سُجّلت كميات البداية كحركة «رصيد افتتاحي» لكل منتج.</span>
+          <b className="state-title">استُورد {done.imported} صنفاً</b>
+          <span className="state-text">سُجّلت كميات البداية كحركة «رصيد افتتاحي» لكل صنف.</span>
           <button type="button" className="btn btn-p btn-sm" onClick={onClose}>
-            عرض المنتجات
+            عرض البضاعة
           </button>
         </div>
       ) : (
@@ -238,7 +238,7 @@ function ImportDialog({ onClose }) {
               disabled={!checked || run.isPending}
               onClick={() => run.mutate({ file, dryRun: false }, { onSuccess: setDone })}
             >
-              {checked ? `استيراد ${checked.rows} منتجاً` : "استيراد"}
+              {checked ? `استيراد ${checked.rows} صنفاً` : "استيراد"}
             </button>
             <button type="button" className="btn btn-g" onClick={onClose}>
               إلغاء
@@ -258,7 +258,7 @@ export function NegativeStock() {
     <>
       <PageHeader title="مراجعة المخزون السالب" sub="البيع لا يتوقف عندما ينفد المخزون المسجّل؛ يُسجَّل هنا لتراجعه. عُدّ الكمية على الرف، ثم أدخل العدد الفعلي." />
       {negative.isPending ? <div className="card sk" style={{ height: 160 }} /> : null}
-      {negative.isSuccess && items.length === 0 ? <EmptyState icon="ok" title="لا منتجات بمخزون سالب" text="كل المخزون المسجّل صفر أو أكثر." /> : null}
+      {negative.isSuccess && items.length === 0 ? <EmptyState icon="ok" title="لا أصناف بمخزون سالب" text="كل المخزون المسجّل صفر أو أكثر." /> : null}
       {negative.isError ? <ErrorState error={negative.error} onRetry={() => negative.refetch()} /> : null}
       {items.map(({ product, sales }) => (
         <section key={product.id} className="card panel">

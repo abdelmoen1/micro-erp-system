@@ -11,6 +11,7 @@ import '../../../core/theme/hisbah_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../products/domain/product.dart';
 import '../../scanner/application/lookup_controller.dart';
+import '../../scanner/application/scan_cue.dart';
 import '../../scanner/domain/barcode_camera.dart';
 import '../../scanner/presentation/camera_permission_view.dart';
 import '../../scanner/presentation/scan_frame.dart';
@@ -182,7 +183,8 @@ class _SaleScannerScreenState extends ConsumerState<SaleScannerScreen> with Widg
         // repeat is silent here; the line's highlight already shows what was counted.
         if (_feedback?.kind == ScanFeedbackKind.loading) _show(null);
       case ScanAdded(:final line):
-        unawaited(HapticFeedback.lightImpact());
+        // A code that matched a product: beep, light haptic and frame pulse (repeats are ScanIgnored).
+        ref.read(scanCueProvider).success();
         setState(() => _justId = line.product.id);
         _show(
           ScanFeedback(
@@ -193,7 +195,7 @@ class _SaleScannerScreenState extends ConsumerState<SaleScannerScreen> with Widg
           flash: true,
         );
       case ScanNeedsWeight(:final product):
-        unawaited(HapticFeedback.lightImpact());
+        ref.read(scanCueProvider).success();
         _show(null);
         await _openWeight(product);
       case ScanUnknown(:final code):
@@ -386,6 +388,7 @@ class _SaleCamera extends StatelessWidget {
             ),
           ),
         ),
+        Positioned.fill(child: IgnorePointer(child: ScanPulse(frame: frame))),
         if (!quiet)
           Positioned(
             left: 16,

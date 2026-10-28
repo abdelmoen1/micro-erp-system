@@ -174,7 +174,7 @@ test("US-0408: a CSV with errors lists them by row and cannot be imported", asyn
 
   await page.goto("/products");
   await page.getByRole("button", { name: "استيراد من ملف CSV" }).first().click();
-  const dialog = page.getByRole("dialog", { name: "استيراد المنتجات من ملف CSV" });
+  const dialog = page.getByRole("dialog", { name: "استيراد البضاعة من ملف CSV" });
   await dialog.locator('input[type="file"]').setInputFiles({ name: "p.csv", mimeType: "text/csv", buffer: Buffer.from("name,selling_price,current_stock\nTea,6,1\nMilk,,2\n") });
   await expect(dialog.getByRole("cell", { name: "سعر البيع مطلوب" })).toBeVisible();
   await expect(dialog.getByRole("button", { name: "استيراد", exact: true })).toBeDisabled();
@@ -196,7 +196,7 @@ test("shared catalog: a barcode another store saved fills the name and unit; min
   );
   await page.route("**/api/v1/products", async (r) => {
     sent = r.request().postDataJSON();
-    await r.fulfill({ status: 201, json: { message: "تم إنشاء المنتج بنجاح", product: { id: 30, catalog_product_id: 4, ...sent, current_stock: "6", minimum_stock: "5", is_low_stock: false, status: "active" } } });
+    await r.fulfill({ status: 201, json: { message: "تم إنشاء الصنف بنجاح", product: { id: 30, catalog_product_id: 4, ...sent, current_stock: "6", minimum_stock: "5", is_low_stock: false, status: "active" } } });
   });
   // After saving, the form navigates to the new product's page.
   await page.route(/\/api\/v1\/products\/30(\/movements)?$/, (r) =>
@@ -206,12 +206,12 @@ test("shared catalog: a barcode another store saved fills the name and unit; min
   await page.goto("/products/new");
   await page.getByLabel("الباركود").fill("6291041500213");
   await page.getByLabel("الباركود").blur();
-  await expect(page.getByText("منتج معروف في حسبة")).toBeVisible();
-  await expect(page.getByLabel("اسم المنتج")).toHaveValue("عصير برتقال 1 لتر");
+  await expect(page.getByText("صنف معروف في حسبة")).toBeVisible();
+  await expect(page.getByLabel("اسم الصنف")).toHaveValue("عصير برتقال 1 لتر");
 
   await page.getByLabel("سعر البيع").fill("7.50");
   await page.getByLabel("الكمية الموجودة الآن").fill("6");
-  await page.getByRole("button", { name: "حفظ المنتج" }).click();
+  await page.getByRole("button", { name: "حفظ الصنف" }).click();
   await expect.poll(() => sent).toMatchObject({ name: "عصير برتقال 1 لتر", barcode: "6291041500213", unit: "piece", selling_price: "7.50", current_stock: "6" });
 });
 
@@ -233,14 +233,14 @@ test("cartons: the form shows the price of one piece inside the carton and sends
   let sent = null;
   await page.route("**/api/v1/products", async (r) => {
     sent = r.request().postDataJSON();
-    await r.fulfill({ status: 201, json: { message: "تم إنشاء المنتج بنجاح", product: { id: 31, ...sent, current_stock: "48", minimum_stock: "5", is_low_stock: false, status: "active" } } });
+    await r.fulfill({ status: 201, json: { message: "تم إنشاء الصنف بنجاح", product: { id: 31, ...sent, current_stock: "48", minimum_stock: "5", is_low_stock: false, status: "active" } } });
   });
   await page.route(/\/api\/v1\/products\/31(\/movements)?$/, (r) =>
     r.fulfill({ json: { data: r.request().url().endsWith("/31") ? { id: 31, name: "ماء 600 مل", unit: "piece", current_stock: "48", minimum_stock: "5", pack_size: 24, pack_price: "54.00" } : [] } }),
   );
 
   await page.goto("/products/new");
-  await page.getByLabel("اسم المنتج").fill("ماء 600 مل");
+  await page.getByLabel("اسم الصنف").fill("ماء 600 مل");
   await page.getByLabel("سعر البيع").fill("2.50");
   await page.getByLabel("الكمية الموجودة الآن").fill("48");
   await page.getByLabel("يُباع بالكرتونة أيضاً (جملة)").check();
@@ -253,7 +253,7 @@ test("cartons: the form shows the price of one piece inside the carton and sends
   await expect(page.getByLabel("عدد القطع في الكرتونة")).toHaveCount(0);
   await page.getByRole("button", { name: "بالقطعة" }).click();
 
-  await page.getByRole("button", { name: "حفظ المنتج" }).click();
+  await page.getByRole("button", { name: "حفظ الصنف" }).click();
   await expect.poll(() => sent).toMatchObject({ unit: "piece", selling_price: "2.50", pack_size: "24", pack_price: "54", current_stock: "48" });
 });
 
@@ -267,13 +267,13 @@ test("product form: plain price labels, Arabic-keyboard digits, and a refused fi
 
   await page.goto("/products/new");
   await expect(page.getByText("ما تدفعه أنت للمورّد. لا يظهر للزبون.")).toBeVisible();
-  await expect(page.getByLabel("اسم المنتج")).toHaveAttribute("aria-required", "true");
-  await page.getByLabel("اسم المنتج").fill("شاي أخضر");
+  await expect(page.getByLabel("اسم الصنف")).toHaveAttribute("aria-required", "true");
+  await page.getByLabel("اسم الصنف").fill("شاي أخضر");
   await page.getByLabel("السعر للزبون (سعر البيع)").fill("٠٫٠٠");
   await expect(page.getByLabel("السعر للزبون (سعر البيع)")).toHaveValue("0.00");
-  await page.getByLabel("تكلفة المنتج عليك (سعر الشراء)").fill("١٫٧٥");
+  await page.getByLabel("تكلفة الصنف عليك (سعر الشراء)").fill("١٫٧٥");
   await page.getByLabel("الكمية الموجودة الآن").fill("١٢");
-  await page.getByRole("button", { name: "حفظ المنتج" }).click();
+  await page.getByRole("button", { name: "حفظ الصنف" }).click();
 
   await expect.poll(() => sent).toMatchObject({ selling_price: "0.00", cost_price: "1.75", current_stock: "12" });
   const price = page.getByLabel("السعر للزبون (سعر البيع)");
@@ -392,17 +392,17 @@ test("products: stopping asks first and says it can be undone; a stopped product
   });
 
   await page.goto("/products/9");
-  await page.getByRole("button", { name: "إيقاف المنتج" }).click();
+  await page.getByRole("button", { name: "إيقاف الصنف" }).click();
   const confirm = page.getByRole("alertdialog", { name: "إيقاف «أرز»؟" });
   await expect(confirm).toContainText("تستطيع إعادته متى شئت");
   await confirm.getByRole("button", { name: "رجوع" }).click();
   expect(sent).toEqual([]);
 
-  await page.getByRole("button", { name: "إيقاف المنتج" }).click();
-  await page.getByRole("alertdialog").getByRole("button", { name: "إيقاف المنتج" }).click();
-  await expect(page.getByText("هذا المنتج موقوف")).toBeVisible();
-  await page.getByRole("button", { name: "إعادة تفعيل المنتج" }).click();
-  await expect(page.getByRole("button", { name: "إيقاف المنتج" })).toBeVisible();
+  await page.getByRole("button", { name: "إيقاف الصنف" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "إيقاف الصنف" }).click();
+  await expect(page.getByText("هذا الصنف موقوف")).toBeVisible();
+  await page.getByRole("button", { name: "إعادة تفعيل الصنف" }).click();
+  await expect(page.getByRole("button", { name: "إيقاف الصنف" })).toBeVisible();
   expect(sent).toEqual(["deactivate", { status: "active" }]);
 });
 
