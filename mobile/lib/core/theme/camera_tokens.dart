@@ -36,6 +36,10 @@ abstract final class CameraTokens {
   static const dotScanning = Color(0xFFFFFFFF);
   static const dotRead = Color(0xFF7FD1C2);
 
+  /// The glow around the frame after a good read (same mint as the read dot), and how long it lasts.
+  static const pulse = Color(0xFF7FD1C2);
+  static const pulseDuration = Duration(milliseconds: 450);
+
   /// `camera.hint`: rgba(20,38,46,.86) card, 14 px text, shown after [hintDelay] without a read.
   static const hint = Color(0xDB14262E);
   static const hintText = TextStyle(color: Colors.white, fontSize: 14, height: 1.6);

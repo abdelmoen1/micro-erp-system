@@ -11,6 +11,7 @@ import '../../../core/widgets/ltr_value.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../shell/app_shell.dart';
 import '../application/lookup_controller.dart';
+import '../application/scan_cue.dart';
 import '../domain/barcode_camera.dart';
 import 'camera_permission_view.dart';
 import 'manual_entry_sheet.dart';
@@ -127,9 +128,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with WidgetsBindi
 
   void _onDetected(String code) {
     if (!_scanning || _manualOpen || ref.read(lookupControllerProvider) is! LookupIdle) return;
-    // TODO(C4): Android CONFIRM haptic is not exposed by Flutter; mediumImpact stands in.
-    // TODO(U-5): no beep on read (off by default in the spec).
-    unawaited(HapticFeedback.mediumImpact());
+    // One beep, one light haptic and a frame pulse; the camera pauses right after, so no repeats.
+    ref.read(scanCueProvider).success();
     _source = _Source.camera;
     _pauseCamera();
     if (widget.pickMode) {
@@ -371,6 +371,9 @@ class _CameraLayer extends StatelessWidget {
                 ),
               ),
             ),
+            Positioned.fill(
+              child: IgnorePointer(child: ScanPulse(frame: frame)),
+            ),
             if (locked)
               Positioned(
                 left: frame.center.dx - CameraTokens.badgeSize / 2,
@@ -470,13 +473,7 @@ class _CameraLayer extends StatelessWidget {
 
 /// `camera.control`: 48 dp circle (also on the sale scanner); "on" = white fill + ink icon (state by icon and fill too).
 class CameraControl extends StatelessWidget {
-  const CameraControl({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.selected = false,
-  });
+  const CameraControl({super.key, required this.icon, required this.label, required this.onTap, this.selected = false});
 
   final IconData icon;
   final String label;

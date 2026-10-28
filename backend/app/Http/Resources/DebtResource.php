@@ -27,6 +27,9 @@ class DebtResource extends JsonResource
             'return_credit' => Money::of($this->return_credit),
             'remaining_amount' => Money::of($this->remaining_amount),
             'due_date' => $this->due_date?->toDateString(),
+            // Legacy debts only: when the old debt started and the shopkeeper's note on it.
+            'originated_on' => $this->originated_on?->toDateString(),
+            'note' => $this->invoice?->notes,
             'status' => $this->status,
             'created_at' => $this->created_at,
         ];

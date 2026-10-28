@@ -4,30 +4,30 @@
   "loading": "جارٍ التحميل…",
   "guideTitle": "دليل الاستخدام",
   "guideCardTitle": "جديد على حسبة؟",
-  "guideCardBody": "جرّب في دقيقتين: أضف منتجاً بالباركود، ثم بِعه في فاتورة.",
+  "guideCardBody": "جرّب في دقيقتين: أضف صنفاً بالباركود، ثم بِعه في فاتورة.",
   "guideStart": "ابدأ الدليل",
   "guideLater": "لاحقاً",
   "guideStep": "الخطوة {n} من {total}",
   "@guideStep": {"placeholders": {"n": {"type": "int"}, "total": {"type": "int"}}},
   "guideWelcomeTitle": "أهلاً بك في حسبة",
-  "guideWelcomeBody": "سنجرب معاً أهم شيئين في المحل: إضافة منتج بالباركود، وعمل فاتورة بالباركود. كل ما تفعله هنا حقيقي ويُحفظ في متجرك.",
-  "guideAddTitle": "أضف منتجك الأول بالباركود",
-  "guideAdd1": "اضغط «امسح منتجاً الآن» ووجّه الكاميرا إلى باركود أي منتج في محلك.",
-  "guideAdd2": "إن كان المنتج معروفاً نملأ اسمه، وأنت تكتب السعر والكمية الموجودة.",
+  "guideWelcomeBody": "سنجرب معاً أهم شيئين في المحل: إضافة صنف بالباركود، وعمل فاتورة بالباركود. كل ما تفعله هنا حقيقي ويُحفظ في متجرك.",
+  "guideAddTitle": "أضف صنفك الأول بالباركود",
+  "guideAdd1": "اضغط «امسح صنفاً الآن» ووجّه الكاميرا إلى باركود أي صنف في محلك.",
+  "guideAdd2": "إن كان الصنف معروفاً نملأ اسمه، وأنت تكتب السعر والكمية الموجودة.",
   "guideAdd3": "اضغط «حفظ»، ثم ارجع لتكمل الدليل.",
-  "guideAddAction": "امسح منتجاً الآن",
-  "guideAddDone": "أضفت منتجك الأول. أحسنت!",
+  "guideAddAction": "امسح صنفاً الآن",
+  "guideAddDone": "أضفت صنفك الأول. أحسنت!",
   "guideSaleTitle": "اعمل فاتورتك الأولى بالباركود",
-  "guideSale1": "اضغط «افتح شاشة البيع» ثم امسح المنتج؛ يدخل السلة فوراً.",
-  "guideSale2": "امسح المنتج مرة ثانية لزيادة الكمية، أو امسح منتجات أخرى.",
+  "guideSale1": "اضغط «افتح شاشة البيع» ثم امسح الصنف؛ يدخل السلة فوراً.",
+  "guideSale2": "امسح الصنف مرة ثانية لزيادة الكمية، أو امسح أصناف أخرى.",
   "guideSale3": "اضغط «إتمام البيع»، اختر نقداً أو ديناً على زبون، ثم احفظ الفاتورة.",
   "guideSaleAction": "افتح شاشة البيع",
   "guideDoneTitle": "جاهز للعمل!",
-  "guideDoneBody": "الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «المنتجات». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.",
+  "guideDoneBody": "الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «البضاعة». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.",
   "guideFinish": "ابدأ العمل",
   "guideNext": "التالي",
   "guideSkip": "تخطَّ هذه الخطوة",
-  "moreGuideSub": "جرّب إضافة منتج وعمل فاتورة خطوة بخطوة",
+  "moreGuideSub": "جرّب إضافة صنف وعمل فاتورة خطوة بخطوة",
   "moreSupport": "الدعم الفني",
   "moreSupportSub": "أرسل شكوى أو اقتراحاً لفريق حسبة",
   "supportType": "نوع الدعم",
@@ -74,7 +74,7 @@
   "phPayAmount": "المبلغ الذي دفعه الزبون بالشيكل",
   "phVoidReason": "لماذا تُلغى هذه الفاتورة",
   "splashTagline": "دفتر متجرك، في جيبك",
-  "splashSubline": "المبيعات والديون والمخزون في مكان واحد",
+  "splashSubline": "المبيعات والديون والبضاعة في مكان واحد",
   "splashChecking": "جارٍ التحقق من الجلسة",
   "loginTitle": "تسجيل الدخول",
   "loginHelper": "أدخل بيانات حسابك في المتجر",
@@ -117,7 +117,7 @@
   "tabHome": "الرئيسية",
   "tabPos": "بيع",
   "tabCustomers": "الزبائن",
-  "tabProducts": "المنتجات",
+  "tabProducts": "البضاعة",
   "tabMore": "المزيد",
   "sellA11y": "بيع",
   "sellCurrentA11y": "بيع — أنت في شاشة البيع",
@@ -126,7 +126,7 @@
   "offlineBanner": "لا يوجد اتصال — البيع يحتاج إلى الإنترنت",
   "placeholderHome": "لوحة اليوم — شاشة هبوط المالك والمدير",
   "placeholderCustomers": "قائمة الزبائن",
-  "placeholderProducts": "المنتجات والمخزون المنخفض",
+  "placeholderProducts": "البضاعة والأصناف اللي قرّبت تخلص",
   "placeholderPos": "سلة البيع — شاشة هبوط الموظف",
   "placeholderBody": "محتوى هذه الشاشة يُصمَّم في S4 (US-1508). هنا يظهر فقط إطار التطبيق: الرأس، حالة الاتصال، وشريط التنقل.",
   "placeholderPosBody": "المسح والسلة والدفع تُبنى في مرحلة لاحقة (S5). هنا يظهر فقط إطار التطبيق.",
@@ -174,7 +174,7 @@
   "homeWalkIn": "زبون نقدي",
   "homeLoadError": "تعذّر تحميل لوحة اليوم.",
   "currencySymbol": "₪",
-  "scanEntryTitle": "عرض بيانات منتج",
+  "scanEntryTitle": "عرض بيانات صنف",
   "scanEntryBody": "الاسم والسعر والمخزون. للعرض فقط، لا يُضاف إلى بيع.",
   "scanBarcode": "مسح باركود",
   "scanCloseA11y": "إغلاق الماسح والرجوع إلى البيع",
@@ -184,17 +184,17 @@
   "scanRead": "تمت القراءة",
   "scanPaused": "المسح متوقف",
   "scanSearchingCode": "جارٍ البحث عن باركود…",
-  "scanSearchingProduct": "جارٍ البحث عن المنتج…",
+  "scanSearchingProduct": "جارٍ البحث عن الصنف…",
   "scanHintTitle": "صعب القراءة؟",
-  "scanHintBody": "قرّب الباركود ببطء، أمِل المنتج لتجنب اللمعان، وشغّل الإضاءة. أو أدخله يدويًا.",
+  "scanHintBody": "قرّب الباركود ببطء، أمِل الصنف لتجنب اللمعان، وشغّل الإضاءة. أو أدخله يدويًا.",
   "scanManual": "إدخال الباركود يدويًا",
-  "scanFound": "تم العثور على المنتج",
+  "scanFound": "لقينا الصنف",
   "scanPrice": "سعر البيع",
-  "scanStock": "المخزون الحالي",
+  "scanStock": "الكمية الموجودة",
   "scanBarcodeLabel": "الباركود",
-  "scanAnother": "مسح منتج آخر",
+  "scanAnother": "امسح صنف ثاني",
   "scanBackToSale": "الرجوع إلى البيع",
-  "scanNotFoundTitle": "لا يوجد منتج بهذا الباركود",
+  "scanNotFoundTitle": "ما في صنف بهذا الباركود",
   "scanNotFoundBody": "تأكد من الرقم أو امسحه مرة أخرى.",
   "scanAgain": "مسح مرة أخرى",
   "scanDeniedTitle": "لا يمكن المسح بدون الكاميرا",
@@ -209,9 +209,9 @@
   "manualHint": "الأرقام كما تظهر تحت خطوط الباركود",
   "manualHelper": "اكتب الأرقام كما تظهر تحت خطوط الباركود.",
   "manualEmpty": "أدخل رقم الباركود",
-  "manualSubmit": "عرض المنتج",
+  "manualSubmit": "عرض الصنف",
   "manualCancelA11y": "إلغاء الإدخال اليدوي",
-  "lookupFailedTitle": "تعذّر عرض المنتج",
+  "lookupFailedTitle": "تعذّر عرض الصنف",
   "lookupSavedForRetry": "محفوظ لإعادة المحاولة.",
   "cancel": "إلغاء",
   "backWord": "رجوع",
@@ -227,7 +227,7 @@
       }
     }
   },
-  "scanLookingUp": "جارٍ البحث عن المنتج…",
+  "scanLookingUp": "جارٍ البحث عن الصنف…",
   "barcodeWord": "الباركود",
   "scanAdded": "أُضيف إلى السلة",
   "scanIncremented": "+1 · {name}",
@@ -250,11 +250,11 @@
   "scanDuplicate": "قراءة مكررة — لم تُضف",
   "scanDuplicateBody": "الباركود نفسه خلال 1.5 ثانية. امسح مجدداً بعد لحظة لإضافة قطعة.",
   "scanUnknown": "باركود غير معروف",
-  "scanUnknownBody": "لا يوجد منتج بهذا الرقم في متجرك:",
-  "scanLookupFailed": "تعذّر البحث عن المنتج",
+  "scanUnknownBody": "لا يوجد صنف بهذا الرقم في متجرك:",
+  "scanLookupFailed": "تعذّر البحث عن الصنف",
   "scanLookupFailedBody": "تحقق من الاتصال ثم أعد المحاولة.",
-  "cartEmptyTitle": "امسح منتجاً للبدء",
-  "cartEmptyBody": "أو ابحث عنه بالاسم. المنتجات بالوزن تفتح شاشة إدخال الوزن.",
+  "cartEmptyTitle": "امسح أول صنف لتبدأ",
+  "cartEmptyBody": "أو ابحث عنه بالاسم. البضاعة بالوزن تفتح شاشة إدخال الوزن.",
   "unitChipPiece": "قطعة",
   "unitChipWeighed": "بالوزن",
   "pieceWord": "قطعة",
@@ -304,7 +304,7 @@
       }
     }
   },
-  "stockWord": "المخزون",
+  "stockWord": "الكمية",
   "weightTitle": "أدخل الوزن",
   "weightTitleEdit": "تعديل الوزن",
   "perKg": "لكل كغ",
@@ -343,11 +343,11 @@
   "removeFromCart": "حذف من السلة",
   "keyBackspace": "حذف آخر رقم",
   "keyDecimal": "فاصلة عشرية",
-  "productSearchTitle": "بحث عن منتج",
-  "productSearchHint": "ابحث باسم المنتج أو الباركود",
-  "productSearchEmpty": "لا يوجد منتج بهذا الاسم",
-  "productSearchEmptyBody": "تحقق من الكتابة. المنتجات تُضاف من لوحة الإدارة على الويب.",
-  "productSearchError": "تعذّر تحميل المنتجات",
+  "productSearchTitle": "بحث عن صنف",
+  "productSearchHint": "ابحث باسم الصنف أو الباركود",
+  "productSearchEmpty": "ما في صنف بهذا الاسم",
+  "productSearchEmptyBody": "تحقق من الكتابة. البضاعة تُضاف من لوحة الإدارة على الويب.",
+  "productSearchError": "تعذّر تحميل البضاعة",
   "listErrorBody": "تحقق من الاتصال. البيع الحالي محفوظ كما هو.",
   "checkoutTitle": "الدفع",
   "checkoutNotCreatedYet": "لم تُنشأ الفاتورة بعد",
@@ -631,7 +631,7 @@
   "custSearchHint": "بحث بالاسم أو الهاتف",
   "custAdd": "+ زبون",
   "custSearchMin": "اكتب حرفين أو أكثر للبحث.",
-  "custEmptyTitle": "لا زبائن بعد",
+  "custEmptyTitle": "ما في زبائن لسّا",
   "custEmptyBody": "أضف زبائن الدين. البيع النقدي لا يحتاج زبوناً.",
   "custNoResults": "لا زبون باسم «{query}»",
   "@custNoResults": {
@@ -653,7 +653,7 @@
   "custLoadError": "تعذّر تحميل الزبائن. تحقق من الاتصال ثم أعد المحاولة.",
   "custOverdue": "متأخر",
   "custInactive": "موقوف",
-  "custRemaining": "المتبقي عليه",
+  "custRemaining": "الباقي عليه",
   "custOverdueAmount": "متأخر {amount}",
   "@custOverdueAmount": {
     "placeholders": {
@@ -671,7 +671,7 @@
     }
   },
   "custNoLimit": "بلا حد للدين",
-  "custRecordPayment": "تسجيل دفعة",
+  "custRecordPayment": "قبض دفعة",
   "custCall": "اتصال بـ {phone}",
   "@custCall": {
     "placeholders": {
@@ -681,9 +681,9 @@
     }
   },
   "custOpenDebts": "ديون مفتوحة",
-  "custNoOpenDebts": "لا ديون مفتوحة على هذا الزبون.",
+  "custNoOpenDebts": "ما عليه ديون مفتوحة.",
   "custRecentPayments": "آخر الدفعات",
-  "custNoPayments": "لا دفعات بعد.",
+  "custNoPayments": "ما في دفعات لسّا.",
   "custDebtSale": "فاتورة #{id}",
   "@custDebtSale": {
     "placeholders": {
@@ -692,7 +692,7 @@
       }
     }
   },
-  "custDebtOpening": "دين افتتاحي",
+  "custDebtOpening": "دين قديم",
   "custDue": "استحقاق {date}",
   "@custDue": {
     "placeholders": {
@@ -715,7 +715,7 @@
     }
   },
   "payAmount": "المبلغ",
-  "payFull": "كامل المتبقي",
+  "payFull": "كل الباقي",
   "payOther": "مبلغ آخر",
   "payRemainingNote": "المتبقي {amount} · حتى خانتين عشريتين",
   "@payRemainingNote": {
@@ -726,9 +726,9 @@
     }
   },
   "payMethod": "طريقة الدفع",
-  "payNow": "المتبقي الآن",
+  "payNow": "الباقي هلّأ",
   "payThis": "الدفعة",
-  "payAfter": "بعد الدفعة",
+  "payAfter": "الباقي بعد الدفعة",
   "payOldestFirst": "تُوزَّع على الديون من الأقدم استحقاقاً.",
   "payConfirm": "تأكيد استلام {amount}",
   "@payConfirm": {
@@ -772,27 +772,27 @@
   },
   "payDoneButton": "تم",
   "prodSearchHint": "بحث بالاسم أو الباركود",
-  "prodAdd": "+ منتج",
+  "prodAdd": "+ صنف",
   "prodFilterAll": "الكل",
   "prodFilterLow": "منخفض",
   "prodFilterNegative": "سالب",
-  "prodEmptyTitle": "لا منتجات بعد",
-  "prodEmptyBody": "امسح رمز المنتج أو الباركود لإضافته بسرعة، أو استورد قائمتك من الويب.",
-  "prodNoResults": "لا منتجات تطابق هذا البحث.",
-  "prodLoadError": "تعذّر تحميل المنتجات.",
+  "prodEmptyTitle": "ما في بضاعة لسّا",
+  "prodEmptyBody": "امسح رمز الصنف أو الباركود لإضافته بسرعة، أو استورد قائمتك من الويب.",
+  "prodNoResults": "ما في بضاعة بهذا الاسم.",
+  "prodLoadError": "تعذّر تحميل البضاعة.",
   "prodStockOk": "متوفر",
   "prodStockLow": "منخفض",
   "prodStockOut": "نفد",
   "prodStockNegative": "سالب",
   "prodPerPiece": "قطعة",
   "prodPerKg": "كغ",
-  "addTitle": "إضافة منتج",
+  "addTitle": "إضافة صنف",
   "addScan": "مسح رمز QR أو الباركود",
   "addScanSub": "نقرأ ما في الرمز ونعبّئ الحقول",
   "addManual": "إدخال يدوي",
-  "addManualSub": "للمنتجات بلا رمز، مثل الموزون",
+  "addManualSub": "للأصناف بلا رمز، مثل الموزون",
   "addChecking": "جارٍ التحقق من الرمز…",
-  "addExistsTitle": "المنتج موجود",
+  "addExistsTitle": "الصنف موجود",
   "addExistsBody": "الباركود {code} مسجّل في متجرك. لن نضيفه مرة ثانية.",
   "@addExistsBody": {
     "placeholders": {
@@ -816,12 +816,12 @@
   "addFieldBarcode": "الباركود",
   "addFieldPrice": "السعر",
   "addFieldUnit": "الوحدة",
-  "addUnreadable": "هذا الرمز لا يحتوي بيانات منتج. أدخل المنتج يدوياً؛ لن نستخدم محتواه.",
+  "addUnreadable": "هذا الرمز لا يحتوي بيانات صنف. أدخل الصنف يدوياً؛ لن نستخدم محتواه.",
   "addManualNote": "إدخال يدوي. الاسم وسعر البيع مطلوبان.",
-  "addLookupFailed": "تعذّر التحقق من وجود المنتج الآن؛ سنتحقق عند الحفظ.",
-  "addFromCatalog": "هذا المنتج معروف في حسبة، فملأنا اسمه ووحدته. أدخل سعر البيع والتكلفة والكمية لمتجرك.",
-  "formNewTitle": "منتج جديد",
-  "formName": "اسم المنتج",
+  "addLookupFailed": "تعذّر التحقق من وجود الصنف الآن؛ سنتحقق عند الحفظ.",
+  "addFromCatalog": "هذا الصنف معروف في حسبة، فملأنا اسمه ووحدته. أدخل سعر البيع والتكلفة والكمية لمتجرك.",
+  "formNewTitle": "صنف جديد",
+  "formName": "اسم الصنف",
   "formNameHint": "مثال: تمر مجهول 1 كغ",
   "formBarcode": "الباركود",
   "formOptional": "اختياري",
@@ -829,17 +829,17 @@
   "formByPiece": "بالقطعة",
   "formByKg": "بالوزن (كغ)",
   "formPrice": "السعر للزبون (سعر البيع)",
-  "formCost": "تكلفة المنتج عليك (سعر الشراء)",
-  "formStock": "المخزون الآن",
-  "formMin": "نبّهني عندما يصل المخزون إلى",
-  "formNameRequired": "اكتب اسم المنتج.",
+  "formCost": "تكلفة الصنف عليك (سعر الشراء)",
+  "formStock": "الكمية الموجودة الآن",
+  "formMin": "نبّهني لمّا توصل الكمية إلى",
+  "formNameRequired": "اكتب اسم الصنف.",
   "formPriceInvalid": "أدخل سعراً صحيحاً.",
-  "formStockPiece": "عدد صحيح للمنتج بالقطعة.",
+  "formStockPiece": "عدد صحيح للصنف بالقطعة.",
   "formStockKg": "حتى 3 خانات عشرية.",
-  "formSave": "حفظ المنتج",
+  "formSave": "حفظ الصنف",
   "formSaving": "جارٍ الحفظ…",
   "formNetwork": "تعذّر الحفظ: لا اتصال بالخادم. بياناتك باقية في النموذج؛ أعد المحاولة.",
-  "formForbidden": "إضافة المنتجات للمالك أو المدير. اطلب من المالك إضافته.",
+  "formForbidden": "إضافة البضاعة للمالك أو المدير. اطلب من المالك إضافته.",
   "formFailed": "تعذّر الحفظ. حاول مرة أخرى.",
   "savedTitle": "أُضيف «{name}»",
   "@savedTitle": {
@@ -849,8 +849,8 @@
       }
     }
   },
-  "savedScanNext": "مسح منتج آخر",
-  "savedBack": "العودة إلى المنتجات",
+  "savedScanNext": "امسح صنف ثاني",
+  "savedBack": "الرجوع للبضاعة",
   "homeAttention": "يحتاج انتباهك",
   "homeOverdueAlert": "ديون متأخرة: {count}",
   "@homeOverdueAlert": {
@@ -868,7 +868,7 @@
       }
     }
   },
-  "homeLowStockAlert": "منتجات تحت الحد: {count}",
+  "homeLowStockAlert": "بضاعة تحت الحد: {count}",
   "@homeLowStockAlert": {
     "placeholders": {
       "count": {
@@ -961,7 +961,7 @@
       }
     }
   },
-  "subscriptionDataSafe": "بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والمنتجات. يعود كل شيء فور تفعيل الاشتراك.",
+  "subscriptionDataSafe": "بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والبضاعة. يعود كل شيء فور تفعيل الاشتراك.",
   "subscriptionContactWhatsapp": "تواصل معنا عبر واتساب",
   "subscriptionContactNoNumber": "تواصل مع إدارة حسبة لتفعيل الاشتراك.",
   "subscriptionWhatsappMessage": "مرحباً، أريد تفعيل اشتراك متجر «{store}» على حسبة.\nالبريد: {email}",
@@ -986,11 +986,11 @@
   "subscriptionCheckAgain": "تحقق من جديد",
   "subscriptionChecking": "جارٍ التحقق…",
   "subscriptionStillInactive": "لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد».",
-  "saleScanTitle": "مسح منتجات البيع",
-  "saleScanKeepGoing": "الكاميرا شغّالة: امسح المنتج التالي",
+  "saleScanTitle": "مسح أصناف البيع",
+  "saleScanKeepGoing": "الكاميرا شغّالة: امسح الصنف اللي بعده",
   "saleScanCloseA11y": "إغلاق الكاميرا والعودة إلى السلة",
   "cartPanelTitle": "السلة",
-  "saleScanEmptyBody": "وجّه الكاميرا إلى باركود المنتج. تبقى الكاميرا مفتوحة لتضيف المنتجات واحداً تلو الآخر.",
+  "saleScanEmptyBody": "وجّه الكاميرا إلى باركود الصنف. تبقى الكاميرا مفتوحة لتضيف البضاعة واحداً تلو الآخر.",
   "completeSale": "إتمام البيع",
   "methodRecordOnly": "يُسجَّل فقط أن الزبون دفع عبر {method}. حسبة لا تتصل بهذه الخدمة ولا تتحقق من وصول المبلغ، فتأكد منه قبل تأكيد البيع.",
   "@methodRecordOnly": {
@@ -1000,12 +1000,12 @@
       }
     }
   },
-  "invTitle": "إضافة منتجات بالمسح",
-  "invInstruction": "امسح باركود المنتج لإضافته إلى متجرك. لا يدخل سلة البيع.",
-  "invWaiting": "أكمل النموذج أو أغلقه لمسح المنتج التالي",
-  "invCloseA11y": "إغلاق الكاميرا والعودة إلى المنتجات",
+  "invTitle": "إضافة بضاعة بالمسح",
+  "invInstruction": "امسح باركود الصنف لإضافته إلى متجرك. لا يدخل سلة البيع.",
+  "invWaiting": "أكمل النموذج أو أغلقه لمسح الصنف التالي",
+  "invCloseA11y": "إغلاق الكاميرا والرجوع للبضاعة",
   "invBackToScanning": "إغلاق والعودة إلى المسح",
-  "invStockNow": "المخزون الآن {stock}",
+  "invStockNow": "الكمية الآن {stock}",
   "@invStockNow": {
     "placeholders": {
       "stock": {
@@ -1013,7 +1013,7 @@
       }
     }
   },
-  "invExistsNote": "هذا المنتج في متجرك، فلن يُضاف مرة ثانية. لإدخال بضاعة جديدة منه اختر «إضافة كمية».",
+  "invExistsNote": "هذا الصنف في متجرك، فلن يُضاف مرة ثانية. لإدخال بضاعة جديدة منه اختر «إضافة كمية».",
   "invAddStock": "إضافة كمية",
   "invAddStockQty": "الكمية المستلمة ({unit})",
   "@invAddStockQty": {
@@ -1028,8 +1028,8 @@
   "invReasonRequired": "اكتب سبب إضافة الكمية.",
   "invQtyPiece": "أدخل عدداً صحيحاً أكبر من صفر.",
   "invQtyKg": "أدخل وزناً أكبر من صفر، حتى 3 خانات عشرية.",
-  "invAddStockSave": "إضافة إلى المخزون",
-  "invStockAdded": "أُضيفت الكمية إلى «{name}». المخزون الآن {stock}",
+  "invAddStockSave": "إضافة للكمية",
+  "invStockAdded": "أُضيفت الكمية إلى «{name}». الكمية الآن {stock}",
   "@invStockAdded": {
     "placeholders": {
       "name": {
@@ -1049,7 +1049,7 @@
       }
     }
   },
-  "invNetworkUncertain": "انقطع الاتصال قبل أن يصل رد الخادم، فقد يكون الحفظ تمّ. بياناتك باقية؛ اضغط «إعادة المحاولة» وسنتحقق دون تكرار المنتج.",
+  "invNetworkUncertain": "انقطع الاتصال قبل أن يصل رد الخادم، فقد يكون الحفظ تمّ. بياناتك باقية؛ اضغط «إعادة المحاولة» وسنتحقق دون تكرار الصنف.",
   "invFromCatalog": "معروف في حسبة: الاسم والوحدة جاهزان. أكمل أسعار متجرك والكمية.",
   "packWord": "كرتونة",
   "unitChipPack": "كرتونة ×{size}",
@@ -1140,7 +1140,7 @@
   "subscriptionCopy": "نسخ البيانات",
   "subscriptionCopied": "نُسخت البيانات.",
   "discardTitle": "تجاهل ما كتبته؟",
-  "discardBody": "لم يُحفظ هذا المنتج بعد. إذا خرجت الآن ستضيع البيانات التي أدخلتها.",
+  "discardBody": "لم يُحفظ هذا الصنف بعد. إذا خرجت الآن ستضيع البيانات التي أدخلتها.",
   "discardKeep": "متابعة الإدخال",
   "discardConfirm": "تجاهل وخروج",
   "saleDetailError": "تعذّر تحميل الفاتورة. تحقق من الاتصال ثم أعد المحاولة.",
@@ -1157,8 +1157,8 @@
   "moreStaffSub": "دعوة موظف، تغيير الدور، الإيقاف",
   "moreStoreInfo": "بيانات المحل",
   "moreStoreInfoSub": "الاسم والهاتف والعنوان على الإيصال",
-  "moreSectionStock": "المخزون",
-  "moreLowStock": "منتجات قاربت على النفاد",
+  "moreSectionStock": "البضاعة والكميات",
+  "moreLowStock": "بضاعة قرّبت تخلص",
   "moreLowStockSub": "عند الحد الأدنى أو أقل",
   "moreNegative": "مخزون سالب للمراجعة",
   "moreNegativeSub": "بيعت بأكثر من الكمية المسجّلة",
@@ -1315,8 +1315,8 @@
   "saleStatusPaid": "مدفوعة",
   "saleStatusCredit": "دين",
   "saleStatusPartial": "دفع جزئي",
-  "prodDetailError": "تعذّر تحميل المنتج. تحقق من الاتصال ثم أعد المحاولة.",
-  "prodStockNowLabel": "المخزون الآن",
+  "prodDetailError": "تعذّر تحميل الصنف. تحقق من الاتصال ثم أعد المحاولة.",
+  "prodStockNowLabel": "الكمية الموجودة الآن",
   "prodMinimumLabel": "تنبيه عند {qty}",
   "@prodMinimumLabel": {
     "placeholders": {
@@ -1344,11 +1344,11 @@
       }
     }
   },
-  "prodEdit": "تعديل المنتج",
-  "prodAdjust": "جرد أو تعديل المخزون",
-  "prodMovements": "حركات المخزون",
+  "prodEdit": "تعديل الصنف",
+  "prodAdjust": "جرد أو تعديل الكمية",
+  "prodMovements": "حركات البضاعة",
   "prodNoMovements": "لا حركات بعد.",
-  "prodDeactivate": "إيقاف المنتج",
+  "prodDeactivate": "إيقاف الصنف",
   "prodDeactivateTitle": "إيقاف «{name}»؟",
   "@prodDeactivateTitle": {
     "placeholders": {
@@ -1357,7 +1357,7 @@
       }
     }
   },
-  "prodDeactivateBody": "لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».",
+  "prodDeactivateBody": "لن يظهر في البيع ولا في قائمة البضاعة. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».",
   "prodDeactivated": "أُوقف «{name}».",
   "@prodDeactivated": {
     "placeholders": {
@@ -1366,13 +1366,13 @@
       }
     }
   },
-  "prodInactiveNote": "هذا المنتج موقوف: لا يُباع ولا يظهر في القائمة.",
+  "prodInactiveNote": "هذا الصنف موقوف: لا يُباع ولا يظهر في القائمة.",
   "prodFilterInactive": "موقوفة",
-  "prodReactivate": "إعادة تفعيل المنتج",
-  "prodReactivated": "رجع المنتج إلى البيع والقائمة كما كان.",
+  "prodReactivate": "إعادة تفعيل الصنف",
+  "prodReactivated": "رجع الصنف إلى البيع والقائمة كما كان.",
   "invOpenProduct": "تعديل السعر والتفاصيل",
   "prodSaved": "حُفظت التعديلات.",
-  "prodViewOnly": "تعديل المنتجات والمخزون للمالك أو المدير.",
+  "prodViewOnly": "تعديل البضاعة والكمية للمالك أو المدير.",
   "moveOpening": "رصيد افتتاحي",
   "moveSale": "بيع",
   "moveVoid": "إلغاء فاتورة",
@@ -1387,7 +1387,7 @@
       }
     }
   },
-  "adjTitle": "تعديل مخزون «{name}»",
+  "adjTitle": "تعديل كمية «{name}»",
   "@adjTitle": {
     "placeholders": {
       "name": {
@@ -1440,10 +1440,10 @@
   },
   "adjNoChange": "العدد مطابق للمسجّل؛ لا شيء لتعديله.",
   "adjNegative": "المخزون لا يصبح سالباً بالتعديل.",
-  "adjInvalidPiece": "عدد صحيح للمنتج بالقطعة.",
+  "adjInvalidPiece": "عدد صحيح للصنف بالقطعة.",
   "adjInvalidKg": "حتى 3 خانات عشرية.",
   "adjSave": "حفظ التعديل",
-  "adjDone": "عُدّل المخزون. الآن {stock}",
+  "adjDone": "تعدّلت الكمية. صارت {stock}",
   "@adjDone": {
     "placeholders": {
       "stock": {
@@ -1451,9 +1451,9 @@
       }
     }
   },
-  "lowTitle": "منتجات قاربت على النفاد",
-  "lowEmpty": "كل المنتجات فوق الحد الأدنى للتنبيه.",
-  "lowRow": "المخزون {stock} · التنبيه عند {min}",
+  "lowTitle": "بضاعة قرّبت تخلص",
+  "lowEmpty": "كل البضاعة فوق حد التنبيه.",
+  "lowRow": "الكمية {stock} · التنبيه عند {min}",
   "@lowRow": {
     "placeholders": {
       "stock": {
@@ -1465,8 +1465,8 @@
     }
   },
   "negTitle": "مخزون سالب للمراجعة",
-  "negEmpty": "لا منتجات بمخزون سالب.",
-  "negHelp": "بيعت هذه المنتجات بأكثر مما هو مسجّل. عُدّ الرف ثم صحّح المخزون من صفحة المنتج.",
+  "negEmpty": "لا أصناف بمخزون سالب.",
+  "negHelp": "بيعت هذه البضاعة بأكثر مما هو مسجّل. عُدّ الرف ثم صحّح المخزون من صفحة الصنف.",
   "negSale": "فاتورة #{id} · {qty}",
   "@negSale": {
     "placeholders": {
@@ -1478,5 +1478,40 @@
       }
     }
   },
-  "listLoadError": "تعذّر التحميل. تحقق من الاتصال ثم أعد المحاولة."
+  "listLoadError": "تعذّر التحميل. تحقق من الاتصال ثم أعد المحاولة.",
+  "legacyAction": "تسجيل دين قديم",
+  "legacyActionSub": "دين على زبون من قبل ما تستعمل حسبة، من دفترك القديم",
+  "legacyTitle": "تسجيل دين قديم",
+  "legacyIntro": "بيتسجّل كدين على الزبون بس: ما بينحسب بيع، وما بينقص من البضاعة، وما بيدخل الصندوق.",
+  "legacyCustomer": "الزبون",
+  "legacyPickCustomer": "اختر الزبون",
+  "legacyChange": "تغيير",
+  "legacyAmount": "المبلغ اللي عليه",
+  "legacyAmountHint": "مثلاً 150",
+  "legacyAmountInvalid": "اكتب مبلغ صحيح أكبر من صفر، وبحد أقصى رقمين بعد الفاصلة.",
+  "legacyAmountTooBig": "المبلغ أكبر من المسموح.",
+  "legacyPartlyPaid": "إذا الزبون دفع جزء منه قبل، اكتب الباقي عليه بس.",
+  "legacyOrigin": "تاريخ الدين",
+  "legacyOriginNone": "مش محدد",
+  "legacyDue": "موعد السداد (اختياري)",
+  "legacyDueNone": "بدون موعد",
+  "legacyNote": "ملاحظة (اختياري)",
+  "legacyNoteHint": "مثلاً: من دفتر الديون القديم",
+  "legacyClear": "مسح",
+  "legacySave": "تسجيل الدين",
+  "legacySaving": "جارٍ التسجيل…",
+  "legacyRetry": "أعد المحاولة",
+  "legacyUncertain": "انقطع الاتصال قبل ما يوصل رد الخادم، ويمكن يكون الدين تسجّل. اضغط «أعد المحاولة» وما رح يتسجّل مرتين.",
+  "legacyConfirmTitle": "تأكيد الدين القديم",
+  "legacyConfirmBody": "رح يتسجّل على {name} دين قديم بقيمة {amount}. بتقدر تعدّله أو تحذفه لاحقاً من لوحة الويب.",
+  "@legacyConfirmBody": {"placeholders": {"name": {"type": "String"}, "amount": {"type": "String"}}},
+  "legacyConfirmOk": "نعم، سجّل",
+  "legacyBack": "رجوع",
+  "legacyDone": "تسجّل الدين القديم",
+  "legacyDoneBody": "صار على {name} دين قديم بقيمة {amount}.",
+  "@legacyDoneBody": {"placeholders": {"name": {"type": "String"}, "amount": {"type": "String"}}},
+  "legacyDoneButton": "تمام",
+  "legacyForbidden": "تسجيل الديون القديمة للمالك أو المدير.",
+  "legacySince": "من {date}",
+  "@legacySince": {"placeholders": {"date": {"type": "String"}}}
 }

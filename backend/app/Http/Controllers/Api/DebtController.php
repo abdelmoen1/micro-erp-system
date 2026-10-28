@@ -85,6 +85,7 @@ class DebtController extends Controller
                 'has_debt' => true,
                 'payment_method' => null,
                 'source' => InvoiceSource::OPENING_DEBT,
+                'notes' => $validated['note'] ?? null,
             ]);
 
             $invoice->items()->create([
@@ -100,6 +101,7 @@ class DebtController extends Controller
                 'customer_id' => $invoice->customer_id,
                 // US-0701 AC2: a past date is allowed for a legacy debt; it is overdue at once.
                 'due_date' => $validated['due_date'] ?? null,
+                'originated_on' => $validated['originated_on'] ?? null,
                 'amount' => $amount,
                 'remaining_amount' => $amount,
                 'status' => 'unpaid',

@@ -22,6 +22,7 @@ class Debt extends Model
         'remaining_amount',
         'return_credit',
         'due_date',
+        'originated_on',
         'status',
         'reversal_reason',
     ];
@@ -33,6 +34,7 @@ class Debt extends Model
             'remaining_amount' => 'decimal:2',
             'return_credit' => 'decimal:2',
             'due_date' => 'date:Y-m-d',
+            'originated_on' => 'date:Y-m-d',
         ];
     }
 

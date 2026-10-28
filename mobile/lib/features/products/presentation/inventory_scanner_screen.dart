@@ -15,6 +15,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../sale/domain/repeat_scan_guard.dart';
 import '../../sale/presentation/sale_widgets.dart';
 import '../../scanner/application/lookup_controller.dart';
+import '../../scanner/application/scan_cue.dart';
 import '../../scanner/domain/barcode_camera.dart';
 import '../../scanner/presentation/camera_permission_view.dart';
 import '../../scanner/presentation/scan_frame.dart';
@@ -142,7 +143,7 @@ class _InventoryScannerScreenState extends ConsumerState<InventoryScannerScreen>
     final code = raw.trim();
     final fresh = _guard.accept(code);
     if (!fresh || _sheet != null || code.isEmpty) return;
-    unawaited(HapticFeedback.mediumImpact());
+    ref.read(scanCueProvider).success();
     unawaited(_open(parseProductCode(code)));
   }
 
@@ -330,6 +331,7 @@ class _InventoryCamera extends StatelessWidget {
             ),
           ),
         ),
+        Positioned.fill(child: IgnorePointer(child: ScanPulse(frame: frame))),
         Positioned(
           left: 16,
           right: 16,

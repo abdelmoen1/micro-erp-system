@@ -99,9 +99,10 @@ class _TodayCard extends ConsumerWidget {
         gradient: const LinearGradient(
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
-          colors: [HisbahColors.primary, HisbahColors.primaryPressed],
+          // Secondary into brand teal: the same identity, lighter than the old pressed-teal end.
+          colors: [HisbahColors.secondary, HisbahColors.primary],
         ),
-        boxShadow: const [BoxShadow(color: Color(0x33176D73), blurRadius: 18, offset: Offset(0, 8))],
+        boxShadow: const [BoxShadow(color: Color(0x29176D73), blurRadius: 16, offset: Offset(0, 6))],
       ),
       child: Stack(
         children: [
@@ -425,6 +426,8 @@ class _Shortcut extends StatelessWidget {
           borderRadius: BorderRadius.circular(HisbahRadius.button),
           side: filled ? BorderSide.none : const BorderSide(color: HisbahColors.border),
         ),
+        elevation: filled ? 0 : 1,
+        shadowColor: HisbahColors.shadow,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(HisbahRadius.button),

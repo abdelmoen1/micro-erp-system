@@ -52,6 +52,32 @@ class CustomerRepository {
     return [for (final row in data) PaymentRow.fromJson(row as Map<String, dynamic>)];
   }
 
+  /// POST /debts: an old debt from before Hisbah (owner or manager). It is an obligation only; the
+  /// server records no sale, stock movement or payment. The same [idempotencyKey] on a retry can
+  /// never record it twice. Returns the new debt's remaining amount.
+  Future<Money> recordLegacyDebt({
+    required int customerId,
+    required Money amount,
+    required String idempotencyKey,
+    String? originatedOn,
+    String? dueDate,
+    String? note,
+  }) async {
+    final body = await _api.post(
+      '/debts',
+      body: {
+        'customer_id': customerId,
+        'amount': amount.toApi(),
+        'originated_on': ?originatedOn,
+        'due_date': ?dueDate,
+        'note': ?note,
+      },
+      idempotencyKey: idempotencyKey,
+    );
+    final debt = (body['data'] as Map<String, dynamic>? ?? const {})['debt'] as Map<String, dynamic>? ?? const {};
+    return Money.parse('${debt['remaining_amount'] ?? amount.toApi()}');
+  }
+
   /// US-0705: the whole balance when [amount] is null, else that amount to the oldest debts first.
   /// The same [idempotencyKey] on a retry can never record the payment twice (AC3).
   Future<PaymentReceipt> pay({

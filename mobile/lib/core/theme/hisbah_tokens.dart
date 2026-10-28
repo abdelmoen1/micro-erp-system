@@ -5,11 +5,16 @@ import 'package:flutter/material.dart';
 /// Brand palette (2026-10-22): deep teal #10565B, secondary teal #176D73, warm ground #F2EEE4,
 /// card #FBF9F4, pale teal #E1ECE8, ink #14262E. Red is kept for errors, overdue debt and
 /// destructive actions only.
+/// 2026-10-28 refresh: a lighter, warmer ground and near-white cards with a soft shadow, so the app
+/// reads brighter without changing the brand teal.
 abstract final class HisbahColors {
-  static const ground = Color(0xFFF2EEE4);
-  static const surface = Color(0xFFFBF9F4);
+  static const ground = Color(0xFFF6F3EC);
+  static const surface = Color(0xFFFFFDFA);
   static const raised = Color(0xFFFFFFFF);
-  static const border = Color(0xFFE2DBCD);
+  static const border = Color(0xFFE8E2D6);
+
+  /// Soft card elevation (ink at 7 %): depth without heavy borders.
+  static const shadow = Color(0x1214262E);
   static const borderStrong = Color(0xFF948B7B);
   static const ink = Color(0xFF14262E);
   static const inkMuted = Color(0xFF4E5856);

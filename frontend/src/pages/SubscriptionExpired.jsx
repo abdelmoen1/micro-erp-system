@@ -114,7 +114,7 @@ export default function SubscriptionExpired() {
 
             <div className="note ok">
               <Icon name="lock" size={18} />
-              <span>بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والمنتجات. يعود كل شيء فور تفعيل الاشتراك.</span>
+              <span>بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والبضاعة. يعود كل شيء فور تفعيل الاشتراك.</span>
             </div>
 
             {number ? (

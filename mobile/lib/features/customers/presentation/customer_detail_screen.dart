@@ -7,10 +7,12 @@ import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/ltr_value.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/application/session_controller.dart';
 import '../../sale/presentation/sale_detail_screen.dart';
 import '../../sale/presentation/sale_widgets.dart';
 import '../domain/customer.dart';
 import '../domain/ledger.dart';
+import 'legacy_debt_screen.dart';
 import 'record_payment_screen.dart';
 
 /// Everything M-08 shows, loaded together so the numbers agree.
@@ -109,6 +111,8 @@ class _BalanceCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final limit = summary.creditLimit;
+    final session = ref.watch(sessionProvider);
+    final canRecordOld = session is SignedIn && session.user.canOverride && customer.isActive;
     return LineCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -153,6 +157,19 @@ class _BalanceCard extends ConsumerWidget {
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(HisbahSize.button)),
               child: Text(t.custRecordPayment),
             ),
+            if (canRecordOld) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                key: const Key('customer.legacyDebt'),
+                onPressed: () async {
+                  if (await openLegacyDebt(context, customer: customer)) {
+                    ref.invalidate(customerLedgerProvider(customer.id));
+                  }
+                },
+                icon: const Icon(Icons.history_edu_rounded),
+                label: Text(t.legacyAction),
+              ),
+            ],
           ],
         ),
       ),
@@ -204,31 +221,41 @@ class _DebtRow extends StatelessWidget {
         padding: EdgeInsetsDirectional.fromSTEB(12, 12, invoiceId == null ? 12 : 4, 12),
         child: Row(
           children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    debt.isOpening ? t.custDebtOpening : t.custDebtSale(debt.invoiceId ?? 0),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  Text(
+                    [
+                      if (debt.originatedOn != null) t.legacySince(isolateLtr(_date.format(debt.originatedOn!))),
+                      due == null ? t.custNoDue : t.custDue(isolateLtr(_date.format(due))),
+                    ].join(' · '),
+                    style: const TextStyle(fontSize: 12, color: HisbahColors.inkMuted),
+                  ),
+                  if (debt.note != null)
+                    Text(
+                      debt.note!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: HisbahColors.inkSubtle),
+                    ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  debt.isOpening ? t.custDebtOpening : t.custDebtSale(debt.invoiceId ?? 0),
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  due == null ? t.custNoDue : t.custDue(isolateLtr(_date.format(due))),
-                  style: const TextStyle(fontSize: 12, color: HisbahColors.inkMuted),
+                MoneyText(debt.remaining.toApi(), style: const TextStyle(fontWeight: FontWeight.w700)),
+                _Chip(
+                  text: overdue ? t.custOverdue : t.custStatusOpen,
+                  tone: overdue ? StatusTone.error : StatusTone.neutral,
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              MoneyText(debt.remaining.toApi(), style: const TextStyle(fontWeight: FontWeight.w700)),
-              _Chip(
-                text: overdue ? t.custOverdue : t.custStatusOpen,
-                tone: overdue ? StatusTone.error : StatusTone.neutral,
-              ),
-            ],
-          ),
             if (invoiceId != null) const Icon(Icons.chevron_left_rounded, color: HisbahColors.inkMuted),
           ],
         ),

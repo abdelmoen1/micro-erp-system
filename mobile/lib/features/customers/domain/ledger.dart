@@ -30,6 +30,8 @@ class OpenDebt {
     required this.isOpening,
     required this.remaining,
     required this.dueDate,
+    this.originatedOn,
+    this.note,
   });
 
   factory OpenDebt.fromJson(Map<String, dynamic> json) => OpenDebt(
@@ -38,6 +40,8 @@ class OpenDebt {
     isOpening: json['source'] == 'opening_debt',
     remaining: Money.parse('${json['remaining_amount'] ?? '0.00'}'),
     dueDate: DateTime.tryParse('${json['due_date'] ?? ''}'),
+    originatedOn: DateTime.tryParse('${json['originated_on'] ?? ''}'),
+    note: (json['note'] as String?)?.trim().isEmpty ?? true ? null : (json['note'] as String).trim(),
   );
 
   final int id;
@@ -45,6 +49,10 @@ class OpenDebt {
   final bool isOpening;
   final Money remaining;
   final DateTime? dueDate;
+
+  /// Legacy (opening) debts only: the day the old debt started, and where it came from.
+  final DateTime? originatedOn;
+  final String? note;
 
   /// Past its due date by the phone's calendar (the store and its phones share one timezone).
   bool isOverdue(DateTime today) {

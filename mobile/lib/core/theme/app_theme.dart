@@ -69,7 +69,7 @@ abstract final class AppTheme {
               ? HisbahColors.disabledBg
               : states.contains(WidgetState.focused) || states.contains(WidgetState.error)
               ? HisbahColors.raised
-              : HisbahColors.ground,
+              : HisbahColors.raised,
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         hintStyle: const TextStyle(color: HisbahColors.inkSubtle, fontSize: 16),
@@ -114,6 +114,31 @@ abstract final class AppTheme {
         linearTrackColor: HisbahColors.progressTrack,
       ),
       dividerTheme: const DividerThemeData(color: HisbahColors.border, thickness: 1, space: 1),
+      // Floating, rounded feedback and dialogs on the warm surface (no Material tint).
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: HisbahColors.ink,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(color: HisbahColors.onPrimary, fontSize: 15),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(HisbahRadius.field)),
+        insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: HisbahColors.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(HisbahRadius.sheet - 4)),
+        titleTextStyle: textTheme.titleMedium,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(color: HisbahColors.inkMuted),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: HisbahColors.raised,
+        selectedColor: HisbahColors.primaryTint,
+        side: const BorderSide(color: HisbahColors.border),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+        labelStyle: textTheme.labelMedium,
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: HisbahColors.primary, textStyle: textTheme.labelMedium),
+      ),
     );
   }
 }
