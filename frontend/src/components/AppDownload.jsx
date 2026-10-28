@@ -38,15 +38,15 @@ function DownloadButton({ apk, className = "btn btn-p" }) {
     <a className={className} href={apk.data?.url ?? LATEST_APK} rel="noopener noreferrer" download>
       <Icon name="download" size={18} />
       تنزيل التطبيق
-      {apk.data ? <span className="m"> {apk.data.version} ({apk.data.sizeMb} MB)</span> : null}
+      {apk.data ? <span className="app-dl-size m">{apk.data.sizeMb} MB</span> : null}
     </a>
   );
 }
 
 const STEPS = [
-  ["نزّل التطبيق على جوالك", "افتح هذه الصفحة من متصفح جوال أندرويد واضغط «تنزيل التطبيق»."],
-  ["اسمح بالتثبيت", "عند فتح الملف يسألك أندرويد عن السماح بالتثبيت من هذا المصدر؛ اسمح ثم اضغط «تثبيت»."],
-  ["ادخل بنفس حسابك", "افتح حسبة وادخل ببريدك وكلمة مرورك هنا، وسيأخذك «دليل الاستخدام» لإضافة أول صنف وعمل أول فاتورة بالباركود."],
+  ["نزّل التطبيق", "من متصفح جوال أندرويد."],
+  ["اسمح بالتثبيت", "وافق على التثبيت من هذا المصدر."],
+  ["ادخل بنفس حسابك", "نفس البريد وكلمة المرور."],
 ];
 
 function Steps() {
@@ -107,26 +107,27 @@ export function AppDownloadCard() {
     <section className="card panel app-card" aria-labelledby="app-card-title">
       <div className="app-card-head">
         <span className="app-card-ic" aria-hidden="true">
-          <Icon name="phone" size={26} strokeWidth={1.8} />
+          <Icon name="phone" size={24} strokeWidth={1.8} />
         </span>
         <span>
           <h2 id="app-card-title">تطبيق حسبة على الجوال</h2>
           <small>
-            البيع بالباركود من الجوال، وكل شيء يصل هنا فوراً.
+            البيع بالباركود من الجوال، وكل شيء يصل هنا فوراً
             {apk.data ? (
               <>
-                {" "}
-                آخر نسخة <span className="m">{apk.data.version}</span> لأندرويد.
+                {" · "}أندرويد <span className="m">{apk.data.version.split("+")[0]}</span>
               </>
             ) : null}
           </small>
         </span>
-        <DownloadButton apk={apk} />
-        <button type="button" className="btn btn-t btn-sm" onClick={() => toggle(true)}>
-          إخفاء
+        <button type="button" className="app-card-hide" onClick={() => toggle(true)} aria-label="إخفاء" title="إخفاء">
+          <Icon name="close" size={18} />
         </button>
       </div>
-      <Steps />
+      <div className="app-card-body">
+        <Steps />
+        <DownloadButton apk={apk} className="btn btn-p app-dl" />
+      </div>
     </section>
   );
 }
