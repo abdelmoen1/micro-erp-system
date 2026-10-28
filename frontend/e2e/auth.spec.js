@@ -253,7 +253,7 @@ test("a failed low-stock request says so instead of «all products above the min
 
   await page.goto("/dashboard");
 
-  await expect(page.getByText("تعذّر تحميل المخزون")).toBeVisible({ timeout: 15000 });
-  await expect(page.getByText("كل المنتجات فوق الحد الأدنى")).toHaveCount(0);
+  await expect(page.getByText("تعذّر تحميل البضاعة")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText("كل البضاعة فوق الحد الأدنى")).toHaveCount(0);
   await expect(page.getByText("₪ 64.50").first()).toBeVisible();
 });

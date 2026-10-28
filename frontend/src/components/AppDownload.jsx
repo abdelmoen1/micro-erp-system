@@ -42,7 +42,7 @@ function DownloadButton({ apk, className = "btn btn-p" }) {
 const STEPS = [
   ["نزّل التطبيق على جوالك", "افتح هذه الصفحة من متصفح جوال أندرويد واضغط «تنزيل التطبيق»."],
   ["اسمح بالتثبيت", "عند فتح الملف يسألك أندرويد عن السماح بالتثبيت من هذا المصدر؛ اسمح ثم اضغط «تثبيت»."],
-  ["ادخل بنفس حسابك", "افتح حسبة وادخل ببريدك وكلمة مرورك هنا، وسيأخذك «دليل الاستخدام» لإضافة أول منتج وعمل أول فاتورة بالباركود."],
+  ["ادخل بنفس حسابك", "افتح حسبة وادخل ببريدك وكلمة مرورك هنا، وسيأخذك «دليل الاستخدام» لإضافة أول صنف وعمل أول فاتورة بالباركود."],
 ];
 
 function Steps() {
@@ -63,9 +63,42 @@ function Steps() {
   );
 }
 
-/** On the dashboard: the app, its version and how to install it. */
+const hiddenKey = () => `hisbah.appCard.hidden.${session.user()?.id ?? "anon"}`;
+
+function readHidden() {
+  try {
+    return localStorage.getItem(hiddenKey()) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** On the dashboard: the app, its version and how to install it. «إخفاء» folds it to one line. */
 export function AppDownloadCard() {
   const apk = useLatestApk();
+  const [hidden, setHidden] = useState(readHidden);
+  const toggle = (hide) => {
+    try {
+      if (hide) localStorage.setItem(hiddenKey(), "1");
+      else localStorage.removeItem(hiddenKey());
+    } catch {
+      // Private mode: the choice lasts until the page reloads.
+    }
+    setHidden(hide);
+  };
+
+  if (hidden) {
+    return (
+      <section className="card app-card app-card-folded" aria-label="تطبيق حسبة على الجوال">
+        <Icon name="phone" size={20} strokeWidth={1.8} />
+        <span>تطبيق حسبة على الجوال</span>
+        <button type="button" className="btn btn-t btn-sm" onClick={() => toggle(false)}>
+          إظهار
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section className="card panel app-card" aria-labelledby="app-card-title">
       <div className="app-card-head">
@@ -85,6 +118,9 @@ export function AppDownloadCard() {
           </small>
         </span>
         <DownloadButton apk={apk} />
+        <button type="button" className="btn btn-t btn-sm" onClick={() => toggle(true)}>
+          إخفاء
+        </button>
       </div>
       <Steps />
     </section>

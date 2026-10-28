@@ -44,7 +44,7 @@ export default function ProductDetail() {
   const status = useProductStatus();
   const [confirmStop, setConfirmStop] = useState(false);
 
-  if (!isNew && product.isError) return <ErrorState error={product.error} title="تعذّر فتح المنتج" onRetry={() => product.refetch()} />;
+  if (!isNew && product.isError) return <ErrorState error={product.error} title="تعذّر فتح الصنف" onRetry={() => product.refetch()} />;
   if (!isNew && product.isPending) return <div className="card sk" style={{ height: 320 }} />;
 
   const p = product.data;
@@ -52,22 +52,22 @@ export default function ProductDetail() {
 
   return (
     <>
-      <Crumbs items={[["المنتجات", "/products"], [isNew ? "منتج جديد" : p.name]]} />
+      <Crumbs items={[["البضاعة", "/products"], [isNew ? "صنف جديد" : p.name]]} />
       <div className="split">
         <ProductForm key={p?.id ?? "new"} product={p} manager={manager} onSaved={(saved) => (isNew ? navigate(`/products/${saved.id}`, { replace: true }) : null)} />
 
         {!isNew ? (
           <section className="card panel" style={{ flex: "1 1 480px" }}>
             <div className="page-head">
-              <h2 style={{ fontSize: 17 }}>حركات المخزون</h2>
+              <h2 style={{ fontSize: 17 }}>حركات البضاعة</h2>
               {manager ? (
                 <button type="button" className="btn btn-s btn-sm" onClick={() => setParams({ adjust: "1" })}>
-                  تعديل المخزون
+                  تعديل الكمية
                 </button>
               ) : null}
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
-              <span className="field-hint">المخزون الآن</span>
+              <span className="field-hint">الكمية الموجودة الآن</span>
               <b className="m" style={{ fontSize: 26 }}>
                 {p.current_stock}
               </b>
@@ -78,7 +78,7 @@ export default function ProductDetail() {
               <div role="status" className="banner tone-pending">
                 <Icon name="ban" size={20} />
                 <span>
-                  هذا المنتج موقوف: لا يظهر في البيع ولا في قائمة المنتجات.
+                  هذا الصنف موقوف: لا يظهر في البيع ولا في قائمة البضاعة.
                   {manager ? <span className="sub">أعِده ليرجع كما كان بسعره ومخزونه.</span> : null}
                 </span>
               </div>
@@ -123,11 +123,11 @@ export default function ProductDetail() {
             />
             {manager && p.status === "inactive" ? (
               <button type="button" className="btn btn-p btn-sm" disabled={status.isPending} onClick={() => status.mutate({ id: p.id, active: true })} style={{ alignSelf: "flex-start" }}>
-                {status.isPending ? "جارٍ الإعادة…" : "إعادة تفعيل المنتج"}
+                {status.isPending ? "جارٍ الإعادة…" : "إعادة تفعيل الصنف"}
               </button>
             ) : manager ? (
               <button type="button" className="btn btn-t danger" onClick={() => setConfirmStop(true)} style={{ alignSelf: "flex-start" }}>
-                إيقاف المنتج
+                إيقاف الصنف
               </button>
             ) : null}
           </section>
@@ -136,8 +136,8 @@ export default function ProductDetail() {
       {adjusting ? <AdjustDialog product={p} onClose={() => setParams({})} /> : null}
       {confirmStop ? (
         <Dialog title={`إيقاف «${p.name}»؟`} role="alertdialog" tone="warning" icon="ban" onClose={() => setConfirmStop(false)}>
-          <p>لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل.</p>
-          <p className="field-hint">تستطيع إعادته متى شئت من «المنتجات ← موقوفة»، فيرجع كما كان.</p>
+          <p>لن يظهر في البيع ولا في قائمة البضاعة. حركاته وفواتيره السابقة تبقى في السجل.</p>
+          <p className="field-hint">تستطيع إعادته متى شئت من «البضاعة ← موقوفة»، فيرجع كما كان.</p>
           <div className="dlg-actions">
             <button
               type="button"
@@ -145,7 +145,7 @@ export default function ProductDetail() {
               disabled={status.isPending}
               onClick={() => status.mutate({ id: p.id, active: false }, { onSuccess: () => setConfirmStop(false) })}
             >
-              {status.isPending ? "جارٍ الإيقاف…" : "إيقاف المنتج"}
+              {status.isPending ? "جارٍ الإيقاف…" : "إيقاف الصنف"}
             </button>
             <button type="button" className="btn btn-g" onClick={() => setConfirmStop(false)}>
               رجوع
@@ -223,8 +223,8 @@ function ProductForm({ product, manager, onSaved }) {
 
   return (
     <form ref={formRef} className="card panel form-stack" style={{ flex: "1 1 420px" }} onSubmit={submit} noValidate>
-      <h1 style={{ fontSize: 22 }}>{product ? product.name : "منتج جديد"}</h1>
-      <Field id="pf-name" label="اسم المنتج" required={!readOnly} error={err("name")}>
+      <h1 style={{ fontSize: 22 }}>{product ? product.name : "صنف جديد"}</h1>
+      <Field id="pf-name" label="اسم الصنف" required={!readOnly} error={err("name")}>
         <input id="pf-name" className="fld" value={form.name} onChange={set("name")} readOnly={readOnly} />
       </Field>
       <Field id="pf-barcode" label="الباركود" optional error={err("barcode")}>
@@ -240,7 +240,7 @@ function ProductForm({ product, manager, onSaved }) {
       ) : match?.catalog_product ? (
         <p role="status" className="banner tone-info">
           <span>
-            منتج معروف في حسبة، فملأنا اسمه ووحدته.
+            صنف معروف في حسبة، فملأنا اسمه ووحدته.
             <span className="sub">أدخل سعر البيع والتكلفة والكمية لمتجرك. تعديل الاسم يخص متجرك وحده.</span>
           </span>
         </p>
@@ -262,19 +262,19 @@ function ProductForm({ product, manager, onSaved }) {
         <Field id="pf-price" label="السعر للزبون (سعر البيع)" required={!readOnly} error={err("selling_price")} hint={`ما يدفعه الزبون مقابل ${priceUnit}.`}>
           <input id="pf-price" className="fld ltr m" inputMode="decimal" value={form.selling_price} onChange={setNumber("selling_price")} readOnly={readOnly} />
         </Field>
-        <Field id="pf-cost" label="تكلفة المنتج عليك (سعر الشراء)" optional error={err("cost_price")} hint="ما تدفعه أنت للمورّد. لا يظهر للزبون.">
+        <Field id="pf-cost" label="تكلفة الصنف عليك (سعر الشراء)" optional error={err("cost_price")} hint="ما تدفعه أنت للمورّد. لا يظهر للزبون.">
           <input id="pf-cost" className="fld ltr m" inputMode="decimal" value={form.cost_price ?? ""} onChange={setNumber("cost_price")} readOnly={readOnly} />
         </Field>
         <Field
           id="pf-stock"
-          label={product ? "المخزون الحالي" : "الكمية الموجودة الآن"}
+          label={product ? "الكمية الموجودة" : "الكمية الموجودة الآن"}
           required={!product && !readOnly}
           error={err("current_stock")}
-          hint={product ? "يتغير بالبيع أو بتعديل المخزون مع سبب." : null}
+          hint={product ? "يتغير بالبيع أو بتعديل الكمية مع سبب." : null}
         >
           <input id="pf-stock" className="fld ltr m" inputMode={form.unit === "kg" ? "decimal" : "numeric"} value={form.current_stock} onChange={setNumber("current_stock")} readOnly={Boolean(product) || readOnly} />
         </Field>
-        <Field id="pf-min" label="نبّهني عندما يصل المخزون إلى" optional error={err("minimum_stock")} hint="يظهر المنتج في «مخزون منخفض» عند هذا الرقم أو أقل.">
+        <Field id="pf-min" label="نبّهني لمّا توصل الكمية إلى" optional error={err("minimum_stock")} hint="يظهر الصنف في «مخزون منخفض» عند هذا الرقم أو أقل.">
           <input id="pf-min" className="fld ltr m" inputMode={form.unit === "kg" ? "decimal" : "numeric"} value={form.minimum_stock} onChange={setNumber("minimum_stock")} readOnly={readOnly} />
         </Field>
       </div>
@@ -288,14 +288,14 @@ function ProductForm({ product, manager, onSaved }) {
       {manager ? (
         <div className="dlg-actions">
           <button type="submit" className="btn btn-p" disabled={save.isPending}>
-            {save.isPending ? "جارٍ الحفظ…" : product ? "حفظ التعديلات" : "حفظ المنتج"}
+            {save.isPending ? "جارٍ الحفظ…" : product ? "حفظ التعديلات" : "حفظ الصنف"}
           </button>
           <Link className="btn btn-g" to="/products">
             إلغاء
           </Link>
         </div>
       ) : (
-        <p className="field-hint">تعديل المنتجات للمالك أو المدير.</p>
+        <p className="field-hint">تعديل البضاعة للمالك أو المدير.</p>
       )}
     </form>
   );
@@ -397,7 +397,7 @@ function AdjustDialog({ product, onClose }) {
                 ? "عدد صحيح من الكراتين أكبر من صفر."
                 : unit === "kg"
                   ? "حتى 3 خانات عشرية."
-                  : "عدد صحيح للمنتج بالقطعة."
+                  : "عدد صحيح للصنف بالقطعة."
               : adjust.error?.fieldError?.("quantity")
           }
         >
@@ -419,7 +419,7 @@ function AdjustDialog({ product, onClose }) {
           ]}
           total={["الفرق الذي سيُسجَّل", delta === null ? "—" : fromMilli(delta, unit), delta < 0 ? "var(--debt-fg)" : "var(--success-fg)"]}
         />
-        {after !== null && after < 0 ? <p className="field-error">المخزون لا يصبح سالباً بالتعديل.</p> : null}
+        {after !== null && after < 0 ? <p className="field-error">الكمية لا تصير سالبة بالتعديل.</p> : null}
         <ErrorBanner error={adjust.error && !Object.keys(adjust.error.errors ?? {}).length ? adjust.error : null} />
         <div className="dlg-actions">
           <button type="submit" className="btn btn-p" disabled={!delta || adjust.isPending || after < 0}>

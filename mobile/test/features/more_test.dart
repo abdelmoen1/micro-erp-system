@@ -365,7 +365,7 @@ void main() {
       final sent = api.requestsTo('POST /stock-adjustments').single;
       expect(sent.data, {'product_id': 12, 'quantity': '-3', 'reason': 'جرد الرف'});
       expect(sent.headers['Idempotency-Key'], isNotNull);
-      expect(find.text('عُدّل المخزون. الآن 27 قطعة'), findsOneWidget);
+      expect(find.text('تعدّلت الكمية. صارت 27 قطعة'), findsOneWidget);
     });
 
     testWidgets('cartons received add their pieces; a count equal to the record is refused', (tester) async {
@@ -402,7 +402,7 @@ void main() {
       expect(find.text('بيع · فاتورة #40'), findsOneWidget);
       expect(find.byKey(const Key('product.adjust')), findsNothing);
       expect(find.byKey(const Key('product.edit')), findsNothing);
-      expect(find.text('تعديل المنتجات والمخزون للمالك أو المدير.'), findsOneWidget);
+      expect(find.text('تعديل البضاعة والكمية للمالك أو المدير.'), findsOneWidget);
     });
 
     testWidgets('a stopped product is listed under «موقوفة» and comes back with one button', (tester) async {
@@ -422,7 +422,7 @@ void main() {
         ..on('GET /products/12', FakeResponse(200, {'data': water}));
       await tap(tester, find.byKey(const Key('product.reactivate')));
       expect(api.requestsTo('PATCH /products/12').single.data, {'status': 'active'});
-      expect(find.text('رجع المنتج إلى البيع والقائمة كما كان.'), findsOneWidget);
+      expect(find.text('رجع الصنف إلى البيع والقائمة كما كان.'), findsOneWidget);
       expect(find.byKey(const Key('product.adjust')), findsOneWidget);
     });
 

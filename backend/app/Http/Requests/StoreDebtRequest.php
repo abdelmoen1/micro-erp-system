@@ -24,20 +24,26 @@ class StoreDebtRequest extends FormRequest
             ],
             'amount' => ['required', ...Money::inputRules()],
             'due_date' => ['nullable', 'date_format:Y-m-d'],
+            // A legacy debt: the day it started, never in the future, and a short note on where it came from.
+            'originated_on' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'note' => ['nullable', 'string', 'max:255'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'customer_id.required' => 'يجب اختيار العميل.',
-            'customer_id.exists' => 'العميل غير موجود في متجرك.',
+            'customer_id.required' => 'اختر الزبون.',
+            'customer_id.exists' => 'الزبون غير موجود في محلك.',
             'amount.required' => 'يجب إدخال قيمة الدين.',
             'amount.numeric' => 'قيمة الدين يجب أن تكون رقمية.',
             'amount.decimal' => 'قيمة الدين يجب ألا تتجاوز منزلتين عشريتين.',
             'amount.gt' => 'قيمة الدين يجب أن تكون أكبر من صفر.',
             'due_date.date_format' => 'صيغة تاريخ الاستحقاق يجب أن تكون YYYY-MM-DD.',
             'amount.max' => 'قيمة الدين أكبر من الحد المسموح.',
+            'originated_on.date_format' => 'صيغة تاريخ الدين يجب أن تكون YYYY-MM-DD.',
+            'originated_on.before_or_equal' => 'تاريخ الدين لا يكون بعد اليوم.',
+            'note.max' => 'الملاحظة طويلة، 255 حرفاً كحد أقصى.',
         ];
     }
 }

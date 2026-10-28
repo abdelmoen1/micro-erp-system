@@ -70,8 +70,18 @@
 .state-text { font-size: 15px; color: var(--ink-muted); max-width: 52ch; line-height: 1.7; }
 .split { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
 .split > * { min-width: 0; }
+/* Dashboard shortcuts: cards that open the screen doing the job. */
+.quick-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.quick-card { display: flex; align-items: center; gap: 12px; padding: 16px 18px; color: var(--ink); text-decoration: none; }
+.quick-card > span:nth-child(2) { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.quick-card small { font-size: 13px; color: var(--ink-muted); }
+.quick-card:hover { box-shadow: 0 0 0 1px var(--accent-600), var(--sh-sm); }
+.quick-ic { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--brand-tint); color: var(--accent-600); }
+
 /* The mobile app: download card on the dashboard and the first-visit guide. */
 .app-card { margin-block: 16px; }
+.app-card-folded { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--accent-600); }
+.app-card-folded > span { flex: 1; font-weight: 600; color: var(--ink); }
 .app-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; }
 .app-card-head > span:nth-child(2) { flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px; }
 .app-card-head h2 { font-size: 17px; font-weight: 700; }

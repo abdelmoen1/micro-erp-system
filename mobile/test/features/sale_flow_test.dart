@@ -10,10 +10,12 @@ import 'package:smartshop/features/auth/data/auth_repository.dart';
 import 'package:smartshop/features/sale/presentation/checkout_screen.dart';
 import 'package:smartshop/features/sale/presentation/receipt_screen.dart';
 import 'package:smartshop/features/scanner/application/lookup_controller.dart' show cameraPermissionsProvider, barcodeCameraFactoryProvider;
+import 'package:smartshop/features/scanner/application/scan_cue.dart';
 import 'package:smartshop/features/scanner/domain/barcode_camera.dart';
 
 import '../support/fake_api.dart';
 import 'products_test.dart' show productJson;
+import 'scan_cue_test.dart' show CountingBeep;
 import 'scanner_test.dart' show FakeCamera, FakePermissions;
 
 /// S2 sale flow on the hi-fi designs: M-02 cart + weight sheet, M-04 checkout, M-05 picker,
@@ -76,6 +78,8 @@ void main() {
   late MemoryKeyValueStore disk;
   late FakePermissions permissions;
   late List<FakeCamera> cameras;
+  late CountingBeep beep;
+  late ScanCue cue;
 
   Future<void> pumpApp(WidgetTester tester, {String role = 'employee'}) async {
     api.on('GET /me', meOk(role: role));
@@ -88,6 +92,7 @@ void main() {
         retry: (_, _) => null,
         overrides: [
           keyValueStoreProvider.overrideWithValue(disk),
+          scanCueProvider.overrideWithValue(cue),
           httpAdapterProvider.overrideWithValue(api),
           cameraPermissionsProvider.overrideWithValue(permissions),
           barcodeCameraFactoryProvider.overrideWithValue(() {
@@ -132,6 +137,8 @@ void main() {
     disk = MemoryKeyValueStore({AuthRepository.tokenKey: '1|tok'});
     permissions = FakePermissions(CameraPermission.granted);
     cameras = [];
+    beep = CountingBeep();
+    cue = ScanCue(beep: beep, haptic: () async {}, minGap: Duration.zero);
     api.on('GET /dashboard', dashboardOk());
   });
 
@@ -139,7 +146,7 @@ void main() {
     testWidgets('a scan adds a line; the same barcode inside 1.5 s is ignored', (tester) async {
       api.on('GET /products/lookup', lookup(milk));
       await pumpApp(tester);
-      expect(find.text('امسح منتجاً للبدء'), findsOneWidget);
+      expect(find.text('امسح أول صنف لتبدأ'), findsOneWidget);
 
       await scan(tester, milkCode);
       expect(find.byKey(const Key('cart.feedback.added')), findsOneWidget);
@@ -150,6 +157,7 @@ void main() {
       await scan(tester, milkCode);
       expect(find.byKey(const Key('cart.feedback.duplicate')), findsNothing);
       expect(api.requestsTo('GET /products/lookup'), hasLength(1));
+      expect((beep.plays, cue.pulses.value), (1, 1), reason: 'one beep and one frame pulse for the counted read only');
       expect(textOf(tester, 'cart.qty.7'), '1');
       expect(scannerOpen(), isTrue, reason: 'the camera stays open between products');
 
@@ -184,7 +192,8 @@ void main() {
       await scan(tester, '6290000000017');
       expect(find.byKey(const Key('cart.feedback.unknown')), findsOneWidget);
       expect(find.text('6290000000017'), findsOneWidget);
-      expect(find.text('امسح منتجاً للبدء'), findsOneWidget);
+      expect(find.text('امسح أول صنف لتبدأ'), findsOneWidget);
+      expect((beep.plays, cue.pulses.value), (0, 0), reason: 'no success cue for a code that matched nothing');
     });
   });
 
@@ -219,7 +228,7 @@ void main() {
       expect(find.byKey(const Key('receipt.void')), findsNothing, reason: 'employees cannot void');
 
       await tap(tester, 'receipt.newSale');
-      expect(find.text('امسح منتجاً للبدء'), findsOneWidget);
+      expect(find.text('امسح أول صنف لتبدأ'), findsOneWidget);
     });
 
     testWidgets('partial without a customer is stopped locally (UI-AC-03)', (tester) async {
@@ -338,7 +347,7 @@ void main() {
 
       await tap(tester, 'receipt.newSale');
       expect(scannerOpen(), isTrue, reason: 'back on the camera, ready for the next customer');
-      expect(find.text('امسح منتجاً للبدء'), findsOneWidget);
+      expect(find.text('امسح أول صنف لتبدأ'), findsOneWidget);
       expect(cameras.single.resumes, 1);
       await scan(tester, milkCode);
       expect(find.byKey(const Key('cart.line.7')), findsOneWidget);

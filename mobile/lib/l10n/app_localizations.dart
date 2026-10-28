@@ -125,7 +125,7 @@ abstract class AppLocalizations {
   /// No description provided for @guideCardBody.
   ///
   /// In ar, this message translates to:
-  /// **'جرّب في دقيقتين: أضف منتجاً بالباركود، ثم بِعه في فاتورة.'**
+  /// **'جرّب في دقيقتين: أضف صنفاً بالباركود، ثم بِعه في فاتورة.'**
   String get guideCardBody;
 
   /// No description provided for @guideStart.
@@ -155,25 +155,25 @@ abstract class AppLocalizations {
   /// No description provided for @guideWelcomeBody.
   ///
   /// In ar, this message translates to:
-  /// **'سنجرب معاً أهم شيئين في المحل: إضافة منتج بالباركود، وعمل فاتورة بالباركود. كل ما تفعله هنا حقيقي ويُحفظ في متجرك.'**
+  /// **'سنجرب معاً أهم شيئين في المحل: إضافة صنف بالباركود، وعمل فاتورة بالباركود. كل ما تفعله هنا حقيقي ويُحفظ في متجرك.'**
   String get guideWelcomeBody;
 
   /// No description provided for @guideAddTitle.
   ///
   /// In ar, this message translates to:
-  /// **'أضف منتجك الأول بالباركود'**
+  /// **'أضف صنفك الأول بالباركود'**
   String get guideAddTitle;
 
   /// No description provided for @guideAdd1.
   ///
   /// In ar, this message translates to:
-  /// **'اضغط «امسح منتجاً الآن» ووجّه الكاميرا إلى باركود أي منتج في محلك.'**
+  /// **'اضغط «امسح صنفاً الآن» ووجّه الكاميرا إلى باركود أي صنف في محلك.'**
   String get guideAdd1;
 
   /// No description provided for @guideAdd2.
   ///
   /// In ar, this message translates to:
-  /// **'إن كان المنتج معروفاً نملأ اسمه، وأنت تكتب السعر والكمية الموجودة.'**
+  /// **'إن كان الصنف معروفاً نملأ اسمه، وأنت تكتب السعر والكمية الموجودة.'**
   String get guideAdd2;
 
   /// No description provided for @guideAdd3.
@@ -185,13 +185,13 @@ abstract class AppLocalizations {
   /// No description provided for @guideAddAction.
   ///
   /// In ar, this message translates to:
-  /// **'امسح منتجاً الآن'**
+  /// **'امسح صنفاً الآن'**
   String get guideAddAction;
 
   /// No description provided for @guideAddDone.
   ///
   /// In ar, this message translates to:
-  /// **'أضفت منتجك الأول. أحسنت!'**
+  /// **'أضفت صنفك الأول. أحسنت!'**
   String get guideAddDone;
 
   /// No description provided for @guideSaleTitle.
@@ -203,13 +203,13 @@ abstract class AppLocalizations {
   /// No description provided for @guideSale1.
   ///
   /// In ar, this message translates to:
-  /// **'اضغط «افتح شاشة البيع» ثم امسح المنتج؛ يدخل السلة فوراً.'**
+  /// **'اضغط «افتح شاشة البيع» ثم امسح الصنف؛ يدخل السلة فوراً.'**
   String get guideSale1;
 
   /// No description provided for @guideSale2.
   ///
   /// In ar, this message translates to:
-  /// **'امسح المنتج مرة ثانية لزيادة الكمية، أو امسح منتجات أخرى.'**
+  /// **'امسح الصنف مرة ثانية لزيادة الكمية، أو امسح أصناف أخرى.'**
   String get guideSale2;
 
   /// No description provided for @guideSale3.
@@ -233,7 +233,7 @@ abstract class AppLocalizations {
   /// No description provided for @guideDoneBody.
   ///
   /// In ar, this message translates to:
-  /// **'الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «المنتجات». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.'**
+  /// **'الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «البضاعة». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.'**
   String get guideDoneBody;
 
   /// No description provided for @guideFinish.
@@ -257,7 +257,7 @@ abstract class AppLocalizations {
   /// No description provided for @moreGuideSub.
   ///
   /// In ar, this message translates to:
-  /// **'جرّب إضافة منتج وعمل فاتورة خطوة بخطوة'**
+  /// **'جرّب إضافة صنف وعمل فاتورة خطوة بخطوة'**
   String get moreGuideSub;
 
   /// No description provided for @moreSupport.
@@ -539,7 +539,7 @@ abstract class AppLocalizations {
   /// No description provided for @splashSubline.
   ///
   /// In ar, this message translates to:
-  /// **'المبيعات والديون والمخزون في مكان واحد'**
+  /// **'المبيعات والديون والبضاعة في مكان واحد'**
   String get splashSubline;
 
   /// No description provided for @splashChecking.
@@ -713,7 +713,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabProducts.
   ///
   /// In ar, this message translates to:
-  /// **'المنتجات'**
+  /// **'البضاعة'**
   String get tabProducts;
 
   /// No description provided for @tabMore.
@@ -767,7 +767,7 @@ abstract class AppLocalizations {
   /// No description provided for @placeholderProducts.
   ///
   /// In ar, this message translates to:
-  /// **'المنتجات والمخزون المنخفض'**
+  /// **'البضاعة والأصناف اللي قرّبت تخلص'**
   String get placeholderProducts;
 
   /// No description provided for @placeholderPos.
@@ -929,7 +929,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanEntryTitle.
   ///
   /// In ar, this message translates to:
-  /// **'عرض بيانات منتج'**
+  /// **'عرض بيانات صنف'**
   String get scanEntryTitle;
 
   /// No description provided for @scanEntryBody.
@@ -989,7 +989,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanSearchingProduct.
   ///
   /// In ar, this message translates to:
-  /// **'جارٍ البحث عن المنتج…'**
+  /// **'جارٍ البحث عن الصنف…'**
   String get scanSearchingProduct;
 
   /// No description provided for @scanHintTitle.
@@ -1001,7 +1001,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanHintBody.
   ///
   /// In ar, this message translates to:
-  /// **'قرّب الباركود ببطء، أمِل المنتج لتجنب اللمعان، وشغّل الإضاءة. أو أدخله يدويًا.'**
+  /// **'قرّب الباركود ببطء، أمِل الصنف لتجنب اللمعان، وشغّل الإضاءة. أو أدخله يدويًا.'**
   String get scanHintBody;
 
   /// No description provided for @scanManual.
@@ -1013,7 +1013,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanFound.
   ///
   /// In ar, this message translates to:
-  /// **'تم العثور على المنتج'**
+  /// **'لقينا الصنف'**
   String get scanFound;
 
   /// No description provided for @scanPrice.
@@ -1025,7 +1025,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanStock.
   ///
   /// In ar, this message translates to:
-  /// **'المخزون الحالي'**
+  /// **'الكمية الموجودة'**
   String get scanStock;
 
   /// No description provided for @scanBarcodeLabel.
@@ -1037,7 +1037,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanAnother.
   ///
   /// In ar, this message translates to:
-  /// **'مسح منتج آخر'**
+  /// **'امسح صنف ثاني'**
   String get scanAnother;
 
   /// No description provided for @scanBackToSale.
@@ -1049,7 +1049,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanNotFoundTitle.
   ///
   /// In ar, this message translates to:
-  /// **'لا يوجد منتج بهذا الباركود'**
+  /// **'ما في صنف بهذا الباركود'**
   String get scanNotFoundTitle;
 
   /// No description provided for @scanNotFoundBody.
@@ -1139,7 +1139,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualSubmit.
   ///
   /// In ar, this message translates to:
-  /// **'عرض المنتج'**
+  /// **'عرض الصنف'**
   String get manualSubmit;
 
   /// No description provided for @manualCancelA11y.
@@ -1151,7 +1151,7 @@ abstract class AppLocalizations {
   /// No description provided for @lookupFailedTitle.
   ///
   /// In ar, this message translates to:
-  /// **'تعذّر عرض المنتج'**
+  /// **'تعذّر عرض الصنف'**
   String get lookupFailedTitle;
 
   /// No description provided for @lookupSavedForRetry.
@@ -1205,7 +1205,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanLookingUp.
   ///
   /// In ar, this message translates to:
-  /// **'جارٍ البحث عن المنتج…'**
+  /// **'جارٍ البحث عن الصنف…'**
   String get scanLookingUp;
 
   /// No description provided for @barcodeWord.
@@ -1259,13 +1259,13 @@ abstract class AppLocalizations {
   /// No description provided for @scanUnknownBody.
   ///
   /// In ar, this message translates to:
-  /// **'لا يوجد منتج بهذا الرقم في متجرك:'**
+  /// **'لا يوجد صنف بهذا الرقم في متجرك:'**
   String get scanUnknownBody;
 
   /// No description provided for @scanLookupFailed.
   ///
   /// In ar, this message translates to:
-  /// **'تعذّر البحث عن المنتج'**
+  /// **'تعذّر البحث عن الصنف'**
   String get scanLookupFailed;
 
   /// No description provided for @scanLookupFailedBody.
@@ -1277,13 +1277,13 @@ abstract class AppLocalizations {
   /// No description provided for @cartEmptyTitle.
   ///
   /// In ar, this message translates to:
-  /// **'امسح منتجاً للبدء'**
+  /// **'امسح أول صنف لتبدأ'**
   String get cartEmptyTitle;
 
   /// No description provided for @cartEmptyBody.
   ///
   /// In ar, this message translates to:
-  /// **'أو ابحث عنه بالاسم. المنتجات بالوزن تفتح شاشة إدخال الوزن.'**
+  /// **'أو ابحث عنه بالاسم. البضاعة بالوزن تفتح شاشة إدخال الوزن.'**
   String get cartEmptyBody;
 
   /// No description provided for @unitChipPiece.
@@ -1373,7 +1373,7 @@ abstract class AppLocalizations {
   /// No description provided for @stockWord.
   ///
   /// In ar, this message translates to:
-  /// **'المخزون'**
+  /// **'الكمية'**
   String get stockWord;
 
   /// No description provided for @weightTitle.
@@ -1481,31 +1481,31 @@ abstract class AppLocalizations {
   /// No description provided for @productSearchTitle.
   ///
   /// In ar, this message translates to:
-  /// **'بحث عن منتج'**
+  /// **'بحث عن صنف'**
   String get productSearchTitle;
 
   /// No description provided for @productSearchHint.
   ///
   /// In ar, this message translates to:
-  /// **'ابحث باسم المنتج أو الباركود'**
+  /// **'ابحث باسم الصنف أو الباركود'**
   String get productSearchHint;
 
   /// No description provided for @productSearchEmpty.
   ///
   /// In ar, this message translates to:
-  /// **'لا يوجد منتج بهذا الاسم'**
+  /// **'ما في صنف بهذا الاسم'**
   String get productSearchEmpty;
 
   /// No description provided for @productSearchEmptyBody.
   ///
   /// In ar, this message translates to:
-  /// **'تحقق من الكتابة. المنتجات تُضاف من لوحة الإدارة على الويب.'**
+  /// **'تحقق من الكتابة. البضاعة تُضاف من لوحة الإدارة على الويب.'**
   String get productSearchEmptyBody;
 
   /// No description provided for @productSearchError.
   ///
   /// In ar, this message translates to:
-  /// **'تعذّر تحميل المنتجات'**
+  /// **'تعذّر تحميل البضاعة'**
   String get productSearchError;
 
   /// No description provided for @listErrorBody.
@@ -2351,7 +2351,7 @@ abstract class AppLocalizations {
   /// No description provided for @custEmptyTitle.
   ///
   /// In ar, this message translates to:
-  /// **'لا زبائن بعد'**
+  /// **'ما في زبائن لسّا'**
   String get custEmptyTitle;
 
   /// No description provided for @custEmptyBody.
@@ -2399,7 +2399,7 @@ abstract class AppLocalizations {
   /// No description provided for @custRemaining.
   ///
   /// In ar, this message translates to:
-  /// **'المتبقي عليه'**
+  /// **'الباقي عليه'**
   String get custRemaining;
 
   /// No description provided for @custOverdueAmount.
@@ -2423,7 +2423,7 @@ abstract class AppLocalizations {
   /// No description provided for @custRecordPayment.
   ///
   /// In ar, this message translates to:
-  /// **'تسجيل دفعة'**
+  /// **'قبض دفعة'**
   String get custRecordPayment;
 
   /// No description provided for @custCall.
@@ -2441,7 +2441,7 @@ abstract class AppLocalizations {
   /// No description provided for @custNoOpenDebts.
   ///
   /// In ar, this message translates to:
-  /// **'لا ديون مفتوحة على هذا الزبون.'**
+  /// **'ما عليه ديون مفتوحة.'**
   String get custNoOpenDebts;
 
   /// No description provided for @custRecentPayments.
@@ -2453,7 +2453,7 @@ abstract class AppLocalizations {
   /// No description provided for @custNoPayments.
   ///
   /// In ar, this message translates to:
-  /// **'لا دفعات بعد.'**
+  /// **'ما في دفعات لسّا.'**
   String get custNoPayments;
 
   /// No description provided for @custDebtSale.
@@ -2465,7 +2465,7 @@ abstract class AppLocalizations {
   /// No description provided for @custDebtOpening.
   ///
   /// In ar, this message translates to:
-  /// **'دين افتتاحي'**
+  /// **'دين قديم'**
   String get custDebtOpening;
 
   /// No description provided for @custDue.
@@ -2519,7 +2519,7 @@ abstract class AppLocalizations {
   /// No description provided for @payFull.
   ///
   /// In ar, this message translates to:
-  /// **'كامل المتبقي'**
+  /// **'كل الباقي'**
   String get payFull;
 
   /// No description provided for @payOther.
@@ -2543,7 +2543,7 @@ abstract class AppLocalizations {
   /// No description provided for @payNow.
   ///
   /// In ar, this message translates to:
-  /// **'المتبقي الآن'**
+  /// **'الباقي هلّأ'**
   String get payNow;
 
   /// No description provided for @payThis.
@@ -2555,7 +2555,7 @@ abstract class AppLocalizations {
   /// No description provided for @payAfter.
   ///
   /// In ar, this message translates to:
-  /// **'بعد الدفعة'**
+  /// **'الباقي بعد الدفعة'**
   String get payAfter;
 
   /// No description provided for @payOldestFirst.
@@ -2633,7 +2633,7 @@ abstract class AppLocalizations {
   /// No description provided for @prodAdd.
   ///
   /// In ar, this message translates to:
-  /// **'+ منتج'**
+  /// **'+ صنف'**
   String get prodAdd;
 
   /// No description provided for @prodFilterAll.
@@ -2657,25 +2657,25 @@ abstract class AppLocalizations {
   /// No description provided for @prodEmptyTitle.
   ///
   /// In ar, this message translates to:
-  /// **'لا منتجات بعد'**
+  /// **'ما في بضاعة لسّا'**
   String get prodEmptyTitle;
 
   /// No description provided for @prodEmptyBody.
   ///
   /// In ar, this message translates to:
-  /// **'امسح رمز المنتج أو الباركود لإضافته بسرعة، أو استورد قائمتك من الويب.'**
+  /// **'امسح رمز الصنف أو الباركود لإضافته بسرعة، أو استورد قائمتك من الويب.'**
   String get prodEmptyBody;
 
   /// No description provided for @prodNoResults.
   ///
   /// In ar, this message translates to:
-  /// **'لا منتجات تطابق هذا البحث.'**
+  /// **'ما في بضاعة بهذا الاسم.'**
   String get prodNoResults;
 
   /// No description provided for @prodLoadError.
   ///
   /// In ar, this message translates to:
-  /// **'تعذّر تحميل المنتجات.'**
+  /// **'تعذّر تحميل البضاعة.'**
   String get prodLoadError;
 
   /// No description provided for @prodStockOk.
@@ -2717,7 +2717,7 @@ abstract class AppLocalizations {
   /// No description provided for @addTitle.
   ///
   /// In ar, this message translates to:
-  /// **'إضافة منتج'**
+  /// **'إضافة صنف'**
   String get addTitle;
 
   /// No description provided for @addScan.
@@ -2741,7 +2741,7 @@ abstract class AppLocalizations {
   /// No description provided for @addManualSub.
   ///
   /// In ar, this message translates to:
-  /// **'للمنتجات بلا رمز، مثل الموزون'**
+  /// **'للأصناف بلا رمز، مثل الموزون'**
   String get addManualSub;
 
   /// No description provided for @addChecking.
@@ -2753,7 +2753,7 @@ abstract class AppLocalizations {
   /// No description provided for @addExistsTitle.
   ///
   /// In ar, this message translates to:
-  /// **'المنتج موجود'**
+  /// **'الصنف موجود'**
   String get addExistsTitle;
 
   /// No description provided for @addExistsBody.
@@ -2813,7 +2813,7 @@ abstract class AppLocalizations {
   /// No description provided for @addUnreadable.
   ///
   /// In ar, this message translates to:
-  /// **'هذا الرمز لا يحتوي بيانات منتج. أدخل المنتج يدوياً؛ لن نستخدم محتواه.'**
+  /// **'هذا الرمز لا يحتوي بيانات صنف. أدخل الصنف يدوياً؛ لن نستخدم محتواه.'**
   String get addUnreadable;
 
   /// No description provided for @addManualNote.
@@ -2825,25 +2825,25 @@ abstract class AppLocalizations {
   /// No description provided for @addLookupFailed.
   ///
   /// In ar, this message translates to:
-  /// **'تعذّر التحقق من وجود المنتج الآن؛ سنتحقق عند الحفظ.'**
+  /// **'تعذّر التحقق من وجود الصنف الآن؛ سنتحقق عند الحفظ.'**
   String get addLookupFailed;
 
   /// No description provided for @addFromCatalog.
   ///
   /// In ar, this message translates to:
-  /// **'هذا المنتج معروف في حسبة، فملأنا اسمه ووحدته. أدخل سعر البيع والتكلفة والكمية لمتجرك.'**
+  /// **'هذا الصنف معروف في حسبة، فملأنا اسمه ووحدته. أدخل سعر البيع والتكلفة والكمية لمتجرك.'**
   String get addFromCatalog;
 
   /// No description provided for @formNewTitle.
   ///
   /// In ar, this message translates to:
-  /// **'منتج جديد'**
+  /// **'صنف جديد'**
   String get formNewTitle;
 
   /// No description provided for @formName.
   ///
   /// In ar, this message translates to:
-  /// **'اسم المنتج'**
+  /// **'اسم الصنف'**
   String get formName;
 
   /// No description provided for @formNameHint.
@@ -2891,25 +2891,25 @@ abstract class AppLocalizations {
   /// No description provided for @formCost.
   ///
   /// In ar, this message translates to:
-  /// **'تكلفة المنتج عليك (سعر الشراء)'**
+  /// **'تكلفة الصنف عليك (سعر الشراء)'**
   String get formCost;
 
   /// No description provided for @formStock.
   ///
   /// In ar, this message translates to:
-  /// **'المخزون الآن'**
+  /// **'الكمية الموجودة الآن'**
   String get formStock;
 
   /// No description provided for @formMin.
   ///
   /// In ar, this message translates to:
-  /// **'نبّهني عندما يصل المخزون إلى'**
+  /// **'نبّهني لمّا توصل الكمية إلى'**
   String get formMin;
 
   /// No description provided for @formNameRequired.
   ///
   /// In ar, this message translates to:
-  /// **'اكتب اسم المنتج.'**
+  /// **'اكتب اسم الصنف.'**
   String get formNameRequired;
 
   /// No description provided for @formPriceInvalid.
@@ -2921,7 +2921,7 @@ abstract class AppLocalizations {
   /// No description provided for @formStockPiece.
   ///
   /// In ar, this message translates to:
-  /// **'عدد صحيح للمنتج بالقطعة.'**
+  /// **'عدد صحيح للصنف بالقطعة.'**
   String get formStockPiece;
 
   /// No description provided for @formStockKg.
@@ -2933,7 +2933,7 @@ abstract class AppLocalizations {
   /// No description provided for @formSave.
   ///
   /// In ar, this message translates to:
-  /// **'حفظ المنتج'**
+  /// **'حفظ الصنف'**
   String get formSave;
 
   /// No description provided for @formSaving.
@@ -2951,7 +2951,7 @@ abstract class AppLocalizations {
   /// No description provided for @formForbidden.
   ///
   /// In ar, this message translates to:
-  /// **'إضافة المنتجات للمالك أو المدير. اطلب من المالك إضافته.'**
+  /// **'إضافة البضاعة للمالك أو المدير. اطلب من المالك إضافته.'**
   String get formForbidden;
 
   /// No description provided for @formFailed.
@@ -2969,13 +2969,13 @@ abstract class AppLocalizations {
   /// No description provided for @savedScanNext.
   ///
   /// In ar, this message translates to:
-  /// **'مسح منتج آخر'**
+  /// **'امسح صنف ثاني'**
   String get savedScanNext;
 
   /// No description provided for @savedBack.
   ///
   /// In ar, this message translates to:
-  /// **'العودة إلى المنتجات'**
+  /// **'الرجوع للبضاعة'**
   String get savedBack;
 
   /// No description provided for @homeAttention.
@@ -2999,7 +2999,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeLowStockAlert.
   ///
   /// In ar, this message translates to:
-  /// **'منتجات تحت الحد: {count}'**
+  /// **'بضاعة تحت الحد: {count}'**
   String homeLowStockAlert(int count);
 
   /// No description provided for @homeNegativeAlert.
@@ -3293,7 +3293,7 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionDataSafe.
   ///
   /// In ar, this message translates to:
-  /// **'بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والمنتجات. يعود كل شيء فور تفعيل الاشتراك.'**
+  /// **'بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والبضاعة. يعود كل شيء فور تفعيل الاشتراك.'**
   String get subscriptionDataSafe;
 
   /// No description provided for @subscriptionContactWhatsapp.
@@ -3341,13 +3341,13 @@ abstract class AppLocalizations {
   /// No description provided for @saleScanTitle.
   ///
   /// In ar, this message translates to:
-  /// **'مسح منتجات البيع'**
+  /// **'مسح أصناف البيع'**
   String get saleScanTitle;
 
   /// No description provided for @saleScanKeepGoing.
   ///
   /// In ar, this message translates to:
-  /// **'الكاميرا شغّالة: امسح المنتج التالي'**
+  /// **'الكاميرا شغّالة: امسح الصنف اللي بعده'**
   String get saleScanKeepGoing;
 
   /// No description provided for @saleScanCloseA11y.
@@ -3365,7 +3365,7 @@ abstract class AppLocalizations {
   /// No description provided for @saleScanEmptyBody.
   ///
   /// In ar, this message translates to:
-  /// **'وجّه الكاميرا إلى باركود المنتج. تبقى الكاميرا مفتوحة لتضيف المنتجات واحداً تلو الآخر.'**
+  /// **'وجّه الكاميرا إلى باركود الصنف. تبقى الكاميرا مفتوحة لتضيف البضاعة واحداً تلو الآخر.'**
   String get saleScanEmptyBody;
 
   /// No description provided for @completeSale.
@@ -3383,25 +3383,25 @@ abstract class AppLocalizations {
   /// No description provided for @invTitle.
   ///
   /// In ar, this message translates to:
-  /// **'إضافة منتجات بالمسح'**
+  /// **'إضافة بضاعة بالمسح'**
   String get invTitle;
 
   /// No description provided for @invInstruction.
   ///
   /// In ar, this message translates to:
-  /// **'امسح باركود المنتج لإضافته إلى متجرك. لا يدخل سلة البيع.'**
+  /// **'امسح باركود الصنف لإضافته إلى متجرك. لا يدخل سلة البيع.'**
   String get invInstruction;
 
   /// No description provided for @invWaiting.
   ///
   /// In ar, this message translates to:
-  /// **'أكمل النموذج أو أغلقه لمسح المنتج التالي'**
+  /// **'أكمل النموذج أو أغلقه لمسح الصنف التالي'**
   String get invWaiting;
 
   /// No description provided for @invCloseA11y.
   ///
   /// In ar, this message translates to:
-  /// **'إغلاق الكاميرا والعودة إلى المنتجات'**
+  /// **'إغلاق الكاميرا والرجوع للبضاعة'**
   String get invCloseA11y;
 
   /// No description provided for @invBackToScanning.
@@ -3413,13 +3413,13 @@ abstract class AppLocalizations {
   /// No description provided for @invStockNow.
   ///
   /// In ar, this message translates to:
-  /// **'المخزون الآن {stock}'**
+  /// **'الكمية الآن {stock}'**
   String invStockNow(String stock);
 
   /// No description provided for @invExistsNote.
   ///
   /// In ar, this message translates to:
-  /// **'هذا المنتج في متجرك، فلن يُضاف مرة ثانية. لإدخال بضاعة جديدة منه اختر «إضافة كمية».'**
+  /// **'هذا الصنف في متجرك، فلن يُضاف مرة ثانية. لإدخال بضاعة جديدة منه اختر «إضافة كمية».'**
   String get invExistsNote;
 
   /// No description provided for @invAddStock.
@@ -3467,13 +3467,13 @@ abstract class AppLocalizations {
   /// No description provided for @invAddStockSave.
   ///
   /// In ar, this message translates to:
-  /// **'إضافة إلى المخزون'**
+  /// **'إضافة للكمية'**
   String get invAddStockSave;
 
   /// No description provided for @invStockAdded.
   ///
   /// In ar, this message translates to:
-  /// **'أُضيفت الكمية إلى «{name}». المخزون الآن {stock}'**
+  /// **'أُضيفت الكمية إلى «{name}». الكمية الآن {stock}'**
   String invStockAdded(String name, String stock);
 
   /// No description provided for @invStockForbidden.
@@ -3491,7 +3491,7 @@ abstract class AppLocalizations {
   /// No description provided for @invNetworkUncertain.
   ///
   /// In ar, this message translates to:
-  /// **'انقطع الاتصال قبل أن يصل رد الخادم، فقد يكون الحفظ تمّ. بياناتك باقية؛ اضغط «إعادة المحاولة» وسنتحقق دون تكرار المنتج.'**
+  /// **'انقطع الاتصال قبل أن يصل رد الخادم، فقد يكون الحفظ تمّ. بياناتك باقية؛ اضغط «إعادة المحاولة» وسنتحقق دون تكرار الصنف.'**
   String get invNetworkUncertain;
 
   /// No description provided for @invFromCatalog.
@@ -3665,7 +3665,7 @@ abstract class AppLocalizations {
   /// No description provided for @discardBody.
   ///
   /// In ar, this message translates to:
-  /// **'لم يُحفظ هذا المنتج بعد. إذا خرجت الآن ستضيع البيانات التي أدخلتها.'**
+  /// **'لم يُحفظ هذا الصنف بعد. إذا خرجت الآن ستضيع البيانات التي أدخلتها.'**
   String get discardBody;
 
   /// No description provided for @discardKeep.
@@ -3725,13 +3725,13 @@ abstract class AppLocalizations {
   /// No description provided for @moreSectionStock.
   ///
   /// In ar, this message translates to:
-  /// **'المخزون'**
+  /// **'البضاعة والكميات'**
   String get moreSectionStock;
 
   /// No description provided for @moreLowStock.
   ///
   /// In ar, this message translates to:
-  /// **'منتجات قاربت على النفاد'**
+  /// **'بضاعة قرّبت تخلص'**
   String get moreLowStock;
 
   /// No description provided for @moreLowStockSub.
@@ -4241,13 +4241,13 @@ abstract class AppLocalizations {
   /// No description provided for @prodDetailError.
   ///
   /// In ar, this message translates to:
-  /// **'تعذّر تحميل المنتج. تحقق من الاتصال ثم أعد المحاولة.'**
+  /// **'تعذّر تحميل الصنف. تحقق من الاتصال ثم أعد المحاولة.'**
   String get prodDetailError;
 
   /// No description provided for @prodStockNowLabel.
   ///
   /// In ar, this message translates to:
-  /// **'المخزون الآن'**
+  /// **'الكمية الموجودة الآن'**
   String get prodStockNowLabel;
 
   /// No description provided for @prodMinimumLabel.
@@ -4271,19 +4271,19 @@ abstract class AppLocalizations {
   /// No description provided for @prodEdit.
   ///
   /// In ar, this message translates to:
-  /// **'تعديل المنتج'**
+  /// **'تعديل الصنف'**
   String get prodEdit;
 
   /// No description provided for @prodAdjust.
   ///
   /// In ar, this message translates to:
-  /// **'جرد أو تعديل المخزون'**
+  /// **'جرد أو تعديل الكمية'**
   String get prodAdjust;
 
   /// No description provided for @prodMovements.
   ///
   /// In ar, this message translates to:
-  /// **'حركات المخزون'**
+  /// **'حركات البضاعة'**
   String get prodMovements;
 
   /// No description provided for @prodNoMovements.
@@ -4295,7 +4295,7 @@ abstract class AppLocalizations {
   /// No description provided for @prodDeactivate.
   ///
   /// In ar, this message translates to:
-  /// **'إيقاف المنتج'**
+  /// **'إيقاف الصنف'**
   String get prodDeactivate;
 
   /// No description provided for @prodDeactivateTitle.
@@ -4307,7 +4307,7 @@ abstract class AppLocalizations {
   /// No description provided for @prodDeactivateBody.
   ///
   /// In ar, this message translates to:
-  /// **'لن يظهر في البيع ولا في قائمة المنتجات. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».'**
+  /// **'لن يظهر في البيع ولا في قائمة البضاعة. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».'**
   String get prodDeactivateBody;
 
   /// No description provided for @prodDeactivated.
@@ -4319,7 +4319,7 @@ abstract class AppLocalizations {
   /// No description provided for @prodInactiveNote.
   ///
   /// In ar, this message translates to:
-  /// **'هذا المنتج موقوف: لا يُباع ولا يظهر في القائمة.'**
+  /// **'هذا الصنف موقوف: لا يُباع ولا يظهر في القائمة.'**
   String get prodInactiveNote;
 
   /// No description provided for @prodFilterInactive.
@@ -4331,13 +4331,13 @@ abstract class AppLocalizations {
   /// No description provided for @prodReactivate.
   ///
   /// In ar, this message translates to:
-  /// **'إعادة تفعيل المنتج'**
+  /// **'إعادة تفعيل الصنف'**
   String get prodReactivate;
 
   /// No description provided for @prodReactivated.
   ///
   /// In ar, this message translates to:
-  /// **'رجع المنتج إلى البيع والقائمة كما كان.'**
+  /// **'رجع الصنف إلى البيع والقائمة كما كان.'**
   String get prodReactivated;
 
   /// No description provided for @invOpenProduct.
@@ -4355,7 +4355,7 @@ abstract class AppLocalizations {
   /// No description provided for @prodViewOnly.
   ///
   /// In ar, this message translates to:
-  /// **'تعديل المنتجات والمخزون للمالك أو المدير.'**
+  /// **'تعديل البضاعة والكمية للمالك أو المدير.'**
   String get prodViewOnly;
 
   /// No description provided for @moveOpening.
@@ -4403,7 +4403,7 @@ abstract class AppLocalizations {
   /// No description provided for @adjTitle.
   ///
   /// In ar, this message translates to:
-  /// **'تعديل مخزون «{name}»'**
+  /// **'تعديل كمية «{name}»'**
   String adjTitle(String name);
 
   /// No description provided for @adjCount.
@@ -4493,7 +4493,7 @@ abstract class AppLocalizations {
   /// No description provided for @adjInvalidPiece.
   ///
   /// In ar, this message translates to:
-  /// **'عدد صحيح للمنتج بالقطعة.'**
+  /// **'عدد صحيح للصنف بالقطعة.'**
   String get adjInvalidPiece;
 
   /// No description provided for @adjInvalidKg.
@@ -4511,25 +4511,25 @@ abstract class AppLocalizations {
   /// No description provided for @adjDone.
   ///
   /// In ar, this message translates to:
-  /// **'عُدّل المخزون. الآن {stock}'**
+  /// **'تعدّلت الكمية. صارت {stock}'**
   String adjDone(String stock);
 
   /// No description provided for @lowTitle.
   ///
   /// In ar, this message translates to:
-  /// **'منتجات قاربت على النفاد'**
+  /// **'بضاعة قرّبت تخلص'**
   String get lowTitle;
 
   /// No description provided for @lowEmpty.
   ///
   /// In ar, this message translates to:
-  /// **'كل المنتجات فوق الحد الأدنى للتنبيه.'**
+  /// **'كل البضاعة فوق حد التنبيه.'**
   String get lowEmpty;
 
   /// No description provided for @lowRow.
   ///
   /// In ar, this message translates to:
-  /// **'المخزون {stock} · التنبيه عند {min}'**
+  /// **'الكمية {stock} · التنبيه عند {min}'**
   String lowRow(String stock, String min);
 
   /// No description provided for @negTitle.
@@ -4541,13 +4541,13 @@ abstract class AppLocalizations {
   /// No description provided for @negEmpty.
   ///
   /// In ar, this message translates to:
-  /// **'لا منتجات بمخزون سالب.'**
+  /// **'لا أصناف بمخزون سالب.'**
   String get negEmpty;
 
   /// No description provided for @negHelp.
   ///
   /// In ar, this message translates to:
-  /// **'بيعت هذه المنتجات بأكثر مما هو مسجّل. عُدّ الرف ثم صحّح المخزون من صفحة المنتج.'**
+  /// **'بيعت هذه البضاعة بأكثر مما هو مسجّل. عُدّ الرف ثم صحّح المخزون من صفحة الصنف.'**
   String get negHelp;
 
   /// No description provided for @negSale.
@@ -4561,6 +4561,198 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تعذّر التحميل. تحقق من الاتصال ثم أعد المحاولة.'**
   String get listLoadError;
+
+  /// No description provided for @legacyAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل دين قديم'**
+  String get legacyAction;
+
+  /// No description provided for @legacyActionSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'دين على زبون من قبل ما تستعمل حسبة، من دفترك القديم'**
+  String get legacyActionSub;
+
+  /// No description provided for @legacyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل دين قديم'**
+  String get legacyTitle;
+
+  /// No description provided for @legacyIntro.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيتسجّل كدين على الزبون بس: ما بينحسب بيع، وما بينقص من البضاعة، وما بيدخل الصندوق.'**
+  String get legacyIntro;
+
+  /// No description provided for @legacyCustomer.
+  ///
+  /// In ar, this message translates to:
+  /// **'الزبون'**
+  String get legacyCustomer;
+
+  /// No description provided for @legacyPickCustomer.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر الزبون'**
+  String get legacyPickCustomer;
+
+  /// No description provided for @legacyChange.
+  ///
+  /// In ar, this message translates to:
+  /// **'تغيير'**
+  String get legacyChange;
+
+  /// No description provided for @legacyAmount.
+  ///
+  /// In ar, this message translates to:
+  /// **'المبلغ اللي عليه'**
+  String get legacyAmount;
+
+  /// No description provided for @legacyAmountHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثلاً 150'**
+  String get legacyAmountHint;
+
+  /// No description provided for @legacyAmountInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب مبلغ صحيح أكبر من صفر، وبحد أقصى رقمين بعد الفاصلة.'**
+  String get legacyAmountInvalid;
+
+  /// No description provided for @legacyAmountTooBig.
+  ///
+  /// In ar, this message translates to:
+  /// **'المبلغ أكبر من المسموح.'**
+  String get legacyAmountTooBig;
+
+  /// No description provided for @legacyPartlyPaid.
+  ///
+  /// In ar, this message translates to:
+  /// **'إذا الزبون دفع جزء منه قبل، اكتب الباقي عليه بس.'**
+  String get legacyPartlyPaid;
+
+  /// No description provided for @legacyOrigin.
+  ///
+  /// In ar, this message translates to:
+  /// **'تاريخ الدين'**
+  String get legacyOrigin;
+
+  /// No description provided for @legacyOriginNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'مش محدد'**
+  String get legacyOriginNone;
+
+  /// No description provided for @legacyDue.
+  ///
+  /// In ar, this message translates to:
+  /// **'موعد السداد (اختياري)'**
+  String get legacyDue;
+
+  /// No description provided for @legacyDueNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'بدون موعد'**
+  String get legacyDueNone;
+
+  /// No description provided for @legacyNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة (اختياري)'**
+  String get legacyNote;
+
+  /// No description provided for @legacyNoteHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثلاً: من دفتر الديون القديم'**
+  String get legacyNoteHint;
+
+  /// No description provided for @legacyClear.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح'**
+  String get legacyClear;
+
+  /// No description provided for @legacySave.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الدين'**
+  String get legacySave;
+
+  /// No description provided for @legacySaving.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ التسجيل…'**
+  String get legacySaving;
+
+  /// No description provided for @legacyRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعد المحاولة'**
+  String get legacyRetry;
+
+  /// No description provided for @legacyUncertain.
+  ///
+  /// In ar, this message translates to:
+  /// **'انقطع الاتصال قبل ما يوصل رد الخادم، ويمكن يكون الدين تسجّل. اضغط «أعد المحاولة» وما رح يتسجّل مرتين.'**
+  String get legacyUncertain;
+
+  /// No description provided for @legacyConfirmTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد الدين القديم'**
+  String get legacyConfirmTitle;
+
+  /// No description provided for @legacyConfirmBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'رح يتسجّل على {name} دين قديم بقيمة {amount}. بتقدر تعدّله أو تحذفه لاحقاً من لوحة الويب.'**
+  String legacyConfirmBody(String name, String amount);
+
+  /// No description provided for @legacyConfirmOk.
+  ///
+  /// In ar, this message translates to:
+  /// **'نعم، سجّل'**
+  String get legacyConfirmOk;
+
+  /// No description provided for @legacyBack.
+  ///
+  /// In ar, this message translates to:
+  /// **'رجوع'**
+  String get legacyBack;
+
+  /// No description provided for @legacyDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجّل الدين القديم'**
+  String get legacyDone;
+
+  /// No description provided for @legacyDoneBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'صار على {name} دين قديم بقيمة {amount}.'**
+  String legacyDoneBody(String name, String amount);
+
+  /// No description provided for @legacyDoneButton.
+  ///
+  /// In ar, this message translates to:
+  /// **'تمام'**
+  String get legacyDoneButton;
+
+  /// No description provided for @legacyForbidden.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الديون القديمة للمالك أو المدير.'**
+  String get legacyForbidden;
+
+  /// No description provided for @legacySince.
+  ///
+  /// In ar, this message translates to:
+  /// **'من {date}'**
+  String legacySince(String date);
 }
 
 class _AppLocalizationsDelegate

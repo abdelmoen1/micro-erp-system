@@ -223,7 +223,7 @@ void main() {
       expect(cameras.last.pauses, 1);
       expect(api.requestsTo('GET /products/lookup').single.queryParameters['barcode'], rice);
       expect(find.text('تمت القراءة'), findsOneWidget);
-      expect(find.text('تم العثور على المنتج'), findsOneWidget);
+      expect(find.text('لقينا الصنف'), findsOneWidget);
       expect(find.text('أرز بسمتي 2 كغ'), findsOneWidget);
       expect(find.text('₪ 13.00'), findsOneWidget);
       expect(find.text('24'), findsOneWidget);
@@ -231,7 +231,7 @@ void main() {
       // View only: no cost price, cart or sale action.
       expect(find.textContaining('9.00'), findsNothing);
       expect(find.byType(FilledButton), findsWidgets);
-      expect(find.text('مسح منتج آخر'), findsOneWidget);
+      expect(find.text('امسح صنف ثاني'), findsOneWidget);
       expect(find.text('الرجوع إلى البيع'), findsOneWidget);
 
       // Scanning stays paused while the sheet is open.
@@ -278,7 +278,7 @@ void main() {
       await openScanner(tester);
       await read(tester, '6290000000017');
 
-      expect(find.text('لا يوجد منتج بهذا الباركود'), findsOneWidget);
+      expect(find.text('ما في صنف بهذا الباركود'), findsOneWidget);
       expect(find.textContaining('6 290000 000017', findRichText: true), findsWidgets);
       expect(find.text('تأكد من الرقم أو امسحه مرة أخرى.'), findsOneWidget);
       // No HTTP code or status shown.
@@ -403,7 +403,7 @@ void main() {
       await openScanner(tester);
       await read(tester, rice);
 
-      expect(find.text('تعذّر عرض المنتج'), findsOneWidget);
+      expect(find.text('تعذّر عرض الصنف'), findsOneWidget);
       expect(find.text('تعذّر الاتصال بالخادم. تحقق من الإنترنت ثم أعد المحاولة.'), findsOneWidget);
       expect(find.text('لا يوجد اتصال — البيع يحتاج إلى الإنترنت'), findsOneWidget);
       expect(find.textContaining('محفوظ لإعادة المحاولة.', findRichText: true), findsOneWidget);
@@ -413,7 +413,7 @@ void main() {
       final sent = api.requestsTo('GET /products/lookup');
       expect(sent, hasLength(2));
       expect(sent.map((r) => r.queryParameters['barcode']), everyElement(rice));
-      expect(find.text('تعذّر عرض المنتج'), findsOneWidget);
+      expect(find.text('تعذّر عرض الصنف'), findsOneWidget);
     });
 
     testWidgets('5xx: the server message with the support reference; retry can succeed', (tester) async {
