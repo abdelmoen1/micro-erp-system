@@ -443,6 +443,7 @@ test("app download: the first visit opens the install guide with the newest APK;
         tag_name: "android-1.2.0_4",
         assets: [
           { name: "hisbah-1.2.0_4.apk.sha256", size: 100, browser_download_url: "https://example.test/sha" },
+          { name: "hisbah.apk", size: 81_000_000, browser_download_url: "https://example.test/hisbah.apk" },
           { name: "hisbah-1.2.0_4.apk", size: 81_000_000, browser_download_url: "https://example.test/hisbah-1.2.0_4.apk" },
         ],
       },
@@ -460,4 +461,17 @@ test("app download: the first visit opens the install guide with the newest APK;
   const card = page.getByRole("region", { name: "تطبيق حسبة على الجوال" });
   await expect(card).toContainText("1.2.0+4");
   await expect(card.getByRole("link", { name: /تنزيل التطبيق/ })).toHaveAttribute("href", "https://example.test/hisbah-1.2.0_4.apk");
+});
+
+test("app download: without the GitHub API the button still serves the newest APK", async ({ page }) => {
+  await signIn(page);
+  await page.route("https://api.github.com/repos/abdelmoen1/micro-erp-system/releases/latest", (r) =>
+    r.fulfill({ status: 403, json: { message: "API rate limit exceeded" } }),
+  );
+  await page.goto("/dashboard");
+  const guide = page.getByRole("dialog", { name: "ابدأ بتطبيق حسبة على جوالك" });
+  await expect(guide.getByRole("link", { name: /تنزيل التطبيق/ })).toHaveAttribute(
+    "href",
+    "https://github.com/abdelmoen1/micro-erp-system/releases/latest/download/hisbah.apk",
+  );
 });
