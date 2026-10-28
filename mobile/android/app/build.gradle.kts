@@ -49,6 +49,18 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Phones only (64- and 32-bit ARM): x86_64 serves emulators and Chromebooks and added 30 MB.
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
+    }
+
+    // Native libraries are compressed in the APK (about 49 MB down to 23 MB) and extracted on
+    // install, as Flutter apps did before AGP 3.6. Halves the download from the website.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 
     signingConfigs {

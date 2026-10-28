@@ -459,8 +459,12 @@ test("app download: the first visit opens the install guide with the newest APK;
   await page.reload();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   const card = page.getByRole("region", { name: "تطبيق حسبة على الجوال" });
-  await expect(card).toContainText("1.2.0+4");
+  await expect(card).toContainText("1.2.0");
   await expect(card.getByRole("link", { name: /تنزيل التطبيق/ })).toHaveAttribute("href", "https://example.test/hisbah-1.2.0_4.apk");
+  // The button carries only the size; the version sits in the card's line.
+  await expect(card.getByRole("link", { name: /تنزيل التطبيق/ })).toHaveText(/تنزيل التطبيق\s*81 MB/);
+  await card.getByRole("button", { name: "إخفاء" }).click();
+  await expect(page.getByRole("region", { name: "تطبيق حسبة على الجوال" })).toContainText("إظهار");
 });
 
 test("app download: without the GitHub API the button still serves the newest APK", async ({ page }) => {
