@@ -104,11 +104,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
           NAME: ${{ steps.package.outputs.name }}
+        # hisbah.apk: the same file under a fixed name, so releases/latest/download/hisbah.apk (the
+        # web download link) always serves the newest published release.
         run: |
+          cp "$RUNNER_TEMP/apk-out/$NAME.apk" "$RUNNER_TEMP/apk-out/hisbah.apk"
           gh release create "android-${RELEASE_VERSION//+/_}" --draft --target "$GITHUB_SHA" \
             --title "Hisbah Android $RELEASE_VERSION (draft: not public)" \
             --notes "Shorebird release $RELEASE_VERSION. Install on the phone from this page while signed in to GitHub. Keep it a draft: publishing makes the APK public." \
-            "$RUNNER_TEMP/apk-out/$NAME.apk" "$RUNNER_TEMP/apk-out/$NAME.apk.sha256"
+            "$RUNNER_TEMP/apk-out/$NAME.apk" "$RUNNER_TEMP/apk-out/$NAME.apk.sha256" "$RUNNER_TEMP/apk-out/hisbah.apk"
 
       - uses: actions/upload-artifact@v4
         if: vars.MOBILE_APK_DISTRIBUTION != 'draft-release'
