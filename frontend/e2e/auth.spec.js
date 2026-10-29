@@ -56,12 +56,12 @@ test("owner logs in and lands on the dashboard with a stored session", async ({ 
   });
 
   await page.goto("/login");
-  await page.getByLabel("البريد الإلكتروني").fill("owner@example.com");
+  await page.getByLabel("رقم الجوال").fill("059 912 3456");
   await page.getByLabel("كلمة المرور", { exact: true }).fill("password123");
   await page.getByRole("button", { name: "تسجيل الدخول" }).click();
 
   await expect(page).toHaveURL(/\/dashboard$/);
-  expect(sent).toEqual({ email: "owner@example.com", password: "password123" });
+  expect(sent).toEqual({ login: "0599123456", password: "password123" });
   expect(await page.evaluate(() => localStorage.getItem("token"))).toBe("2|test-token");
 });
 
@@ -71,17 +71,18 @@ test("wrong credentials show the W-01 banner and clear the password", async ({ p
   );
 
   await page.goto("/login");
-  await page.getByLabel("البريد الإلكتروني").fill("owner@example.com");
+  await page.getByLabel("رقم الجوال").fill("0599123456");
   await page.getByLabel("كلمة المرور", { exact: true }).fill("wrong-password");
   await page.getByRole("button", { name: "تسجيل الدخول" }).click();
 
-  await expect(page.getByRole("alert")).toHaveText("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+  await expect(page.getByRole("alert")).toHaveText("رقم الجوال أو كلمة المرور غير صحيحة.");
   await expect(page.getByLabel("كلمة المرور", { exact: true })).toHaveValue("");
 });
 
 const registration = {
   store_name: "بقالة النور",
   owner_name: "علي أحمد",
+  owner_phone: "0599123456",
   phone: "0599123456",
   address: "شارع السلام، الخليل",
   area: "الخليل",
@@ -104,7 +105,7 @@ test("DEF-13: the three-step /join form creates the store through the API", asyn
   await fillStoreSteps(page);
   // Back keeps what was typed.
   await page.getByRole("button", { name: "رجوع" }).click();
-  await expect(page.getByLabel("رقم الهاتف")).toHaveValue("0599123456");
+  await expect(page.getByLabel("رقم جوالك (تسجّل الدخول به)")).toHaveValue("0599123456");
   await page.getByRole("button", { name: "التالي" }).click();
   await fillCredentials(page);
   await page.getByRole("button", { name: "إنشاء المتجر" }).click();
@@ -204,7 +205,7 @@ async function fillStoreSteps(page) {
   await page.getByLabel("اسم المتجر").fill("بقالة النور");
   await page.getByLabel("اسم صاحب المتجر").fill("علي أحمد");
   await page.getByRole("button", { name: "التالي" }).click();
-  await page.getByLabel("رقم الهاتف").fill("0599123456");
+  await page.getByLabel("رقم جوالك (تسجّل الدخول به)").fill("0599123456");
   await page.getByLabel("المدينة").selectOption("الخليل");
   await page.getByLabel("عنوان المتجر").fill("شارع السلام");
   await page.getByRole("button", { name: "التالي" }).click();

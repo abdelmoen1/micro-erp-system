@@ -67,6 +67,7 @@ class BackendFeatureTest extends TestCase
         $registered = $this->postJson('/api/v1/register', [
             'store_name' => 'Main',
             'owner_name' => 'Owner',
+            'owner_phone' => '0599000001',
             'email' => 'owner@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
@@ -88,13 +89,13 @@ class BackendFeatureTest extends TestCase
         $invitation = $this->actingAs($owner, 'sanctum')->postJson('/api/v1/invitations', ['email' => 'new@example.com', 'role' => 'employee'])->assertCreated()->json('invitation');
         $this->assertDatabaseHas('store_invitations', ['id' => $invitation['id'], 'store_id' => $store->id]);
         $this->app['auth']->forgetGuards();
-        $this->postJson('/api/v1/register/invitation', ['token' => $invitation['token'], 'name' => 'New', 'email' => 'new@example.com', 'password' => 'password', 'password_confirmation' => 'password'])->assertCreated();
-        $this->postJson('/api/v1/register/invitation', ['token' => $invitation['token'], 'name' => 'Again', 'email' => 'again@example.com', 'password' => 'password', 'password_confirmation' => 'password'])->assertUnprocessable();
+        $this->postJson('/api/v1/register/invitation', ['token' => $invitation['token'], 'name' => 'New', 'phone' => '0599000002', 'email' => 'new@example.com', 'password' => 'password', 'password_confirmation' => 'password'])->assertCreated();
+        $this->postJson('/api/v1/register/invitation', ['token' => $invitation['token'], 'name' => 'Again', 'phone' => '0599000003', 'email' => 'again@example.com', 'password' => 'password', 'password_confirmation' => 'password'])->assertUnprocessable();
         $this->actingAs($employee, 'sanctum')->postJson('/api/v1/invitations', ['role' => 'employee'])->assertForbidden();
         $this->actingAs($owner, 'sanctum')->postJson('/api/v1/invitations', ['role' => 'owner'])->assertUnprocessable();
         $expired = StoreInvitation::create(['store_id' => $store->id, 'invited_by' => $owner->id, 'role' => 'employee', 'token_hash' => hash('sha256', 'expired'), 'expires_at' => Carbon::now()->subMinute()]);
         $this->app['auth']->forgetGuards();
-        $this->postJson('/api/v1/register/invitation', ['token' => 'expired', 'name' => 'Old', 'email' => 'old@example.com', 'password' => 'password', 'password_confirmation' => 'password'])->assertUnprocessable();
+        $this->postJson('/api/v1/register/invitation', ['token' => 'expired', 'name' => 'Old', 'phone' => '0599000004', 'email' => 'old@example.com', 'password' => 'password', 'password_confirmation' => 'password'])->assertUnprocessable();
         $this->actingAs($owner, 'sanctum')->getJson('/api/v1/users')->assertOk()->assertJsonFragment(['id' => $employee->id]);
         $this->actingAs($owner, 'sanctum')->patchJson("/api/v1/users/{$employee->id}/role", ['role' => 'manager'])->assertOk();
         $this->assertDatabaseHas('users', ['id' => $employee->id, 'role' => 'manager']);

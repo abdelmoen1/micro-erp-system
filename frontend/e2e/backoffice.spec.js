@@ -394,12 +394,12 @@ test("settings: the owner saves the store details and changes the password", asy
   await page.getByRole("button", { name: "تغيير كلمة المرور" }).click();
   await expect(page.getByText("اكتب كلمة المرور الحالية.")).toBeVisible();
   expect(passwordSent).toBeNull();
-  await page.getByLabel(/كلمة المرور الحالية/).fill("wrong-pass");
+  await page.locator("#pw-current").fill("wrong-pass");
   await page.getByLabel(/^كلمة المرور الجديدة/).fill("new-pass-123");
   await page.getByLabel(/تأكيد كلمة المرور الجديدة/).fill("new-pass-123");
   await page.getByRole("button", { name: "تغيير كلمة المرور" }).click();
   await expect(page.getByText("كلمة المرور الحالية غير صحيحة.")).toBeVisible();
-  await page.getByLabel(/كلمة المرور الحالية/).fill("old-pass-123");
+  await page.locator("#pw-current").fill("old-pass-123");
   await page.getByRole("button", { name: "تغيير كلمة المرور" }).click();
   await expect(page.getByText("تم تغيير كلمة المرور، وسُجّل الخروج من الأجهزة الأخرى.")).toBeVisible();
   expect(passwordSent).toEqual({ current_password: "old-pass-123", password: "new-pass-123", password_confirmation: "new-pass-123" });

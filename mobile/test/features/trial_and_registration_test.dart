@@ -158,6 +158,7 @@ void main() {
       expect(api.requestsTo('POST /register').single.data, {
         'store_name': 'بقالة الأمل',
         'owner_name': 'سامي',
+        'owner_phone': '0599123456',
         'phone': '0599123456',
         'address': 'شارع الوحدة، غزة',
         'area': 'غزة',
@@ -195,7 +196,7 @@ void main() {
       });
     });
 
-    test('step 2: phone of 9 or 10 digits (spaces and dashes allowed), city and street', () {
+    test('step 2: a mobile number 05XXXXXXXX (spaces, dashes, +970, Arabic digits allowed), city and street', () {
       final d = RegistrationDraft()..phone = '05991';
       expect(d.validateStep(1), {
         RegistrationField.phone: RegistrationError.phoneInvalid,
@@ -203,15 +204,24 @@ void main() {
         RegistrationField.street: RegistrationError.streetRequired,
       });
       d
-        ..phone = '059 912-345'
         ..city = 'رفح'
         ..street = 'الشابورة';
-      expect(d.validateStep(1), isEmpty);
-      d.phone = '05991234567';
-      expect(d.validateStep(1)[RegistrationField.phone], RegistrationError.phoneInvalid);
+      for (final ok in ['059 912-3456', '+970 599 123 456', '٠٥٩٩١٢٣٤٥٦']) {
+        d.phone = ok;
+        expect(d.validateStep(1), isEmpty, reason: ok);
+        expect(d.normalizedPhone, '0599123456');
+      }
+      for (final bad in ['05991234567', '0699123456', '599123456']) {
+        d.phone = bad;
+        expect(d.validateStep(1)[RegistrationField.phone], RegistrationError.phoneInvalid, reason: bad);
+      }
     });
 
-    test('step 3: valid email, 8+ character password, matching confirmation', () {
+    test('step 3: an optional but valid email, 8+ character password, matching confirmation', () {
+      expect((RegistrationDraft()
+            ..password = 'Password123'
+            ..passwordConfirmation = 'Password123')
+          .validateStep(2), isEmpty, reason: 'no e-mail is fine');
       final d = RegistrationDraft()
         ..email = 'not-an-email'
         ..password = 'short'
@@ -286,7 +296,7 @@ void main() {
       expect(focused(tester, 'register.phone'), isTrue);
       await tester.enterText(find.byKey(const Key('register.phone')), '1234');
       await tapKey(tester, 'register.next');
-      expect(find.text('رقم الهاتف 9 أو 10 أرقام، مثل 0599123456.'), findsOneWidget);
+      expect(find.text('رقم الجوال 10 أرقام يبدأ بـ 05، مثل 0599123456.'), findsOneWidget);
       expect(find.text('يرجى اختيار المدينة.'), findsOneWidget);
       await tester.enterText(find.byKey(const Key('register.phone')), '0599123456');
       await tapKey(tester, 'register.city');
@@ -310,6 +320,7 @@ void main() {
       expect(api.requestsTo('POST /register').single.data, {
         'store_name': 'بقالة الأمل',
         'owner_name': 'سامي',
+        'owner_phone': '0599123456',
         'phone': '0599123456',
         'address': 'شارع الوحدة، غزة',
         'area': 'غزة',

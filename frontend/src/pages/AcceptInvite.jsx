@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import HisbahLogo from "../components/HisbahLogo";
 import { ErrorBanner, Field } from "../components/ui";
+import { latinDigits } from "../lib/format";
+import { normalizePhone } from "../lib/phone";
 import { apiSend, session } from "../services/apiClient";
 
 /** US-0204: the invited employee opens the owner's link and creates an account in that store. */
@@ -9,10 +11,10 @@ export default function AcceptInvite() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const token = params.get("invite") ?? "";
-  const [form, setForm] = useState({ name: "", email: "", password: "", password_confirmation: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", password: "", password_confirmation: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-  const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  const set = (field) => (e) => setForm({ ...form, [field]: field === "phone" ? latinDigits(e.target.value) : e.target.value });
   const err = (field) => error?.fieldError?.(field);
 
   const submit = async (e) => {
@@ -20,7 +22,13 @@ export default function AcceptInvite() {
     setBusy(true);
     setError(null);
     try {
-      const result = await apiSend("POST", "/register/invitation", { token, ...form });
+      const { email, phone, ...rest } = form;
+      const result = await apiSend("POST", "/register/invitation", {
+        token,
+        ...rest,
+        phone: normalizePhone(phone) ?? phone,
+        ...(email.trim() ? { email: email.trim() } : {}),
+      });
       session.save(result.token, result.user);
       navigate("/dashboard", { replace: true });
     } catch (failure) {
@@ -53,7 +61,10 @@ export default function AcceptInvite() {
                 <Field id="ai-name" label="الاسم" error={err("name")}>
                   <input id="ai-name" className="fld" value={form.name} onChange={set("name")} autoComplete="name" />
                 </Field>
-                <Field id="ai-email" label="البريد الإلكتروني" error={err("email")}>
+                <Field id="ai-phone" label="رقم جوالك (تسجّل الدخول به)" required error={err("phone")}>
+                  <input id="ai-phone" type="tel" inputMode="tel" className="fld ltr" value={form.phone} onChange={set("phone")} autoComplete="tel" placeholder="0599123456" />
+                </Field>
+                <Field id="ai-email" label="البريد الإلكتروني" optional error={err("email")}>
                   <input id="ai-email" type="email" className="fld ltr" value={form.email} onChange={set("email")} autoComplete="username" />
                 </Field>
                 <Field id="ai-pass" label="كلمة المرور" error={err("password")}>

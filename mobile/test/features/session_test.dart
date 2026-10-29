@@ -96,7 +96,7 @@ void main() {
 
     expect(c.read(sessionProvider), isA<SignedIn>());
     expect(disk.values[AuthRepository.tokenKey], '1|test-token');
-    expect(api.requests.single.data, {'email': 'owner@demo.test', 'password': 'password123'});
+    expect(api.requests.single.data, {'login': 'owner@demo.test', 'password': 'password123'});
     expect(api.requests.single.headers.containsKey('Authorization'), isFalse);
   });
 

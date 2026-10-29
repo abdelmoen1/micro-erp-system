@@ -86,7 +86,7 @@ class StoreTimezoneTest extends TestCase
     public function test_new_stores_default_to_gaza_and_owner_can_change_timezone(): void
     {
         $registered = $this->postJson('/api/v1/register', [
-            'store_name' => 'Shop', 'owner_name' => 'Owner', 'email' => 'o@example.com',
+            'store_name' => 'Shop', 'owner_name' => 'Owner', 'owner_phone' => '0599000041', 'email' => 'o@example.com',
             'password' => 'password', 'password_confirmation' => 'password',
         ])->assertCreated();
         $this->assertSame('Asia/Gaza', $registered->json('user.store.timezone'));

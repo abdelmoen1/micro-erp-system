@@ -25,6 +25,7 @@ class StoreLocationTest extends TestCase
         return $overrides + [
             'store_name' => 'بقالة الأمانة',
             'owner_name' => 'علي أحمد',
+            'owner_phone' => '0599000031',
             'email' => 'ali@shop.ps',
             'password' => 'Secret-pass-2026',
             'password_confirmation' => 'Secret-pass-2026',

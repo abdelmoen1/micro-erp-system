@@ -94,10 +94,11 @@ class SessionController extends Notifier<SessionState> {
 
   /// Signs in. Field and credential failures are rethrown for the login screen;
   /// account-level failures also move the whole app to the blocked state.
-  Future<void> login(String email, String password) async {
+  /// [login] is the mobile number (or the e-mail of an older account).
+  Future<void> login(String login, String password) async {
     final repo = ref.read(authRepositoryProvider);
     try {
-      state = _signedIn(await repo.login(email.trim(), password));
+      state = _signedIn(await repo.login(login.trim(), password));
     } on UserInactive {
       state = const AccountBlocked(storeMissing: false);
       rethrow;
@@ -116,6 +117,11 @@ class SessionController extends Notifier<SessionState> {
   /// Validation, throttling and network failures are rethrown for the registration screen.
   Future<void> register(Map<String, String> fields) async {
     state = _signedIn(await ref.read(authRepositoryProvider).register(fields));
+  }
+
+  /// The account changed on the server (a new sign-in number): keep the session, show the new data.
+  void updateUser(AppUser user) {
+    if (state is SignedIn) state = _signedIn(user);
   }
 
   /// "Check again" on the renewal screen: back to the app once the subscription is active.

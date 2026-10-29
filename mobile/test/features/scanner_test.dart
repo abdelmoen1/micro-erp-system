@@ -443,7 +443,7 @@ void main() {
       expect(find.text('انتهت الجلسة. سجّل الدخول للمتابعة.'), findsOneWidget);
 
       api.on('POST /login', loginOk(role: 'employee'));
-      await tester.enterText(find.byKey(const Key('login.email')), 'employee@demo.test');
+      await tester.enterText(find.byKey(const Key('login.id')), '0599000002');
       await tester.enterText(find.byKey(const Key('login.password')), 'secret');
       await tapKey(tester, 'login.submit');
       expect(find.byKey(const Key('cart.scan')), findsOneWidget);
