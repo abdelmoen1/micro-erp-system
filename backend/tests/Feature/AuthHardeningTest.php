@@ -23,12 +23,12 @@ class AuthHardeningTest extends TestCase
         $user = $this->makeUser($this->makeStore(), 'owner', ['email' => 'owner@example.com']);
 
         for ($i = 0; $i < 5; $i++) {
-            $this->postJson('/api/v1/login', ['email' => 'owner@example.com', 'password' => 'wrong'])
+            $this->postJson('/api/v1/login', ['login' => $this->phoneOf('owner@example.com'), 'password' => 'wrong'])
                 ->assertUnauthorized()
                 ->assertJsonPath('code', 'INVALID_CREDENTIALS');
         }
 
-        $throttled = $this->postJson('/api/v1/login', ['email' => 'owner@example.com', 'password' => 'password'])
+        $throttled = $this->postJson('/api/v1/login', ['login' => $this->phoneOf('owner@example.com'), 'password' => 'password'])
             ->assertStatus(429)
             ->assertJsonPath('code', 'TOO_MANY_REQUESTS')
             ->assertHeader('Retry-After');
@@ -36,11 +36,11 @@ class AuthHardeningTest extends TestCase
 
         // Another account from the same IP is not blocked.
         $this->makeUser($user->store, 'employee', ['email' => 'staff@example.com']);
-        $this->postJson('/api/v1/login', ['email' => 'staff@example.com', 'password' => 'password'])->assertOk();
+        $this->postJson('/api/v1/login', ['login' => $this->phoneOf('staff@example.com'), 'password' => 'password'])->assertOk();
 
         // After the window passes, the right password works again.
         $this->travel(61)->seconds();
-        $this->postJson('/api/v1/login', ['email' => 'owner@example.com', 'password' => 'password'])->assertOk();
+        $this->postJson('/api/v1/login', ['login' => $this->phoneOf('owner@example.com'), 'password' => 'password'])->assertOk();
     }
 
     public function test_registration_is_rate_limited_per_ip(): void
@@ -60,7 +60,7 @@ class AuthHardeningTest extends TestCase
     {
         $this->makeUser($this->makeStore(), 'owner', ['email' => 'owner@example.com']);
 
-        $token = $this->postJson('/api/v1/login', ['email' => 'owner@example.com', 'password' => 'password'])
+        $token = $this->postJson('/api/v1/login', ['login' => $this->phoneOf('owner@example.com'), 'password' => 'password'])
             ->assertOk()
             ->json('token');
 

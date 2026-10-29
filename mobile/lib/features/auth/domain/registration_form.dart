@@ -1,6 +1,6 @@
 /// Store-owner registration, the same fields, rules and request as the web /join form
 /// (frontend/src/pages/Join.jsx) so both clients create identical accounts through `POST /register`.
-/// The owner signs in with the mobile number; the e-mail is optional.
+/// The owner signs in with the mobile number.
 library;
 
 import 'phone_number.dart';
@@ -11,7 +11,7 @@ const registrationCities = [
   'سلفيت', 'طوباس', 'أريحا', 'غزة', 'شمال غزة', 'دير البلح', 'خان يونس', 'رفح',
 ];
 
-enum RegistrationField { storeName, ownerName, phone, city, street, email, password, passwordConfirmation, otpCode }
+enum RegistrationField { storeName, ownerName, phone, city, street, password, passwordConfirmation, otpCode }
 
 enum RegistrationError {
   storeNameRequired,
@@ -20,7 +20,6 @@ enum RegistrationError {
   phoneInvalid,
   cityRequired,
   streetRequired,
-  emailInvalid,
   passwordTooShort,
   passwordMismatch,
   otpCodeInvalid,
@@ -30,7 +29,7 @@ enum RegistrationError {
 const registrationSteps = [
   [RegistrationField.storeName, RegistrationField.ownerName],
   [RegistrationField.phone, RegistrationField.city, RegistrationField.street],
-  [RegistrationField.email, RegistrationField.password, RegistrationField.passwordConfirmation],
+  [RegistrationField.password, RegistrationField.passwordConfirmation],
 ];
 
 /// API field → the form field that shows its error (`address` is the street + city pair; `area` is the city).
@@ -41,7 +40,6 @@ const registrationApiFields = {
   'phone': RegistrationField.phone,
   'address': RegistrationField.street,
   'area': RegistrationField.city,
-  'email': RegistrationField.email,
   'password': RegistrationField.password,
   'password_confirmation': RegistrationField.passwordConfirmation,
   'otp_code': RegistrationField.otpCode,
@@ -54,8 +52,6 @@ int stepOf(RegistrationField field) {
 }
 
 class RegistrationDraft {
-  static final _email = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-
   String storeName = '';
   String ownerName = '';
 
@@ -63,7 +59,6 @@ class RegistrationDraft {
   String phone = '';
   String? city;
   String street = '';
-  String email = '';
   String password = '';
   String passwordConfirmation = '';
 
@@ -90,9 +85,6 @@ class RegistrationDraft {
       if (street.trim().isEmpty) e[RegistrationField.street] = RegistrationError.streetRequired;
     }
     if (step == 2) {
-      if (email.trim().isNotEmpty && !_email.hasMatch(email.trim())) {
-        e[RegistrationField.email] = RegistrationError.emailInvalid;
-      }
       if (password.length < 8) e[RegistrationField.password] = RegistrationError.passwordTooShort;
       if (passwordConfirmation.isEmpty || passwordConfirmation != password) {
         e[RegistrationField.passwordConfirmation] = RegistrationError.passwordMismatch;
@@ -113,7 +105,6 @@ class RegistrationDraft {
     'phone': normalizedPhone,
     'address': '${street.trim()}، $city',
     'area': city!,
-    if (email.trim().isNotEmpty) 'email': email.trim(),
     'password': password,
     'password_confirmation': passwordConfirmation,
     if (otpCode.trim().isNotEmpty) 'otp_code': otpCode.trim(),

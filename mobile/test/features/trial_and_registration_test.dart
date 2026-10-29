@@ -149,7 +149,6 @@ void main() {
         ..phone = '059-912 3456'
         ..city = 'غزة'
         ..street = 'شارع الوحدة'
-        ..email = ' sami@shop.ps '
         ..password = 'Password123'
         ..passwordConfirmation = 'Password123';
       await c.read(sessionProvider.notifier).register(draft.toRequest());
@@ -162,7 +161,6 @@ void main() {
         'phone': '0599123456',
         'address': 'شارع الوحدة، غزة',
         'area': 'غزة',
-        'email': 'sami@shop.ps',
         'password': 'Password123',
         'password_confirmation': 'Password123',
       });
@@ -217,17 +215,15 @@ void main() {
       }
     });
 
-    test('step 3: an optional but valid email, 8+ character password, matching confirmation', () {
+    test('step 3: an 8+ character password and a matching confirmation', () {
       expect((RegistrationDraft()
             ..password = 'Password123'
             ..passwordConfirmation = 'Password123')
-          .validateStep(2), isEmpty, reason: 'no e-mail is fine');
+          .validateStep(2), isEmpty);
       final d = RegistrationDraft()
-        ..email = 'not-an-email'
         ..password = 'short'
         ..passwordConfirmation = 'other';
       expect(d.validateStep(2), {
-        RegistrationField.email: RegistrationError.emailInvalid,
         RegistrationField.password: RegistrationError.passwordTooShort,
         RegistrationField.passwordConfirmation: RegistrationError.passwordMismatch,
       });
@@ -307,7 +303,7 @@ void main() {
 
       // Step 3.
       expect(find.text('الخطوة 3 من 3: بيانات الدخول'), findsOneWidget);
-      await tester.enterText(find.byKey(const Key('register.email')), 'sami@shop.ps');
+      expect(find.byKey(const Key('register.email')), findsNothing);
       await tester.enterText(find.byKey(const Key('register.password')), 'Password123');
       await tester.enterText(find.byKey(const Key('register.passwordConfirmation')), 'Password12');
       await tapKey(tester, 'register.submit');
@@ -324,18 +320,17 @@ void main() {
         'phone': '0599123456',
         'address': 'شارع الوحدة، غزة',
         'area': 'غزة',
-        'email': 'sami@shop.ps',
         'password': 'Password123',
         'password_confirmation': 'Password123',
       });
       expect(find.byType(RegisterScreen), findsNothing);
     });
 
-    testWidgets('a taken email returns to step 3 with the web message', (tester) async {
+    testWidgets('a taken number returns to step 2 with the web message', (tester) async {
       api.on(
         'POST /register',
         envelope(422, 'VALIDATION_FAILED', errors: {
-          'email': ['The email has already been taken.'],
+          'owner_phone': ['هذا الرقم مسجّل لحساب آخر.'],
         }),
       );
       await pumpApp(tester);
@@ -349,15 +344,14 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('register.street')), 'الرمال');
       await tapKey(tester, 'register.next');
-      await tester.enterText(find.byKey(const Key('register.email')), 'taken@shop.ps');
       await tester.enterText(find.byKey(const Key('register.password')), 'Password123');
       await tester.enterText(find.byKey(const Key('register.passwordConfirmation')), 'Password123');
       await tapKey(tester, 'register.submit');
 
-      expect(find.text('لم يُنشأ المتجر: البريد الإلكتروني مستخدم.'), findsOneWidget);
-      expect(find.text('هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.'), findsOneWidget);
-      expect(find.text('الخطوة 3 من 3: بيانات الدخول'), findsOneWidget);
-      expect(focused(tester, 'register.email'), isTrue);
+      expect(find.text('لم يُنشأ المتجر: رقم الجوال مستخدم.'), findsOneWidget);
+      expect(find.text('هذا الرقم مسجّل مسبقاً. سجّل الدخول، أو استخدم رقماً آخر.'), findsOneWidget);
+      expect(find.text('الخطوة 2 من 3: الموقع والتواصل'), findsOneWidget);
+      expect(focused(tester, 'register.phone'), isTrue);
     });
 
     testWidgets('an expired store lands on the Arabic renewal screen; WhatsApp opens with the store named', (tester) async {
@@ -390,18 +384,18 @@ void main() {
       expect(find.byKey(const Key('subscription.noNumber')), findsOneWidget);
       expect(find.byKey(const Key('subscription.howTo')), findsOneWidget);
 
-      // Never a dead end: the store and the email to quote, copied with one tap.
+      // Never a dead end: the store and the number to quote, copied with one tap.
       String? copied;
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
         if (call.method == 'Clipboard.setData') copied = (call.arguments as Map)['text'] as String;
         return null;
       });
       addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
-      expect(find.text('المتجر: Demo Shop\nالبريد: owner@demo.test'), findsOneWidget);
+      expect(find.text('المتجر: Demo Shop\nالجوال: 0599000001'), findsOneWidget);
       await tester.ensureVisible(find.byKey(const Key('subscription.copy')));
       await tester.tap(find.byKey(const Key('subscription.copy')));
       await tester.pump();
-      expect(copied, 'المتجر: Demo Shop\nالبريد: owner@demo.test');
+      expect(copied, 'المتجر: Demo Shop\nالجوال: 0599000001');
       expect(find.text('نُسخت البيانات.'), findsOneWidget);
     });
 

@@ -21,8 +21,6 @@ export default defineConfig({
     command: `npx vite --host 127.0.0.1 --port ${PORT} --strictPort`,
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: !process.env.CI,
-    // A test client id renders the Google button; e2e stubs the Google script itself.
-    env: { VITE_GOOGLE_CLIENT_ID: "e2e-client.apps.googleusercontent.com" },
     timeout: 120_000,
   },
 });

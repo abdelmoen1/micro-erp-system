@@ -29,7 +29,7 @@ class AdminStoreResource extends JsonResource
             'owner' => $this->when($this->relationLoaded('owner'), fn() => $owner ? [
                 'id' => $owner->id,
                 'name' => $owner->name,
-                'email' => $owner->email,
+                'phone' => $owner->phone,
                 'phone' => $owner->phone,
                 'status' => $owner->status ?? 'active',
             ] : null),

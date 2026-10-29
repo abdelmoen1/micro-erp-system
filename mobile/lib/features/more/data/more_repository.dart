@@ -4,31 +4,30 @@ import '../../auth/domain/app_user.dart';
 
 /// A manager or employee of the store (GET /users, owner only). The owner is not in the list.
 class StaffMember {
-  const StaffMember({required this.id, required this.name, required this.email, required this.role, required this.active});
+  const StaffMember({required this.id, required this.name, required this.phone, required this.role, required this.active});
 
   factory StaffMember.fromJson(Map<String, dynamic> json) => StaffMember(
     id: (json['id'] as num).toInt(),
     name: json['name'] as String? ?? '',
-    email: json['email'] as String? ?? '',
+    phone: json['phone'] as String? ?? '',
     role: UserRole.parse(json['role'] as String?),
     active: json['status'] != 'inactive',
   );
 
   final int id;
   final String name;
-  final String email;
+  final String phone;
   final UserRole role;
   final bool active;
 }
 
 /// A new invitation: the link is shown once, then only its expiry remains on the server.
 class StaffInvite {
-  const StaffInvite({required this.link, required this.role, required this.expiresAt, this.email});
+  const StaffInvite({required this.link, required this.role, required this.expiresAt});
 
   final String link;
   final UserRole role;
   final DateTime? expiresAt;
-  final String? email;
 }
 
 /// What the owner edits about the store (GET / PATCH /my-store).
@@ -97,18 +96,14 @@ class MoreRepository {
   }
 
   /// POST /invitations: a link the new manager or employee opens to create their account.
-  Future<StaffInvite> invite({required UserRole role, required int hours, String? email}) async {
-    final body = await _api.post(
-      '/invitations',
-      body: {'role': role.name, 'expires_in_hours': hours, if (email != null && email.trim().isNotEmpty) 'email': email.trim()},
-    );
+  Future<StaffInvite> invite({required UserRole role, required int hours}) async {
+    final body = await _api.post('/invitations', body: {'role': role.name, 'expires_in_hours': hours});
     final invitation = body['invitation'] as Map<String, dynamic>;
     final token = Uri.encodeQueryComponent(invitation['token'] as String);
     return StaffInvite(
       link: '${Env.webBaseUrl}/invite?invite=$token',
       role: UserRole.parse(invitation['role'] as String?),
       expiresAt: DateTime.tryParse(invitation['expires_at'] as String? ?? '')?.toLocal(),
-      email: invitation['email'] as String?,
     );
   }
 

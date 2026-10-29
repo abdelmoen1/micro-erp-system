@@ -74,7 +74,7 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
   }
 
   Future<void> _openWhatsapp(String number, AppUser user, AppLocalizations t) async {
-    final text = t.subscriptionWhatsappMessage(user.storeName, user.email);
+    final text = t.subscriptionWhatsappMessage(user.storeName, user.phone ?? '');
     final uri = Uri.parse('https://wa.me/$number?text=${Uri.encodeComponent(text)}');
     var opened = false;
     try {
@@ -214,7 +214,7 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
   }
 }
 
-/// The store and the account email, selectable, with one button that copies both.
+/// The store and the account's mobile number, selectable, with one button that copies both.
 class _ContactDetails extends StatelessWidget {
   const _ContactDetails({required this.user});
 
@@ -223,7 +223,7 @@ class _ContactDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final lines = [t.subscriptionStoreLine(user.storeName), t.subscriptionEmailLine(user.email)];
+    final lines = [t.subscriptionStoreLine(user.storeName), t.subscriptionPhoneLine(user.phone ?? '')];
     return Container(
       key: const Key('subscription.details'),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),

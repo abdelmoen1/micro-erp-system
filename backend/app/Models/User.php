@@ -44,6 +44,9 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'google_id',
+        // Accounts sign in with their phone only; an old e-mail is never shown or sent.
+        'email',
+        'email_verified_at',
     ];
 
     /**

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AcceptInvitationRequest;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\ChangePhoneRequest;
-use App\Http\Requests\GoogleRegisterStoreRequest;
 use App\Http\Requests\RegisterStoreRequest;
 use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Requests\SendOtpRequest;
@@ -14,7 +13,6 @@ use App\Models\PhoneOtp;
 use App\Models\User;
 use App\Services\AuditService;
 use App\Services\AuthService;
-use App\Services\GoogleIdTokenVerifier;
 use App\Services\OtpService;
 use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
@@ -91,54 +89,18 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        // `login` is the mobile number (or the e-mail of an account made before phone sign-in);
-        // `email` is still read from app versions that sent it.
+        // `login` is the mobile number: accounts sign in with nothing else.
         $credentials = $request->validate([
-            'login' => ['required_without:email', 'nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'string', 'max:255'],
+            'login' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ], [
-            'login.required_without' => 'اكتب رقم الجوال.',
+            'login.required' => 'اكتب رقم الجوال.',
         ]);
 
-        $user = $this->authService->login($credentials['login'] ?? $credentials['email'], $credentials['password'], (string) $request->ip());
+        $user = $this->authService->login($credentials['login'], $credentials['password'], (string) $request->ip());
         $token = $this->authService->issueToken($user);
 
         return $this->authenticatedResponse($user->load('store'), 'تم تسجيل دخولك بنجاح', 200, $token);
-    }
-
-    /**
-     * Google sign-in. A known account gets a token; a new one gets an onboarding token for
-     * POST /register/google, so no store is created before the owner fills it in.
-     */
-    public function google(Request $request, GoogleIdTokenVerifier $verifier)
-    {
-        $data = $request->validate(['credential' => ['required', 'string', 'max:4096']]);
-        $profile = $verifier->verify($data['credential']);
-        $user = $this->authService->findGoogleUser($profile);
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'أكمل بيانات متجرك لإنشاء الحساب',
-                'onboarding' => [
-                    'token' => $this->authService->onboardingToken($profile),
-                    'name' => $profile['name'],
-                    'email' => $profile['email'],
-                ],
-            ]);
-        }
-
-        $token = $this->authService->issueToken($user);
-
-        return $this->authenticatedResponse($user->load('store'), 'تم تسجيل دخولك بنجاح', 200, $token);
-    }
-
-    public function registerWithGoogle(GoogleRegisterStoreRequest $request)
-    {
-        $user = $this->authService->registerStoreWithGoogle($request->validated());
-        $token = $this->authService->issueToken($user);
-
-        return $this->authenticatedResponse($user, 'تم إنشاء المتجر والمالك بنجاح', 201, $token);
     }
 
     public function logout(Request $request)

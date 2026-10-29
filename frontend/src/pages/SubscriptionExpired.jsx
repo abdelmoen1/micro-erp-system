@@ -10,17 +10,17 @@ import { logout, useSubscription } from "../services/dashboard";
 
 /** wa.me link with a prefilled request naming the store and the account. */
 function whatsappLink(number, user) {
-  const text = `مرحباً، أريد تفعيل اشتراك متجر «${user?.store?.name ?? ""}» على حسبة.\nالبريد: ${user?.email ?? ""}`;
+  const text = `مرحباً، أريد تفعيل اشتراك متجر «${user?.store?.name ?? ""}» على حسبة.\nالجوال: ${user?.phone ?? ""}`;
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
 }
 
 /**
  * Without a support number the owner still has to say which store to activate: the store and the
- * account email, ready to copy into any message.
+ * account's mobile number, ready to copy into any message.
  */
 function ContactDetails({ user }) {
   const [copied, setCopied] = useState(false);
-  const text = `المتجر: ${user.store?.name ?? ""}\nالبريد: ${user.email ?? ""}`;
+  const text = `المتجر: ${user.store?.name ?? ""}\nالجوال: ${user.phone ?? ""}`;
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text);
@@ -35,7 +35,7 @@ function ContactDetails({ user }) {
       <p className="contact-lines">
         المتجر: <b>{user.store?.name}</b>
         <br />
-        البريد: <b className="ltr-inline">{user.email}</b>
+        الجوال: <b className="ltr-inline">{user.phone}</b>
       </p>
       <button type="button" className="btn btn-g btn-sm" onClick={copy}>
         <Icon name={copied ? "check" : "copy"} size={16} />

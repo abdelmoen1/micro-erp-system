@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon";
-import { DataTable, Dialog, EmptyState, ErrorBanner, Field, PageHeader, StatusBadge } from "../components/ui";
+import { DataTable, Dialog, EmptyState, ErrorBanner, PageHeader, StatusBadge } from "../components/ui";
 import { session } from "../services/apiClient";
 import { useInvite, useStaff, useStaffAction } from "../services/backoffice";
 import { roleOf } from "../lib/domain";
@@ -53,7 +53,7 @@ export default function Staff() {
               <>
                 <b style={{ fontWeight: 600 }}>{u.name}</b>
                 <span className="cell-sub m" style={{ textAlign: "right" }}>
-                  {u.email}
+                  {u.phone}
                 </span>
               </>
             ),
@@ -119,7 +119,6 @@ export default function Staff() {
 }
 
 function InviteDialog({ onClose }) {
-  const [email, setEmail] = useState("");
   const [role, setRole] = useState("employee");
   const [hours, setHours] = useState(24);
   const [copied, setCopied] = useState(false);
@@ -128,7 +127,7 @@ function InviteDialog({ onClose }) {
 
   const submit = (e) => {
     e.preventDefault();
-    invite.mutate({ email: email.trim() || null, role, expires_in_hours: hours });
+    invite.mutate({ role, expires_in_hours: hours });
   };
 
   return (
@@ -150,7 +149,6 @@ function InviteDialog({ onClose }) {
           </div>
           <p className="field-hint">
             ينتهي في <span className="m">{dateTime(invite.data.expires_at)}</span> · {ROLE[invite.data.role] ?? invite.data.role}
-            {invite.data.email ? ` · ${invite.data.email}` : ""}
           </p>
           <button type="button" className="btn btn-p" onClick={onClose}>
             تم
@@ -158,9 +156,6 @@ function InviteDialog({ onClose }) {
         </div>
       ) : (
         <form className="form-stack" onSubmit={submit} noValidate>
-          <Field id="iv-email" label="البريد الإلكتروني" optional error={invite.error?.fieldError?.("email")}>
-            <input id="iv-email" type="email" className="fld ltr" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" />
-          </Field>
           <div className="field">
             <span className="field-label" id="iv-role">
               الدور
@@ -192,7 +187,7 @@ function InviteDialog({ onClose }) {
               ))}
             </div>
           </div>
-          <ErrorBanner error={invite.error && !invite.error.fieldError?.("email") ? invite.error : null} />
+          <ErrorBanner error={invite.error} />
           <div className="dlg-actions">
             <button type="submit" className="btn btn-p" disabled={invite.isPending}>
               {invite.isPending ? "جارٍ الإنشاء…" : "إنشاء رابط الدعوة"}

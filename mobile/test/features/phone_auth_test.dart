@@ -74,19 +74,7 @@ void main() {
     await tapKey(tester, 'login.submit');
 
     expect(api.requestsTo('POST /login').single.data, {'login': '0599123456', 'password': 'secret'});
-  });
-
-  testWidgets('an older account switches to its e-mail', (tester) async {
-    api.on('POST /login', loginOk());
-    await pumpApp(tester);
-
-    await tapKey(tester, 'login.mode');
-    expect(find.text('البريد الإلكتروني'), findsOneWidget);
-    await type(tester, 'login.id', 'owner@shop.ps');
-    await type(tester, 'login.password', 'secret');
-    await tapKey(tester, 'login.submit');
-
-    expect(api.requestsTo('POST /login').single.data, {'login': 'owner@shop.ps', 'password': 'secret'});
+    expect(find.byKey(const Key('login.mode')), findsNothing, reason: 'no e-mail sign-in');
   });
 
   testWidgets('a forgotten password: the number, the SMS code and a new password', (tester) async {
@@ -198,11 +186,11 @@ void main() {
 
     await type(tester, 'register.otpCode', '222222');
     await tapKey(tester, 'register.submit');
-    expect(find.text('هذا الرقم مسجّل لحساب آخر.'), findsOneWidget);
+    expect(find.text('هذا الرقم مسجّل مسبقاً. سجّل الدخول، أو استخدم رقماً آخر.'), findsOneWidget);
     expect(find.text('الخطوة 2 من 3: الموقع والتواصل'), findsOneWidget);
   });
 
-  testWidgets('an older e-mail account adds its number from More', (tester) async {
+  testWidgets('the sign-in number is changed from More', (tester) async {
     disk.values[AuthRepository.tokenKey] = 'tok';
     api
       ..on('GET /me', meOk())
@@ -210,8 +198,9 @@ void main() {
     await pumpApp(tester);
 
     await tapKey(tester, 'nav.more');
-    expect(find.text('أضف رقمك لتدخل به بدل البريد'), findsOneWidget);
+    expect(find.text('0599000001'), findsWidgets);
     await tapKey(tester, 'more.phone');
+    await type(tester, 'phone.number', '');
     await tapKey(tester, 'phone.save');
     expect(find.text('اكتب رقم جوالك.'), findsOneWidget);
     expect(api.requestsTo('PATCH /me/phone'), isEmpty);
@@ -221,6 +210,6 @@ void main() {
     await tapKey(tester, 'phone.save');
 
     expect(api.requestsTo('PATCH /me/phone').single.data, {'phone': '0599123456', 'current_password': 'password'});
-    expect(find.text('0599123456'), findsOneWidget, reason: 'the tile shows the new number');
+    expect(find.text('0599123456'), findsWidgets, reason: 'the tile shows the new number');
   });
 }

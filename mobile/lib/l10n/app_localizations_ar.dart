@@ -223,9 +223,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get phPhone => 'رقم جوالك، مثل 0599123456';
 
   @override
-  String get phEmail => 'بريدك الذي تدخل به، مثل name@store.ps';
-
-  @override
   String get phCustomerName => 'اسم الزبون كما تناديه';
 
   @override
@@ -253,9 +250,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get loginHelper => 'أدخل بيانات حسابك في المتجر';
 
   @override
-  String get emailLabel => 'البريد الإلكتروني';
-
-  @override
   String get passwordLabel => 'كلمة المرور';
 
   @override
@@ -275,12 +269,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get loginSubmitting => 'جارٍ تسجيل الدخول…';
-
-  @override
-  String get emailRequired => 'أدخل البريد الإلكتروني';
-
-  @override
-  String get emailInvalid => 'صيغة البريد الإلكتروني غير صحيحة';
 
   @override
   String get passwordRequired => 'أدخل كلمة المرور';
@@ -392,7 +380,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get logoutConfirmBody =>
-      'ستحتاج إلى البريد الإلكتروني وكلمة المرور للدخول مجدداً.';
+      'ستحتاج إلى رقم الجوال وكلمة المرور للدخول مجدداً.';
 
   @override
   String get stay => 'البقاء';
@@ -1700,7 +1688,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get registerStepAccountSub =>
-      'اختر البريد وكلمة المرور التي تدخل بها إلى حسبة.';
+      'اختر كلمة المرور التي تدخل بها إلى حسبة مع رقم جوالك.';
 
   @override
   String get storeNameLabel => 'اسم المتجر';
@@ -1745,24 +1733,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get streetRequired => 'يرجى إدخال عنوان المتجر.';
 
   @override
-  String get registerEmailRequired => 'يرجى إدخال البريد الإلكتروني.';
-
-  @override
-  String get registerEmailInvalid => 'صيغة البريد الإلكتروني غير صحيحة.';
-
-  @override
   String get passwordTooShort => 'كلمة المرور 8 أحرف على الأقل.';
 
   @override
   String get passwordMismatch => 'التأكيد لا يطابق كلمة المرور.';
 
   @override
-  String get emailTaken =>
-      'هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.';
+  String get phoneTaken =>
+      'هذا الرقم مسجّل مسبقاً. سجّل الدخول، أو استخدم رقماً آخر.';
 
   @override
-  String get registerFailedTaken =>
-      'لم يُنشأ المتجر: البريد الإلكتروني مستخدم.';
+  String get registerFailedTaken => 'لم يُنشأ المتجر: رقم الجوال مستخدم.';
 
   @override
   String get registerFailedValidation =>
@@ -1817,8 +1798,8 @@ class AppLocalizationsAr extends AppLocalizations {
       'تواصل مع إدارة حسبة لتفعيل الاشتراك.';
 
   @override
-  String subscriptionWhatsappMessage(String store, String email) {
-    return 'مرحباً، أريد تفعيل اشتراك متجر «$store» على حسبة.\nالبريد: $email';
+  String subscriptionWhatsappMessage(String store, String phone) {
+    return 'مرحباً، أريد تفعيل اشتراك متجر «$store» على حسبة.\nالجوال: $phone';
   }
 
   @override
@@ -2018,8 +1999,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String subscriptionEmailLine(String email) {
-    return 'البريد: $email';
+  String subscriptionPhoneLine(String phone) {
+    return 'الجوال: $phone';
   }
 
   @override
@@ -2194,12 +2175,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get invite7d => '7 أيام';
-
-  @override
-  String get inviteEmail => 'بريده الإلكتروني';
-
-  @override
-  String get inviteEmailHint => 'إن كتبته، لا يعمل الرابط إلا بهذا البريد';
 
   @override
   String get inviteCreate => 'إنشاء رابط الدعوة';
@@ -2842,25 +2817,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get phLoginPhone => 'مثل 0599123456';
 
   @override
-  String get loginEmailRequired => 'اكتب البريد الإلكتروني.';
-
-  @override
-  String get loginUseEmail => 'حسابي القديم بالبريد الإلكتروني';
-
-  @override
-  String get loginUsePhone => 'الدخول برقم الجوال';
-
-  @override
   String get loginForgot => 'نسيت كلمة المرور؟';
 
   @override
   String get ownerPhoneLabel => 'رقم جوالك (تسجّل الدخول به)';
-
-  @override
-  String get emailOptionalLabel => 'البريد الإلكتروني (اختياري)';
-
-  @override
-  String get phEmailOptional => 'لا حاجة له للدخول';
 
   @override
   String get otpTitle => 'رمز التأكيد';
@@ -2924,7 +2884,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get morePhone => 'رقم الجوال للدخول';
 
   @override
-  String get morePhoneAdd => 'أضف رقمك لتدخل به بدل البريد';
+  String get morePhoneAdd => 'أضف رقم جوالك لتدخل به';
 
   @override
   String get phoneTitle => 'رقم الجوال للدخول';

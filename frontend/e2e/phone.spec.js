@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 // Sign-in by mobile number on the web: an older account by its e-mail, a forgotten password and
 // sign-up with the SMS code, and adding the number to an older account in Settings.
 
-const user = { id: 1, name: "علي أحمد", email: null, phone: "0599123456", role: "owner", store: { id: 1, name: "بقالة النور" } };
+const user = { id: 1, name: "علي أحمد", phone: "0599123456", role: "owner", store: { id: 1, name: "بقالة النور" } };
 
 const options = (otp) => (route) => route.fulfill({ json: { data: { login: "phone", otp } } });
 
@@ -14,13 +14,13 @@ async function mockDashboard(page) {
   await page.route("**/api/v1/products?**", (r) => r.fulfill({ json: { data: [], meta: { total: 0 } } }));
 }
 
-test("an older account signs in with its e-mail in the same field; no reset link while codes are off", async ({ page }) => {
+test("an e-mail is not a sign-in; no reset link while codes are off", async ({ page }) => {
   let sent;
   await mockDashboard(page);
   await page.route("**/api/v1/auth/options", options(false));
   await page.route("**/api/v1/login", async (route) => {
     sent = route.request().postDataJSON();
-    await route.fulfill({ json: { message: "ok", user: { ...user, email: "old@shop.ps", phone: null }, token: "2|t" } });
+    await route.fulfill({ json: { message: "ok", user, token: "2|t" } });
   });
 
   await page.goto("/login");
@@ -33,8 +33,13 @@ test("an older account signs in with its e-mail in the same field; no reset link
 
   await page.getByLabel("رقم الجوال").fill("old@shop.ps");
   await page.getByRole("button", { name: "تسجيل الدخول" }).click();
+  await expect(page.getByText("رقم الجوال 10 أرقام يبدأ بـ 05، مثل 0599123456.")).toBeVisible();
+  expect(sent).toBeUndefined();
+
+  await page.getByLabel("رقم الجوال").fill("0599 123 456");
+  await page.getByRole("button", { name: "تسجيل الدخول" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  expect(sent).toEqual({ login: "old@shop.ps", password: "password123" });
+  expect(sent).toEqual({ login: "0599123456", password: "password123" });
 });
 
 test("a forgotten password: the number, the SMS code and a new password, then back to sign in", async ({ page }) => {
@@ -72,7 +77,7 @@ test("a forgotten password: the number, the SMS code and a new password, then ba
   ]);
 });
 
-test("with SMS codes on, /join confirms the number on step 3; the e-mail may stay empty", async ({ page }) => {
+test("with SMS codes on, /join confirms the number with a code before the store is made", async ({ page }) => {
   let otp;
   let registered;
   await mockDashboard(page);
@@ -94,7 +99,7 @@ test("with SMS codes on, /join confirms the number on step 3; the e-mail may sta
   await page.getByLabel("المدينة").selectOption("الخليل");
   await page.getByLabel("عنوان المتجر").fill("شارع السلام");
   await page.getByRole("button", { name: "التالي" }).click();
-  await expect(page.getByText("البريد اختياري")).toBeVisible();
+  await expect(page.getByText("جميع الحقول مطلوبة")).toBeVisible();
   await page.getByLabel("كلمة المرور", { exact: true }).fill("password123");
   await page.getByLabel("تأكيد كلمة المرور", { exact: true }).fill("password123");
   await page.getByRole("button", { name: "أرسل رمز التأكيد" }).click();
@@ -118,9 +123,9 @@ test("with SMS codes on, /join confirms the number on step 3; the e-mail may sta
   });
 });
 
-test("an older e-mail account adds its sign-in number in Settings", async ({ page }) => {
+test("the sign-in number is changed in Settings", async ({ page }) => {
   let sent;
-  const old = { ...user, email: "old@shop.ps", phone: null };
+  const old = { ...user, phone: "0599000001" };
   await page.addInitScript((u) => {
     localStorage.setItem("token", "2|test-token");
     localStorage.setItem("user", JSON.stringify(u));
@@ -137,7 +142,6 @@ test("an older e-mail account adds its sign-in number in Settings", async ({ pag
 
   await page.goto("/settings");
   const section = page.locator("form").filter({ has: page.getByRole("heading", { name: "رقم الجوال للدخول" }) });
-  await expect(section.getByText("حسابك يدخل بالبريد. أضف رقم جوالك لتدخل به.")).toBeVisible();
   await section.getByLabel("رقم الجوال").fill("059-912-3456");
   await section.getByLabel("كلمة المرور الحالية").fill("password123");
   await section.getByRole("button", { name: "حفظ الرقم" }).click();

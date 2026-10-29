@@ -68,14 +68,13 @@ class BackendFeatureTest extends TestCase
             'store_name' => 'Main',
             'owner_name' => 'Owner',
             'owner_phone' => '0599000001',
-            'email' => 'owner@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
         ])->assertCreated()->assertJsonStructure(['message', 'user', 'token']);
-        $this->postJson('/api/v1/login', ['email' => 'owner@example.com', 'password' => 'password'])->assertOk()->assertJsonStructure(['token']);
+        $this->postJson('/api/v1/login', ['login' => '0599000001', 'password' => 'password'])->assertOk()->assertJsonStructure(['token']);
         $token = $registered->json('token');
         $this->withHeader('Authorization', "Bearer {$token}")->postJson('/api/v1/logout')->assertOk();
-        $this->assertDatabaseHas('users', ['email' => 'owner@example.com', 'role' => 'owner']);
+        $this->assertDatabaseHas('users', ['phone' => '0599000001', 'email' => null, 'role' => 'owner']);
     }
 
     public function test_roles_and_invitations(): void

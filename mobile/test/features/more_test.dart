@@ -83,8 +83,8 @@ void main() {
   testWidgets('staff: invite by link (WhatsApp or copy), change a role, deactivate after a confirmation', (tester) async {
     api.on('GET /users', const FakeResponse(200, {
       'data': [
-        {'id': 5, 'name': 'سامي', 'email': 'sami@shop.ps', 'role': 'employee', 'status': 'active'},
-        {'id': 6, 'name': 'رامي', 'email': 'rami@shop.ps', 'role': 'manager', 'status': 'inactive'},
+        {'id': 5, 'name': 'سامي', 'phone': '0599111222', 'role': 'employee', 'status': 'active'},
+        {'id': 6, 'name': 'رامي', 'phone': '0599333444', 'role': 'manager', 'status': 'inactive'},
       ],
     }));
     await pumpApp(tester);
@@ -97,7 +97,7 @@ void main() {
     // Invite a manager for 3 days.
     api.on('POST /invitations', const FakeResponse(201, {
       'message': 'تم إنشاء الدعوة بنجاح',
-      'invitation': {'id': 1, 'email': null, 'role': 'manager', 'expires_at': '2026-10-28T10:00:00.000000Z', 'token': 'abc+123'},
+      'invitation': {'id': 1, 'role': 'manager', 'expires_at': '2026-10-28T10:00:00.000000Z', 'token': 'abc+123'},
     }));
     await tap(tester, find.byKey(const Key('staff.invite')));
     await tap(tester, find.byKey(const Key('invite.role.manager')));

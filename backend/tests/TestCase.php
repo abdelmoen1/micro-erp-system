@@ -20,6 +20,12 @@ abstract class TestCase extends BaseTestCase
         return parent::setUpTraits();
     }
 
+    /** The sign-in phone of the test account that was made with [email]. */
+    protected function phoneOf(string $email): string
+    {
+        return \App\Models\User::query()->where('email', $email)->value('phone');
+    }
+
     /**
      * Headers carrying a fresh Idempotency-Key, for one financial request.
      */

@@ -31,7 +31,7 @@ class UserController extends Controller
             ->select([
                 'id',
                 'name',
-                'email',
+                'phone',
                 'role',
                 'status',
                 'deactivated_at',

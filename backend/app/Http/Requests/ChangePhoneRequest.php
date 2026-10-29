@@ -28,7 +28,7 @@ class ChangePhoneRequest extends FormRequest
     {
         return [
             'phone' => SignInPhone::rules(ignoreUserId: $this->user()->id),
-            // A Google-only account has no password to give.
+            // An account without a password (an old Google one) has none to give.
             'current_password' => [Rule::requiredIf(fn() => $this->user()->password !== null), 'nullable', 'string'],
             'otp_code' => [Rule::requiredIf(fn() => app(OtpService::class)->enabled()), 'nullable', 'digits:6'],
         ];

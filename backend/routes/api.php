@@ -24,16 +24,14 @@ use App\Http\Controllers\Api\Admin\SupportTicketController as AdminSupportTicket
 
 // All routes are served under /api/v1 (bootstrap/app.php, D-22).
 
-// Authentication (login throttling lives in AuthService: 5 failures/min per email+IP)
+// Authentication by mobile number (login throttling lives in AuthService: 5 failures/min per number + IP)
 Route::post('/login', [AuthController::class, 'login']);
 // Sign-in by mobile number: what the screens offer, one-time SMS codes, and a forgotten password.
 Route::get('/auth/options', [AuthController::class, 'options']);
 Route::post('/auth/otp', [AuthController::class, 'sendOtp'])->middleware('throttle:otp');
 Route::post('/auth/password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:register');
-Route::post('/auth/google', [AuthController::class, 'google'])->middleware('throttle:sso');
 Route::middleware('throttle:register')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/register/google', [AuthController::class, 'registerWithGoogle']);
     Route::post('/register/invitation', [AuthController::class, 'acceptInvitation']);
 });
 

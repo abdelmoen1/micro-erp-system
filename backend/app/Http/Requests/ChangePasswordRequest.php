@@ -42,9 +42,9 @@ class ChangePasswordRequest extends FormRequest
                     return;
                 }
                 $user = $this->user();
-                // A Google-only account has no password to change; a session alone cannot set one.
+                // An account without a password cannot have one set by a session alone.
                 if ($user->password === null) {
-                    $validator->errors()->add('current_password', 'حسابك يدخل بحساب Google، فليس له كلمة مرور لتغييرها.');
+                    $validator->errors()->add('current_password', 'هذا الحساب ليس له كلمة مرور لتغييرها. استعمل «نسيت كلمة المرور».');
                 } elseif (! Hash::check((string) $this->input('current_password'), $user->password)) {
                     $validator->errors()->add('current_password', 'كلمة المرور الحالية غير صحيحة.');
                 }

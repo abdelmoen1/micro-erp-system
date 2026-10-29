@@ -6,8 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
 /**
- * Staff joining by an invitation link: they sign in with their mobile number; the e-mail is
- * optional. The link itself proves the invitation, so no SMS code is spent here.
+ * Staff joining by an invitation link: they sign in with their mobile number. The link itself
+ * proves the invitation, so no SMS code is spent here.
  */
 class AcceptInvitationRequest extends FormRequest
 {
@@ -18,10 +18,7 @@ class AcceptInvitationRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'phone' => SignInPhone::prepare($this->input('phone')),
-            'email' => $this->filled('email') ? $this->input('email') : null,
-        ]);
+        $this->merge(['phone' => SignInPhone::prepare($this->input('phone'))]);
     }
 
     public function rules(): array
@@ -30,7 +27,6 @@ class AcceptInvitationRequest extends FormRequest
             'token' => ['required', 'string'],
             'name' => ['required', 'string', 'max:255'],
             'phone' => SignInPhone::rules(),
-            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ];
     }
