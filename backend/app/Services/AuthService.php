@@ -9,8 +9,6 @@ use App\Models\Store;
 use App\Models\StoreInvitation;
 use App\Models\User;
 use App\Support\PhoneNumber;
-use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -23,18 +21,14 @@ class AuthService
 
     public const LOGIN_DECAY_SECONDS = 60;
 
-    /** How long a new Google user has to finish onboarding before signing in again. */
-    public const ONBOARDING_MINUTES = 30;
-
     /**
      * Stateless credential check (no session), throttled per login + IP on failed attempts only
-     * (US-0104), and refused for inactive staff (US-0105). [$login] is the mobile number; accounts
-     * made with an e-mail before sign-in by phone may still give their e-mail.
+     * (US-0104), and refused for inactive staff (US-0105). [$login] is the mobile number.
      */
     public function login(string $login, string $password, string $ip): User
     {
-        $phone = str_contains($login, '@') ? null : PhoneNumber::normalize($login);
-        $key = 'login:' . sha1(Str::lower($phone ?? trim($login)) . '|' . $ip);
+        $phone = PhoneNumber::normalize($login);
+        $key = 'login:' . sha1(($phone ?? Str::lower(trim($login))) . '|' . $ip);
 
         if (RateLimiter::tooManyAttempts($key, self::MAX_LOGIN_ATTEMPTS)) {
             $seconds = RateLimiter::availableIn($key);
@@ -48,9 +42,7 @@ class AuthService
             );
         }
 
-        $user = $phone !== null
-            ? User::where('phone', $phone)->first()
-            : (str_contains($login, '@') ? User::where('email', trim($login))->first() : null);
+        $user = $phone !== null ? User::where('phone', $phone)->first() : null;
 
         if (!$user || !Hash::check($password, $user->password)) {
             RateLimiter::hit($key, self::LOGIN_DECAY_SECONDS);
@@ -114,82 +106,16 @@ class AuthService
 
             $owner = new User([
                 'name' => $data['owner_name'],
-                'email' => $data['email'] ?? null,
                 'phone' => $data['owner_phone'] ?? null,
                 'password' => $data['password'] ?? null,
             ]);
             $owner->phone_verified_at = ($data['phone_verified'] ?? false) ? now() : null;
             $owner->store_id = $store->id;
             $owner->role = UserRole::OWNER;
-            $owner->google_id = $data['google_id'] ?? null;
             $owner->save();
 
             return $owner->load('store');
         });
-    }
-
-    /**
-     * The account for a verified Google profile: by Google id, else by email (Google verified it,
-     * so the account is linked on first use). Null means a new user who must onboard first.
-     */
-    public function findGoogleUser(array $profile): ?User
-    {
-        $user = User::where('google_id', $profile['sub'])->first()
-            ?? User::where('email', $profile['email'])->first();
-
-        if (!$user) {
-            return null;
-        }
-
-        if (!$user->isActive()) {
-            throw new ApiException(403, 'USER_INACTIVE', 'تم إيقاف هذا الحساب. تواصل مع صاحب المتجر.');
-        }
-
-        $this->ensureStoreOpen($user);
-
-        if ($user->google_id === null) {
-            $user->forceFill(['google_id' => $profile['sub']])->save();
-        }
-
-        return $user;
-    }
-
-    /** A sealed, short-lived copy of the Google profile that POST /register/google trusts. */
-    public function onboardingToken(array $profile): string
-    {
-        return Crypt::encryptString(json_encode([
-            'sub' => $profile['sub'],
-            'email' => $profile['email'],
-            'name' => $profile['name'],
-            'exp' => now()->addMinutes(self::ONBOARDING_MINUTES)->getTimestamp(),
-        ]));
-    }
-
-    public function registerStoreWithGoogle(array $data): User
-    {
-        try {
-            $profile = json_decode(Crypt::decryptString($data['onboarding_token']), true);
-        } catch (DecryptException) {
-            $profile = null;
-        }
-
-        if (!is_array($profile) || ($profile['exp'] ?? 0) <= now()->getTimestamp()) {
-            throw ValidationException::withMessages([
-                'onboarding_token' => 'انتهت مهلة التسجيل. تابع بحساب Google مرة أخرى.',
-            ]);
-        }
-
-        if (User::where('google_id', $profile['sub'])->orWhere('email', $profile['email'])->exists()) {
-            throw ValidationException::withMessages([
-                'email' => 'هذا البريد مسجّل مسبقاً. سجّل الدخول بحساب Google.',
-            ]);
-        }
-
-        return $this->registerStore([
-            ...$data,
-            'email' => $profile['email'],
-            'google_id' => $profile['sub'],
-        ]);
     }
 
     /**
@@ -237,7 +163,6 @@ class AuthService
         $invitation = StoreInvitation::create([
             'store_id' => $inviter->store_id,
             'invited_by' => $inviter->id,
-            'email' => $data['email'] ?? null,
             'role' => $data['role'],
             'token_hash' => hash('sha256', $token),
             'expires_at' => now()->addHours($data['expires_in_hours'] ?? 72),
@@ -263,16 +188,8 @@ class AuthService
                 throw self::storeSuspended();
             }
 
-            // An invitation made for an e-mail is kept for it when the new member gives an e-mail.
-            if ($invitation->email && !empty($data['email']) && !hash_equals(strtolower($invitation->email), strtolower($data['email']))) {
-                throw ValidationException::withMessages([
-                    'email' => 'البريد الإلكتروني لا يطابق الدعوة.',
-                ]);
-            }
-
             $user = new User([
                 'name' => $data['name'],
-                'email' => $data['email'] ?? null,
                 'phone' => $data['phone'],
                 'password' => $data['password'],
             ]);

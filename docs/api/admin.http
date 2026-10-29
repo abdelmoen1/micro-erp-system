@@ -2,8 +2,8 @@
 #
 # Who: only an account with users.is_platform_admin = true. Nothing in the API sets that flag; it is granted on
 # the server with an existing account:
-#     php artisan hisbah:platform-admin owner@example.com          # grant
-#     php artisan hisbah:platform-admin owner@example.com --revoke # revoke (also signs the account out everywhere)
+#     php artisan hisbah:platform-admin 0592288354          # grant (the account's mobile number)
+#     php artisan hisbah:platform-admin 0592288354 --revoke # revoke (also signs the account out everywhere)
 # Any other signed-in account → 403 FORBIDDEN on every /admin route (unknown ids too, so ids cannot be probed);
 # no token → 401; a deactivated admin → 403 USER_INACTIVE. /admin routes are not under the `store` middleware.
 #

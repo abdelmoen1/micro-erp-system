@@ -15,7 +15,6 @@ class AppUser {
   const AppUser({
     required this.id,
     required this.name,
-    required this.email,
     required this.role,
     required this.storeId,
     required this.storeName,
@@ -33,7 +32,6 @@ class AppUser {
     return AppUser(
       id: (json['id'] as num).toInt(),
       name: json['name'] as String? ?? '',
-      email: json['email'] as String? ?? '',
       phone: json['phone'] as String?,
       role: UserRole.parse(json['role'] as String?),
       storeId: (json['store_id'] as num?)?.toInt(),
@@ -50,9 +48,8 @@ class AppUser {
 
   final int id;
   final String name;
-  final String email;
 
-  /// The mobile number this account signs in with; null for an older e-mail account until it adds one.
+  /// The mobile number this account signs in with.
   final String? phone;
   final UserRole role;
   final int? storeId;
@@ -76,7 +73,6 @@ class AppUser {
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
-    'email': email,
     'phone': phone,
     'role': role.name,
     'store_id': storeId,

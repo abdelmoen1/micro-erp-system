@@ -117,7 +117,7 @@ export default function AppShell() {
           <span className="topbar-title">لوحة الإدارة</span>
           <span className="topbar-meta">
             <span className="role-chip">{ROLE_LABEL[role]}</span>
-            <span className="m">{user.email}</span>
+            <span className="m">{user.phone}</span>
           </span>
         </header>
         <main id="main" className="content">

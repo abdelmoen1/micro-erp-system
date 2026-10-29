@@ -136,13 +136,13 @@ class _StaffScreenState extends ConsumerState<StaffScreen> {
                     LineCard(
                       child: Column(
                         children: [
-                          if (me != null) _PersonRow(name: me.name, email: me.email, badge: '${t.staffYou} · ${t.roleOwner}'),
+                          if (me != null) _PersonRow(name: me.name, phone: me.phone ?? '', badge: '${t.staffYou} · ${t.roleOwner}'),
                           for (final m in members) ...[
                             const Divider(height: 1, color: HisbahColors.border),
                             _PersonRow(
                               key: Key('staff.row.${m.id}'),
                               name: m.name,
-                              email: m.email,
+                              phone: m.phone,
                               badge: m.active ? roleName(t, m.role) : t.staffInactive,
                               muted: !m.active,
                               onTap: m.active && !_busy ? () => _actions(m) : null,
@@ -181,10 +181,10 @@ class _StaffScreenState extends ConsumerState<StaffScreen> {
 }
 
 class _PersonRow extends StatelessWidget {
-  const _PersonRow({super.key, required this.name, required this.email, required this.badge, this.muted = false, this.onTap});
+  const _PersonRow({super.key, required this.name, required this.phone, required this.badge, this.muted = false, this.onTap});
 
   final String name;
-  final String email;
+  final String phone;
   final String badge;
   final bool muted;
   final VoidCallback? onTap;
@@ -205,7 +205,7 @@ class _PersonRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  LtrValue(email, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
+                  LtrValue(phone, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
                 ],
               ),
             ),
@@ -236,34 +236,23 @@ class InviteSheet extends ConsumerStatefulWidget {
 }
 
 class _InviteSheetState extends ConsumerState<InviteSheet> {
-  final _email = TextEditingController();
   UserRole _role = UserRole.employee;
   int _hours = 24;
   bool _busy = false;
   String? _error;
-  String? _emailError;
   StaffInvite? _invite;
   bool _whatsappFailed = false;
   bool _copied = false;
-
-  @override
-  void dispose() {
-    _email.dispose();
-    super.dispose();
-  }
 
   Future<void> _create() async {
     final t = AppLocalizations.of(context);
     setState(() {
       _busy = true;
       _error = null;
-      _emailError = null;
     });
     try {
-      final invite = await ref.read(moreRepositoryProvider).invite(role: _role, hours: _hours, email: _email.text);
+      final invite = await ref.read(moreRepositoryProvider).invite(role: _role, hours: _hours);
       if (mounted) setState(() => _invite = invite);
-    } on ValidationFailed catch (failure) {
-      if (mounted) setState(() => _emailError = failure.fieldErrors['email']?.first ?? failure.message);
     } on ApiFailure catch (failure) {
       if (mounted) {
         setState(() => _error = failure is Forbidden ? t.staffOwnerOnly : (failure.message ?? t.staffActionError));
@@ -337,17 +326,6 @@ class _InviteSheetState extends ConsumerState<InviteSheet> {
                 ],
               ),
               const SizedBox(height: 14),
-              MoreField(
-                fieldKey: 'invite.email',
-                label: t.inviteEmail,
-                controller: _email,
-                keyboard: TextInputType.emailAddress,
-                ltr: true,
-                helper: t.inviteEmailHint,
-                error: _emailError,
-                enabled: !_busy,
-                action: TextInputAction.done,
-              ),
               if (_error != null) ToneCard(tone: StatusTone.error, icon: Icons.error_outline_rounded, title: _error!, alert: true),
             ]
           : [
@@ -372,7 +350,6 @@ class _InviteSheetState extends ConsumerState<InviteSheet> {
                 [
                   roleName(t, invite.role),
                   if (invite.expiresAt != null) t.inviteExpires(_expiry.format(invite.expiresAt!)),
-                  ?invite.email,
                 ].join(' · '),
                 style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
               ),

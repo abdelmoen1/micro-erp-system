@@ -2,17 +2,13 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { clock, useCountdown } from "../lib/countdown";
 import Banner, { FieldError, Spinner } from "../components/Banner";
-import GoogleButton from "../components/GoogleButton";
 import HisbahLogo, { HisbahMark } from "../components/HisbahLogo";
 import Icon from "../components/Icon";
-import { GOOGLE_CLIENT_ID } from "../lib/google";
 import { landingPath } from "../lib/domain";
 import { latinDigits, shortReference } from "../lib/format";
 import { normalizePhone, PHONE_HINT } from "../lib/phone";
 import { ApiError, NetworkError } from "../services/apiClient";
-import { useAuthOptions, useGoogleMutation, useLoginMutation } from "../services/useAuth";
-
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+import { useAuthOptions, useLoginMutation } from "../services/useAuth";
 
 /** What the last attempt ended with (W-01 review states). */
 function outcomeOf(error) {
@@ -21,7 +17,6 @@ function outcomeOf(error) {
   if (error.status === 429) return { kind: "throttled", wait: error.retryAfter ?? 60 };
   if (error.code === "USER_INACTIVE") return { kind: "inactive" };
   if (error.code === "STORE_SUSPENDED") return { kind: "suspended" };
-  if (error.code === "GOOGLE_TOKEN_INVALID" || error.code === "SSO_UNAVAILABLE") return { kind: "google", message: error.message };
   if (error.status === 401 || error.code === "INVALID_CREDENTIALS") return { kind: "invalid" };
   if (error.status === 422) return { kind: "fields", errors: error.errors };
   return { kind: "server", reference: shortReference(error.correlationId) };
@@ -61,8 +56,6 @@ function LoginBanner({ outcome, waitLeft }) {
           تم تغيير كلمة المرور. سجّل الدخول برقم جوالك وكلمة المرور الجديدة.
         </Banner>
       );
-    case "google":
-      return <Banner>{outcome.message}</Banner>;
     case "network":
       return <Banner>تعذّر الاتصال بالخادم. تحقق من الإنترنت ثم أعد المحاولة.</Banner>;
     case "server":
@@ -95,8 +88,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const signIn = useLoginMutation();
-  const google = useGoogleMutation();
-  // The mobile number; an account made before sign-in by phone may give its e-mail instead.
+  // The mobile number the account signs in with.
   const [login, setLogin] = useState(params.get("phone") ?? "");
   const options = useAuthOptions();
   const [password, setPassword] = useState("");
@@ -107,34 +99,16 @@ export default function Login() {
   );
   const waitLeft = useCountdown(outcome?.kind === "throttled" ? outcome.wait : 0);
 
-  const busy = signIn.isPending || google.isPending;
+  const busy = signIn.isPending;
   const throttled = outcome?.kind === "throttled" && waitLeft > 0;
   const success = outcome?.kind === "success";
-
-  // A new Google account continues to registration; a known one goes straight in.
-  const onGoogle = (credential) => {
-    if (busy || success) return;
-    google.mutate(credential, {
-      onSuccess: (result) => {
-        if (result.onboarding) {
-          navigate("/join", { state: { google: result.onboarding } });
-          return;
-        }
-        setOutcome({ kind: "success" });
-        navigate(landingPath(result.user), { replace: true });
-      },
-      onError: (error) => setOutcome(outcomeOf(error)),
-    });
-  };
 
   const submit = (event) => {
     event.preventDefault();
     if (busy || throttled || success) return;
     const errors = {};
-    const byEmail = login.includes("@");
     if (!login.trim()) errors.login = "اكتب رقم الجوال.";
-    else if (byEmail && !EMAIL_RE.test(login.trim())) errors.login = "صيغة البريد الإلكتروني غير صحيحة";
-    else if (!byEmail && !normalizePhone(login)) errors.login = PHONE_HINT;
+    else if (!normalizePhone(login)) errors.login = PHONE_HINT;
     if (!password) errors.password = "أدخل كلمة المرور";
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
@@ -143,7 +117,7 @@ export default function Login() {
       return;
     }
     signIn.mutate(
-      { login: byEmail ? login.trim() : normalizePhone(login), password },
+      { login: normalizePhone(login), password },
       {
         onSuccess: (result) => {
           setOutcome({ kind: "success" });
@@ -216,16 +190,10 @@ export default function Login() {
                     }}
                     disabled={busy}
                     aria-invalid={fieldErrors.login ? "true" : "false"}
-                    aria-describedby="w1-login-err w1-login-hint"
+                    aria-describedby="w1-login-err"
                   />
                 </div>
-                {fieldErrors.login ? (
-                  <FieldError id="w1-login-err">{fieldErrors.login}</FieldError>
-                ) : (
-                  <span id="w1-login-hint" className="field-hint">
-                    حسابك القديم بالبريد؟ اكتب بريدك هنا.
-                  </span>
-                )}
+                <FieldError id="w1-login-err">{fieldErrors.login}</FieldError>
               </div>
               <div className="field">
                 <label htmlFor="w1-pass" className="field-label">
@@ -277,12 +245,6 @@ export default function Login() {
               <span>ليس لديك حساب؟</span>
               <Link to="/join">إنشاء متجر جديد</Link>
             </p>
-            {GOOGLE_CLIENT_ID ? (
-              <div className="signin-sso">
-                <GoogleButton onCredential={onGoogle} text="signin_with" disabled={busy} />
-                <p>حساب Google الجديد يكمل إنشاء المتجر بعد الدخول.</p>
-              </div>
-            ) : null}
           </div>
 
           <footer className="signin-foot">

@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 // S3 back office (W-07, W-11/W-12, W-14, US-0408, W-15). The API is mocked with the response shapes
 // of the Laravel resources; each test checks what the screen shows and what it sends.
 
-const owner = { id: 1, name: "علي أحمد", email: "ali@shop.ps", role: "owner", store: { id: 1, name: "بقالة الأمانة" } };
+const owner = { id: 1, name: "علي أحمد", phone: "0599333444", role: "owner", store: { id: 1, name: "بقالة الأمانة" } };
 
 async function signIn(page, user = owner) {
   await page.addInitScript((u) => {

@@ -5,12 +5,11 @@ import { clock, useCountdown } from "../lib/countdown";
 import Banner, { FieldError, Spinner } from "../components/Banner";
 import HisbahLogo, { HisbahMark } from "../components/HisbahLogo";
 import Icon from "../components/Icon";
-import { shortReference } from "../lib/format";
+import { latinDigits, shortReference } from "../lib/format";
+import { normalizePhone, PHONE_HINT } from "../lib/phone";
 import { ApiError, NetworkError, session } from "../services/apiClient";
 import { logout } from "../services/dashboard";
 import { useLoginMutation } from "../services/useAuth";
-
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 /** What the last attempt ended with. `not_admin`: valid store account, refused here and signed out again. */
 function outcomeOf(error) {
@@ -26,7 +25,7 @@ function outcomeOf(error) {
 function AdminBanner({ outcome, waitLeft }) {
   switch (outcome?.kind) {
     case "invalid":
-      return <Banner>البريد الإلكتروني أو كلمة المرور غير صحيحة.</Banner>;
+      return <Banner>رقم الجوال أو كلمة المرور غير صحيحة.</Banner>;
     case "not_admin":
       return (
         <Banner tone="voided" icon="lock" extra={<Link to="/login" className="sub">الدخول إلى لوحة المتجر</Link>}>
@@ -74,7 +73,7 @@ export default function AdminLogin() {
   const queryClient = useQueryClient();
   const [params] = useSearchParams();
   const login = useLoginMutation();
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -92,17 +91,17 @@ export default function AdminLogin() {
     event.preventDefault();
     if (busy || throttled) return;
     const errors = {};
-    if (!email.trim()) errors.email = "أدخل البريد الإلكتروني";
-    else if (!EMAIL_RE.test(email.trim())) errors.email = "صيغة البريد الإلكتروني غير صحيحة";
+    if (!phone.trim()) errors.login = "اكتب رقم الجوال.";
+    else if (!normalizePhone(phone)) errors.login = PHONE_HINT;
     if (!password) errors.password = "أدخل كلمة المرور";
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       setOutcome(null);
-      document.getElementById(errors.email ? "adm-email" : "adm-pass")?.focus();
+      document.getElementById(errors.login ? "adm-phone" : "adm-pass")?.focus();
       return;
     }
     login.mutate(
-      { email: email.trim(), password },
+      { login: normalizePhone(phone), password },
       {
         onSuccess: async (result) => {
           if (result.user?.is_platform_admin) {
@@ -119,7 +118,7 @@ export default function AdminLogin() {
         onError: (error) => {
           const next = outcomeOf(error);
           if (next.kind === "fields") {
-            setFieldErrors({ email: next.errors.email?.[0], password: next.errors.password?.[0] });
+            setFieldErrors({ login: next.errors.login?.[0], password: next.errors.password?.[0] });
             setOutcome(null);
             return;
           }
@@ -148,29 +147,31 @@ export default function AdminLogin() {
             <AdminBanner outcome={outcome} waitLeft={waitLeft} />
             <form className="form-stack" onSubmit={submit} noValidate>
               <div className="field">
-                <label htmlFor="adm-email" className="field-label">
-                  البريد الإلكتروني
+                <label htmlFor="adm-phone" className="field-label">
+                  رقم الجوال
                 </label>
                 <div className="fld-wrap">
-                  <Icon name="mail" size={18} strokeWidth={1.7} className="fld-icon" />
+                  <Icon name="phone" size={18} strokeWidth={1.7} className="fld-icon" />
                   <input
-                    id="adm-email"
-                    className={`fld ltr${fieldErrors.email ? " err" : ""}`}
-                    type="email"
-                    name="email"
+                    id="adm-phone"
+                    className={`fld ltr${fieldErrors.login ? " err" : ""}`}
+                    type="text"
+                    inputMode="tel"
+                    name="username"
                     autoComplete="username"
                     spellCheck={false}
-                    value={email}
+                    placeholder="0599123456"
+                    value={phone}
                     onChange={(e) => {
-                      setEmail(e.target.value);
-                      setFieldErrors((f) => ({ ...f, email: undefined }));
+                      setPhone(latinDigits(e.target.value));
+                      setFieldErrors((f) => ({ ...f, login: undefined }));
                     }}
                     disabled={busy}
-                    aria-invalid={fieldErrors.email ? "true" : "false"}
-                    aria-describedby="adm-email-err"
+                    aria-invalid={fieldErrors.login ? "true" : "false"}
+                    aria-describedby="adm-phone-err"
                   />
                 </div>
-                <FieldError id="adm-email-err">{fieldErrors.email}</FieldError>
+                <FieldError id="adm-phone-err">{fieldErrors.login}</FieldError>
               </div>
               <div className="field">
                 <label htmlFor="adm-pass" className="field-label">

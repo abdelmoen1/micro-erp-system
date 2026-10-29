@@ -76,7 +76,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       ..ownerName = _controllers[RegistrationField.ownerName]!.text
       ..phone = _controllers[RegistrationField.phone]!.text
       ..street = _controllers[RegistrationField.street]!.text
-      ..email = _controllers[RegistrationField.email]!.text
       ..password = _controllers[RegistrationField.password]!.text
       ..passwordConfirmation = _controllers[RegistrationField.passwordConfirmation]!.text
       ..otpCode = _controllers[RegistrationField.otpCode]!.text;
@@ -89,7 +88,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     RegistrationError.phoneInvalid => t.phoneInvalid,
     RegistrationError.cityRequired => t.cityRequired,
     RegistrationError.streetRequired => t.streetRequired,
-    RegistrationError.emailInvalid => t.registerEmailInvalid,
     RegistrationError.passwordTooShort => t.passwordTooShort,
     RegistrationError.passwordMismatch => t.passwordMismatch,
     RegistrationError.otpCodeInvalid => t.otpCodeInvalid,
@@ -173,7 +171,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
-  /// API field errors on our fields (address → street); «email taken» gets its own wording, and the
+  /// API field errors on our fields (address → street); «number taken» gets its own wording, and the
   /// form goes back to the first step that has an error.
   void _showServerErrors(Map<String, List<String>> fieldErrors, AppLocalizations t) {
     final errors = <RegistrationField, String>{};
@@ -181,16 +179,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final message = fieldErrors[key]?.firstOrNull;
       if (message != null) errors[field] = message;
     });
-    final email = errors[RegistrationField.email];
-    if (email != null && _takenPattern.hasMatch(email)) errors[RegistrationField.email] = t.emailTaken;
+    final phone = errors[RegistrationField.phone];
+    final taken = phone != null && _takenPattern.hasMatch(phone);
+    if (taken) errors[RegistrationField.phone] = t.phoneTaken;
     setState(() {
       _errors = errors;
       // Only a wrong code keeps the code view open; any other field sends the form back to it.
       if (errors.keys.any((f) => f != RegistrationField.otpCode)) _codeSentTo = null;
       if (errors.isNotEmpty) _step = errors.keys.map(stepOf).reduce(math.min);
-      _outcome = errors.length == 1 && errors.containsKey(RegistrationField.email)
-          ? _Outcome.taken
-          : _Outcome.validation;
+      _outcome = errors.length == 1 && taken ? _Outcome.taken : _Outcome.validation;
     });
     _focusFirstError();
   }
@@ -377,14 +374,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       _field(RegistrationField.street, t.streetLabel, hint: t.phStreet, autofill: const [AutofillHints.streetAddressLine1]),
     ],
     _ => [
-      _field(
-        RegistrationField.email,
-        t.emailOptionalLabel,
-        keyboard: TextInputType.emailAddress,
-        ltr: true,
-        hint: t.phEmailOptional,
-        autofill: const [AutofillHints.email],
-      ),
       _field(
         RegistrationField.password,
         t.passwordLabel,

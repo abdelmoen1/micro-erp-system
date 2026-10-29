@@ -68,7 +68,6 @@
   "phOwnerName": "اسمك الكامل",
   "phStreet": "الشارع أو أقرب معلم",
   "phPhone": "رقم جوالك، مثل 0599123456",
-  "phEmail": "بريدك الذي تدخل به، مثل name@store.ps",
   "phCustomerName": "اسم الزبون كما تناديه",
   "phPaidNow": "كم دفع الزبون الآن بالشيكل",
   "phPayAmount": "المبلغ الذي دفعه الزبون بالشيكل",
@@ -78,7 +77,6 @@
   "splashChecking": "جارٍ التحقق من الجلسة",
   "loginTitle": "تسجيل الدخول",
   "loginHelper": "أدخل بيانات حسابك في المتجر",
-  "emailLabel": "البريد الإلكتروني",
   "passwordLabel": "كلمة المرور",
   "showPassword": "إظهار",
   "hidePassword": "إخفاء",
@@ -86,8 +84,6 @@
   "hidePasswordA11y": "إخفاء كلمة المرور",
   "loginButton": "تسجيل الدخول",
   "loginSubmitting": "جارٍ تسجيل الدخول…",
-  "emailRequired": "أدخل البريد الإلكتروني",
-  "emailInvalid": "صيغة البريد الإلكتروني غير صحيحة",
   "passwordRequired": "أدخل كلمة المرور",
   "invalidCredentials": "رقم الجوال أو كلمة المرور غير صحيحة.",
   "tooManyAttempts": "محاولات كثيرة. يمكنك المحاولة بعد",
@@ -135,7 +131,7 @@
   "roleEmployee": "موظف",
   "logout": "تسجيل الخروج",
   "logoutConfirmTitle": "تسجيل الخروج؟",
-  "logoutConfirmBody": "ستحتاج إلى البريد الإلكتروني وكلمة المرور للدخول مجدداً.",
+  "logoutConfirmBody": "ستحتاج إلى رقم الجوال وكلمة المرور للدخول مجدداً.",
   "stay": "البقاء",
   "homeGreeting": "أهلاً، {name}",
   "@homeGreeting": {
@@ -918,7 +914,7 @@
   "registerStepContact": "الموقع والتواصل",
   "registerStepContactSub": "الهاتف والعنوان يظهران على إيصال الزبون.",
   "registerStepAccount": "بيانات الدخول",
-  "registerStepAccountSub": "اختر البريد وكلمة المرور التي تدخل بها إلى حسبة.",
+  "registerStepAccountSub": "اختر كلمة المرور التي تدخل بها إلى حسبة مع رقم جوالك.",
   "storeNameLabel": "اسم المتجر",
   "ownerNameLabel": "اسم صاحب المتجر",
   "storePhoneLabel": "رقم الهاتف",
@@ -933,12 +929,10 @@
   "phoneInvalid": "رقم الجوال 10 أرقام يبدأ بـ 05، مثل 0599123456.",
   "cityRequired": "يرجى اختيار المدينة.",
   "streetRequired": "يرجى إدخال عنوان المتجر.",
-  "registerEmailRequired": "يرجى إدخال البريد الإلكتروني.",
-  "registerEmailInvalid": "صيغة البريد الإلكتروني غير صحيحة.",
   "passwordTooShort": "كلمة المرور 8 أحرف على الأقل.",
   "passwordMismatch": "التأكيد لا يطابق كلمة المرور.",
-  "emailTaken": "هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.",
-  "registerFailedTaken": "لم يُنشأ المتجر: البريد الإلكتروني مستخدم.",
+  "phoneTaken": "هذا الرقم مسجّل مسبقاً. سجّل الدخول، أو استخدم رقماً آخر.",
+  "registerFailedTaken": "لم يُنشأ المتجر: رقم الجوال مستخدم.",
   "registerFailedValidation": "لم يُنشأ المتجر. راجع الحقول المعلّمة.",
   "registerNetworkError": "تعذّر الاتصال بالخادم. بياناتك باقية في النموذج، أعد المحاولة.",
   "registerServerError": "حدث خطأ في الخادم ولم يُنشأ المتجر. أعد المحاولة بعد قليل.",
@@ -964,13 +958,13 @@
   "subscriptionDataSafe": "بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والبضاعة. يعود كل شيء فور تفعيل الاشتراك.",
   "subscriptionContactWhatsapp": "تواصل معنا عبر واتساب",
   "subscriptionContactNoNumber": "تواصل مع إدارة حسبة لتفعيل الاشتراك.",
-  "subscriptionWhatsappMessage": "مرحباً، أريد تفعيل اشتراك متجر «{store}» على حسبة.\nالبريد: {email}",
+  "subscriptionWhatsappMessage": "مرحباً، أريد تفعيل اشتراك متجر «{store}» على حسبة.\nالجوال: {phone}",
   "@subscriptionWhatsappMessage": {
     "placeholders": {
       "store": {
         "type": "String"
       },
-      "email": {
+      "phone": {
         "type": "String"
       }
     }
@@ -1129,10 +1123,10 @@
       }
     }
   },
-  "subscriptionEmailLine": "البريد: {email}",
-  "@subscriptionEmailLine": {
+  "subscriptionPhoneLine": "الجوال: {phone}",
+  "@subscriptionPhoneLine": {
     "placeholders": {
-      "email": {
+      "phone": {
         "type": "String"
       }
     }
@@ -1240,8 +1234,6 @@
   "invite24h": "24 ساعة",
   "invite3d": "3 أيام",
   "invite7d": "7 أيام",
-  "inviteEmail": "بريده الإلكتروني",
-  "inviteEmailHint": "إن كتبته، لا يعمل الرابط إلا بهذا البريد",
   "inviteCreate": "إنشاء رابط الدعوة",
   "inviteCreating": "جارٍ الإنشاء…",
   "inviteReady": "الدعوة جاهزة. أرسل الرابط إلى الموظف؛ يظهر هنا مرة واحدة فقط.",
@@ -1577,13 +1569,8 @@
   "@cartonsCellLoose": {"placeholders":{"count":{"type":"int"},"pieces":{"type":"int"}}},
   "loginPhoneLabel": "رقم الجوال",
   "phLoginPhone": "مثل 0599123456",
-  "loginEmailRequired": "اكتب البريد الإلكتروني.",
-  "loginUseEmail": "حسابي القديم بالبريد الإلكتروني",
-  "loginUsePhone": "الدخول برقم الجوال",
   "loginForgot": "نسيت كلمة المرور؟",
   "ownerPhoneLabel": "رقم جوالك (تسجّل الدخول به)",
-  "emailOptionalLabel": "البريد الإلكتروني (اختياري)",
-  "phEmailOptional": "لا حاجة له للدخول",
   "otpTitle": "رمز التأكيد",
   "otpSentTo": "أرسلنا رمزاً من 6 أرقام برسالة إلى {phone}.",
   "@otpSentTo": {"placeholders":{"phone":{"type":"String"}}},
@@ -1604,7 +1591,7 @@
   "resetSave": "حفظ كلمة المرور الجديدة",
   "resetDone": "تم تغيير كلمة المرور. سجّل الدخول برقم جوالك وكلمة المرور الجديدة.",
   "morePhone": "رقم الجوال للدخول",
-  "morePhoneAdd": "أضف رقمك لتدخل به بدل البريد",
+  "morePhoneAdd": "أضف رقم جوالك لتدخل به",
   "phoneTitle": "رقم الجوال للدخول",
   "phoneHelper": "تسجّل الدخول بهذا الرقم وكلمة مرورك.",
   "phoneNewLabel": "رقم الجوال",

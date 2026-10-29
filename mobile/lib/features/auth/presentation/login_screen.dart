@@ -29,13 +29,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-
   final _formKey = GlobalKey<FormState>();
   final _login = TextEditingController();
-
-  /// An account made before sign-in by phone may still enter its e-mail.
-  bool _byEmail = false;
   final _password = TextEditingController();
   final _passwordFocus = FocusNode();
 
@@ -67,7 +62,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _failure = null;
     });
     try {
-      final login = _byEmail ? _login.text.trim() : (normalizePhone(_login.text) ?? _login.text);
+      final login = normalizePhone(_login.text) ?? _login.text;
       await ref.read(sessionProvider.notifier).login(login, _password.text);
     } on ApiFailure catch (failure) {
       if (!mounted) return;
@@ -104,22 +99,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   /// Client-side validation in Arabic; known server field errors use the same Arabic text (DEF-19).
   String? _validateLogin(String? value, AppLocalizations t) {
     final v = value?.trim() ?? '';
-    if (_byEmail) {
-      if (v.isEmpty) return t.loginEmailRequired;
-      if (!_emailPattern.hasMatch(v)) return t.emailInvalid;
-      return null;
-    }
     if (v.isEmpty) return t.phoneRequired;
     if (normalizePhone(v) == null || _serverFieldErrors.containsKey('login')) return t.phoneInvalid;
     return null;
   }
-
-  void _toggleMode() => setState(() {
-    _byEmail = !_byEmail;
-    _login.clear();
-    _failure = null;
-    _formKey.currentState?.reset();
-  });
 
   Future<void> _forgot() async {
     final done = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()));
@@ -251,37 +234,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               Text(t.loginHelper, style: const TextStyle(fontSize: 16, color: HisbahColors.inkMuted)),
                               const SizedBox(height: 16),
                               if (banner != null) ...[banner, const SizedBox(height: 16)],
-                              Text(_byEmail ? t.emailLabel : t.loginPhoneLabel, style: label),
+                              Text(t.loginPhoneLabel, style: label),
                               const SizedBox(height: 8),
                               TextFormField(
                                 key: const Key('login.id'),
                                 controller: _login,
                                 enabled: !_submitting,
-                                keyboardType: _byEmail ? TextInputType.emailAddress : TextInputType.phone,
+                                keyboardType: TextInputType.phone,
                                 // A number typed on an Arabic keyboard (٠٥٩…) is read as 059….
-                                inputFormatters: _byEmail ? null : const [LatinDigitsFormatter()],
+                                inputFormatters: const [LatinDigitsFormatter()],
                                 autocorrect: false,
                                 textDirection: TextDirection.ltr,
                                 textInputAction: TextInputAction.next,
-                                autofillHints: _byEmail
-                                    ? const [AutofillHints.username, AutofillHints.email]
-                                    : const [AutofillHints.username, AutofillHints.telephoneNumber],
+                                autofillHints: const [AutofillHints.username, AutofillHints.telephoneNumber],
                                 style: const TextStyle(fontSize: 16),
                                 decoration: InputDecoration(
-                                  hintText: _byEmail ? t.phEmail : t.phLoginPhone,
+                                  hintText: t.phLoginPhone,
                                   hintTextDirection: Directionality.of(context),
                                 ),
                                 validator: (v) => _validateLogin(v, t),
                                 errorBuilder: (_, error) => _errorLine(error),
                                 onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
-                              ),
-                              Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: TextButton(
-                                  key: const Key('login.mode'),
-                                  onPressed: _submitting ? null : _toggleMode,
-                                  child: Text(_byEmail ? t.loginUsePhone : t.loginUseEmail),
-                                ),
                               ),
                               const SizedBox(height: 16),
                               Text(t.passwordLabel, style: label),

@@ -89,7 +89,6 @@ class PosSupportTest extends TestCase
             'store_name' => 'Al-Noor Grocery',
             'owner_name' => 'Ali',
             'owner_phone' => '0599000021',
-            'email' => 'ali@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
         ])->assertCreated()->assertJsonPath('user.store.name', 'Al-Noor Grocery');

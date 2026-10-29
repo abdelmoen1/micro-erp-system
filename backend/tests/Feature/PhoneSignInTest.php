@@ -70,7 +70,7 @@ class PhoneSignInTest extends TestCase
     {
         $this->getJson('/api/v1/auth/options')->assertOk()->assertJsonPath('data.otp', false)->assertJsonPath('data.login', 'phone');
 
-        $this->signUp()->assertCreated()->assertJsonPath('user.phone', '0599123456')->assertJsonPath('user.email', null);
+        $this->signUp()->assertCreated()->assertJsonPath('user.phone', '0599123456')->assertJsonMissingPath('user.email');
         $this->app['auth']->forgetGuards();
 
         foreach (['0599123456', '+970 599 123 456'] as $login) {
@@ -95,15 +95,17 @@ class PhoneSignInTest extends TestCase
         $this->signUp(['owner_phone' => null])->assertUnprocessable()->assertJsonValidationErrors('owner_phone');
     }
 
-    public function test_an_older_account_still_signs_in_with_its_email_and_the_old_field(): void
+    public function test_an_email_never_signs_in(): void
     {
         $store = $this->makeStore();
-        $this->makeUser($store, 'owner', ['email' => 'old@shop.ps']);
+        $this->makeUser($store, 'owner', ['email' => 'old@shop.ps', 'phone' => '0599123456']);
 
-        $this->postJson('/api/v1/login', ['login' => 'old@shop.ps', 'password' => 'password'])->assertOk();
-        // App versions from before phone sign-in send `email`.
-        $this->postJson('/api/v1/login', ['email' => 'old@shop.ps', 'password' => 'password'])->assertOk();
-        $this->postJson('/api/v1/login', ['password' => 'password'])->assertUnprocessable()->assertJsonValidationErrors('login');
+        $this->postJson('/api/v1/login', ['login' => 'old@shop.ps', 'password' => 'password'])
+            ->assertUnauthorized()->assertJsonPath('code', 'INVALID_CREDENTIALS');
+        $this->postJson('/api/v1/login', ['email' => 'old@shop.ps', 'password' => 'password'])
+            ->assertUnprocessable()->assertJsonValidationErrors('login');
+        $this->postJson('/api/v1/login', ['login' => '0599123456', 'password' => 'password'])
+            ->assertOk()->assertJsonMissingPath('user.email');
     }
 
     public function test_with_codes_on_sign_up_needs_the_code_sent_to_the_number(): void
@@ -203,7 +205,7 @@ class PhoneSignInTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('otp_code');
     }
 
-    public function test_an_email_account_adds_its_phone_with_the_password(): void
+    public function test_an_account_changes_its_phone_with_the_password(): void
     {
         $store = $this->makeStore();
         $owner = $this->makeUser($store, 'owner', ['email' => 'old@shop.ps']);

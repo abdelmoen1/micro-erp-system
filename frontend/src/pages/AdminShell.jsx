@@ -117,7 +117,7 @@ export default function AdminShell() {
           <span className="topbar-title">إدارة المنصة</span>
           <span className="topbar-meta">
             <span className="role-chip">مالك المنصة</span>
-            <span className="m">{user.email}</span>
+            <span className="m">{user.phone}</span>
           </span>
         </header>
         <main id="main" className="content">

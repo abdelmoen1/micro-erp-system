@@ -52,7 +52,6 @@ export default function AdminStore() {
           </div>
           <dl className="facts">
             <Fact label="المالك" value={s.owner ? s.owner.name : "بلا مالك مسجّل"} />
-            <Fact label="بريد المالك" value={s.owner?.email} ltr />
             <Fact label="هاتف المالك" value={s.owner?.phone} ltr />
             <Fact label="هاتف المتجر" value={s.phone} ltr />
             <Fact label="العنوان" value={s.address} />
@@ -87,7 +86,7 @@ export default function AdminStore() {
                 <span>
                   <b>{m.name}</b>
                   <span className="cell-sub m" style={{ textAlign: "right" }}>
-                    {m.email}
+                    {m.phone}
                   </span>
                 </span>
                 <span className="member-meta">

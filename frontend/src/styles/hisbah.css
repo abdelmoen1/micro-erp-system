@@ -185,11 +185,6 @@ a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border
   border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--ink-muted);
 }
 .eye:hover { color: var(--deep); }
-.or { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-muted); }
-.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-.sso-slot { min-height: 44px; display: flex; justify-content: center; }
-.sso-slot[aria-disabled] { pointer-events: none; opacity: 0.6; }
-.sso-note { font-size: 13px; color: var(--ink-muted); text-align: center; }
 
 /* ---------- /login: form card beside the deep-teal panel ---------- */
 .signin { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 24px; background: var(--ground); }
@@ -206,8 +201,6 @@ a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border
 .signin-body .btn-p { margin-top: 6px; }
 .signin-alt { display: flex; gap: 6px; justify-content: center; font-size: 13px; color: var(--ink-muted); }
 .signin-alt a { color: var(--deep); }
-.signin-sso { display: flex; flex-direction: column; gap: 8px; padding-top: 20px; border-top: 1px solid var(--border); }
-.signin-sso p { font-size: 12px; text-align: center; color: var(--ink-muted); }
 .signin-panel {
   border-radius: 16px; background: var(--deep); color: var(--on-deep); padding: 36px 32px;
   display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;
@@ -297,7 +290,7 @@ a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border
 .fld-wrap:focus-within .fld-icon { color: var(--deep); }
 .fld-icon { transition: color 0.18s; }
 .signin-sub, .quiet-link, .signin-alt, .join-head p:last-child, .join-step-head p, .join-foot { color: var(--auth-muted); }
-.signin-sso, .stepper, .join-foot { border-color: var(--auth-line); }
+.stepper, .join-foot { border-color: var(--auth-line); }
 .panel-kicker { color: var(--auth-accent); }
 .signin-card, .join-card { box-shadow: 0 0 0 1px var(--auth-line), 0 30px 70px rgba(30, 58, 50, 0.08); }
 

@@ -7,7 +7,7 @@ import { expect, test } from "@playwright/test";
 const expiredUser = {
   id: 3,
   name: "سامي",
-  email: "sami@shop.ps",
+  phone: "0599777888",
   role: "owner",
   store: { id: 9, name: "بقالة الأمل", has_access: false, subscription_state: "inactive", trial_ends_at: "2026-10-20T08:00:00Z" },
 };
@@ -73,7 +73,7 @@ test("a 403 SUBSCRIPTION_EXPIRED on any store page goes to the renewal screen; n
   await expect(page.getByText("تواصل مع إدارة حسبة لتفعيل الاشتراك.")).toBeVisible();
   // Never a dead end: the store to name, and what happens after paying.
   await expect(page.getByText("اذكر هذه البيانات عند التواصل:")).toBeVisible();
-  await expect(page.getByText(expiredUser.email)).toBeVisible();
+  await expect(page.getByText(expiredUser.phone)).toBeVisible();
   await expect(page.getByRole("button", { name: "نسخ البيانات" })).toBeVisible();
   await expect(page.getByText("ثم اضغط «تحقق من جديد» لتعود إلى متجرك.", { exact: false })).toBeVisible();
 });

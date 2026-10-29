@@ -227,9 +227,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phPhone => 'Your mobile number, e.g. 0599123456';
 
   @override
-  String get phEmail => 'The email you sign in with, e.g. name@store.ps';
-
-  @override
   String get phCustomerName => 'The customer\'s name as you call them';
 
   @override
@@ -257,9 +254,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginHelper => 'Enter your shop account details';
 
   @override
-  String get emailLabel => 'Email';
-
-  @override
   String get passwordLabel => 'Password';
 
   @override
@@ -279,12 +273,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginSubmitting => 'Signing in…';
-
-  @override
-  String get emailRequired => 'Enter your email';
-
-  @override
-  String get emailInvalid => 'The email format is not valid';
 
   @override
   String get passwordRequired => 'Enter your password';
@@ -396,7 +384,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logoutConfirmBody =>
-      'You will need your email and password to sign in again.';
+      'You will need your mobile number and password to sign in again.';
 
   @override
   String get stay => 'Stay';
@@ -1711,7 +1699,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get registerStepAccountSub =>
-      'Choose the email and password you sign in to Hisbah with.';
+      'Choose the password you sign in to Hisbah with, together with your mobile number.';
 
   @override
   String get storeNameLabel => 'Store name';
@@ -1757,12 +1745,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get streetRequired => 'Enter the store\'s address.';
 
   @override
-  String get registerEmailRequired => 'Enter the email address.';
-
-  @override
-  String get registerEmailInvalid => 'The email address is not valid.';
-
-  @override
   String get passwordTooShort => 'The password needs at least 8 characters.';
 
   @override
@@ -1770,12 +1752,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'The confirmation does not match the password.';
 
   @override
-  String get emailTaken =>
-      'This email is already registered. Sign in, or use another email.';
+  String get phoneTaken =>
+      'This number is already registered. Sign in, or use another number.';
 
   @override
   String get registerFailedTaken =>
-      'The store was not created: the email is in use.';
+      'The store was not created: the mobile number is in use.';
 
   @override
   String get registerFailedValidation =>
@@ -1831,8 +1813,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Contact Hisbah to activate the subscription.';
 
   @override
-  String subscriptionWhatsappMessage(String store, String email) {
-    return 'Hello, I would like to activate the subscription of «$store» on Hisbah.\nEmail: $email';
+  String subscriptionWhatsappMessage(String store, String phone) {
+    return 'Hello, I would like to activate the subscription of «$store» on Hisbah.\nMobile: $phone';
   }
 
   @override
@@ -2036,8 +2018,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String subscriptionEmailLine(String email) {
-    return 'Email: $email';
+  String subscriptionPhoneLine(String phone) {
+    return 'Mobile: $phone';
   }
 
   @override
@@ -2213,12 +2195,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invite7d => '7 days';
-
-  @override
-  String get inviteEmail => 'Their email';
-
-  @override
-  String get inviteEmailHint => 'If typed, the link only works with this email';
 
   @override
   String get inviteCreate => 'Create invite link';
@@ -2864,25 +2840,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phLoginPhone => 'e.g. 0599123456';
 
   @override
-  String get loginEmailRequired => 'Enter the e-mail.';
-
-  @override
-  String get loginUseEmail => 'My older account uses an e-mail';
-
-  @override
-  String get loginUsePhone => 'Sign in with the mobile number';
-
-  @override
   String get loginForgot => 'Forgot the password?';
 
   @override
   String get ownerPhoneLabel => 'Your mobile number (you sign in with it)';
-
-  @override
-  String get emailOptionalLabel => 'E-mail (optional)';
-
-  @override
-  String get phEmailOptional => 'Not needed to sign in';
 
   @override
   String get otpTitle => 'Confirmation code';

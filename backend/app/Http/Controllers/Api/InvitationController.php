@@ -25,7 +25,6 @@ class InvitationController extends Controller
 
             $this->audit->record('invitation.created', $invitation, [
                 'role' => $invitation->role->value,
-                'email' => $invitation->email,
             ]);
 
             return [$invitation, $token];
@@ -35,7 +34,6 @@ class InvitationController extends Controller
             'message' => 'تم إنشاء الدعوة بنجاح',
             'invitation' => [
                 'id' => $invitation->id,
-                'email' => $invitation->email,
                 'role' => $invitation->role,
                 'expires_at' => $invitation->expires_at,
                 'token' => $token,

@@ -137,7 +137,7 @@ void main() {
       expect(find.text('إعادة المحاولة'), findsOneWidget);
     });
 
-    testWidgets('deactivated account: banner on the login screen, email kept, no token', (tester) async {
+    testWidgets('deactivated account: banner on the login screen, number kept, no token', (tester) async {
       api.on('POST /login', envelope(403, 'USER_INACTIVE'));
       await pumpApp(tester);
       await submitLogin(tester, '0599000002', 'pw');

@@ -13,14 +13,16 @@ import 'package:smartshop/features/auth/application/session_controller.dart';
 import 'package:smartshop/features/auth/data/auth_repository.dart';
 import 'package:smartshop/features/auth/domain/app_user.dart';
 
-const ownerEmail = String.fromEnvironment('LIVE_OWNER_EMAIL', defaultValue: 'owner@demo.test');
+const ownerPhone = String.fromEnvironment('LIVE_OWNER_PHONE', defaultValue: '0599000001');
 const ownerPassword = String.fromEnvironment('LIVE_OWNER_PASSWORD', defaultValue: 'password123');
 const _password = 'Hisbah-Live-2026!';
 
 void defineAuthScenarios({required String baseUrl, required KeyValueStore Function() newStore}) {
   final run = DateTime.now().millisecondsSinceEpoch;
-  final activeEmail = 'live.emp.$run@demo.test';
-  final inactiveEmail = 'live.off.$run@demo.test';
+  // Fresh numbers per run: 0597… for the active employee, 0598… for the deactivated one.
+  final digits = (run % 10000000).toString().padLeft(7, '0');
+  final activePhone = '0597$digits';
+  final inactivePhone = '0598$digits';
 
   ApiClient raw([String? token]) => ApiClient(baseUrl: baseUrl, readToken: () async => token);
 
@@ -41,16 +43,16 @@ void defineAuthScenarios({required String baseUrl, required KeyValueStore Functi
     return c.read(sessionProvider);
   }
 
-  Future<int> inviteEmployee(String ownerToken, String email) async {
-    final invitation = await raw(ownerToken).post('/invitations', body: {'email': email, 'role': 'employee'});
+  Future<int> inviteEmployee(String ownerToken, String phone) async {
+    final invitation = await raw(ownerToken).post('/invitations', body: {'role': 'employee'});
     final token = (invitation['invitation'] as Map)['token'];
     final created = await raw().post(
       '/register/invitation',
       auth: false,
       body: {
         'token': token,
-        'name': 'Live $email',
-        'email': email,
+        'name': 'Live $phone',
+        'phone': phone,
         'password': _password,
         'password_confirmation': _password,
       },
@@ -59,10 +61,10 @@ void defineAuthScenarios({required String baseUrl, required KeyValueStore Functi
   }
 
   setUpAll(() async {
-    final owner = await raw().post('/login', auth: false, body: {'email': ownerEmail, 'password': ownerPassword});
+    final owner = await raw().post('/login', auth: false, body: {'login': ownerPhone, 'password': ownerPassword});
     final ownerToken = owner['token'] as String;
-    await inviteEmployee(ownerToken, activeEmail);
-    final inactiveId = await inviteEmployee(ownerToken, inactiveEmail);
+    await inviteEmployee(ownerToken, activePhone);
+    final inactiveId = await inviteEmployee(ownerToken, inactivePhone);
     await raw(ownerToken).post('/users/$inactiveId/deactivate');
   });
 
@@ -71,10 +73,10 @@ void defineAuthScenarios({required String baseUrl, required KeyValueStore Functi
     final c = container(store);
     await settled(c);
 
-    await c.read(sessionProvider.notifier).login(activeEmail, _password);
+    await c.read(sessionProvider.notifier).login(activePhone, _password);
 
     final state = c.read(sessionProvider) as SignedIn;
-    expect(state.user.email, activeEmail);
+    expect(state.user.name, 'Live $activePhone');
     expect(state.user.role, UserRole.employee);
     expect(state.user.role.landsOnPos, isTrue);
     expect(await store.read(AuthRepository.tokenKey), isNotEmpty);
@@ -86,7 +88,7 @@ void defineAuthScenarios({required String baseUrl, required KeyValueStore Functi
     await settled(c);
 
     await expectLater(
-      c.read(sessionProvider.notifier).login(activeEmail, 'not-the-password'),
+      c.read(sessionProvider.notifier).login(activePhone, 'not-the-password'),
       throwsA(isA<InvalidCredentials>()),
     );
     expect(c.read(sessionProvider), isA<SignedOut>());
@@ -96,12 +98,12 @@ void defineAuthScenarios({required String baseUrl, required KeyValueStore Functi
   test('TC-1306-03 sixth failed attempt → 429 with Retry-After', () async {
     final c = container(newStore());
     await settled(c);
-    final email = 'live.nobody.$run@demo.test';
+    final nobody = '0596$digits';
 
     for (var i = 0; i < 5; i++) {
-      await expectLater(c.read(sessionProvider.notifier).login(email, 'x'), throwsA(isA<InvalidCredentials>()));
+      await expectLater(c.read(sessionProvider.notifier).login(nobody, 'x'), throwsA(isA<InvalidCredentials>()));
     }
-    final sixth = c.read(sessionProvider.notifier).login(email, 'x');
+    final sixth = c.read(sessionProvider.notifier).login(nobody, 'x');
     await expectLater(
       sixth,
       throwsA(isA<TooManyRequests>().having((f) => f.retryAfter.inSeconds, 'retryAfter', inInclusiveRange(1, 60))),
@@ -113,7 +115,7 @@ void defineAuthScenarios({required String baseUrl, required KeyValueStore Functi
     final c = container(store);
     await settled(c);
 
-    await expectLater(c.read(sessionProvider.notifier).login(inactiveEmail, _password), throwsA(isA<UserInactive>()));
+    await expectLater(c.read(sessionProvider.notifier).login(inactivePhone, _password), throwsA(isA<UserInactive>()));
     expect(c.read(sessionProvider), isA<AccountBlocked>());
     expect(await store.read(AuthRepository.tokenKey), isNull);
   });
@@ -122,7 +124,7 @@ void defineAuthScenarios({required String baseUrl, required KeyValueStore Functi
     final store = newStore();
     final c = container(store);
     await settled(c);
-    await c.read(sessionProvider.notifier).login(activeEmail, _password);
+    await c.read(sessionProvider.notifier).login(activePhone, _password);
     final token = await store.read(AuthRepository.tokenKey);
 
     await c.read(sessionProvider.notifier).logout();
@@ -135,7 +137,7 @@ void defineAuthScenarios({required String baseUrl, required KeyValueStore Functi
     final store = newStore();
     final first = container(store);
     await settled(first);
-    await first.read(sessionProvider.notifier).login(activeEmail, _password);
+    await first.read(sessionProvider.notifier).login(activePhone, _password);
     final userId = (first.read(sessionProvider) as SignedIn).user.id;
 
     final afterRestart = container(store); // same persisted storage, fresh app state

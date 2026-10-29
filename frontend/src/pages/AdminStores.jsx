@@ -56,7 +56,7 @@ export default function AdminStores() {
           <span className="cell-sub">{s.owner ? s.owner.name : "بلا مالك مسجّل"}</span>
           {s.owner ? (
             <span className="cell-sub m" style={{ textAlign: "right" }}>
-              {s.owner.email}
+              {s.owner.phone}
             </span>
           ) : null}
         </>

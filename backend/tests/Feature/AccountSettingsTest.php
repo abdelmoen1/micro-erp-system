@@ -43,10 +43,10 @@ class AccountSettingsTest extends TestCase
         $this->assertSame(1, AuditLog::where('action', 'user.password_changed')->count());
         $this->app['auth']->forgetGuards();
         $this->withToken($laptop)->getJson('/api/v1/me')->assertUnauthorized();
-        $this->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'New-pass-2026'])->assertOk();
+        $this->postJson('/api/v1/login', ['login' => $user->phone, 'password' => 'New-pass-2026'])->assertOk();
     }
 
-    public function test_a_google_only_account_has_no_password_to_change(): void
+    public function test_an_account_without_a_password_cannot_set_one_here(): void
     {
         $user = $this->makeUser($this->makeStore(), 'owner');
         $user->forceFill(['password' => null])->save();
@@ -55,7 +55,7 @@ class AccountSettingsTest extends TestCase
             'current_password' => 'anything',
             'password' => 'New-pass-2026',
             'password_confirmation' => 'New-pass-2026',
-        ])->assertUnprocessable()->assertJsonPath('errors.current_password.0', 'حسابك يدخل بحساب Google، فليس له كلمة مرور لتغييرها.');
+        ])->assertUnprocessable()->assertJsonPath('errors.current_password.0', 'هذا الحساب ليس له كلمة مرور لتغييرها. استعمل «نسيت كلمة المرور».');
 
         $this->assertNull($user->refresh()->password);
     }

@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
 const user = {
   id: 2,
   name: "علي أحمد",
-  email: "owner@example.com",
+  phone: "0599123456",
   role: "owner",
   store_id: 1,
   store: { id: 1, name: "بقالة النور", timezone: "Asia/Hebron" },
@@ -111,48 +111,18 @@ test("DEF-13: the three-step /join form creates the store through the API", asyn
   await page.getByRole("button", { name: "إنشاء المتجر" }).click();
 
   await expect(page).toHaveURL(/\/dashboard$/);
-  expect(sent).toEqual({ ...registration, email: "owner@example.com", password: "password123", password_confirmation: "password123" });
+  expect(sent).toEqual({ ...registration, password: "password123", password_confirmation: "password123" });
   expect(await page.evaluate(() => localStorage.getItem("token"))).toBe("3|new-owner");
 });
 
-test("a new Google user signs in, onboards and gets a store", async ({ page }) => {
-  let sent;
-  await mockSignedInApi(page);
-  // Stand-in for Google Identity Services: its button returns an ID token when clicked.
-  await page.route("https://accounts.google.com/gsi/client", (route) =>
-    route.fulfill({
-      contentType: "text/javascript",
-      body: `window.google = { accounts: { id: {
-        initialize(o) { window.__gsi = o; },
-        renderButton(el) {
-          const b = document.createElement("button");
-          b.type = "button"; b.textContent = "Google";
-          b.onclick = () => window.__gsi.callback({ credential: "id-token" });
-          el.appendChild(b);
-        },
-      } } };`,
-    }),
-  );
-  await page.route("**/api/v1/auth/google", (route) =>
-    route.fulfill({ json: { message: "x", onboarding: { token: "sealed", name: "علي أحمد", email: "owner@gmail.com" } } }),
-  );
-  await page.route("**/api/v1/register/google", async (route) => {
-    sent = route.request().postDataJSON();
-    await route.fulfill({ status: 201, json: { message: "x", user, token: "4|google-owner" } });
-  });
-
+test("sign-in and registration have no e-mail and no Google", async ({ page }) => {
   await page.goto("/login");
-  await page.getByRole("button", { name: "Google" }).click();
-
-  await expect(page).toHaveURL(/\/join$/);
-  await expect(page.getByLabel("اسم صاحب المتجر")).toHaveValue("علي أحمد");
+  await expect(page.getByLabel("رقم الجوال")).toBeVisible();
+  await expect(page.getByText(/البريد|Google/)).toHaveCount(0);
+  await page.goto("/join");
   await fillStoreSteps(page);
-  await expect(page.getByText("owner@gmail.com")).toBeVisible();
-  await page.getByRole("button", { name: "إنشاء المتجر" }).click();
-
-  await expect(page).toHaveURL(/\/dashboard$/);
-  expect(sent).toEqual({ onboarding_token: "sealed", ...registration });
-  expect(await page.evaluate(() => localStorage.getItem("token"))).toBe("4|google-owner");
+  await expect(page.getByLabel("كلمة المرور", { exact: true })).toBeVisible();
+  await expect(page.getByText(/البريد|Google/)).toHaveCount(0);
 });
 
 test("DEF-13: an API validation error is shown next to its field", async ({ page }) => {
@@ -160,9 +130,9 @@ test("DEF-13: an API validation error is shown next to its field", async ({ page
     route.fulfill({
       status: 422,
       json: {
-        message: "The email has already been taken.",
+        message: "هذا الرقم مسجّل لحساب آخر.",
         code: "VALIDATION_FAILED",
-        errors: { email: ["The email has already been taken."] },
+        errors: { owner_phone: ["هذا الرقم مسجّل لحساب آخر."] },
         correlation_id: "01TEST",
       },
     }),
@@ -173,9 +143,9 @@ test("DEF-13: an API validation error is shown next to its field", async ({ page
   await fillCredentials(page);
   await page.getByRole("button", { name: "إنشاء المتجر" }).click();
 
-  await expect(page.getByText("الخطوة 3 من 3")).toBeVisible();
-  await expect(page.getByText("هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.")).toBeVisible();
-  await expect(page.getByText("لم يُنشأ المتجر: البريد الإلكتروني مستخدم.")).toBeVisible();
+  await expect(page.getByText("الخطوة 2 من 3")).toBeVisible();
+  await expect(page.getByText("هذا الرقم مسجّل مسبقاً. سجّل الدخول، أو استخدم رقماً آخر.")).toBeVisible();
+  await expect(page.getByText("لم يُنشأ المتجر: رقم الجوال مستخدم.")).toBeVisible();
   await expect(page).toHaveURL(/\/join$/);
   expect(await page.evaluate(() => localStorage.getItem("token"))).toBeNull();
 });
@@ -211,9 +181,8 @@ async function fillStoreSteps(page) {
   await page.getByRole("button", { name: "التالي" }).click();
 }
 
-/** Step 3 of /join with email and password. */
+/** Step 3 of /join: the password. */
 async function fillCredentials(page) {
-  await page.getByLabel("البريد الإلكتروني").fill("owner@example.com");
   await page.getByLabel("كلمة المرور", { exact: true }).fill("password123");
   await page.getByLabel("تأكيد كلمة المرور", { exact: true }).fill("password123");
 }

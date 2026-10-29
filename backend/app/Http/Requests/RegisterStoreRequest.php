@@ -9,7 +9,7 @@ use Illuminate\Validation\Rules\Password;
 
 /**
  * A new store and its owner. The owner signs in with the mobile number (one account per number);
- * the e-mail is optional. With SMS codes on, the number is confirmed by the code it received.
+ * with SMS codes on, the number is confirmed by the code it received.
  */
 class RegisterStoreRequest extends FormRequest
 {
@@ -20,10 +20,7 @@ class RegisterStoreRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'owner_phone' => SignInPhone::prepare($this->input('owner_phone')),
-            'email' => $this->filled('email') ? $this->input('email') : null,
-        ]);
+        $this->merge(['owner_phone' => SignInPhone::prepare($this->input('owner_phone'))]);
     }
 
     public function rules(): array
@@ -36,7 +33,6 @@ class RegisterStoreRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:255'],
             ...StoreLocation::rules(),
             'timezone' => ['nullable', 'timezone:all'],
-            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'otp_code' => [Rule::requiredIf(fn() => app(OtpService::class)->enabled()), 'nullable', 'digits:6'],
         ];

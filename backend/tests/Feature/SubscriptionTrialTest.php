@@ -126,7 +126,7 @@ class SubscriptionTrialTest extends TestCase
         $store = $this->expiredStore();
         $this->makeUser($store, 'owner', ['email' => 'owner@shop.ps']);
 
-        $login = $this->postJson('/api/v1/login', ['email' => 'owner@shop.ps', 'password' => 'password'])
+        $login = $this->postJson('/api/v1/login', ['login' => $this->phoneOf('owner@shop.ps'), 'password' => 'password'])
             ->assertOk()
             ->assertJsonPath('user.store.has_access', false)
             ->assertJsonPath('user.store.subscription_state', 'inactive');
@@ -239,7 +239,7 @@ class SubscriptionTrialTest extends TestCase
         $this->makeUser($expired, 'owner', ['email' => 'expired@shop.ps']);
         $expired->forceFill(['status' => 'suspended'])->save();
 
-        $this->postJson('/api/v1/login', ['email' => 'expired@shop.ps', 'password' => 'password'])
+        $this->postJson('/api/v1/login', ['login' => $this->phoneOf('expired@shop.ps'), 'password' => 'password'])
             ->assertForbidden()->assertJsonPath('code', 'STORE_SUSPENDED');
 
         $paid = $this->makeStore('Paid');
