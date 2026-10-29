@@ -2,6 +2,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_failure.dart';
 import '../../../core/api/idempotency_key_store.dart';
 import '../../../core/money/fixed_point.dart';
+import '../../../core/offline/offline_store.dart';
 import '../domain/cart.dart';
 
 /// The body of POST /sales (docs/api/sales.http). Built from the cart; no prices are sent.
@@ -113,6 +114,7 @@ class SaleReceipt {
     this.voidedByName,
     this.voidReason,
     this.returned,
+    this.localRef,
   });
 
   factory SaleReceipt.fromJson(Map<String, dynamic> body) {
@@ -176,6 +178,11 @@ class SaleReceipt {
 
   /// Value of the goods returned against this sale (GET /sales/{id} only; null elsewhere).
   final Money? returned;
+
+  /// R2: saved on the phone, waiting for the sync. There is no server number (and no void) yet.
+  final String? localRef;
+
+  bool get isPending => localRef != null;
 
   bool get isVoided => status == 'voided';
 
@@ -251,6 +258,75 @@ class SaleRepository {
       if (isFinalAnswer(failure)) await _keys.complete(operationId);
       rethrow;
     }
+  }
+
+  /// US-1103 offline sale: committed on the phone in one transaction (the queued request and the
+  /// stock and balance it moves), with this checkout's Idempotency-Key as its
+  /// `client_transaction_id`. The payload is exactly the online body, so a checkout whose online
+  /// attempt timed out is still recorded once. The prices charged travel with it (decision A).
+  /// Throws [QueueFull] at the queue limit (BR-12); the key is then kept for the retry.
+  Future<SaleReceipt> queue(
+    SaleDraft draft, {
+    required String operationId,
+    required OfflineStore local,
+    required int? userId,
+    String? customerName,
+    String? customerPhone,
+    String? sellerName,
+  }) async {
+    final key = await _keys.keyFor(operationId);
+    final cart = draft.cart;
+    final debt = draft.debtPreview;
+    final item = await local.enqueue(
+      clientTransactionId: key,
+      userId: userId,
+      type: 'sale',
+      payload: draft.toJson(),
+      charged: [
+        for (final line in cart.lines)
+          {'product_id': line.product.id, 'sale_unit': line.pack ? 'pack' : null, 'unit_price': line.unitPrice.toApi()},
+      ],
+      summary: {
+        'total': cart.total.toApi(),
+        'paid': draft.paidAmount.toApi(),
+        'debt': debt.toApi(),
+        'method': draft.paymentMethod,
+        'customer_name': customerName,
+        'lines': cart.lines.length,
+      },
+      effects: [
+        for (final line in cart.lines) OutboxEffect.stock(line.product.id, Quantity.milli(-line.baseQuantity.milli)),
+        if (debt.isPositive && draft.customerId != null) OutboxEffect.balance(draft.customerId!, debt),
+      ],
+    );
+    await _keys.complete(operationId);
+
+    return SaleReceipt(
+      id: 0,
+      localRef: item.localRef,
+      total: cart.total,
+      paid: draft.paidAmount,
+      debt: debt,
+      flags: const [],
+      warnings: const [],
+      lines: [
+        for (final line in cart.lines)
+          SaleLine(
+            name: line.product.name,
+            unit: line.product.unit,
+            quantity: line.quantity,
+            unitPrice: line.unitPrice,
+            lineTotal: line.total,
+            packSize: line.pack ? line.product.packSize : null,
+          ),
+      ],
+      paymentMethod: draft.paidAmount.isPositive ? draft.paymentMethod : null,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      sellerName: sellerName,
+      createdAt: item.occurredAt,
+      dueDate: draft.dueDate,
+    );
   }
 
   /// POST /sales/{id}/void (US-0503, owner / manager). Same key discipline as [submit]: one key per

@@ -8,19 +8,23 @@ import { session } from "../services/apiClient";
 // The newest published release is read at runtime, so a new APK needs no web deploy. Installed apps
 // then keep themselves current with over-the-air patches.
 const REPO = "abdelmoen1/micro-erp-system";
-const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`;
+// GitHub redirects this to the newest published release's hisbah.apk (attached by every release),
+// so the button serves the latest APK even when the API below cannot be read (rate limit, offline).
+const LATEST_APK = `https://github.com/${REPO}/releases/latest/download/hisbah.apk`;
 
 /** { url, version, sizeMb } of the newest published APK; the releases page when it cannot be read. */
 function useLatestApk() {
   return useQuery({
     queryKey: ["latest-apk"],
-    staleTime: 10 * 60_000,
+    staleTime: 60_000,
     retry: 1,
     queryFn: async ({ signal }) => {
-      const response = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { signal, headers: { Accept: "application/vnd.github+json" } });
+      const response = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { signal, cache: "no-store", headers: { Accept: "application/vnd.github+json" } });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const release = await response.json();
-      const apk = (release.assets ?? []).find((asset) => asset.name.endsWith(".apk"));
+      // The versioned file (hisbah-1.2.0_4.apk) names the download after its version.
+      const assets = (release.assets ?? []).filter((asset) => asset.name.endsWith(".apk"));
+      const apk = assets.find((asset) => asset.name !== "hisbah.apk") ?? assets[0];
       if (!apk) throw new Error("no apk");
       // Tags look like android-1.1.0_3: version 1.1.0, build 3.
       const version = release.tag_name.replace(/^android-/, "").replace("_", "+");
@@ -31,18 +35,18 @@ function useLatestApk() {
 
 function DownloadButton({ apk, className = "btn btn-p" }) {
   return (
-    <a className={className} href={apk.data?.url ?? RELEASES_PAGE} rel="noopener noreferrer" download={apk.data ? "" : undefined}>
+    <a className={className} href={apk.data?.url ?? LATEST_APK} rel="noopener noreferrer" download>
       <Icon name="download" size={18} />
       تنزيل التطبيق
-      {apk.data ? <span className="m"> ({apk.data.sizeMb} MB)</span> : null}
+      {apk.data ? <span className="app-dl-size m">{apk.data.sizeMb} MB</span> : null}
     </a>
   );
 }
 
 const STEPS = [
-  ["نزّل التطبيق على جوالك", "افتح هذه الصفحة من متصفح جوال أندرويد واضغط «تنزيل التطبيق»."],
-  ["اسمح بالتثبيت", "عند فتح الملف يسألك أندرويد عن السماح بالتثبيت من هذا المصدر؛ اسمح ثم اضغط «تثبيت»."],
-  ["ادخل بنفس حسابك", "افتح حسبة وادخل ببريدك وكلمة مرورك هنا، وسيأخذك «دليل الاستخدام» لإضافة أول صنف وعمل أول فاتورة بالباركود."],
+  ["نزّل التطبيق", "من متصفح جوال أندرويد."],
+  ["اسمح بالتثبيت", "وافق على التثبيت من هذا المصدر."],
+  ["ادخل بنفس حسابك", "نفس البريد وكلمة المرور."],
 ];
 
 function Steps() {
@@ -103,26 +107,27 @@ export function AppDownloadCard() {
     <section className="card panel app-card" aria-labelledby="app-card-title">
       <div className="app-card-head">
         <span className="app-card-ic" aria-hidden="true">
-          <Icon name="phone" size={26} strokeWidth={1.8} />
+          <Icon name="phone" size={24} strokeWidth={1.8} />
         </span>
         <span>
           <h2 id="app-card-title">تطبيق حسبة على الجوال</h2>
           <small>
-            البيع بالباركود من الجوال، وكل شيء يصل هنا فوراً.
+            البيع بالباركود من الجوال، وكل شيء يصل هنا فوراً
             {apk.data ? (
               <>
-                {" "}
-                آخر نسخة <span className="m">{apk.data.version}</span> لأندرويد.
+                {" · "}أندرويد <span className="m">{apk.data.version.split("+")[0]}</span>
               </>
             ) : null}
           </small>
         </span>
-        <DownloadButton apk={apk} />
-        <button type="button" className="btn btn-t btn-sm" onClick={() => toggle(true)}>
-          إخفاء
+        <button type="button" className="app-card-hide" onClick={() => toggle(true)} aria-label="إخفاء" title="إخفاء">
+          <Icon name="close" size={18} />
         </button>
       </div>
-      <Steps />
+      <div className="app-card-body">
+        <Steps />
+        <DownloadButton apk={apk} className="btn btn-p app-dl" />
+      </div>
     </section>
   );
 }

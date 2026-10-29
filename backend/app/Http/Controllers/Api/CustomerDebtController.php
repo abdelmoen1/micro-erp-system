@@ -71,8 +71,14 @@ class CustomerDebtController extends Controller
             $validated['notes'] ?? null,
         );
 
+        return self::paidResponse($result, isset($validated['amount']));
+    }
+
+    /** The 201 body of a customer payment; the offline sync (US-1101) answers with the same one. */
+    public static function paidResponse(array $result, bool $withAmount)
+    {
         return response()->json([
-            'message' => isset($validated['amount'])
+            'message' => $withAmount
                 ? 'تم تسجيل الدفعة بنجاح.'
                 : 'تم تسديد جميع ديون العميل بنجاح.',
             'data' => $result,

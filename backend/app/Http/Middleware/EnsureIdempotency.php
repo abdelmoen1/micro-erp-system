@@ -46,13 +46,14 @@ class EnsureIdempotency
             (int) $user->store_id,
             $user->id,
             strtolower($key),
-            $this->fingerprint($methodPath, $request->all()),
+            self::fingerprint($methodPath, $request->all()),
             $methodPath,
             fn() => $next($request),
         );
     }
 
-    private function fingerprint(string $methodPath, array $input): string
+    /** Also used by the offline sync, so a queued request matches its own online attempt. */
+    public static function fingerprint(string $methodPath, array $input): string
     {
         return hash('sha256', $methodPath . '|' . json_encode(self::sortKeys($input)));
     }

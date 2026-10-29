@@ -49,6 +49,24 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Phones only (64- and 32-bit ARM): x86_64 serves emulators and Chromebooks and added 30 MB.
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
+    }
+
+    // Native libraries are compressed in the APK (about 49 MB down to 23 MB) and extracted on
+    // install, as Flutter apps did before AGP 3.6. Halves the download from the website.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+            // Shorebird's release build ignores ndk.abiFilters, so the x86 engines (12.7 MB, emulators
+            // and Chromebooks only) are dropped here as well: no shop phone runs them.
+            excludes += listOf("lib/x86_64/**", "lib/x86/**")
+            // The sqlite3 package's build hook (pulled in by sqflite_common_ffi, a test-only
+            // dependency) bundles its own SQLite; the app's sqflite uses Android's, so it is never loaded.
+            excludes += "lib/**/libsqlite3.so"
+        }
     }
 
     signingConfigs {

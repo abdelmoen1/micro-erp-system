@@ -3,8 +3,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import HisbahLogo from "../components/HisbahLogo";
 import Icon from "../components/Icon";
+import { canManage } from "../lib/domain";
 import { initialOf } from "../lib/format";
 import { session } from "../services/apiClient";
+import { useSyncConflicts } from "../services/backoffice";
 import { logout } from "../services/dashboard";
 
 const ROLE_LABEL = { owner: "مالك المتجر", manager: "مدير", employee: "موظف" };
@@ -18,6 +20,8 @@ const NAV = [
   { label: "الديون", icon: "debts", to: "/debts" },
   { label: "المدفوعات", icon: "payments", to: "/payments" },
   { label: "الموظفون", icon: "staff", to: "/staff", ownerOnly: true },
+  // R2: what the phones sent offline and the server held or flagged (SCR-W-18).
+  { label: "مراجعة المزامنة", icon: "upload", to: "/sync", managerOnly: true, count: true },
   { label: "الإعدادات", icon: "settings", to: "/settings" },
 ];
 
@@ -29,6 +33,10 @@ export default function AppShell() {
   const [leaving, setLeaving] = useState(false);
   const user = session.user() ?? {};
   const role = user.role ?? "employee";
+  const manager = canManage(user);
+  // One small page just for the badge; employees never ask (the endpoint is Owner / Manager only).
+  const syncOpen = useSyncConflicts({ status: "open", per_page: 1 }, manager);
+  const openSync = syncOpen.data?.open_count ?? 0;
 
   const signOut = async () => {
     setLeaving(true);
@@ -53,11 +61,16 @@ export default function AppShell() {
         </div>
         <div className="navwrap">
           <nav id="w5-nav" className="nav" aria-label="القائمة الرئيسية">
-            {NAV.filter((item) => !item.ownerOnly || role === "owner").map((item) =>
+            {NAV.filter((item) => (!item.ownerOnly || role === "owner") && (!item.managerOnly || manager)).map((item) =>
               item.to ? (
                 <NavLink key={item.label} to={item.to} end={item.to === "/dashboard"} onClick={() => setOpen(false)}>
                   <Icon name={item.icon} size={20} strokeWidth={1.7} />
                   <span>{item.label}</span>
+                  {item.count && openSync > 0 ? (
+                    <span className="nav-count" aria-label={`${openSync} بانتظار المراجعة`}>
+                      {openSync}
+                    </span>
+                  ) : null}
                 </NavLink>
               ) : (
                 <span key={item.label} className="soon" aria-disabled="true">

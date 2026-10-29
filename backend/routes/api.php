@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StockAdjustmentController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\SupportTicketController;
+use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\Admin\OverviewController as AdminOverviewController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\StoreController as AdminStoreController;
@@ -157,5 +158,12 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
         '/payment-groups/{paymentGroupId}/reverse',
         [PaymentController::class, 'reverseGroup']
     )->middleware('idempotent');
+
+    // R2 offline sync (doc 16). The batch carries one Idempotency-Key per item, each run through
+    // the same idempotency layer as POST /sales and pay-all, so the route itself has none.
+    Route::get('sync/bootstrap', [SyncController::class, 'bootstrap']);
+    Route::post('sync/batch', [SyncController::class, 'batch'])->middleware('throttle:60,1');
+    Route::get('sync/conflicts', [SyncController::class, 'conflicts']);
+    Route::post('sync/conflicts/{conflict}/resolve', [SyncController::class, 'resolve'])->middleware('idempotent');
     }); // subscribed
 });

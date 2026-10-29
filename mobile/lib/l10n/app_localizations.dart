@@ -4753,6 +4753,282 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'من {date}'**
   String legacySince(String date);
+
+  /// No description provided for @offlineSavedBanner.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال — البيع والدفعات تُحفظ على الهاتف وتُرسل عند عودة الإنترنت'**
+  String get offlineSavedBanner;
+
+  /// No description provided for @offlineSavedBannerCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال — {count} عملية محفوظة على الهاتف بانتظار الإرسال'**
+  String offlineSavedBannerCount(int count);
+
+  /// No description provided for @syncSynced.
+  ///
+  /// In ar, this message translates to:
+  /// **'متزامن'**
+  String get syncSynced;
+
+  /// No description provided for @syncSyncing.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ المزامنة…'**
+  String get syncSyncing;
+
+  /// No description provided for @syncPending.
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار المزامنة ({count})'**
+  String syncPending(int count);
+
+  /// No description provided for @syncOfflinePending.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير متصل · {count}'**
+  String syncOfflinePending(int count);
+
+  /// No description provided for @syncNeedsReview.
+  ///
+  /// In ar, this message translates to:
+  /// **'يحتاج مراجعة ({count})'**
+  String syncNeedsReview(int count);
+
+  /// No description provided for @syncNow.
+  ///
+  /// In ar, this message translates to:
+  /// **'مزامنة الآن'**
+  String get syncNow;
+
+  /// No description provided for @syncTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المزامنة'**
+  String get syncTitle;
+
+  /// No description provided for @syncOfflineTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال · {count} عملية بانتظار الإرسال'**
+  String syncOfflineTitle(int count);
+
+  /// No description provided for @syncAllSent.
+  ///
+  /// In ar, this message translates to:
+  /// **'كل العمليات وصلت إلى الخادم'**
+  String get syncAllSent;
+
+  /// No description provided for @syncStuck.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} عملية تعذّر إرسالها عدة مرات. تواصل مع الدعم إن استمر ذلك.'**
+  String syncStuck(int count);
+
+  /// No description provided for @syncHeldTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أوقفها الخادم للمراجعة ({count})'**
+  String syncHeldTitle(int count);
+
+  /// No description provided for @syncHeldHelp.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُحذف. يراجعها المالك أو المدير من موقع حسبة على الويب.'**
+  String get syncHeldHelp;
+
+  /// No description provided for @syncHeldPayment.
+  ///
+  /// In ar, this message translates to:
+  /// **'الدفعة أكبر من رصيد العميل الآن على الخادم.'**
+  String get syncHeldPayment;
+
+  /// No description provided for @syncHeldClock.
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت العملية خارج المدة المسموحة. راجع ساعة الهاتف.'**
+  String get syncHeldClock;
+
+  /// No description provided for @syncPendingTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار الإرسال'**
+  String get syncPendingTitle;
+
+  /// No description provided for @syncNothingPending.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا شيء بانتظار الإرسال.'**
+  String get syncNothingPending;
+
+  /// No description provided for @syncItemSale.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيع'**
+  String get syncItemSale;
+
+  /// No description provided for @syncItemCreditSale.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيع بالدين'**
+  String get syncItemCreditSale;
+
+  /// No description provided for @syncItemPayment.
+  ///
+  /// In ar, this message translates to:
+  /// **'دفعة'**
+  String get syncItemPayment;
+
+  /// No description provided for @syncItemStuck.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر الإرسال {count} مرة'**
+  String syncItemStuck(int count);
+
+  /// No description provided for @queueWarnBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} عملية بانتظار المزامنة من أصل {limit}. اتصل بالإنترنت وزامن الآن.'**
+  String queueWarnBody(int count, int limit);
+
+  /// No description provided for @queueFullTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'امتلأت قائمة الانتظار — لا يمكن حفظ بيع أو دفعة جديدة دون اتصال'**
+  String get queueFullTitle;
+
+  /// No description provided for @queueFullBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'على الهاتف 1000 عملية لم تُرسل بعد. اتصل بالإنترنت لإرسالها، ثم تابع. البحث والعرض يعملان.'**
+  String get queueFullBody;
+
+  /// No description provided for @receiptPendingNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'محفوظ على الهاتف بانتظار الإرسال. يُرسل تلقائيًا عند عودة الإنترنت.'**
+  String get receiptPendingNote;
+
+  /// No description provided for @receiptLocalRef.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم مؤقت'**
+  String get receiptLocalRef;
+
+  /// No description provided for @payPendingNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'محفوظة على الهاتف ({ref}) وتُرسل عند عودة الإنترنت.'**
+  String payPendingNote(String ref);
+
+  /// No description provided for @logoutPendingTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} عملية لم تُرسل بعد'**
+  String logoutPendingTitle(int count);
+
+  /// No description provided for @logoutPendingBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن تسجيل الخروج قبل إرسالها، حتى لا تضيع ولا تُنسب لحساب آخر.'**
+  String get logoutPendingBody;
+
+  /// No description provided for @formByCarton.
+  ///
+  /// In ar, this message translates to:
+  /// **'بالكرتونة'**
+  String get formByCarton;
+
+  /// No description provided for @cartonsLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'عدد الكراتين عندك'**
+  String get cartonsLabel;
+
+  /// No description provided for @cartonsHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'كم كرتونة على الرف'**
+  String get cartonsHint;
+
+  /// No description provided for @looseLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'قطع زيادة'**
+  String get looseLabel;
+
+  /// No description provided for @looseHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'من كرتونة مفتوحة'**
+  String get looseHint;
+
+  /// No description provided for @cartonPriceLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر الكرتونة (جملة)'**
+  String get cartonPriceLabel;
+
+  /// No description provided for @piecePriceLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر القطعة الواحدة'**
+  String get piecePriceLabel;
+
+  /// No description provided for @cartonTotal.
+  ///
+  /// In ar, this message translates to:
+  /// **'المجموع: {total} قطعة'**
+  String cartonTotal(int total);
+
+  /// No description provided for @cartonsInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عدداً صحيحاً، 0 أو أكثر.'**
+  String get cartonsInvalid;
+
+  /// No description provided for @looseTooMany.
+  ///
+  /// In ar, this message translates to:
+  /// **'القطع الزيادة أقل من {size}؛ وإلا فهي كرتونة كاملة.'**
+  String looseTooMany(int size);
+
+  /// No description provided for @prodColName.
+  ///
+  /// In ar, this message translates to:
+  /// **'المنتج'**
+  String get prodColName;
+
+  /// No description provided for @prodColCartons.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكراتين'**
+  String get prodColCartons;
+
+  /// No description provided for @prodColPieces.
+  ///
+  /// In ar, this message translates to:
+  /// **'عدد القطع'**
+  String get prodColPieces;
+
+  /// No description provided for @prodColPrice.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر القطعة'**
+  String get prodColPrice;
+
+  /// No description provided for @cartonsCell.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} كرتونة'**
+  String cartonsCell(int count);
+
+  /// No description provided for @cartonsCellLoose.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} كرتونة + {pieces} قطعة'**
+  String cartonsCellLoose(int count, int pieces);
 }
 
 class _AppLocalizationsDelegate

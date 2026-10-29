@@ -13,6 +13,7 @@ use App\Models\StockMovement;
 use App\Models\User;
 use App\Support\BusinessClock;
 use App\Support\Money;
+use App\Support\OfflineSale;
 use App\Support\Pack;
 use App\Support\Quantity;
 use Illuminate\Support\Collection;
@@ -31,6 +32,15 @@ class SaleService
 {
     public const FLAG_NEGATIVE_STOCK = 'NEGATIVE_STOCK';
 
+    // Offline sales only (doc 16 §4): recorded, then reviewed by a manager.
+    public const FLAG_CREDIT_LIMIT_EXCEEDED = 'CREDIT_LIMIT_EXCEEDED';
+
+    public const FLAG_PRICE_CHANGED = 'PRICE_CHANGED';
+
+    public const FLAG_PRODUCT_INACTIVE = 'PRODUCT_INACTIVE';
+
+    public const FLAG_CUSTOMER_INACTIVE = 'CUSTOMER_INACTIVE';
+
     public function __construct(
         private readonly StockService $stock,
         private readonly AuditService $audit,
@@ -42,24 +52,27 @@ class SaleService
      *     confirm_over_limit?: bool} $data validated input; client prices are never read
      * @return array{invoice: Invoice, warnings: list<array<string, mixed>>}
      */
-    public function create(User $actor, array $data): array
+    public function create(User $actor, array $data, ?OfflineSale $offline = null): array
     {
-        return DB::transaction(function () use ($actor, $data) {
-            $customer = $this->lockCustomer($actor, $data['customer_id'] ?? null);
-            $products = $this->lockProducts($actor, $data['items']);
+        return DB::transaction(function () use ($actor, $data, $offline) {
+            // Offline (doc 16 §4): what no longer matches the server is a review flag, not a refusal.
+            $warnings = [];
 
-            $lines = $this->priceLines($data['items'], $products);
+            $customer = $this->lockCustomer($actor, $data['customer_id'] ?? null, $offline !== null, $warnings);
+            $products = $this->lockProducts($actor, $data['items'], $offline !== null, $warnings);
+
+            $lines = $this->priceLines($data['items'], $products, $offline, $warnings);
             $total = Money::sum(array_column($lines, 'total'));
             $paid = Money::of($data['paid_amount']);
             $debtAmount = Money::sub($total, $paid);
 
-            $this->validatePayment($actor, $data, $customer, $total, $paid, $debtAmount);
+            $this->validatePayment($actor, $data, $customer, $total, $paid, $debtAmount, $offline);
 
             $override = Money::isPositive($debtAmount)
-                ? $this->checkCreditLimit($actor, $customer, $debtAmount, (bool) ($data['confirm_over_limit'] ?? false))
+                ? $this->creditLimit($actor, $customer, $debtAmount, (bool) ($data['confirm_over_limit'] ?? false), $offline, $warnings)
                 : null;
 
-            $invoice = Invoice::create([
+            $invoice = new Invoice([
                 'store_id' => $actor->store_id,
                 'customer_id' => $customer?->id,
                 'total_amount' => $total,
@@ -70,9 +83,16 @@ class SaleService
                 'source' => InvoiceSource::SALE,
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $actor->id,
+                'synced_at' => $offline ? now() : null,
+                'device_id' => $offline?->deviceId,
             ]);
 
-            $warnings = [];
+            // BR-08: an offline sale counts on the day it happened, not the day it arrived.
+            if ($offline) {
+                $invoice->created_at = $offline->occurredAt;
+            }
+
+            $invoice->save();
 
             foreach ($lines as $line) {
                 $product = $line['product'];
@@ -131,13 +151,20 @@ class SaleService
                 'debt_id' => $debt?->id,
                 'debt_amount' => $debt ? $debtAmount : '0.00',
                 'flags' => array_values(array_unique(array_column($warnings, 'code'))),
-                'negative_stock_products' => array_column($warnings, 'product_id'),
-            ], $actor);
+                'negative_stock_products' => array_column(
+                    array_filter($warnings, fn(array $w) => $w['code'] === self::FLAG_NEGATIVE_STOCK),
+                    'product_id',
+                ),
+            ] + ($offline ? [
+                'offline' => true,
+                'device_id' => $offline->deviceId,
+                'occurred_at' => $offline->occurredAt->toIso8601String(),
+            ] : []), $actor);
 
             if ($override !== null) {
                 $this->audit->record('sale.credit_limit_overridden', $invoice, $override + [
                     'customer_id' => $customer->id,
-                ], $actor);
+                ] + ($offline ? ['offline' => true] : []), $actor);
             }
 
             return [
@@ -211,7 +238,7 @@ class SaleService
         });
     }
 
-    private function lockCustomer(User $actor, ?int $customerId): ?Customer
+    private function lockCustomer(User $actor, ?int $customerId, bool $offline, array &$warnings): ?Customer
     {
         if ($customerId === null) {
             return null;
@@ -225,8 +252,11 @@ class SaleService
             ->lockForUpdate()
             ->firstOrFail();
 
-        // US-0301 AC4: an inactive customer is never offered for a new sale.
-        if (!$customer->isActive()) {
+        // US-0301 AC4: an inactive customer is never offered for a new sale. Offline, the phone did
+        // not know yet: the sale happened, so it is recorded and flagged.
+        if (!$customer->isActive() && $offline) {
+            $warnings[] = ['code' => self::FLAG_CUSTOMER_INACTIVE, 'customer_id' => $customer->id, 'name' => $customer->name];
+        } elseif (!$customer->isActive()) {
             throw ValidationException::withMessages(['customer_id' => ['هذا العميل موقوف ولا يمكن البيع له. أعد تفعيله أولًا.']]);
         }
 
@@ -234,7 +264,7 @@ class SaleService
     }
 
     /** @return Collection<int, Product> keyed by id, locked in id order */
-    private function lockProducts(User $actor, array $items): Collection
+    private function lockProducts(User $actor, array $items, bool $offline, array &$warnings): Collection
     {
         $ids = collect($items)->pluck('product_id')->map(fn($id) => (int) $id)->unique()->sort()->values();
 
@@ -254,6 +284,8 @@ class SaleService
             if (!$product) {
                 // Another store's product is reported exactly like an unknown one (05 §2: no leak).
                 $errors["items.{$index}.product_id"] = ['المنتج غير موجود في متجرك.'];
+            } elseif (!$product->isActive() && $offline) {
+                $warnings[] = ['code' => self::FLAG_PRODUCT_INACTIVE, 'product_id' => $product->id, 'name' => $product->name];
             } elseif (!$product->isActive()) {
                 $errors["items.{$index}.product_id"] = ['هذا المنتج موقوف ولا يمكن بيعه.'];
             }
@@ -266,8 +298,11 @@ class SaleService
         return $products;
     }
 
-    /** Prices come from products.selling_price (US-0501 AC1); line total is rounded half-up. */
-    private function priceLines(array $items, Collection $products): array
+    /**
+     * Prices come from products.selling_price (US-0501 AC1); line total is rounded half-up. An
+     * offline sale keeps the price the cashier charged (doc 16 decision A) and flags a difference.
+     */
+    private function priceLines(array $items, Collection $products, ?OfflineSale $offline, array &$warnings): array
     {
         $lines = [];
         $errors = [];
@@ -293,6 +328,18 @@ class SaleService
             // The price of the unit actually sold: per carton for a carton line, never per piece.
             $unitPrice = Money::of($byPack ? $product->pack_price : $product->selling_price);
             $packSize = $byPack ? (int) $product->pack_size : null;
+            $charged = $offline?->chargedPrice($product->id, $item['sale_unit'] ?? null);
+
+            if ($charged !== null && Money::compare($charged, $unitPrice) !== 0) {
+                $warnings[] = [
+                    'code' => self::FLAG_PRICE_CHANGED,
+                    'product_id' => $product->id,
+                    'name' => $product->name,
+                    'charged' => $charged,
+                    'current' => $unitPrice,
+                ];
+                $unitPrice = $charged;
+            }
 
             $lines[] = [
                 'product' => $product,
@@ -318,6 +365,7 @@ class SaleService
         string $total,
         string $paid,
         string $debtAmount,
+        ?OfflineSale $offline,
     ): void {
         $errors = [];
 
@@ -336,7 +384,11 @@ class SaleService
             }
 
             $dueDate = $data['due_date'] ?? null;
-            $today = BusinessClock::forStore($actor->store)->now()->toDateString();
+            // An offline due date was chosen on the day of the sale, not the day it synced.
+            $clock = BusinessClock::forStore($actor->store);
+            $today = $offline
+                ? $offline->occurredAt->setTimezone($clock->timezone())->toDateString()
+                : $clock->now()->toDateString();
 
             if ($dueDate !== null && $dueDate < $today) {
                 $errors['due_date'] = ['تاريخ الاستحقاق لا يمكن أن يكون في الماضي.'];
@@ -347,6 +399,29 @@ class SaleService
 
         if ($errors !== []) {
             throw ValidationException::withMessages($errors);
+        }
+    }
+
+    /**
+     * Offline (D-03): the sale already happened, so a limit the phone could not see is a review
+     * flag. An owner / manager override confirmed on the phone is audited exactly as online.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function creditLimit(User $actor, Customer $customer, string $debtAmount, bool $confirmed, ?OfflineSale $offline, array &$warnings): ?array
+    {
+        if (!$offline) {
+            return $this->checkCreditLimit($actor, $customer, $debtAmount, $confirmed);
+        }
+
+        try {
+            return $this->checkCreditLimit($actor, $customer, $debtAmount, $confirmed);
+        } catch (ApiException $e) {
+            $details = $e->details;
+            unset($details['can_override']);
+            $warnings[] = ['code' => self::FLAG_CREDIT_LIMIT_EXCEEDED, 'customer_id' => $customer->id, 'name' => $customer->name] + $details;
+
+            return null;
         }
     }
 

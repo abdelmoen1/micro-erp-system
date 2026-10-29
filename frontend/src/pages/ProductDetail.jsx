@@ -4,7 +4,7 @@ import Icon from "../components/Icon";
 import { ConfirmSummary, Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, Field, Segments, StatusBadge } from "../components/ui";
 import { newIdempotencyKey, session } from "../services/apiClient";
 import { lookupCatalog, useAdjustStock, useMovements, useProduct, useProductStatus, useSaveProduct } from "../services/backoffice";
-import { canManage, stockState } from "../lib/domain";
+import { canManage, stockState, cartonPieces, cartonsLabel } from "../lib/domain";
 import { dateTime, latinDigits } from "../lib/format";
 
 const MOVEMENT = {
@@ -161,17 +161,25 @@ function ProductForm({ product, manager, onSaved }) {
   const [form, setForm] = useState(() => ({
     name: product?.name ?? "",
     barcode: product?.barcode ?? "",
-    unit: product?.unit ?? "piece",
+    // By the carton unless the product is weighed or already has no carton.
+    mode: product ? (product.unit === "kg" ? "kg" : product.pack_size ? "carton" : "piece") : "carton",
     selling_price: product?.selling_price ?? "",
     cost_price: product?.cost_price ?? "",
     current_stock: product ? product.current_stock : "0",
     minimum_stock: product?.minimum_stock ?? "",
-    has_pack: Boolean(product?.pack_size),
     pack_size: product?.pack_size ? String(product.pack_size) : "",
     pack_price: product?.pack_price ?? "",
+    cartons: "",
+    loose: "",
   }));
   const [match, setMatch] = useState(null);
+  const [tried, setTried] = useState(false);
   const save = useSaveProduct();
+  const unit = form.mode === "kg" ? "kg" : "piece";
+  const byCarton = form.mode === "carton";
+  // New products only: the stock is counted in cartons; afterwards it moves by sales and adjustments.
+  const countCartons = byCarton && !product;
+  const total = cartonPieces(form.pack_size, form.cartons, form.loose);
 
   // New products only: a barcode another store saved fills the shared name and unit; one already
   // in this store points to it instead (its stock changes by adjustment, not a second product).
@@ -182,41 +190,58 @@ function ProductForm({ product, manager, onSaved }) {
       const found = await lookupCatalog(code);
       setMatch(found);
       if (!found.product && found.catalog_product) {
-        setForm((f) => ({ ...f, name: found.catalog_product.name, unit: found.catalog_product.unit }));
+        const weighed = found.catalog_product.unit === "kg";
+        setForm((f) => ({ ...f, name: found.catalog_product.name, mode: weighed ? "kg" : f.mode === "kg" ? "carton" : f.mode }));
       }
     } catch {
       setMatch(null); // The server checks the barcode again on save.
     }
   };
-  const err = (field) => save.error?.fieldError?.(field);
+
+  // The carton count is checked here (the server only sees the worked-out pieces).
+  const size = /^\d{1,6}$/.test(String(form.pack_size).trim()) ? Number(form.pack_size) : null;
+  const localErrors = countCartons
+    ? {
+        cartons: /^\d{1,6}$/.test(form.cartons.trim()) ? null : "أدخل عدد الكراتين: عدد صحيح، 0 أو أكثر.",
+        loose:
+          form.loose.trim() && !/^\d{1,6}$/.test(form.loose.trim())
+            ? "أدخل عدداً صحيحاً."
+            : size && Number(form.loose || 0) >= size
+              ? `القطع الزيادة أقل من ${size}؛ وإلا فهي كرتونة كاملة.`
+              : null,
+      }
+    : {};
+  const err = (field) => (tried ? localErrors[field] : null) ?? save.error?.fieldError?.(field === "cartons" ? "current_stock" : field);
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
   // Numbers typed on an Arabic keyboard (٢٫٥) are kept as 2.5.
   const setNumber = (field) => (e) => setForm({ ...form, [field]: latinDigits(e.target.value) });
   const readOnly = !manager;
   const formRef = useRef(null);
-  const priceUnit = form.unit === "kg" ? "كيلو واحد" : "قطعة واحدة";
+  const priceUnit = unit === "kg" ? "كيلو واحد" : "قطعة واحدة";
 
-  // A refused save moves to the first field the server marked, so the message is never off-screen.
+  // A refused save moves to the first field marked, so the message is never off-screen.
   useEffect(() => {
-    if (save.error && Object.keys(save.error.errors ?? {}).length) formRef.current?.querySelector('[aria-invalid="true"]')?.focus();
-  }, [save.error]);
+    if ((save.error && Object.keys(save.error.errors ?? {}).length) || tried) formRef.current?.querySelector('[aria-invalid="true"]')?.focus();
+  }, [save.error, tried]);
 
   const submit = (e) => {
     e.preventDefault();
+    setTried(true);
+    if (Object.values(localErrors).some(Boolean)) return;
     const body = {
       name: form.name.trim(),
       barcode: form.barcode.trim() || null,
-      unit: form.unit,
+      unit,
       selling_price: String(form.selling_price).trim(),
       cost_price: String(form.cost_price).trim() || null,
       ...(String(form.minimum_stock).trim() ? { minimum_stock: String(form.minimum_stock).trim() } : {}),
       // A carton is sent whole or cleared whole (both null), so it can never be half-set.
-      ...(form.unit === "piece" && form.has_pack
+      ...(byCarton
         ? { pack_size: String(form.pack_size).trim(), pack_price: String(form.pack_price).trim() }
         : product?.pack_size
           ? { pack_size: null, pack_price: null }
           : {}),
-      ...(product ? {} : { current_stock: String(form.current_stock).trim() || "0" }),
+      ...(product ? {} : { current_stock: countCartons ? String(total ?? "") : String(form.current_stock).trim() || "0" }),
     };
     save.mutate(product ? { id: product.id, ...body } : body, { onSuccess: onSaved });
   };
@@ -249,36 +274,51 @@ function ProductForm({ product, manager, onSaved }) {
         <span className="field-label">يُباع</span>
         <Segments
           label="الوحدة"
-          value={form.unit}
+          value={form.mode}
           options={[
+            ["carton", "بالكرتونة"],
             ["piece", "بالقطعة"],
             ["kg", "بالوزن (كغ)"],
           ]}
-          onChange={(unit) => !readOnly && setForm({ ...form, unit })}
+          onChange={(mode) => !readOnly && setForm({ ...form, mode })}
         />
-        {err("unit") ? <span className="field-error">{err("unit")}</span> : <span className="field-hint">{form.unit === "kg" ? "الأسعار لكل كيلو، والكمية حتى 3 خانات عشرية." : "الأسعار والكمية بالقطعة."}</span>}
+        {err("unit") ? (
+          <span className="field-error">{err("unit")}</span>
+        ) : (
+          <span className="field-hint">
+            {form.mode === "kg"
+              ? "الأسعار لكل كيلو، والكمية حتى 3 خانات عشرية."
+              : byCarton
+                ? "تعدّ الكراتين، ونحسب نحن عدد القطع. البيع بالقطعة أو بالكرتونة."
+                : "الأسعار والكمية بالقطعة."}
+          </span>
+        )}
       </div>
       <div className="grid2">
-        <Field id="pf-price" label="السعر للزبون (سعر البيع)" required={!readOnly} error={err("selling_price")} hint={`ما يدفعه الزبون مقابل ${priceUnit}.`}>
+        <Field id="pf-price" label={byCarton ? "سعر القطعة الواحدة" : "السعر للزبون (سعر البيع)"} required={!readOnly} error={err("selling_price")} hint={`ما يدفعه الزبون مقابل ${priceUnit}.`}>
           <input id="pf-price" className="fld ltr m" inputMode="decimal" value={form.selling_price} onChange={setNumber("selling_price")} readOnly={readOnly} />
         </Field>
         <Field id="pf-cost" label="تكلفة الصنف عليك (سعر الشراء)" optional error={err("cost_price")} hint="ما تدفعه أنت للمورّد. لا يظهر للزبون.">
           <input id="pf-cost" className="fld ltr m" inputMode="decimal" value={form.cost_price ?? ""} onChange={setNumber("cost_price")} readOnly={readOnly} />
         </Field>
-        <Field
-          id="pf-stock"
-          label={product ? "الكمية الموجودة" : "الكمية الموجودة الآن"}
-          required={!product && !readOnly}
-          error={err("current_stock")}
-          hint={product ? "يتغير بالبيع أو بتعديل الكمية مع سبب." : null}
-        >
-          <input id="pf-stock" className="fld ltr m" inputMode={form.unit === "kg" ? "decimal" : "numeric"} value={form.current_stock} onChange={setNumber("current_stock")} readOnly={Boolean(product) || readOnly} />
-        </Field>
-        <Field id="pf-min" label="نبّهني لمّا توصل الكمية إلى" optional error={err("minimum_stock")} hint="يظهر الصنف في «مخزون منخفض» عند هذا الرقم أو أقل.">
-          <input id="pf-min" className="fld ltr m" inputMode={form.unit === "kg" ? "decimal" : "numeric"} value={form.minimum_stock} onChange={setNumber("minimum_stock")} readOnly={readOnly} />
+      </div>
+      {byCarton ? <CartonFields form={form} setNumber={setNumber} err={err} readOnly={readOnly} countCartons={countCartons} total={total} /> : null}
+      <div className="grid2">
+        {countCartons ? null : (
+          <Field
+            id="pf-stock"
+            label={product ? "الكمية الموجودة" : "الكمية الموجودة الآن"}
+            required={!product && !readOnly}
+            error={err("current_stock")}
+            hint={product ? (byCarton ? `${cartonsLabel({ ...product, pack_size: size ?? product.pack_size })}. يتغير بالبيع أو بتعديل الكمية مع سبب.` : "يتغير بالبيع أو بتعديل الكمية مع سبب.") : null}
+          >
+            <input id="pf-stock" className="fld ltr m" inputMode={unit === "kg" ? "decimal" : "numeric"} value={form.current_stock} onChange={setNumber("current_stock")} readOnly={Boolean(product) || readOnly} />
+          </Field>
+        )}
+        <Field id="pf-min" label="نبّهني لمّا توصل الكمية إلى" optional error={err("minimum_stock")} hint="بالقطعة. يظهر الصنف في «مخزون منخفض» عند هذا الرقم أو أقل.">
+          <input id="pf-min" className="fld ltr m" inputMode={unit === "kg" ? "decimal" : "numeric"} value={form.minimum_stock} onChange={setNumber("minimum_stock")} readOnly={readOnly} />
         </Field>
       </div>
-      {form.unit === "piece" ? <PackFields form={form} setForm={setForm} err={err} readOnly={readOnly} /> : null}
       <ErrorBanner error={save.error && !Object.keys(save.error.errors ?? {}).length ? save.error : null} />
       {save.isSuccess && product ? (
         <p role="status" className="banner tone-success">
@@ -305,41 +345,46 @@ function ProductForm({ product, manager, onSaved }) {
 const toAgorot = (v) => (/^\d{1,8}(\.\d{1,2})?$/.test(String(v).trim()) ? Math.round(Number(v) * 100) : null);
 
 /**
- * Wholesale carton (piece products only): how many pieces in one carton and the price of the whole
- * carton. The hint shows what one piece costs inside the carton, so a per-piece price typed in the
- * carton field is obvious before the server refuses it.
+ * The carton: how many pieces in one and the wholesale price of a whole carton. A new product also
+ * counts its cartons on hand and the extra pieces of an opened one; the total in pieces is shown
+ * before saving. The price hint shows what one piece costs inside the carton, so a per-piece price
+ * typed in the carton field is obvious before the server refuses it.
  */
-function PackFields({ form, setForm, err, readOnly }) {
-  const size = /^\d{1,5}$/.test(String(form.pack_size).trim()) ? Number(form.pack_size) : null;
+function CartonFields({ form, setNumber, err, readOnly, countCartons, total }) {
+  const size = /^\d{1,6}$/.test(String(form.pack_size).trim()) ? Number(form.pack_size) : null;
   const packCents = toAgorot(form.pack_price);
   const pieceCents = toAgorot(form.selling_price);
   const perPiece = size && size > 1 && packCents ? packCents / size : null;
   const hint =
     perPiece === null
-      ? "سعر الكرتونة كاملة، وليس سعر القطعة. المخزون يبقى بالقطعة: بيع كرتونة واحدة يخصم كل قطعها."
+      ? "سعر الكرتونة كاملة، وليس سعر القطعة."
       : `القطعة داخل الكرتونة بـ ${(perPiece / 100).toFixed(2)} ₪${pieceCents ? ` مقابل ${(pieceCents / 100).toFixed(2)} ₪ بالمفرد` : ""}.`;
   return (
-    <div className="field" style={{ gap: 10 }}>
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={form.has_pack}
-          disabled={readOnly}
-          onChange={(e) => setForm({ ...form, has_pack: e.target.checked })}
-        />
-        <span>يُباع بالكرتونة أيضاً (جملة)</span>
-      </label>
-      {form.has_pack ? (
-        <div className="grid2">
-          <Field id="pf-pack-size" label="عدد القطع في الكرتونة" error={err("pack_size")}>
-            <input id="pf-pack-size" className="fld ltr m" inputMode="numeric" value={form.pack_size} onChange={(e) => setForm({ ...form, pack_size: latinDigits(e.target.value) })} readOnly={readOnly} />
+    <>
+      <div className="grid2">
+        {countCartons ? (
+          <Field id="pf-cartons" label="عدد الكراتين عندك" required={!readOnly} error={err("cartons")}>
+            <input id="pf-cartons" className="fld ltr m" inputMode="numeric" value={form.cartons} onChange={setNumber("cartons")} readOnly={readOnly} />
           </Field>
-          <Field id="pf-pack-price" label="سعر الكرتونة كاملة" error={err("pack_price")} hint={err("pack_price") ? null : hint}>
-            <input id="pf-pack-price" className="fld ltr m" inputMode="decimal" value={form.pack_price} onChange={(e) => setForm({ ...form, pack_price: latinDigits(e.target.value) })} readOnly={readOnly} />
+        ) : null}
+        <Field id="pf-pack-size" label="عدد القطع في الكرتونة" required={!readOnly} error={err("pack_size")}>
+          <input id="pf-pack-size" className="fld ltr m" inputMode="numeric" value={form.pack_size} onChange={setNumber("pack_size")} readOnly={readOnly} />
+        </Field>
+        {countCartons ? (
+          <Field id="pf-loose" label="قطع زيادة" optional error={err("loose")} hint="من كرتونة مفتوحة.">
+            <input id="pf-loose" className="fld ltr m" inputMode="numeric" value={form.loose} onChange={setNumber("loose")} readOnly={readOnly} />
           </Field>
-        </div>
+        ) : null}
+        <Field id="pf-pack-price" label="سعر الكرتونة (جملة)" required={!readOnly} error={err("pack_price")} hint={err("pack_price") ? null : hint}>
+          <input id="pf-pack-price" className="fld ltr m" inputMode="decimal" value={form.pack_price} onChange={setNumber("pack_price")} readOnly={readOnly} />
+        </Field>
+      </div>
+      {countCartons && total !== null ? (
+        <p role="status" className="carton-total">
+          المجموع: <b className="m">{total}</b> قطعة
+        </p>
       ) : null}
-    </div>
+    </>
   );
 }
 

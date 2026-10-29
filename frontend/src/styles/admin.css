@@ -82,12 +82,23 @@
 .app-card { margin-block: 16px; }
 .app-card-folded { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--accent-600); }
 .app-card-folded > span { flex: 1; font-weight: 600; color: var(--ink); }
-.app-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; }
-.app-card-head > span:nth-child(2) { flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px; }
+.app-card-head { display: flex; align-items: center; gap: 14px; }
+.app-card-head > span:nth-child(2) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .app-card-head h2 { font-size: 17px; font-weight: 700; }
 .app-card-head small { font-size: 14px; color: var(--ink-muted); line-height: 1.6; }
-.app-card-ic { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; background: var(--brand-tint); color: var(--accent-600); }
-.app-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.app-card-ic { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--brand-tint); color: var(--accent-600); }
+/* Hide: a quiet × in the corner, not a second action next to the download. */
+.app-card-hide { flex: none; align-self: flex-start; width: 36px; height: 36px; border: 0; border-radius: 10px; display: grid; place-items: center; background: transparent; color: var(--ink-muted); cursor: pointer; }
+.app-card-hide:hover { background: var(--brand-tint); color: var(--ink); }
+.app-card-hide:focus-visible { outline: 2px solid var(--accent-600); outline-offset: 2px; }
+/* Steps on the start side, the one download button at the end of the same row. */
+.app-card-body { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.app-card-body .app-steps { flex: 1 1 520px; }
+.app-dl { flex: none; }
+.app-dl-size { padding-inline-start: 10px; margin-inline-start: 4px; border-inline-start: 1px solid rgb(255 255 255 / 0.35); font-weight: 600; opacity: 0.9; }
+@media (max-width: 640px) { .app-dl { flex: 1 1 100%; justify-content: center; } }
+.app-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; }
+@media (max-width: 760px) { .app-steps { grid-template-columns: 1fr; } }
 .app-steps li { display: flex; gap: 10px; align-items: flex-start; }
 .app-steps li > span:last-child { display: flex; flex-direction: column; gap: 2px; }
 .app-steps small { font-size: 13px; color: var(--ink-muted); line-height: 1.6; }
@@ -226,3 +237,26 @@ select.fld { padding-inline: 12px; }
   .dlg.is-alert .dlg-actions { flex-direction: column; }
 }
 @keyframes sheet-in { from { transform: translateY(100%); } }
+
+/* SCR-W-18 sync review: stacked cells, the reasons a row is listed, and the resolution choices. */
+.cell-stack { display: grid; gap: 4px; justify-items: start; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.reason-list { margin: 0; padding-inline-start: 18px; font-size: 14px; max-width: 34ch; }
+.reason-list li + li { margin-top: 4px; }
+.resolve-options { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+.resolve-option {
+  display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; cursor: pointer;
+  border: 1.5px solid var(--border-strong); border-radius: 12px; background: var(--raised);
+}
+.resolve-option > span { display: grid; gap: 2px; }
+.resolve-option input { margin-top: 4px; accent-color: var(--primary); }
+.resolve-option.is-on { background: var(--primary-tint); border-color: var(--primary); }
+.resolve-option:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* New product by the carton: the worked-out stock in pieces, shown before saving. */
+.carton-total { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--primary-tint); color: var(--primary-pressed); font-size: 15px; font-weight: 600; }
+.carton-total b { font-size: 17px; }
+.cartons-cell { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stock-negative, .stock-out { color: var(--error-fg); font-weight: 700; }
+.stock-low { color: var(--warning-fg); font-weight: 700; }
+.stock-inactive { color: var(--ink-muted); }

@@ -310,6 +310,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         t.submitRejectedTitle,
         state.serverMessage ?? t.serverError,
       ),
+      SubmitState.queueFull => (StatusTone.error, Icons.cloud_off_rounded, t.queueFullTitle, t.queueFullBody),
       _ => null,
     };
     if (outcome != null) {
