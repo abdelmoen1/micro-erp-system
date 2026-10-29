@@ -112,6 +112,19 @@ A `201` from `POST /sales` carries `flags` (a list of codes) and `warnings` (one
 | Flag | Meaning | Client behaviour |
 |---|---|---|
 | `NEGATIVE_STOCK` | The sale took a product below zero (D-27). Each warning has `product_id`, `name` and `balance_after` | Show a non-blocking notice on the receipt; managers review negative stock later |
+| `CREDIT_LIMIT_EXCEEDED` | **Offline sync only:** the sale took the customer above the limit and no override was confirmed on the phone. The warning carries the credit-limit `details` | Listed for review on the web (SCR-W-18) |
+| `PRICE_CHANGED` | **Offline sync only:** the price changed after the phone's last refresh; the sale keeps the price charged. The warning has `charged` and `current` | Listed for review |
+| `PRODUCT_INACTIVE` / `CUSTOMER_INACTIVE` | **Offline sync only:** the product or customer was deactivated after the phone's last refresh; the sale is recorded | Listed for review |
+
+### Offline sync (R2, doc 16)
+
+`POST /sync/batch` answers 200 with one result per item (`applied`, `duplicate`, `flagged`, `conflict`, `rejected_validation`). A held item's `error.code` is one of the codes of the matching online request, or:
+
+| HTTP | `code` | Where | Client behaviour |
+|---|---|---|---|
+| 422 | `OCCURRED_AT_OUT_OF_RANGE` | A queued item's `occurred_at` is more than 30 days old or more than 10 minutes ahead (`errors.occurred_at`). Held for review | Show it in the held list; check the phone's clock |
+| 409 | `SYNC_CONFLICT_RESOLVED` | `POST /sync/conflicts/{id}/resolve` on an item already resolved | Refresh the list |
+| 422 | `SYNC_RESOLUTION_NOT_ALLOWED` | The resolution does not fit the item's kind (flagged → acknowledged; held payment → applied, refunded, voided; rejected → voided) | Offer the allowed actions only |
 
 ### Optional `details`
 

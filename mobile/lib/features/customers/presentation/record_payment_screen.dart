@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
+import '../../../core/offline/offline_store.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/latin_digits.dart';
 import '../../../core/widgets/ltr_value.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/application/session_controller.dart';
 import '../../sale/presentation/sale_widgets.dart';
+import '../../sync/application/sync_engine.dart';
 import '../domain/customer.dart';
 import '../domain/ledger.dart';
 
@@ -78,10 +81,17 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     if (value == null || value > widget.remaining) return;
     final keys = ref.read(idempotencyKeyStoreProvider);
     final key = await keys.keyFor(_operationId);
+    // A key already sent once must keep its exact body (a pay-all has no amount).
+    final sentBefore = _phase == _Phase.uncertain;
     setState(() {
       _phase = _Phase.busy;
       _error = null;
     });
+
+    // R2 (doc 16 §5): offline, or behind waiting items, the payment joins the queue (FIFO).
+    final sync = ref.read(syncEngineProvider.notifier);
+    if (await sync.shouldQueue()) return _queue(t, key, value, sendAmount: !_full || !sentBefore);
+
     try {
       final receipt = await ref
           .read(customerRepositoryProvider)
@@ -92,7 +102,12 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         _receipt = receipt;
         _phase = _Phase.done;
       });
-    } on NetworkFailure {
+    } on NetworkFailure catch (failure) {
+      if (await sync.canQueue) {
+        // Offline, a "pay all" is sent with the amount the customer handed over, unless the
+        // request may already have reached the server with its original body.
+        return _queue(t, key, value, sendAmount: !_full || !(failure.maybeDelivered || sentBefore));
+      }
       // The outcome is unknown: keep the key so the retry is the same operation.
       if (mounted) setState(() => _phase = _Phase.uncertain);
     } on ServerError {
@@ -107,6 +122,36 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
           ValidationFailed(:final fieldErrors) => fieldErrors['amount']?.firstOrNull ?? failure.message,
           _ => failure.message ?? t.serverError,
         };
+      });
+    }
+  }
+
+  /// US-1103: the payment is committed on the phone and the customer's balance drops at once.
+  Future<void> _queue(AppLocalizations t, String key, Money value, {required bool sendAmount}) async {
+    final session = ref.read(sessionProvider);
+    try {
+      final receipt = await ref.read(customerRepositoryProvider).queuePayment(
+        local: ref.read(offlineStoreProvider),
+        customer: widget.customer,
+        userId: session is SignedIn ? session.user.id : null,
+        method: _method,
+        idempotencyKey: key,
+        amount: value,
+        remainingBefore: widget.remaining,
+        sendAmount: sendAmount,
+      );
+      await ref.read(idempotencyKeyStoreProvider).complete(_operationId);
+      await ref.read(syncEngineProvider.notifier).enqueued();
+      if (!mounted) return;
+      setState(() {
+        _receipt = receipt;
+        _phase = _Phase.done;
+      });
+    } on QueueFull {
+      if (!mounted) return;
+      setState(() {
+        _phase = _Phase.form;
+        _error = t.queueFullBody;
       });
     }
   }
@@ -149,6 +194,15 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
           textAlign: TextAlign.center,
           style: const TextStyle(color: HisbahColors.inkMuted, fontSize: 15),
         ),
+        if (receipt.pending) ...[
+          const SizedBox(height: 16),
+          ToneCard(
+            key: const Key('payment.pending'),
+            tone: StatusTone.offline,
+            icon: Icons.cloud_upload_outlined,
+            title: t.payPendingNote(receipt.localRef!),
+          ),
+        ],
         const SizedBox(height: 24),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),

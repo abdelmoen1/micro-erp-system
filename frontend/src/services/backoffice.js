@@ -176,6 +176,21 @@ export function useOpeningDebt() {
   });
 }
 
+// ---------------------------------------------------------------- offline sync review (SCR-W-18)
+export const useSyncConflicts = (filters, enabled = true) =>
+  useQuery({ queryKey: queryKeys.sync.list(filters), queryFn: page(`/sync/conflicts${qs(filters)}`), placeholderData: (p) => p, enabled });
+
+/** Acknowledge, apply, refund or void an offline item; "apply" records payments, so it is idempotent. */
+export function useResolveSyncConflict() {
+  const invalidate = useInvalidateLedger();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, resolution, note, key }) =>
+      apiIdempotent("POST", `/sync/conflicts/${id}/resolve`, { resolution, ...(note ? { note } : {}) }, { idempotencyKey: key }),
+    onSuccess: () => Promise.all([invalidate(), client.invalidateQueries({ queryKey: queryKeys.sync.all })]),
+  });
+}
+
 // ---------------------------------------------------------------- staff (W-15)
 export const useStaff = () => useQuery({ queryKey: queryKeys.staff.all, queryFn: data("/users") });
 

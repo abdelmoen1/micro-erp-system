@@ -7,6 +7,7 @@ class CustomerSummary {
     required this.overdue,
     required this.openDebts,
     required this.creditLimit,
+    this.local = false,
   });
 
   factory CustomerSummary.fromJson(Map<String, dynamic> json) => CustomerSummary(
@@ -20,6 +21,9 @@ class CustomerSummary {
   final Money overdue;
   final int openDebts;
   final Money? creditLimit;
+
+  /// Offline: from the phone's cache, with queued sales and payments applied (R2).
+  final bool local;
 }
 
 /// One open debt on M-08 (GET /debts?customer_id=…&bucket=open).
@@ -88,8 +92,13 @@ class PaymentRow {
 
 /// The server's answer to a payment: what was paid and what is left (US-0705).
 class PaymentReceipt {
-  const PaymentReceipt({required this.paid, required this.remainingAfter});
+  const PaymentReceipt({required this.paid, required this.remainingAfter, this.localRef});
 
   final Money paid;
   final Money remainingAfter;
+
+  /// Saved on the phone and waiting for the sync (R2); the server has not seen it yet.
+  final String? localRef;
+
+  bool get pending => localRef != null;
 }

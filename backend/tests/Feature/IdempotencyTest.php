@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\SaleReturn;
 use App\Models\StockMovement;
 use App\Models\Store;
+use App\Models\SyncConflict;
 use App\Models\User;
 use App\Services\IdempotencyService;
 use App\Services\SaleService;
@@ -42,6 +43,7 @@ class IdempotencyTest extends TestCase
         'POST api/v1/sales/{invoice}/returns',
         'POST api/v1/invoices/{invoice}/returns',
         'POST api/v1/stock-adjustments',
+        'POST api/v1/sync/conflicts/{conflict}/resolve',
     ];
 
     private Store $store;
@@ -241,6 +243,7 @@ class IdempotencyTest extends TestCase
             'sale return' => ['return'],
             'sale return via the invoices alias' => ['return-alias'],
             'stock adjustment' => ['stock-adjustment'],
+            'resolve a held offline payment' => ['resolve-sync-conflict'],
         ];
     }
 
@@ -317,6 +320,20 @@ class IdempotencyTest extends TestCase
                 'quantity' => -3,
                 'reason' => 'Shelf count',
             ], $state],
+            'resolve-sync-conflict' => (function () use ($customer, $state) {
+                $conflict = SyncConflict::create([
+                    'store_id' => $this->store->id,
+                    'client_transaction_id' => (string) Str::uuid(),
+                    'type' => 'payment',
+                    'kind' => SyncConflict::KIND_CONFLICT,
+                    'customer_id' => $customer->id,
+                    'amount' => '30.00',
+                    'payload' => ['payload' => ['customer_id' => $customer->id, 'amount' => '30.00', 'method' => 'cash']],
+                    'reason' => 'PAYMENT_EXCEEDS_REMAINING',
+                ]);
+
+                return ['POST', "/api/v1/sync/conflicts/{$conflict->id}/resolve", ['resolution' => 'applied'], $state];
+            })(),
         };
     }
 }

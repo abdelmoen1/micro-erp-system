@@ -2,8 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
+import '../../../core/offline/offline_store.dart';
 import '../../../core/providers.dart';
+import '../../auth/application/session_controller.dart';
 import '../../auth/domain/app_user.dart';
+import '../../sync/application/sync_engine.dart';
 import '../../customers/domain/customer.dart';
 import '../data/sale_repository.dart';
 import '../domain/cart.dart';
@@ -44,6 +47,9 @@ enum SubmitState {
 
   /// Any other final refusal; [CheckoutState.serverMessage] says why.
   rejected,
+
+  /// Offline with 1000 items waiting (BR-12): nothing more is saved until the queue syncs.
+  queueFull,
 }
 
 /// Field-level problems found before sending (UI-AC-03).
@@ -295,14 +301,49 @@ class CheckoutController extends Notifier<CheckoutState> {
       confirmOverLimit: override,
     );
 
+    // R2 (doc 16 §5): offline, or with items still waiting, the sale joins the queue (FIFO).
+    final sync = ref.read(syncEngineProvider.notifier);
+    if (await sync.shouldQueue()) return _queue(draft, operationId, override: override);
+
     try {
       final receipt = await ref.read(saleRepositoryProvider).submit(draft, operationId: operationId);
       if (!ref.mounted) return const CheckoutStayed();
       state = state.copyWith(submit: SubmitState.idle, clearOperation: true, afterUncertain: false);
       return CheckoutDone(receipt, afterUncertain: wasUncertain, overridden: override);
+    } on NetworkFailure catch (failure) {
+      if (!ref.mounted) return const CheckoutStayed();
+      // Sent or not, the same key and body go into the queue: the server records it once (AC-06).
+      if (await sync.canQueue) return _queue(draft, operationId, override: override);
+      return _onFailure(failure, override: override);
     } on ApiFailure catch (failure) {
       if (!ref.mounted) return const CheckoutStayed();
       return _onFailure(failure, override: override);
+    }
+  }
+
+  /// US-1103: the local commit. The receipt says it waits for the sync; the engine sends it as
+  /// soon as the server is reachable.
+  Future<CheckoutOutcome> _queue(SaleDraft draft, String operationId, {required bool override}) async {
+    final session = ref.read(sessionProvider);
+    final user = session is SignedIn ? session.user : null;
+    try {
+      final receipt = await ref.read(saleRepositoryProvider).queue(
+        draft,
+        operationId: operationId,
+        local: ref.read(offlineStoreProvider),
+        userId: user?.id,
+        customerName: state.customer?.name,
+        customerPhone: state.customer?.phone,
+        sellerName: user?.name,
+      );
+      if (!ref.mounted) return const CheckoutStayed();
+      await ref.read(syncEngineProvider.notifier).enqueued();
+      if (!ref.mounted) return const CheckoutStayed();
+      state = state.copyWith(submit: SubmitState.idle, clearOperation: true, afterUncertain: false);
+      return CheckoutDone(receipt, afterUncertain: false, overridden: override);
+    } on QueueFull {
+      if (ref.mounted) state = state.copyWith(submit: SubmitState.queueFull);
+      return const CheckoutStayed();
     }
   }
 

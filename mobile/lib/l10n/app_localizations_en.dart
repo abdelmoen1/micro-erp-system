@@ -2680,4 +2680,124 @@ class AppLocalizationsEn extends AppLocalizations {
   String legacySince(String date) {
     return 'Since $date';
   }
+
+  @override
+  String get offlineSavedBanner =>
+      'Offline — sales and payments are saved on the phone and sent when the internet is back';
+
+  @override
+  String offlineSavedBannerCount(int count) {
+    return 'Offline — $count saved on the phone, waiting to be sent';
+  }
+
+  @override
+  String get syncSynced => 'Synced';
+
+  @override
+  String get syncSyncing => 'Syncing…';
+
+  @override
+  String syncPending(int count) {
+    return 'Waiting to sync ($count)';
+  }
+
+  @override
+  String syncOfflinePending(int count) {
+    return 'Offline · $count';
+  }
+
+  @override
+  String syncNeedsReview(int count) {
+    return 'Needs review ($count)';
+  }
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get syncTitle => 'Sync';
+
+  @override
+  String syncOfflineTitle(int count) {
+    return 'Offline · $count waiting to be sent';
+  }
+
+  @override
+  String get syncAllSent => 'Everything has reached the server';
+
+  @override
+  String syncStuck(int count) {
+    return '$count could not be sent after many tries. Contact support if this continues.';
+  }
+
+  @override
+  String syncHeldTitle(int count) {
+    return 'Held by the server for review ($count)';
+  }
+
+  @override
+  String get syncHeldHelp =>
+      'Nothing was deleted. The owner or a manager reviews them on the Hisbah website.';
+
+  @override
+  String get syncHeldPayment =>
+      'The payment is more than the customer owes on the server now.';
+
+  @override
+  String get syncHeldClock =>
+      'The time of this operation is out of range. Check the phone clock.';
+
+  @override
+  String get syncPendingTitle => 'Waiting to be sent';
+
+  @override
+  String get syncNothingPending => 'Nothing is waiting.';
+
+  @override
+  String get syncItemSale => 'Sale';
+
+  @override
+  String get syncItemCreditSale => 'Credit sale';
+
+  @override
+  String get syncItemPayment => 'Payment';
+
+  @override
+  String syncItemStuck(int count) {
+    return 'Failed $count times';
+  }
+
+  @override
+  String queueWarnBody(int count, int limit) {
+    return '$count of $limit operations are waiting. Connect and sync now.';
+  }
+
+  @override
+  String get queueFullTitle =>
+      'The queue is full — no new sale or payment can be saved offline';
+
+  @override
+  String get queueFullBody =>
+      '1000 operations on this phone have not been sent yet. Connect to send them, then continue. Searching and viewing still work.';
+
+  @override
+  String get receiptPendingNote =>
+      'Saved on the phone. It is sent automatically when the internet is back.';
+
+  @override
+  String get receiptLocalRef => 'Temporary no.';
+
+  @override
+  String payPendingNote(String ref) {
+    return 'Saved on the phone ($ref); sent when the internet is back.';
+  }
+
+  @override
+  String logoutPendingTitle(int count) {
+    return '$count operations not sent yet';
+  }
+
+  @override
+  String get logoutPendingBody =>
+      'You cannot sign out until they are sent, so none is lost or credited to another account.';
 }

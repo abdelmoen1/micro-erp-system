@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\SyncConflict;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as RouteDefinition;
 use Illuminate\Support\Facades\Route;
@@ -74,6 +75,14 @@ class StoreIsolationSweepTest extends TestCase
             'paymentGroupId' => $group,
             'user' => $theirStaff->id,
             'product' => $this->makeProduct($theirs)->id,
+            'conflict' => SyncConflict::create([
+                'store_id' => $theirs->id,
+                'client_transaction_id' => (string) Str::uuid(),
+                'type' => 'payment',
+                'kind' => SyncConflict::KIND_CONFLICT,
+                'payload' => [],
+                'reason' => 'PAYMENT_EXCEEDS_REMAINING',
+            ])->id,
         ];
     }
 

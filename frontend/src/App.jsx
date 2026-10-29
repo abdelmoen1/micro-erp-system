@@ -18,6 +18,7 @@ const SaleDetail = lazy(() => import("./pages/SaleDetail"));
 const Debts = lazy(() => import("./pages/Collections").then((m) => ({ default: m.Debts })));
 const Payments = lazy(() => import("./pages/Collections").then((m) => ({ default: m.Payments })));
 const Staff = lazy(() => import("./pages/Staff"));
+const SyncReview = lazy(() => import("./pages/SyncReview"));
 const Settings = lazy(() => import("./pages/Settings"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const SubscriptionExpired = lazy(() => import("./pages/SubscriptionExpired"));
@@ -57,6 +58,7 @@ export default function App() {
               <Route path="/debts" element={<Debts />} />
               <Route path="/payments" element={<Payments />} />
               <Route path="/staff" element={<Staff />} />
+              <Route path="/sync" element={<SyncReview />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
