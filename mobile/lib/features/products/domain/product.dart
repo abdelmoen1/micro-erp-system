@@ -64,4 +64,13 @@ class Product {
 
   /// The price of one whole carton.
   Money get packMoney => Money.parse(packPrice ?? '0');
+
+  /// Whole cartons on hand and the pieces left over (50 pieces, 24 a carton → (2, 2)). Null for a
+  /// product without a carton, and below zero, where a carton count means nothing.
+  (int, int)? get cartonsOnHand {
+    final size = packSize;
+    if (!hasPack || size == null || size < 1 || currentStock.isNegative || !currentStock.isWhole) return null;
+    final pieces = currentStock.milli ~/ 1000;
+    return (pieces ~/ size, pieces % size);
+  }
 }

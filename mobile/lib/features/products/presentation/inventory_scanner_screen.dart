@@ -784,10 +784,15 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
   final _stock = TextEditingController();
   final _packSize = TextEditingController();
   final _packPrice = TextEditingController();
-  ProductUnit _unit = ProductUnit.piece;
+  final _cartons = TextEditingController();
+  final _loose = TextEditingController();
 
-  /// «يُباع بالكرتونة أيضاً» is on (piece products only); off by default to keep the form short.
-  bool _pack = false;
+  /// By the carton unless the code or the shared catalog says it is weighed.
+  StockEntry _entry = StockEntry.carton;
+
+  ProductUnit get _unit => _entry.unit;
+
+  bool get _byCarton => _entry == StockEntry.carton;
   bool _saving = false;
   Map<String, String> _errors = const {};
   String? _banner;
@@ -807,19 +812,18 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
     final data = _data;
     _name.text = widget.sheet.catalogName ?? data?.name ?? '';
     _price.text = data?.sellingPrice ?? '';
-    _unit = widget.sheet.catalogUnit ?? data?.unit ?? ProductUnit.piece;
-    _opened = (_name.text, _price.text, _unit);
+    _entry = StockEntry.of(widget.sheet.catalogUnit ?? data?.unit ?? ProductUnit.piece);
+    _opened = (_name.text, _price.text, _entry);
     widget.onGuard(_mayClose);
   }
 
   /// What the form held when it opened (prefilled from the code or the catalog).
-  late final (String, String, ProductUnit) _opened;
+  late final (String, String, StockEntry) _opened;
 
   /// Something was typed or changed since the form opened.
   bool get _edited =>
-      (_name.text, _price.text, _unit) != _opened ||
-      _pack ||
-      [_cost, _stock, _packSize, _packPrice].any((c) => c.text.trim().isNotEmpty);
+      (_name.text, _price.text, _entry) != _opened ||
+      [_cost, _stock, _packSize, _packPrice, _cartons, _loose].any((c) => c.text.trim().isNotEmpty);
 
   /// Closing loses unsaved typing, so it asks first; never while a save is on its way.
   Future<bool> _mayClose() async {
@@ -829,7 +833,7 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
 
   @override
   void dispose() {
-    for (final c in [_name, _price, _cost, _stock, _packSize, _packPrice]) {
+    for (final c in [_name, _price, _cost, _stock, _packSize, _packPrice, _cartons, _loose]) {
       c.dispose();
     }
     super.dispose();
@@ -837,7 +841,10 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
 
   Future<void> _save(AppLocalizations t) async {
     if (_saving) return;
-    final stock = _stock.text.trim().isEmpty ? '0' : _stock.text;
+    // By the carton the server gets the pieces: cartons × per carton + extras.
+    final stock = _byCarton
+        ? '${cartonPieces(_packSize.text, _cartons.text, _loose.text)}'
+        : (_stock.text.trim().isEmpty ? '0' : _stock.text);
     final errors = productFormErrors(
       t,
       unit: _unit,
@@ -845,9 +852,11 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
       price: _price.text,
       cost: _cost.text,
       stock: stock,
-      pack: _pack,
       packSize: _packSize.text,
       packPrice: _packPrice.text,
+      cartonEntry: _byCarton,
+      cartons: _cartons.text,
+      loose: _loose.text,
     );
     setState(() {
       _errors = errors;
@@ -865,8 +874,8 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
           sellingPrice: _price.text,
           costPrice: _cost.text,
           currentStock: stock,
-          packSize: _pack ? _packSize.text : null,
-          packPrice: _pack ? _packPrice.text : null,
+          packSize: _byCarton ? _packSize.text : null,
+          packPrice: _byCarton ? _packPrice.text : null,
         ),
       );
       if (!mounted) return;
@@ -883,7 +892,8 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
         _uncertain = false;
         _errors = {
           for (final e in failure.fieldErrors.entries)
-            if (e.value.isNotEmpty && e.key != 'barcode') e.key: e.value.first,
+            if (e.value.isNotEmpty && e.key != 'barcode')
+              (_byCarton && e.key == 'current_stock' ? 'cartons' : e.key): e.value.first,
         };
         final barcodeError = failure.fieldErrors['barcode'];
         _banner = barcodeError != null && barcodeError.isNotEmpty
@@ -992,21 +1002,13 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
         ),
         Text(t.formSoldBy, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        OptionRow(
-          children: [
-            OptionButton(
-              key: const Key('form.unit.piece'),
-              label: t.formByPiece,
-              selected: _unit == ProductUnit.piece,
-              onTap: _saving ? null : () => setState(() => _unit = ProductUnit.piece),
-            ),
-            OptionButton(
-              key: const Key('form.unit.kg'),
-              label: t.formByKg,
-              selected: _unit == ProductUnit.kg,
-              onTap: _saving ? null : () => setState(() => _unit = ProductUnit.kg),
-            ),
-          ],
+        StockEntryChoice(
+          value: _entry,
+          enabled: !_saving,
+          onChanged: (entry) => setState(() {
+            _entry = entry;
+            _errors = const {};
+          }),
         ),
         const SizedBox(height: 12),
         // Two short money fields side by side; they stack only when the text is very large.
@@ -1014,7 +1016,7 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
           builder: (context, c) {
             final price = _QuickField(
               fieldKey: 'selling_price',
-              label: t.formPrice,
+              label: _byCarton ? t.piecePriceLabel : t.formPrice,
               helper: _unit == ProductUnit.kg ? t.formPriceHelpKg : t.formPriceHelpPiece,
               controller: _price,
               number: true,
@@ -1049,40 +1051,42 @@ class _NewProductBodyState extends ConsumerState<_NewProductBody> {
             );
           },
         ),
-        if (_unit == ProductUnit.piece)
-          PackSection(
-            enabled: !_saving,
-            open: _pack,
-            onOpen: (open) => setState(() => _pack = open),
+        if (_byCarton)
+          CartonStockSection(
             size: _packSize,
-            price: _packPrice,
+            cartons: _cartons,
+            loose: _loose,
+            packPrice: _packPrice,
             piecePrice: _price.text,
             errors: _errors,
-            fieldBuilder: (key, label, controller) => _QuickField(
-              hint: key == 'pack_size' ? t.phPackSize : t.phPackPrice,
+            fieldBuilder: (key, label, controller, {optional = false, hint}) => _QuickField(
+              hint: hint,
               fieldKey: key,
               label: label,
               controller: controller,
               number: true,
-              whole: key == 'pack_size',
+              whole: key != 'pack_price',
+              optional: optional,
               enabled: !_saving,
               error: _errors[key],
-              action: TextInputAction.next,
+              action: key == 'pack_price' ? TextInputAction.done : TextInputAction.next,
+              onSubmitted: key == 'pack_price' ? () => _save(t) : null,
               onChanged: () => _clearError(key),
             ),
+          )
+        else
+          _QuickField(
+            fieldKey: 'current_stock',
+            label: t.invOpeningStock(_unit == ProductUnit.kg ? t.prodPerKg : t.prodPerPiece),
+            hint: t.phOpeningStock,
+            controller: _stock,
+            number: true,
+            whole: _unit == ProductUnit.piece,
+            enabled: !_saving,
+            error: _errors['current_stock'],
+            action: TextInputAction.done,
+            onSubmitted: () => _save(t),
           ),
-        _QuickField(
-          fieldKey: 'current_stock',
-          label: t.invOpeningStock(_unit == ProductUnit.kg ? t.prodPerKg : t.prodPerPiece),
-          hint: t.phOpeningStock,
-          controller: _stock,
-          number: true,
-          whole: _unit == ProductUnit.piece,
-          enabled: !_saving,
-          error: _errors['current_stock'],
-          action: TextInputAction.done,
-          onSubmitted: () => _save(t),
-        ),
       ],
     );
   }

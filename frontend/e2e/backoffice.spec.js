@@ -211,6 +211,7 @@ test("shared catalog: a barcode another store saved fills the name and unit; min
   await expect(page.getByText("صنف معروف في حسبة")).toBeVisible();
   await expect(page.getByLabel("اسم الصنف")).toHaveValue("عصير برتقال 1 لتر");
 
+  await page.getByRole("button", { name: "بالقطعة" }).click();
   await page.getByLabel("سعر البيع").fill("7.50");
   await page.getByLabel("الكمية الموجودة الآن").fill("6");
   await page.getByRole("button", { name: "حفظ الصنف" }).click();
@@ -230,7 +231,7 @@ test("shared catalog: a barcode already in my store links to it instead of addin
   await expect(page.getByRole("link", { name: "عصير برتقال" })).toHaveAttribute("href", "/products/9");
 });
 
-test("cartons: the form shows the price of one piece inside the carton and sends size and price together", async ({ page }) => {
+test("cartons: a new product is counted in cartons; the pieces are worked out and sent with the carton size and price", async ({ page }) => {
   await signIn(page);
   let sent = null;
   await page.route("**/api/v1/products", async (r) => {
@@ -242,21 +243,59 @@ test("cartons: the form shows the price of one piece inside the carton and sends
   );
 
   await page.goto("/products/new");
+  await expect(page.getByRole("button", { name: "بالكرتونة" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByLabel("الكمية الموجودة الآن")).toHaveCount(0);
   await page.getByLabel("اسم الصنف").fill("ماء 600 مل");
-  await page.getByLabel("سعر البيع").fill("2.50");
-  await page.getByLabel("الكمية الموجودة الآن").fill("48");
-  await page.getByLabel("يُباع بالكرتونة أيضاً (جملة)").check();
+  await page.getByLabel("سعر القطعة الواحدة").fill("2.50");
+  await page.getByLabel("عدد الكراتين عندك").fill("2");
   await page.getByLabel("عدد القطع في الكرتونة").fill("24");
-  await page.getByLabel("سعر الكرتونة كاملة").fill("54");
+  await page.getByLabel("قطع زيادة").fill("30");
+  await page.getByLabel("سعر الكرتونة (جملة)").fill("54");
   await expect(page.getByText("القطعة داخل الكرتونة بـ 2.25 ₪ مقابل 2.50 ₪ بالمفرد.")).toBeVisible();
+
+  // Extra pieces of a full carton or more are refused before sending.
+  await page.getByRole("button", { name: "حفظ الصنف" }).click();
+  await expect(page.getByLabel("قطع زيادة")).toHaveAccessibleDescription("القطع الزيادة أقل من 24؛ وإلا فهي كرتونة كاملة.");
+  expect(sent).toBeNull();
+  await page.getByLabel("قطع زيادة").fill("3");
+  await expect(page.getByRole("status").filter({ hasText: "المجموع" })).toHaveText("المجموع: 51 قطعة");
 
   // A weighed product has no carton: the fields go away and nothing about cartons is sent.
   await page.getByRole("button", { name: "بالوزن (كغ)" }).click();
   await expect(page.getByLabel("عدد القطع في الكرتونة")).toHaveCount(0);
-  await page.getByRole("button", { name: "بالقطعة" }).click();
+  await page.getByRole("button", { name: "بالكرتونة" }).click();
 
   await page.getByRole("button", { name: "حفظ الصنف" }).click();
-  await expect.poll(() => sent).toMatchObject({ unit: "piece", selling_price: "2.50", pack_size: "24", pack_price: "54", current_stock: "48" });
+  await expect.poll(() => sent).toMatchObject({ unit: "piece", selling_price: "2.50", pack_size: "24", pack_price: "54", current_stock: "51" });
+});
+
+test("products table: name, cartons with an opened one, all pieces and the piece price", async ({ page }) => {
+  await signIn(page);
+  const product = (id, name, extra) => ({ id, name, barcode: null, unit: "piece", selling_price: "2.50", minimum_stock: "5", is_low_stock: false, status: "active", ...extra });
+  await page.route("**/api/v1/products/negative-stock", (r) => r.fulfill({ json: { data: [] } }));
+  await page.route("**/api/v1/products?**", (r) =>
+    r.fulfill({
+      json: {
+        data: [
+          product(1, "ماء 600 مل", { current_stock: "50", pack_size: 24, pack_price: "54.00" }),
+          product(2, "عصير", { current_stock: "48", pack_size: 24, pack_price: "90.00", selling_price: "4.00" }),
+          product(3, "لوز نيء", { unit: "kg", current_stock: "5.200", selling_price: "60.00" }),
+          product(4, "شاي", { current_stock: "2", is_low_stock: true }),
+        ],
+        meta: { current_page: 1, last_page: 1, total: 4 },
+      },
+    }),
+  );
+
+  await page.goto("/products");
+  const table = page.getByRole("table");
+  await expect(table.getByRole("columnheader")).toHaveText(["المنتج", "عدد الكراتين", "عدد القطع الكلي", "سعر القطعة"]);
+  const row = (name) => table.getByRole("row").filter({ hasText: name });
+  await expect(row("ماء 600 مل").getByRole("cell")).toHaveText(["ماء 600 مل", "2 كرتونة + 2 قطعة", "50", "₪ 2.50"]);
+  await expect(row("عصير").getByRole("cell").nth(1)).toHaveText("2 كرتونة");
+  await expect(row("لوز نيء").getByRole("cell").nth(1)).toHaveText("—");
+  await expect(row("لوز نيء").getByRole("cell").nth(2)).toHaveText("5.200 كغ");
+  await expect(row("شاي").getByRole("cell").nth(1)).toHaveText("—");
 });
 
 test("product form: plain price labels, Arabic-keyboard digits, and a refused field is marked and focused", async ({ page }) => {
@@ -271,6 +310,7 @@ test("product form: plain price labels, Arabic-keyboard digits, and a refused fi
   await expect(page.getByText("ما تدفعه أنت للمورّد. لا يظهر للزبون.")).toBeVisible();
   await expect(page.getByLabel("اسم الصنف")).toHaveAttribute("aria-required", "true");
   await page.getByLabel("اسم الصنف").fill("شاي أخضر");
+  await page.getByRole("button", { name: "بالقطعة" }).click();
   await page.getByLabel("السعر للزبون (سعر البيع)").fill("٠٫٠٠");
   await expect(page.getByLabel("السعر للزبون (سعر البيع)")).toHaveValue("0.00");
   await page.getByLabel("تكلفة الصنف عليك (سعر الشراء)").fill("١٫٧٥");

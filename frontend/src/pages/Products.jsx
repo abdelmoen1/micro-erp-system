@@ -2,12 +2,9 @@ import { useDeferredValue, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon";
 import { DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, MoneyText, PageHeader, Pager, Segments, StatusBadge } from "../components/ui";
-import { canManage, stockState } from "../lib/domain";
+import { canManage, cartonsLabel, stockState } from "../lib/domain";
 import { session } from "../services/apiClient";
 import { useImportProducts, useNegativeStock, useProducts } from "../services/backoffice";
-
-const UNIT = { piece: "قطعة", kg: "كغ" };
-
 
 /** SCR-W-08 · products: search by name or barcode, low / negative stock filters (US-0405). */
 export default function Products() {
@@ -28,36 +25,34 @@ export default function Products() {
   const negativeCount = negative.data?.length ?? 0;
   const rows = list.data?.data ?? [];
 
+  // The table the shopkeeper asked for: name, cartons (with an opened one), all pieces, piece price.
+  // The pieces take the stock colour: low, out, below zero.
   const columns = [
     {
       key: "name",
-      label: "الصنف",
+      label: "المنتج",
       render: (p) => (
-        <>
-          <Link className="row-link" to={`/products/${p.id}`}>
-            {p.name}
-          </Link>
-          <span className="cell-sub m" style={{ textAlign: "right" }}>
-            {p.barcode ?? "بلا باركود"}
-          </span>
-        </>
+        <Link className="row-link" to={`/products/${p.id}`}>
+          {p.name}
+        </Link>
       ),
     },
-    { key: "unit", label: "الوحدة", render: (p) => UNIT[p.unit] ?? p.unit },
-    { key: "price", label: "سعر البيع", numeric: true, render: (p) => <MoneyText value={p.selling_price} style={{ fontWeight: 600 }} /> },
-    { key: "min", label: "الحد الأدنى", numeric: true, render: (p) => <span className="m">{p.minimum_stock}</span> },
+    { key: "cartons", label: "عدد الكراتين", numeric: true, render: (p) => <span className="cartons-cell">{cartonsLabel(p)}</span> },
     {
-      key: "stock",
-      label: "المخزون",
+      key: "pieces",
+      label: "عدد القطع الكلي",
+      numeric: true,
       render: (p) => {
         const state = p.status === "inactive" ? "inactive" : stockState(p);
         return (
-          <StatusBadge status={state}>
-            {state !== "out" ? <span className="m"> {p.current_stock}</span> : null}
-          </StatusBadge>
+          <span className={`m stock-${state}`}>
+            {p.current_stock}
+            {p.unit === "kg" ? " كغ" : ""}
+          </span>
         );
       },
     },
+    { key: "price", label: "سعر القطعة", numeric: true, render: (p) => <MoneyText value={p.selling_price} style={{ fontWeight: 600 }} /> },
   ];
 
   const empty =
