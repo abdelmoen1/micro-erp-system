@@ -27,6 +27,7 @@ class SubscriptionTrialTest extends TestCase
         'store_name' => 'بقالة التجربة',
         'owner_name' => 'صاحب المتجر',
         'phone' => '0599123456',
+        'owner_phone' => '0599000051',
         'address' => 'شارع عمر المختار، غزة',
         'email' => 'trial@example.com',
         'password' => 'Password123',
@@ -154,8 +155,8 @@ class SubscriptionTrialTest extends TestCase
 
         // The account itself stays usable without a subscription: sign out, see why, change the password,
         // and reach technical support.
-        $this->assertSame(['GET api/v1/me', 'GET api/v1/subscription', 'GET api/v1/support-tickets', 'PATCH api/v1/me/password', 'POST api/v1/logout', 'POST api/v1/support-tickets'], $open);
-        $this->assertGreaterThan(40, $storeRoutes->count() - 6);
+        $this->assertSame(['GET api/v1/me', 'GET api/v1/subscription', 'GET api/v1/support-tickets', 'PATCH api/v1/me/password', 'PATCH api/v1/me/phone', 'POST api/v1/logout', 'POST api/v1/support-tickets'], $open);
+        $this->assertGreaterThan(40, $storeRoutes->count() - 7);
 
         // A sample of reads and writes, including idempotent financial writes.
         foreach ([['GET', '/dashboard'], ['GET', '/customers'], ['POST', '/customers'], ['GET', '/sales'], ['POST', '/sales'],

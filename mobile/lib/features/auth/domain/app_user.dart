@@ -20,6 +20,7 @@ class AppUser {
     required this.storeId,
     required this.storeName,
     required this.storeTimezone,
+    this.phone,
     this.storePhone,
     this.storeAddress,
     this.hasAccess = true,
@@ -33,6 +34,7 @@ class AppUser {
       id: (json['id'] as num).toInt(),
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
+      phone: json['phone'] as String?,
       role: UserRole.parse(json['role'] as String?),
       storeId: (json['store_id'] as num?)?.toInt(),
       storeName: store['name'] as String? ?? '',
@@ -49,6 +51,9 @@ class AppUser {
   final int id;
   final String name;
   final String email;
+
+  /// The mobile number this account signs in with; null for an older e-mail account until it adds one.
+  final String? phone;
   final UserRole role;
   final int? storeId;
   final String storeName;
@@ -72,6 +77,7 @@ class AppUser {
     'id': id,
     'name': name,
     'email': email,
+    'phone': phone,
     'role': role.name,
     'store_id': storeId,
     'store': {

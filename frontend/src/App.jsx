@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Join from "./pages/Join";
+import Forgot from "./pages/Forgot";
 
 // The landing page and the signed-in area load on demand: the login page stays small.
 const Landing = lazy(() => import("./pages/Landing"));
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/join" element={<Join />} />
+          <Route path="/forgot" element={<Forgot />} />
           <Route path="/invite" element={<AcceptInvite />} />
           {/* Old links (and the mobile app) still point at /register. */}
           <Route path="/register" element={<Navigate to="/join" replace />} />

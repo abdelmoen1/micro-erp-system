@@ -125,6 +125,7 @@ class PlatformAdminTest extends TestCase
         $response = $this->postJson('/api/v1/register', [
             'store_name' => 'Sneaky',
             'owner_name' => 'Eve',
+            'owner_phone' => '0599000011',
             'email' => 'eve@example.com',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
@@ -349,6 +350,7 @@ class PlatformAdminTest extends TestCase
         $this->postJson('/api/v1/register/invitation', [
             'token' => 'invite-token',
             'name' => 'New Hire',
+            'phone' => '0599000012',
             'email' => 'hire@example.com',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',

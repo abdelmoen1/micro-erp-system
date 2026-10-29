@@ -29,7 +29,7 @@ test("an expired store signs in, lands on the renewal screen, and returns once t
   await page.route("**/api/v1/dashboard**", (r) => r.fulfill({ status: 200, json: { data: null } }));
 
   await page.goto("/login");
-  await page.getByLabel("البريد الإلكتروني").fill("sami@shop.ps");
+  await page.getByLabel("رقم الجوال").fill("0599123456");
   await page.getByLabel("كلمة المرور", { exact: true }).fill("not-a-real-password");
   await page.getByRole("button", { name: "تسجيل الدخول" }).click();
 

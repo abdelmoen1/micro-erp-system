@@ -14,6 +14,7 @@ import '../home/dashboard.dart';
 import '../home/home_dashboard.dart';
 import '../auth/presentation/subscription_expired_screen.dart' show externalLinkLauncherProvider;
 import '../more/presentation/change_password_screen.dart';
+import '../more/presentation/change_phone_screen.dart';
 import '../more/presentation/more_widgets.dart';
 import '../more/presentation/staff_screen.dart';
 import '../more/presentation/store_settings_screen.dart';
@@ -346,6 +347,14 @@ class _MoreTab extends ConsumerWidget {
           title: t.moreSectionSettings,
           tiles: [
             const _SubscriptionTile(),
+            MoreTile(
+              key: const Key('more.phone'),
+              icon: Icons.phone_iphone_rounded,
+              title: t.morePhone,
+              // An older e-mail account is asked to add its number.
+              subtitle: (user.phone ?? '').isEmpty ? t.morePhoneAdd : user.phone!,
+              onTap: () => pushScreen<void>(context, const ChangePhoneScreen()),
+            ),
             MoreTile(
               key: const Key('more.password'),
               icon: Icons.lock_reset_rounded,

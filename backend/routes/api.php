@@ -26,6 +26,10 @@ use App\Http\Controllers\Api\Admin\SupportTicketController as AdminSupportTicket
 
 // Authentication (login throttling lives in AuthService: 5 failures/min per email+IP)
 Route::post('/login', [AuthController::class, 'login']);
+// Sign-in by mobile number: what the screens offer, one-time SMS codes, and a forgotten password.
+Route::get('/auth/options', [AuthController::class, 'options']);
+Route::post('/auth/otp', [AuthController::class, 'sendOtp'])->middleware('throttle:otp');
+Route::post('/auth/password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:register');
 Route::post('/auth/google', [AuthController::class, 'google'])->middleware('throttle:sso');
 Route::middleware('throttle:register')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -60,6 +64,7 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::patch('/me/password', [AuthController::class, 'changePassword'])->middleware('throttle:6,1');
+    Route::patch('/me/phone', [AuthController::class, 'changePhone'])->middleware('throttle:6,1');
     Route::get('/subscription', [SubscriptionController::class, 'show']);
     // Technical support: reachable after the subscription ends, when the store needs it most.
     Route::get('/support-tickets', [SupportTicketController::class, 'index']);

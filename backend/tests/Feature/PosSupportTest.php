@@ -88,6 +88,7 @@ class PosSupportTest extends TestCase
         $this->postJson('/api/v1/register', [
             'store_name' => 'Al-Noor Grocery',
             'owner_name' => 'Ali',
+            'owner_phone' => '0599000021',
             'email' => 'ali@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',

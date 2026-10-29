@@ -286,8 +286,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get passwordRequired => 'أدخل كلمة المرور';
 
   @override
-  String get invalidCredentials =>
-      'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+  String get invalidCredentials => 'رقم الجوال أو كلمة المرور غير صحيحة.';
 
   @override
   String get tooManyAttempts => 'محاولات كثيرة. يمكنك المحاولة بعد';
@@ -1734,10 +1733,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ownerNameRequired => 'يرجى إدخال اسم صاحب المتجر.';
 
   @override
-  String get phoneRequired => 'يرجى إدخال رقم الهاتف.';
+  String get phoneRequired => 'اكتب رقم جوالك.';
 
   @override
-  String get phoneInvalid => 'رقم الهاتف 9 أو 10 أرقام، مثل 0599123456.';
+  String get phoneInvalid => 'رقم الجوال 10 أرقام يبدأ بـ 05، مثل 0599123456.';
 
   @override
   String get cityRequired => 'يرجى اختيار المدينة.';
@@ -2835,4 +2834,110 @@ class AppLocalizationsAr extends AppLocalizations {
   String cartonsCellLoose(int count, int pieces) {
     return '$count كرتونة + $pieces قطعة';
   }
+
+  @override
+  String get loginPhoneLabel => 'رقم الجوال';
+
+  @override
+  String get phLoginPhone => 'مثل 0599123456';
+
+  @override
+  String get loginEmailRequired => 'اكتب البريد الإلكتروني.';
+
+  @override
+  String get loginUseEmail => 'حسابي القديم بالبريد الإلكتروني';
+
+  @override
+  String get loginUsePhone => 'الدخول برقم الجوال';
+
+  @override
+  String get loginForgot => 'نسيت كلمة المرور؟';
+
+  @override
+  String get ownerPhoneLabel => 'رقم جوالك (تسجّل الدخول به)';
+
+  @override
+  String get emailOptionalLabel => 'البريد الإلكتروني (اختياري)';
+
+  @override
+  String get phEmailOptional => 'لا حاجة له للدخول';
+
+  @override
+  String get otpTitle => 'رمز التأكيد';
+
+  @override
+  String otpSentTo(String phone) {
+    return 'أرسلنا رمزاً من 6 أرقام برسالة إلى $phone.';
+  }
+
+  @override
+  String get otpCodeLabel => 'الرمز';
+
+  @override
+  String get phOtpCode => '6 أرقام';
+
+  @override
+  String get otpCodeInvalid => 'الرمز 6 أرقام.';
+
+  @override
+  String get otpResend => 'أرسل رمزاً جديداً';
+
+  @override
+  String otpResendIn(int seconds) {
+    return 'رمز جديد بعد $seconds ث';
+  }
+
+  @override
+  String get otpChangeNumber => 'تعديل الرقم';
+
+  @override
+  String get otpSend => 'أرسل الرمز';
+
+  @override
+  String get otpDailyLimit =>
+      'توقّفت رسائل الرمز لليوم. حاول غداً أو تواصل مع الدعم.';
+
+  @override
+  String get otpSendFailed => 'تعذّر إرسال الرسالة الآن. حاول بعد قليل.';
+
+  @override
+  String get otpUnavailable => 'رسائل الرمز غير متاحة الآن.';
+
+  @override
+  String get registerConfirmCode => 'تأكيد الرمز وإنشاء المتجر';
+
+  @override
+  String get resetTitle => 'استعادة كلمة المرور';
+
+  @override
+  String get resetHelper =>
+      'اكتب رقم جوالك، ونرسل لك رمزاً برسالة لتختار كلمة مرور جديدة.';
+
+  @override
+  String get resetSave => 'حفظ كلمة المرور الجديدة';
+
+  @override
+  String get resetDone =>
+      'تم تغيير كلمة المرور. سجّل الدخول برقم جوالك وكلمة المرور الجديدة.';
+
+  @override
+  String get morePhone => 'رقم الجوال للدخول';
+
+  @override
+  String get morePhoneAdd => 'أضف رقمك لتدخل به بدل البريد';
+
+  @override
+  String get phoneTitle => 'رقم الجوال للدخول';
+
+  @override
+  String get phoneHelper => 'تسجّل الدخول بهذا الرقم وكلمة مرورك.';
+
+  @override
+  String get phoneNewLabel => 'رقم الجوال';
+
+  @override
+  String get phoneSave => 'حفظ الرقم';
+
+  @override
+  String get phoneDone => 'تم حفظ الرقم. سجّل الدخول به من الآن.';
 }

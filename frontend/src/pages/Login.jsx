@@ -7,9 +7,10 @@ import HisbahLogo, { HisbahMark } from "../components/HisbahLogo";
 import Icon from "../components/Icon";
 import { GOOGLE_CLIENT_ID } from "../lib/google";
 import { landingPath } from "../lib/domain";
-import { shortReference } from "../lib/format";
+import { latinDigits, shortReference } from "../lib/format";
+import { normalizePhone, PHONE_HINT } from "../lib/phone";
 import { ApiError, NetworkError } from "../services/apiClient";
-import { useGoogleMutation, useLoginMutation } from "../services/useAuth";
+import { useAuthOptions, useGoogleMutation, useLoginMutation } from "../services/useAuth";
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -29,7 +30,7 @@ function outcomeOf(error) {
 function LoginBanner({ outcome, waitLeft }) {
   switch (outcome?.kind) {
     case "invalid":
-      return <Banner>البريد الإلكتروني أو كلمة المرور غير صحيحة.</Banner>;
+      return <Banner>رقم الجوال أو كلمة المرور غير صحيحة.</Banner>;
     case "throttled":
       return waitLeft > 0 ? (
         <Banner tone="pending" icon="clock">
@@ -52,6 +53,12 @@ function LoginBanner({ outcome, waitLeft }) {
       return (
         <Banner tone="info" icon="info">
           انتهت الجلسة. سجّل الدخول للمتابعة من حيث توقفت.
+        </Banner>
+      );
+    case "reset":
+      return (
+        <Banner tone="success" icon="ok">
+          تم تغيير كلمة المرور. سجّل الدخول برقم جوالك وكلمة المرور الجديدة.
         </Banner>
       );
     case "google":
@@ -87,16 +94,20 @@ function LoginBanner({ outcome, waitLeft }) {
 export default function Login() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const login = useLoginMutation();
+  const signIn = useLoginMutation();
   const google = useGoogleMutation();
-  const [email, setEmail] = useState("");
+  // The mobile number; an account made before sign-in by phone may give its e-mail instead.
+  const [login, setLogin] = useState(params.get("phone") ?? "");
+  const options = useAuthOptions();
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [outcome, setOutcome] = useState(() => (params.get("expired") === "1" ? { kind: "expired" } : null));
+  const [outcome, setOutcome] = useState(() =>
+    params.get("expired") === "1" ? { kind: "expired" } : params.get("reset") === "1" ? { kind: "reset" } : null,
+  );
   const waitLeft = useCountdown(outcome?.kind === "throttled" ? outcome.wait : 0);
 
-  const busy = login.isPending || google.isPending;
+  const busy = signIn.isPending || google.isPending;
   const throttled = outcome?.kind === "throttled" && waitLeft > 0;
   const success = outcome?.kind === "success";
 
@@ -120,17 +131,19 @@ export default function Login() {
     event.preventDefault();
     if (busy || throttled || success) return;
     const errors = {};
-    if (!email.trim()) errors.email = "أدخل البريد الإلكتروني";
-    else if (!EMAIL_RE.test(email.trim())) errors.email = "صيغة البريد الإلكتروني غير صحيحة";
+    const byEmail = login.includes("@");
+    if (!login.trim()) errors.login = "اكتب رقم الجوال.";
+    else if (byEmail && !EMAIL_RE.test(login.trim())) errors.login = "صيغة البريد الإلكتروني غير صحيحة";
+    else if (!byEmail && !normalizePhone(login)) errors.login = PHONE_HINT;
     if (!password) errors.password = "أدخل كلمة المرور";
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       setOutcome(null);
-      document.getElementById(errors.email ? "w1-email" : "w1-pass")?.focus();
+      document.getElementById(errors.login ? "w1-login" : "w1-pass")?.focus();
       return;
     }
-    login.mutate(
-      { email: email.trim(), password },
+    signIn.mutate(
+      { login: byEmail ? login.trim() : normalizePhone(login), password },
       {
         onSuccess: (result) => {
           setOutcome({ kind: "success" });
@@ -139,7 +152,7 @@ export default function Login() {
         onError: (error) => {
           const next = outcomeOf(error);
           if (next.kind === "fields") {
-            setFieldErrors({ email: next.errors.email?.[0], password: next.errors.password?.[0] });
+            setFieldErrors({ login: next.errors.login?.[0], password: next.errors.password?.[0] });
             setOutcome(null);
             return;
           }
@@ -181,30 +194,38 @@ export default function Login() {
             <LoginBanner outcome={outcome} waitLeft={waitLeft} />
             <form className="form-stack" onSubmit={submit} noValidate>
               <div className="field">
-                <label htmlFor="w1-email" className="field-label">
-                  البريد الإلكتروني
+                <label htmlFor="w1-login" className="field-label">
+                  رقم الجوال
                 </label>
                 <div className="fld-wrap">
-                  <Icon name="mail" size={18} strokeWidth={1.7} className="fld-icon" />
+                  <Icon name="phone" size={18} strokeWidth={1.7} className="fld-icon" />
                   <input
-                    id="w1-email"
-                    className={`fld ltr${fieldErrors.email ? " err" : ""}`}
-                    type="email"
-                    name="email"
+                    id="w1-login"
+                    className={`fld ltr${fieldErrors.login ? " err" : ""}`}
+                    type="text"
+                    inputMode="tel"
+                    name="username"
                     autoComplete="username"
                     spellCheck={false}
-                    placeholder="name@store.ps"
-                    value={email}
+                    placeholder="0599123456"
+                    value={login}
                     onChange={(e) => {
-                      setEmail(e.target.value);
-                      setFieldErrors((f) => ({ ...f, email: undefined }));
+                      // Digits typed on an Arabic keyboard (٠٥٩…) are kept as 059….
+                      setLogin(latinDigits(e.target.value));
+                      setFieldErrors((f) => ({ ...f, login: undefined }));
                     }}
                     disabled={busy}
-                    aria-invalid={fieldErrors.email ? "true" : "false"}
-                    aria-describedby="w1-email-err"
+                    aria-invalid={fieldErrors.login ? "true" : "false"}
+                    aria-describedby="w1-login-err w1-login-hint"
                   />
                 </div>
-                <FieldError id="w1-email-err">{fieldErrors.email}</FieldError>
+                {fieldErrors.login ? (
+                  <FieldError id="w1-login-err">{fieldErrors.login}</FieldError>
+                ) : (
+                  <span id="w1-login-hint" className="field-hint">
+                    حسابك القديم بالبريد؟ اكتب بريدك هنا.
+                  </span>
+                )}
               </div>
               <div className="field">
                 <label htmlFor="w1-pass" className="field-label">
@@ -240,6 +261,11 @@ export default function Login() {
                   </button>
                 </div>
                 <FieldError id="w1-pass-err">{fieldErrors.password}</FieldError>
+                {options.data?.otp ? (
+                  <Link to="/forgot" className="quiet-link forgot-link">
+                    نسيت كلمة المرور؟
+                  </Link>
+                ) : null}
               </div>
               <button type="submit" className="btn btn-p" disabled={busy || throttled || success} aria-busy={busy}>
                 {busy ? <Spinner /> : null}

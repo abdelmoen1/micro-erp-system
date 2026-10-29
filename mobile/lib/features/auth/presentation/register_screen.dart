@@ -14,7 +14,10 @@ import '../../../core/widgets/hisbah_logo.dart';
 import '../../../core/widgets/latin_digits.dart';
 import '../../../core/widgets/message_banner.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../sale/presentation/sale_widgets.dart' show BodyText;
+import '../domain/phone_number.dart';
 import '../domain/registration_form.dart';
+import 'otp_widgets.dart';
 
 /// Store-owner registration: the web /join form's three steps, fields, rules and request
 /// (POST /register). On success the server starts the store's free trial and the owner is signed in;
@@ -49,6 +52,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   int _waitSeconds = 0;
   Timer? _countdown;
 
+  /// With SMS codes on: the number the code went to (the code view is open) and when a new one may go.
+  String? _codeSentTo;
+  DateTime? _resendAt;
+
   @override
   void dispose() {
     _countdown?.cancel();
@@ -71,7 +78,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       ..street = _controllers[RegistrationField.street]!.text
       ..email = _controllers[RegistrationField.email]!.text
       ..password = _controllers[RegistrationField.password]!.text
-      ..passwordConfirmation = _controllers[RegistrationField.passwordConfirmation]!.text;
+      ..passwordConfirmation = _controllers[RegistrationField.passwordConfirmation]!.text
+      ..otpCode = _controllers[RegistrationField.otpCode]!.text;
   }
 
   String _message(RegistrationError e, AppLocalizations t) => switch (e) {
@@ -81,32 +89,62 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     RegistrationError.phoneInvalid => t.phoneInvalid,
     RegistrationError.cityRequired => t.cityRequired,
     RegistrationError.streetRequired => t.streetRequired,
-    RegistrationError.emailRequired => t.registerEmailRequired,
     RegistrationError.emailInvalid => t.registerEmailInvalid,
     RegistrationError.passwordTooShort => t.passwordTooShort,
     RegistrationError.passwordMismatch => t.passwordMismatch,
+    RegistrationError.otpCodeInvalid => t.otpCodeInvalid,
   };
 
   Future<void> _next(AppLocalizations t) async {
     if (_submitting || _throttled) return;
     _syncDraft();
-    final errors = _draft.validateStep(_step);
+    final errors = _codeSentTo != null ? _draft.validateCode() : _draft.validateStep(_step);
     setState(() {
       _errors = errors.map((field, e) => MapEntry(field, _message(e, t)));
       _outcome = null;
+      _codeError = null;
     });
     if (errors.isNotEmpty) {
       _focusFirstError();
       return;
     }
-    if (_step < registrationSteps.length - 1) {
+    if (_codeSentTo == null && _step < registrationSteps.length - 1) {
       setState(() => _step++);
       // The next step's first field is ready for typing.
       WidgetsBinding.instance.addPostFrameCallback((_) => _focus[registrationSteps[_step].first]?.requestFocus());
       return;
     }
+    // With SMS codes on, the number is confirmed before the store is created.
+    if (_codeSentTo == null && (await ref.read(authOptionsProvider.future)).otp) {
+      await _sendCode(t);
+      return;
+    }
     await _submit(t);
   }
+
+  Future<void> _sendCode(AppLocalizations t) async {
+    setState(() => _submitting = true);
+    final phone = _draft.normalizedPhone;
+    try {
+      final wait = await ref.read(authRepositoryProvider).sendOtp(phone, 'register');
+      if (!mounted) return;
+      setState(() {
+        _codeSentTo = phone;
+        _resendAt = DateTime.now().add(Duration(seconds: wait));
+        _outcome = null;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _focus[RegistrationField.otpCode]?.requestFocus());
+    } on ValidationFailed catch (failure) {
+      _showServerErrors(failure.fieldErrors, t);
+    } on ApiFailure catch (failure) {
+      if (mounted) setState(() => _codeError = otpSendError(failure, t));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  /// A code could not be sent (limits, the gateway): said above the form.
+  String? _codeError;
 
   /// Focus the first field (in the step's order) that has an error; it also scrolls it into view.
   void _focusFirstError() {
@@ -147,6 +185,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (email != null && _takenPattern.hasMatch(email)) errors[RegistrationField.email] = t.emailTaken;
     setState(() {
       _errors = errors;
+      // Only a wrong code keeps the code view open; any other field sends the form back to it.
+      if (errors.keys.any((f) => f != RegistrationField.otpCode)) _codeSentTo = null;
       if (errors.isNotEmpty) _step = errors.keys.map(stepOf).reduce(math.min);
       _outcome = errors.length == 1 && errors.containsKey(RegistrationField.email)
           ? _Outcome.taken
@@ -178,6 +218,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         trailing: _clock(_waitSeconds),
       );
     }
+    if (_codeError != null) return MessageBanner(icon: Icons.warning_amber_rounded, text: _codeError!);
     return switch (_outcome) {
       _Outcome.taken => MessageBanner(icon: Icons.warning_amber_rounded, text: t.registerFailedTaken),
       _Outcome.validation => MessageBanner(icon: Icons.warning_amber_rounded, text: t.registerFailedValidation),
@@ -301,6 +342,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
+  /// The code view after step 3, when SMS codes are on.
+  List<Widget> _codeFields(AppLocalizations t) => [
+    BodyText(t.otpSentTo(maskPhone(_codeSentTo!))),
+    const SizedBox(height: 12),
+    _field(
+      RegistrationField.otpCode,
+      t.otpCodeLabel,
+      keyboard: TextInputType.number,
+      ltr: true,
+      hint: t.phOtpCode,
+      autofill: const [AutofillHints.oneTimeCode],
+      action: TextInputAction.done,
+      onDone: () => _next(t),
+    ),
+    OtpResendButton(availableAt: _resendAt, onResend: () => _sendCode(t), enabled: !_submitting),
+  ];
+
   List<Widget> _stepFields(AppLocalizations t) => switch (_step) {
     0 => [
       _field(RegistrationField.storeName, t.storeNameLabel, hint: t.phRegStoreName),
@@ -309,7 +367,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     1 => [
       _field(
         RegistrationField.phone,
-        t.storePhoneLabel,
+        t.ownerPhoneLabel,
         keyboard: TextInputType.phone,
         ltr: true,
         hint: t.phPhone,
@@ -321,10 +379,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _ => [
       _field(
         RegistrationField.email,
-        t.emailLabel,
+        t.emailOptionalLabel,
         keyboard: TextInputType.emailAddress,
         ltr: true,
-        hint: t.phEmail,
+        hint: t.phEmailOptional,
         autofill: const [AutofillHints.email],
       ),
       _field(
@@ -363,12 +421,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final theme = Theme.of(context);
     final banner = _banner(t);
     final last = _step == registrationSteps.length - 1;
+    final coding = _codeSentTo != null;
     final headings = [
       (t.registerStepStore, t.registerStepStoreSub),
       (t.registerStepContact, t.registerStepContactSub),
       (t.registerStepAccount, t.registerStepAccountSub),
     ];
-    final (heading, sub) = headings[_step];
+    final (heading, sub) = coding ? (t.otpTitle, t.otpSentTo(maskPhone(_codeSentTo!))) : headings[_step];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
@@ -421,7 +480,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                   Text(sub, style: const TextStyle(fontSize: 14, color: HisbahColors.inkMuted)),
                                   const SizedBox(height: 20),
                                   if (banner != null) ...[banner, const SizedBox(height: 16)],
-                                  ..._stepFields(t),
+                                  ...(coding ? _codeFields(t) : _stepFields(t)),
                                   const SizedBox(height: 4),
                                   FilledButton(
                                     key: Key(last ? 'register.submit' : 'register.next'),
@@ -445,6 +504,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                                 ? t.registerSubmitting
                                                 : _throttled
                                                 ? t.loginButtonWait(_clock(_waitSeconds))
+                                                : coding
+                                                ? t.registerConfirmCode
                                                 : last
                                                 ? t.registerSubmit
                                                 : t.registerNext,
@@ -454,7 +515,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                       ],
                                     ),
                                   ),
-                                  if (_step > 0) ...[
+                                  if (coding) ...[
+                                    const SizedBox(height: 8),
+                                    OutlinedButton(
+                                      key: const Key('register.changeNumber'),
+                                      onPressed: _submitting
+                                          ? null
+                                          : () => setState(() {
+                                              _codeSentTo = null;
+                                              _codeError = null;
+                                              _step = 1;
+                                            }),
+                                      child: Text(t.otpChangeNumber),
+                                    ),
+                                  ] else if (_step > 0) ...[
                                     const SizedBox(height: 8),
                                     OutlinedButton(
                                       key: const Key('register.back'),

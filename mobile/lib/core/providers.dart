@@ -62,6 +62,9 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   return client;
 });
 
+/// Whether SMS codes are on (sign-up code, «forgot password», a new number).
+final authOptionsProvider = FutureProvider.autoDispose<AuthOptions>((ref) => ref.watch(authRepositoryProvider).options());
+
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(ref.watch(apiClientProvider), ref.watch(keyValueStoreProvider)),
 );
