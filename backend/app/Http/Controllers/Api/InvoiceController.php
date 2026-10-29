@@ -79,6 +79,12 @@ class InvoiceController extends Controller
             $request->validated(),
         );
 
+        return self::createdResponse($invoice, $warnings);
+    }
+
+    /** The 201 body of a new sale; the offline sync (US-1101) answers with the same one. */
+    public static function createdResponse(Invoice $invoice, array $warnings)
+    {
         return response()->json([
             'message' => 'تم حفظ عملية البيع'
                 . ($invoice->has_debt ? ' وتسجيل الدين' : '')

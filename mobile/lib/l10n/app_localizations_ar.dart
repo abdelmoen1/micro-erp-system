@@ -2660,4 +2660,123 @@ class AppLocalizationsAr extends AppLocalizations {
   String legacySince(String date) {
     return 'من $date';
   }
+
+  @override
+  String get offlineSavedBanner =>
+      'لا يوجد اتصال — البيع والدفعات تُحفظ على الهاتف وتُرسل عند عودة الإنترنت';
+
+  @override
+  String offlineSavedBannerCount(int count) {
+    return 'لا يوجد اتصال — $count عملية محفوظة على الهاتف بانتظار الإرسال';
+  }
+
+  @override
+  String get syncSynced => 'متزامن';
+
+  @override
+  String get syncSyncing => 'جارٍ المزامنة…';
+
+  @override
+  String syncPending(int count) {
+    return 'بانتظار المزامنة ($count)';
+  }
+
+  @override
+  String syncOfflinePending(int count) {
+    return 'غير متصل · $count';
+  }
+
+  @override
+  String syncNeedsReview(int count) {
+    return 'يحتاج مراجعة ($count)';
+  }
+
+  @override
+  String get syncNow => 'مزامنة الآن';
+
+  @override
+  String get syncTitle => 'المزامنة';
+
+  @override
+  String syncOfflineTitle(int count) {
+    return 'لا يوجد اتصال · $count عملية بانتظار الإرسال';
+  }
+
+  @override
+  String get syncAllSent => 'كل العمليات وصلت إلى الخادم';
+
+  @override
+  String syncStuck(int count) {
+    return '$count عملية تعذّر إرسالها عدة مرات. تواصل مع الدعم إن استمر ذلك.';
+  }
+
+  @override
+  String syncHeldTitle(int count) {
+    return 'أوقفها الخادم للمراجعة ($count)';
+  }
+
+  @override
+  String get syncHeldHelp =>
+      'لم تُحذف. يراجعها المالك أو المدير من موقع حسبة على الويب.';
+
+  @override
+  String get syncHeldPayment => 'الدفعة أكبر من رصيد العميل الآن على الخادم.';
+
+  @override
+  String get syncHeldClock =>
+      'وقت العملية خارج المدة المسموحة. راجع ساعة الهاتف.';
+
+  @override
+  String get syncPendingTitle => 'بانتظار الإرسال';
+
+  @override
+  String get syncNothingPending => 'لا شيء بانتظار الإرسال.';
+
+  @override
+  String get syncItemSale => 'بيع';
+
+  @override
+  String get syncItemCreditSale => 'بيع بالدين';
+
+  @override
+  String get syncItemPayment => 'دفعة';
+
+  @override
+  String syncItemStuck(int count) {
+    return 'تعذّر الإرسال $count مرة';
+  }
+
+  @override
+  String queueWarnBody(int count, int limit) {
+    return '$count عملية بانتظار المزامنة من أصل $limit. اتصل بالإنترنت وزامن الآن.';
+  }
+
+  @override
+  String get queueFullTitle =>
+      'امتلأت قائمة الانتظار — لا يمكن حفظ بيع أو دفعة جديدة دون اتصال';
+
+  @override
+  String get queueFullBody =>
+      'على الهاتف 1000 عملية لم تُرسل بعد. اتصل بالإنترنت لإرسالها، ثم تابع. البحث والعرض يعملان.';
+
+  @override
+  String get receiptPendingNote =>
+      'محفوظ على الهاتف بانتظار الإرسال. يُرسل تلقائيًا عند عودة الإنترنت.';
+
+  @override
+  String get receiptLocalRef => 'رقم مؤقت';
+
+  @override
+  String payPendingNote(String ref) {
+    return 'محفوظة على الهاتف ($ref) وتُرسل عند عودة الإنترنت.';
+  }
+
+  @override
+  String logoutPendingTitle(int count) {
+    return '$count عملية لم تُرسل بعد';
+  }
+
+  @override
+  String get logoutPendingBody =>
+      'لا يمكن تسجيل الخروج قبل إرسالها، حتى لا تضيع ولا تُنسب لحساب آخر.';
 }

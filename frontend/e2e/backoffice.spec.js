@@ -13,6 +13,8 @@ async function signIn(page, user = owner) {
   }, user);
   // Settings lists the store's complaints; a test that needs them routes its own.
   await page.route("**/api/v1/support-tickets", (r) => r.fulfill({ json: { data: [] } }));
+  // The sidebar badge of the sync review (owner / manager).
+  await page.route("**/api/v1/sync/conflicts**", (r) => r.fulfill({ json: { data: [], meta: { current_page: 1, last_page: 1 }, open_count: 0 } }));
 }
 
 const customer = { id: 7, name: "أبو محمد", phone: "0599123456", credit_limit: "500.00", status: "active", debts_count: 3 };

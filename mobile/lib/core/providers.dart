@@ -1,5 +1,9 @@
+import 'dart:io' show Platform;
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../features/auth/application/session_controller.dart';
 import '../features/auth/data/auth_repository.dart';
@@ -11,6 +15,8 @@ import '../features/sale/data/sale_repository.dart';
 import 'api/api_client.dart';
 import 'api/idempotency_key_store.dart';
 import 'config/env.dart';
+import 'offline/offline_fallback.dart';
+import 'offline/offline_store.dart';
 import 'storage/key_value_store.dart';
 
 /// Overridden in tests with [MemoryKeyValueStore].
@@ -60,7 +66,26 @@ final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(ref.watch(apiClientProvider), ref.watch(keyValueStoreProvider)),
 );
 
-final productRepositoryProvider = Provider<ProductRepository>((ref) => ProductRepository(ref.watch(apiClientProvider)));
+/// sqflite's platform factory where the plugin exists (the phone); none elsewhere, so desktop runs
+/// and widget tests stay online-only. Offline tests pass sqflite_common_ffi.
+final offlineDatabaseFactoryProvider = Provider<DatabaseFactory?>(
+  (ref) => !kIsWeb && (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) ? databaseFactorySqflitePlugin : null,
+);
+
+/// R2 local database (doc 16 §2). Opens on first use; unusable → the app stays online-only.
+final offlineStoreProvider = Provider<OfflineStore>((ref) {
+  final store = OfflineStore(ref.watch(offlineDatabaseFactoryProvider));
+  ref.onDispose(store.close);
+  return store;
+});
+
+final offlineReadsProvider = Provider<OfflineReads>(
+  (ref) => OfflineReads(ref.watch(offlineStoreProvider), () => ref.read(serverReachableProvider)),
+);
+
+final productRepositoryProvider = Provider<ProductRepository>(
+  (ref) => ProductRepository(ref.watch(apiClientProvider), offline: ref.watch(offlineReadsProvider)),
+);
 
 final idempotencyKeyStoreProvider = Provider<IdempotencyKeyStore>(
   (ref) => IdempotencyKeyStore(ref.watch(keyValueStoreProvider)),
@@ -75,7 +100,7 @@ final stockRepositoryProvider = Provider<StockRepository>(
 );
 
 final customerRepositoryProvider = Provider<CustomerRepository>(
-  (ref) => CustomerRepository(ref.watch(apiClientProvider)),
+  (ref) => CustomerRepository(ref.watch(apiClientProvider), offline: ref.watch(offlineReadsProvider)),
 );
 
 final moreRepositoryProvider = Provider<MoreRepository>((ref) => MoreRepository(ref.watch(apiClientProvider)));

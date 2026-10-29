@@ -109,6 +109,12 @@ class FakeApi implements HttpClientAdapter {
 
   void onSequence(String route, List<FakeResponse> responses) => _routes[route] = [...responses];
 
+  final Map<String, FakeResponse Function(RequestOptions request)> _handlers = {};
+
+  /// A response computed from the request (e.g. a sync batch echoing its items). The handler may
+  /// throw a [DioException] to simulate a connection lost after the server acted.
+  void handle(String route, FakeResponse Function(RequestOptions request) handler) => _handlers[route] = handler;
+
   void offline(String route) => _offline.add(route);
 
   /// The request is sent but no answer comes (a receive timeout): it may have reached the server.
@@ -139,11 +145,12 @@ class FakeApi implements HttpClientAdapter {
       throw DioException.receiveTimeout(timeout: const Duration(seconds: 30), requestOptions: options);
     }
 
+    final handler = _handlers[route];
     final queue = _routes[route];
-    if (queue == null || queue.isEmpty) {
+    if (handler == null && (queue == null || queue.isEmpty)) {
       throw StateError('FakeApi: no response for $route');
     }
-    final response = queue.length > 1 ? queue.removeAt(0) : queue.first;
+    final response = handler != null ? handler(options) : (queue!.length > 1 ? queue.removeAt(0) : queue.first);
 
     return ResponseBody.fromString(
       jsonEncode(response.body),

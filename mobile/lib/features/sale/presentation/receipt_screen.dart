@@ -53,6 +53,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
         : (StatusTone.paid.fg, Icons.check_rounded, t.receiptDoneTitle, t.receiptDebtWord, shekel(r.debt), t.receiptDebtTail(r.customerName ?? ''));
 
     final notes = <(String, IconData, StatusTone)>[
+      if (r.isPending) (t.receiptPendingNote, Icons.cloud_upload_outlined, StatusTone.offline),
       if (!voided && r.warnings.isNotEmpty)
         (t.receiptNegativeNote(r.warnings.map((w) => w.name).join('، ')), Icons.warning_amber_rounded, StatusTone.warning),
       if (!voided && widget.overridden)
@@ -155,7 +156,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                       icon: const Icon(Icons.add_rounded),
                       label: Text(t.newSale),
                     ),
-                    if ((user?.canOverride ?? false) && !voided)
+                    if ((user?.canOverride ?? false) && !voided && !r.isPending)
                       TextButton(
                         key: const Key('receipt.void'),
                         onPressed: _openVoid,
@@ -215,7 +216,13 @@ class ReceiptPaper extends StatelessWidget {
               if ((user?.storePhone ?? '').isNotEmpty) Center(child: Num(user!.storePhone!, size: 13, weight: FontWeight.w400, color: HisbahColors.inkMuted)),
               if ((user?.storeAddress ?? '').isNotEmpty) Text(user!.storeAddress!, textAlign: TextAlign.center, style: muted),
               const _Rule(),
-              _Fact(label: t.receiptNumber, value: Num('#${r.id}', size: 13, weight: FontWeight.w700)),
+              if (r.isPending)
+                _Fact(
+                  label: t.receiptLocalRef,
+                  value: Num(r.localRef!, key: const Key('receipt.localRef'), size: 13, weight: FontWeight.w700),
+                )
+              else
+                _Fact(label: t.receiptNumber, value: Num('#${r.id}', size: 13, weight: FontWeight.w700)),
               if (created != null) _Fact(label: t.receiptDate, value: Num('${dayMonthYear(created)} · ${_time(created)}', size: 13, weight: FontWeight.w400)),
               _Fact(label: t.receiptSeller, value: Text(r.sellerName ?? user?.name ?? '', style: const TextStyle(fontSize: 13))),
               if (r.customerName != null)

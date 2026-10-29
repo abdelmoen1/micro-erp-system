@@ -62,6 +62,10 @@ export const queryKeys = {
     list: (filters) => ["payments", "list", filters],
   },
   staff: { all: ["staff"] },
+  sync: {
+    all: ["sync"],
+    list: (filters) => ["sync", "list", filters],
+  },
   myStore: ["my-store"],
   support: ["support"],
   admin: {

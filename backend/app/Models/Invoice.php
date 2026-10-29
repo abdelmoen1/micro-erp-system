@@ -32,6 +32,8 @@ class Invoice extends Model
         'voided_at',
         'voided_by',
         'void_reason',
+        'synced_at',
+        'device_id',
     ];
 
     protected function casts(): array
@@ -42,6 +44,7 @@ class Invoice extends Model
             'has_debt' => 'boolean',
             'source' => InvoiceSource::class,
             'voided_at' => 'datetime',
+            'synced_at' => 'datetime',
         ];
     }
 

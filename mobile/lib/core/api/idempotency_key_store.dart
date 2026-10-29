@@ -20,7 +20,7 @@ class IdempotencyKeyStore {
     final existing = await _store.read('$_prefix$operationId');
     if (existing != null) return existing;
 
-    final key = _uuidV4();
+    final key = newUuid(_random);
     await _store.write('$_prefix$operationId', key);
     return key;
   }
@@ -37,8 +37,10 @@ class IdempotencyKeyStore {
     ];
   }
 
-  String _uuidV4() {
-    final b = List<int>.generate(16, (_) => _random.nextInt(256));
+  /// A random UUIDv4 (also the offline queue's `client_transaction_id` and the device id).
+  static String newUuid([Random? random]) {
+    final source = random ?? Random.secure();
+    final b = List<int>.generate(16, (_) => source.nextInt(256));
     b[6] = (b[6] & 0x0f) | 0x40;
     b[8] = (b[8] & 0x3f) | 0x80;
     final h = b.map((x) => x.toRadixString(16).padLeft(2, '0')).join();

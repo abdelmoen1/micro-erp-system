@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/offline/offline_store.dart';
 import '../../core/providers.dart';
 import '../../core/theme/hisbah_tokens.dart';
 import '../../l10n/app_localizations.dart';
+import '../sync/application/sync_engine.dart';
+import '../sync/presentation/sync_screen.dart';
 
 /// The five R1 tabs. The bar shows them in enum order; RTL places the first at the right edge:
 /// الرئيسية · الزبائن · بيع (+) · المنتجات · المزيد — بيع is column 3 of 5, the exact centre
@@ -37,21 +40,23 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final online = ref.watch(serverReachableProvider);
+    final banner = OfflineBanner.shows(ref);
     return Scaffold(
       // The body runs under the raised centre button; Scaffold pads it by the bar height.
       extendBody: true,
-      body: Column(
-        children: [
-          if (!online) const OfflineBanner(),
-          Expanded(
-            // The body's own context: its MediaQuery bottom padding includes the bar height
-            // (extendBody), so the end of every tab can scroll clear of the bar.
-            child: Builder(
-              builder: (body) => MediaQuery.removePadding(context: body, removeTop: !online, child: shell),
+      body: _SyncOnResume(
+        child: Column(
+          children: [
+            if (banner) const OfflineBanner(),
+            Expanded(
+              // The body's own context: its MediaQuery bottom padding includes the bar height
+              // (extendBody), so the end of every tab can scroll clear of the bar.
+              child: Builder(
+                builder: (body) => MediaQuery.removePadding(context: body, removeTop: banner, child: shell),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: HisbahNavBar(
         current: AppTab.values[shell.currentIndex],
@@ -60,6 +65,35 @@ class AppShell extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Back in the foreground after an outage or a night: send what waits and refresh the cache.
+class _SyncOnResume extends ConsumerStatefulWidget {
+  const _SyncOnResume({required this.child});
+
+  final Widget child;
+
+  @override
+  ConsumerState<_SyncOnResume> createState() => _SyncOnResumeState();
+}
+
+class _SyncOnResumeState extends ConsumerState<_SyncOnResume> {
+  late final AppLifecycleListener _listener;
+
+  @override
+  void initState() {
+    super.initState();
+    _listener = AppLifecycleListener(onResume: () => ref.read(syncEngineProvider.notifier).kick(refresh: true));
+  }
+
+  @override
+  void dispose() {
+    _listener.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Bottom navigation from the hi-fi board. Side tabs: teal + 700 + indicator when active.
@@ -242,29 +276,53 @@ class _SellButton extends StatelessWidget {
 }
 
 /// Shown under the status bar while the server is unreachable. R1 has no offline sales (ia.md §1).
-class OfflineBanner extends StatelessWidget {
+/// Offline (or a queue near its limit, FR-68): what still works and what waits. With the R2 local
+/// store, sales and payments are saved on the phone; without it, selling needs the internet.
+class OfflineBanner extends ConsumerWidget {
   const OfflineBanner({super.key});
 
+  /// Whether any banner shows, so the screen under it gives up its top inset.
+  static bool shows(WidgetRef ref) => !ref.watch(serverReachableProvider) || ref.watch(syncEngineProvider.select((s) => s.nearLimit));
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final online = ref.watch(serverReachableProvider);
+    final sync = ref.watch(syncEngineProvider);
+    final tone = sync.full ? StatusTone.error : StatusTone.offline;
+    final text = sync.full
+        ? t.queueFullTitle
+        : sync.nearLimit
+        ? t.queueWarnBody(sync.pending, OfflineStore.limit)
+        : !sync.available
+        ? t.offlineBanner
+        : sync.pending > 0
+        ? t.offlineSavedBannerCount(sync.pending)
+        : t.offlineSavedBanner;
+
     return Semantics(
       liveRegion: true,
       child: ColoredBox(
-        color: StatusTone.offline.bg,
+        key: const Key('banner.offline'),
+        color: tone.bg,
         child: SafeArea(
           bottom: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
               children: [
-                Icon(Icons.wifi_off_rounded, size: 20, color: StatusTone.offline.fg),
+                Icon(online ? Icons.cloud_upload_outlined : Icons.wifi_off_rounded, size: 20, color: tone.fg),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    AppLocalizations.of(context).offlineBanner,
-                    style: TextStyle(color: StatusTone.offline.fg, fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
+                  child: Text(text, style: TextStyle(color: tone.fg, fontSize: 14, fontWeight: FontWeight.w600)),
                 ),
+                if (sync.available && sync.pending > 0)
+                  TextButton(
+                    key: const Key('banner.sync'),
+                    onPressed: () => openSyncScreen(context),
+                    style: TextButton.styleFrom(foregroundColor: tone.fg, minimumSize: const Size(44, 44)),
+                    child: Text(t.syncNow),
+                  ),
               ],
             ),
           ),

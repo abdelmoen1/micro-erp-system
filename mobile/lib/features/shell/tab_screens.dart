@@ -18,6 +18,8 @@ import '../more/presentation/more_widgets.dart';
 import '../more/presentation/staff_screen.dart';
 import '../more/presentation/store_settings_screen.dart';
 import '../more/presentation/support_screen.dart';
+import '../sync/application/sync_engine.dart';
+import '../sync/presentation/sync_screen.dart';
 import '../guide/usage_guide.dart';
 import '../products/presentation/stock_lists_screen.dart';
 import '../sale/presentation/sale_widgets.dart' show GroupLabel, LineCard;
@@ -83,7 +85,16 @@ class TabHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final online = ref.watch(serverReachableProvider);
+    final sync = ref.watch(syncEngineProvider);
     final fg = online ? HisbahColors.primary : StatusTone.offline.fg;
+    // FR-67 / UI-AC-13: synced, synchronizing or pending (n), always visible.
+    final (label, icon) = !online
+        ? (sync.pending > 0 ? t.syncOfflinePending(sync.pending) : t.offline, Icons.wifi_off_rounded)
+        : sync.syncing && sync.pending > 0
+        ? (t.syncSyncing, Icons.sync_rounded)
+        : sync.pending > 0
+        ? (t.syncPending(sync.pending), Icons.schedule_rounded)
+        : (sync.available ? t.syncSynced : t.online, Icons.check_rounded);
 
     return Row(
       children: [
@@ -101,24 +112,52 @@ class TabHeader extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Container(
-          key: const Key('header.connection'),
-          constraints: const BoxConstraints(minHeight: 30),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: online ? HisbahColors.primaryTint : StatusTone.offline.bg,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(online ? Icons.check_rounded : Icons.wifi_off_rounded, size: 14, color: fg),
-              const SizedBox(width: 6),
-              Text(
-                online ? t.online : t.offline,
-                style: TextStyle(fontSize: 13, color: fg, fontWeight: FontWeight.w600),
+        // Shrinks before the title does on a narrow phone; the label ellipsizes.
+        Flexible(
+          child: Semantics(
+            button: sync.available,
+            child: InkWell(
+              onTap: sync.available ? () => openSyncScreen(context) : null,
+              borderRadius: BorderRadius.circular(999),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    key: const Key('header.connection'),
+                    constraints: const BoxConstraints(minHeight: 30),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: online ? HisbahColors.primaryTint : StatusTone.offline.bg,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, size: 14, color: fg),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 13, color: fg, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (sync.review > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        t.syncNeedsReview(sync.review),
+                        key: const Key('header.review'),
+                        style: TextStyle(fontSize: 12, color: StatusTone.warning.fg, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ],
@@ -349,6 +388,39 @@ class _MoreTab extends ConsumerWidget {
   /// Logout confirm sheet (hi-fi board): staying is the primary, safe choice.
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final t = AppLocalizations.of(context);
+    // R2: unsynced sales and payments belong to this account; another one must never send them.
+    final pending = ref.read(syncEngineProvider).pending;
+    if (pending > 0) {
+      await showModalBottomSheet<void>(
+        context: context,
+        useSafeArea: true,
+        builder: (sheet) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                t.logoutPendingTitle(pending),
+                key: const Key('logout.pending'),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 14),
+              Text(t.logoutPendingBody, style: const TextStyle(fontSize: 15, color: HisbahColors.inkMuted)),
+              const SizedBox(height: 14),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(sheet);
+                  openSyncScreen(context);
+                },
+                child: Text(t.syncNow),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       useSafeArea: true,
@@ -387,7 +459,11 @@ class _MoreTab extends ConsumerWidget {
         ),
       ),
     );
-    if (confirmed == true) await ref.read(sessionProvider.notifier).logout();
+    if (confirmed != true) return;
+    // The next account on this phone starts from an empty cache.
+    final store = ref.read(offlineStoreProvider);
+    if (await store.available) await store.clearCatalog();
+    await ref.read(sessionProvider.notifier).logout();
   }
 }
 
@@ -440,9 +516,12 @@ class _SubscriptionTile extends ConsumerWidget {
     final storeName = session is SignedIn ? session.user.storeName : '';
     final status = switch (summary) {
       null => null,
-      SubscriptionSummary(state: 'trial', :final trialEndsAt?) => t.moreSubTrialUntil(_day.format(trialEndsAt.toLocal())),
-      SubscriptionSummary(state: 'active', :final subscriptionExpiresAt?) =>
-        t.moreSubActiveUntil(_day.format(subscriptionExpiresAt.toLocal())),
+      SubscriptionSummary(state: 'trial', :final trialEndsAt?) => t.moreSubTrialUntil(
+        _day.format(trialEndsAt.toLocal()),
+      ),
+      SubscriptionSummary(state: 'active', :final subscriptionExpiresAt?) => t.moreSubActiveUntil(
+        _day.format(subscriptionExpiresAt.toLocal()),
+      ),
       _ => t.moreSubActive,
     };
     final number = summary?.supportWhatsapp;

@@ -237,3 +237,18 @@ select.fld { padding-inline: 12px; }
   .dlg.is-alert .dlg-actions { flex-direction: column; }
 }
 @keyframes sheet-in { from { transform: translateY(100%); } }
+
+/* SCR-W-18 sync review: stacked cells, the reasons a row is listed, and the resolution choices. */
+.cell-stack { display: grid; gap: 4px; justify-items: start; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.reason-list { margin: 0; padding-inline-start: 18px; font-size: 14px; max-width: 34ch; }
+.reason-list li + li { margin-top: 4px; }
+.resolve-options { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+.resolve-option {
+  display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; cursor: pointer;
+  border: 1.5px solid var(--border-strong); border-radius: 12px; background: var(--raised);
+}
+.resolve-option > span { display: grid; gap: 2px; }
+.resolve-option input { margin-top: 4px; accent-color: var(--primary); }
+.resolve-option.is-on { background: var(--primary-tint); border-color: var(--primary); }
+.resolve-option:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }

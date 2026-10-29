@@ -22,6 +22,7 @@ class Payment extends Model
         'reversed_at',
         'reversed_by',
         'reversal_reason',
+        'synced_at',
     ];
     protected function casts(): array
     {
@@ -30,6 +31,7 @@ class Payment extends Model
             'is_reversed' => 'boolean',
             'paid_at' => 'datetime',
             'reversed_at' => 'datetime',
+            'synced_at' => 'datetime',
         ];
     }
 
