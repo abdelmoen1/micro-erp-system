@@ -2800,4 +2800,60 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get logoutPendingBody =>
       'You cannot sign out until they are sent, so none is lost or credited to another account.';
+
+  @override
+  String get formByCarton => 'By the carton';
+
+  @override
+  String get cartonsLabel => 'Cartons you have';
+
+  @override
+  String get cartonsHint => 'How many on the shelf';
+
+  @override
+  String get looseLabel => 'Extra pieces';
+
+  @override
+  String get looseHint => 'From an opened carton';
+
+  @override
+  String get cartonPriceLabel => 'Carton price (wholesale)';
+
+  @override
+  String get piecePriceLabel => 'Price of one piece';
+
+  @override
+  String cartonTotal(int total) {
+    return 'Total: $total pieces';
+  }
+
+  @override
+  String get cartonsInvalid => 'Enter a whole number, 0 or more.';
+
+  @override
+  String looseTooMany(int size) {
+    return 'Extra pieces must be fewer than $size; otherwise it is a full carton.';
+  }
+
+  @override
+  String get prodColName => 'Product';
+
+  @override
+  String get prodColCartons => 'Cartons';
+
+  @override
+  String get prodColPieces => 'Pieces';
+
+  @override
+  String get prodColPrice => 'Piece price';
+
+  @override
+  String cartonsCell(int count) {
+    return '$count cartons';
+  }
+
+  @override
+  String cartonsCellLoose(int count, int pieces) {
+    return '$count cartons + $pieces';
+  }
 }

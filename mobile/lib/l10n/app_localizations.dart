@@ -4933,6 +4933,102 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'لا يمكن تسجيل الخروج قبل إرسالها، حتى لا تضيع ولا تُنسب لحساب آخر.'**
   String get logoutPendingBody;
+
+  /// No description provided for @formByCarton.
+  ///
+  /// In ar, this message translates to:
+  /// **'بالكرتونة'**
+  String get formByCarton;
+
+  /// No description provided for @cartonsLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'عدد الكراتين عندك'**
+  String get cartonsLabel;
+
+  /// No description provided for @cartonsHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'كم كرتونة على الرف'**
+  String get cartonsHint;
+
+  /// No description provided for @looseLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'قطع زيادة'**
+  String get looseLabel;
+
+  /// No description provided for @looseHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'من كرتونة مفتوحة'**
+  String get looseHint;
+
+  /// No description provided for @cartonPriceLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر الكرتونة (جملة)'**
+  String get cartonPriceLabel;
+
+  /// No description provided for @piecePriceLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر القطعة الواحدة'**
+  String get piecePriceLabel;
+
+  /// No description provided for @cartonTotal.
+  ///
+  /// In ar, this message translates to:
+  /// **'المجموع: {total} قطعة'**
+  String cartonTotal(int total);
+
+  /// No description provided for @cartonsInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عدداً صحيحاً، 0 أو أكثر.'**
+  String get cartonsInvalid;
+
+  /// No description provided for @looseTooMany.
+  ///
+  /// In ar, this message translates to:
+  /// **'القطع الزيادة أقل من {size}؛ وإلا فهي كرتونة كاملة.'**
+  String looseTooMany(int size);
+
+  /// No description provided for @prodColName.
+  ///
+  /// In ar, this message translates to:
+  /// **'المنتج'**
+  String get prodColName;
+
+  /// No description provided for @prodColCartons.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكراتين'**
+  String get prodColCartons;
+
+  /// No description provided for @prodColPieces.
+  ///
+  /// In ar, this message translates to:
+  /// **'عدد القطع'**
+  String get prodColPieces;
+
+  /// No description provided for @prodColPrice.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر القطعة'**
+  String get prodColPrice;
+
+  /// No description provided for @cartonsCell.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} كرتونة'**
+  String cartonsCell(int count);
+
+  /// No description provided for @cartonsCellLoose.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} كرتونة + {pieces} قطعة'**
+  String cartonsCellLoose(int count, int pieces);
 }
 
 class _AppLocalizationsDelegate

@@ -179,12 +179,13 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       LineCard(
         child: Column(
           children: [
-            for (var i = 0; i < _products.length; i++) ...[
-              if (i > 0) const Divider(height: 1, color: HisbahColors.border),
+            const _TableHeader(),
+            for (final product in _products) ...[
+              const Divider(height: 1, color: HisbahColors.border),
               _ProductRow(
-                product: _products[i],
+                product: product,
                 onTap: () async {
-                  if (await openProduct(context, _products[i].id) && mounted) unawaited(_load());
+                  if (await openProduct(context, product.id) && mounted) unawaited(_load());
                 },
               ),
             ],
@@ -195,6 +196,33 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   }
 }
 
+/// The table's columns, shared by the header and every row: name, cartons, all pieces, piece price.
+const _columns = [5, 4, 3, 3];
+
+class _TableHeader extends StatelessWidget {
+  const _TableHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    const style = TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: HisbahColors.inkMuted);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      child: Row(
+        children: [
+          for (final (i, label) in [t.prodColName, t.prodColCartons, t.prodColPieces, t.prodColPrice].indexed)
+            Expanded(
+              flex: _columns[i],
+              child: Text(label, style: style, textAlign: i == 0 ? TextAlign.start : TextAlign.end),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One product: its name, how many cartons that is (with the pieces of an opened one), every piece
+/// on hand, and the price of one piece. The pieces take the stock colour (low, out, below zero).
 class _ProductRow extends StatelessWidget {
   const _ProductRow({required this.product, required this.onTap});
 
@@ -207,47 +235,60 @@ class _ProductRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final stock = product.currentStock;
-    final (label, tone) = stock.isNegative
-        ? (t.prodStockNegative, StatusTone.error)
-        : stock.isZero
-        ? (t.prodStockOut, StatusTone.error)
+    final stockColor = stock.isNegative || stock.isZero
+        ? StatusTone.error.fg
         : product.isLowStock
-        ? (t.prodStockLow, StatusTone.warning)
-        : (t.prodStockOk, StatusTone.success);
+        ? StatusTone.warning.fg
+        : HisbahColors.ink;
+    final cartons = product.cartonsOnHand;
+    final weighed = product.unit == ProductUnit.kg;
+    const number = TextStyle(fontSize: 14, fontWeight: FontWeight.w700);
+
     return InkWell(
       key: Key('products.row.${product.id}'),
       onTap: onTap,
       child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(product.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: isolateLtr(formatShekel(product.sellingPrice))),
-                      TextSpan(text: ' / ${product.unit == ProductUnit.kg ? t.prodPerKg : t.prodPerPiece}'),
-                    ],
-                  ),
-                  style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
-                ),
-              ],
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: _columns[0],
+              child: Text(product.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-            decoration: BoxDecoration(color: tone.bg, borderRadius: BorderRadius.circular(999)),
-            child: Text(
-              stock.isZero ? label : '$label ${isolateLtr(stock.format(product.unit))}',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: tone.fg),
+            Expanded(
+              flex: _columns[1],
+              child: Text(
+                cartons == null
+                    ? '—'
+                    : cartons.$2 == 0
+                    ? t.cartonsCell(cartons.$1)
+                    : t.cartonsCellLoose(cartons.$1, cartons.$2),
+                key: Key('products.cartons.${product.id}'),
+                textAlign: TextAlign.end,
+                style: const TextStyle(fontSize: 13, color: HisbahColors.ink),
+              ),
             ),
-          ),
-        ],
-      ),
+            Expanded(
+              flex: _columns[2],
+              child: Text(
+                isolateLtr(weighed ? '${stock.format(product.unit)} ${t.prodPerKg}' : stock.format(product.unit)),
+                key: Key('products.pieces.${product.id}'),
+                textAlign: TextAlign.end,
+                style: number.copyWith(color: stockColor),
+              ),
+            ),
+            Expanded(
+              flex: _columns[3],
+              child: Text(
+                isolateLtr(formatShekel(product.sellingPrice)),
+                key: Key('products.price.${product.id}'),
+                textAlign: TextAlign.end,
+                style: number,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

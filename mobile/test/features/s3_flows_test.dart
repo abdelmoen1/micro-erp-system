@@ -327,6 +327,7 @@ void main() {
       expect(find.text('من الرمز'), findsNWidgets(2));
       expect(api.requestsTo('GET /products/lookup'), isEmpty);
 
+      await tap(tester, find.byKey(const Key('form.unit.piece')));
       await tap(tester, find.byKey(const Key('form.save')));
       expect(find.textContaining('إضافة البضاعة للمالك أو المدير'), findsOneWidget);
 
@@ -349,7 +350,8 @@ void main() {
 
       await tap(tester, find.byKey(const Key('form.save')));
       expect(find.text('اكتب اسم الصنف.'), findsOneWidget);
-      expect(find.text('أدخل سعراً صحيحاً.'), findsOneWidget);
+      expect(tester.widget<TextField>(find.byKey(const Key('form.selling_price'))).decoration!.errorText, 'أدخل سعراً صحيحاً.');
+      expect(tester.widget<TextField>(find.byKey(const Key('form.cartons'))).decoration!.errorText, 'أدخل عدداً صحيحاً، 0 أو أكثر.');
       expect(api.requestsTo('POST /products'), isEmpty);
     });
 
@@ -369,6 +371,7 @@ void main() {
       await tester.enterText(find.byKey(const Key('form.name')), 'تمر مجهول 1 كغ');
       await tester.enterText(find.byKey(const Key('form.selling_price')), '45');
       await tester.enterText(find.byKey(const Key('form.cost_price')), '38.5');
+      await tap(tester, find.byKey(const Key('form.unit.piece')));
       await tester.enterText(find.byKey(const Key('form.current_stock')), '12');
       await tap(tester, find.byKey(const Key('form.save')));
 
@@ -403,6 +406,7 @@ void main() {
       await scanCode(tester, '6281007041235');
       await tester.enterText(find.byKey(const Key('form.name')), 'تمر مجهول 1 كغ');
       await tester.enterText(find.byKey(const Key('form.selling_price')), '45');
+      await tap(tester, find.byKey(const Key('form.unit.piece')));
       await tester.enterText(find.byKey(const Key('form.current_stock')), '3');
 
       api.offline('POST /products');
@@ -513,19 +517,25 @@ void main() {
       expect(find.text('أُضيفت الكمية إلى «ماء 600 مل». الكمية الآن 78'), findsOneWidget);
     });
 
-    testWidgets('a new product with a carton: the per-piece price is shown and a carton cheaper than a piece is stopped', (tester) async {
+    testWidgets('a new product by the carton: cartons × pieces + extras is the stock; a carton cheaper than a piece is stopped', (tester) async {
       api.on('GET /products/catalog-lookup', const FakeResponse(200, {'data': {'barcode': '6281007041235', 'product': null, 'catalog_product': null}}));
       api.on('POST /products', FakeResponse(201, {'message': 'تم إنشاء المنتج بنجاح', 'product': dates}));
       await pumpApp(tester);
       await scanCode(tester, '6281007041235');
 
+      expect(find.byKey(const Key('form.current_stock')), findsNothing, reason: 'by the carton, the stock is counted in cartons');
       await tester.enterText(find.byKey(const Key('form.name')), 'ماء 600 مل');
       await tester.enterText(find.byKey(const Key('form.selling_price')), '2.50');
-      await tester.ensureVisible(find.byKey(const Key('form.pack')));
-      await tap(tester, find.byKey(const Key('form.pack')));
+      await tester.enterText(find.byKey(const Key('form.cartons')), '2');
       await tester.enterText(find.byKey(const Key('form.pack_size')), '24');
+      await tester.enterText(find.byKey(const Key('form.loose')), '30');
+      await tap(tester, find.byKey(const Key('form.save')));
+      expect(find.text('القطع الزيادة أقل من 24؛ وإلا فهي كرتونة كاملة.'), findsOneWidget);
+
+      await tester.enterText(find.byKey(const Key('form.loose')), '3');
+      await tester.pump();
+      expect(find.text('المجموع: 51 قطعة'), findsOneWidget);
       await tester.enterText(find.byKey(const Key('form.pack_price')), '2.50');
-      await tester.enterText(find.byKey(const Key('form.current_stock')), '48');
       await tap(tester, find.byKey(const Key('form.save')));
       expect(find.text('سعر الكرتونة يجب أن يكون أعلى من سعر القطعة. هل أدخلت سعر القطعة هنا؟'), findsOneWidget);
       expect(api.requestsTo('POST /products'), isEmpty);
@@ -539,7 +549,7 @@ void main() {
         'barcode': '6281007041235',
         'unit': 'piece',
         'selling_price': '2.50',
-        'current_stock': '48',
+        'current_stock': '51',
         'pack_size': '24',
         'pack_price': '54',
       });
@@ -562,6 +572,7 @@ void main() {
       expect(find.byKey(const Key('inventory.sheet')), findsOneWidget);
       expect(tester.widget<TextField>(find.byKey(const Key('form.name'))).controller!.text, 'تمر مجهول 1 كغ');
 
+      await tap(tester, find.byKey(const Key('form.unit.piece')));
       await tester.enterText(find.byKey(const Key('form.current_stock')), '١٢');
       await tap(tester, find.byKey(const Key('form.save')));
       expect(api.requestsTo('POST /products').single.data, {
@@ -599,7 +610,7 @@ void main() {
       await tap(tester, find.byKey(const Key('products.add')));
       await tap(tester, find.byKey(const Key('addProduct.manual')));
 
-      expect(find.textContaining('السعر للزبون (سعر البيع)'), findsOneWidget);
+      expect(find.textContaining('سعر القطعة الواحدة'), findsOneWidget);
       expect(find.textContaining('تكلفة الصنف عليك (سعر الشراء)'), findsOneWidget);
       expect(find.text('ما تدفعه للمورّد، لا يراه الزبون'), findsOneWidget);
 
@@ -615,6 +626,29 @@ void main() {
       await tap(tester, find.byKey(const Key('discard.leave')));
       expect(find.byKey(const Key('form.name')), findsNothing);
       expect(api.requestsTo('POST /products'), isEmpty);
+    });
+
+    testWidgets('the products table: name, cartons with the extra pieces, all pieces and the piece price', (tester) async {
+      api.on('GET /products', FakeResponse(200, {
+        'data': [
+          {...productJson(id: 3, name: 'ماء 600 مل', price: '2.50', stock: '50'), 'pack_size': 24, 'pack_price': '54.00'},
+          {...productJson(id: 4, name: 'عصير', price: '4.00', stock: '48'), 'pack_size': 24, 'pack_price': '90.00'},
+          productJson(id: 5, name: 'لوز نيء', unit: 'kg', price: '60.00', stock: '5.200'),
+        ],
+      }));
+      await pumpApp(tester);
+      await tap(tester, find.byKey(const Key('nav.products')));
+
+      expect(find.text('الكراتين'), findsOneWidget);
+      expect(find.text('عدد القطع'), findsOneWidget);
+      expect(find.text('سعر القطعة'), findsOneWidget);
+      String cell(String key) => tester.widget<Text>(find.byKey(Key(key))).data!;
+      expect(cell('products.cartons.3'), '2 كرتونة + 2 قطعة');
+      expect(cell('products.pieces.3'), contains('50'));
+      expect(cell('products.price.3'), contains('2.50'));
+      expect(cell('products.cartons.4'), '2 كرتونة');
+      expect(cell('products.cartons.5'), '—', reason: 'a weighed product has no cartons');
+      expect(cell('products.pieces.5'), contains('5.200'));
     });
 
     testWidgets('an employee sees products without the add button', (tester) async {

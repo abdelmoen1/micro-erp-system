@@ -252,3 +252,11 @@ select.fld { padding-inline: 12px; }
 .resolve-option input { margin-top: 4px; accent-color: var(--primary); }
 .resolve-option.is-on { background: var(--primary-tint); border-color: var(--primary); }
 .resolve-option:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* New product by the carton: the worked-out stock in pieces, shown before saving. */
+.carton-total { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--primary-tint); color: var(--primary-pressed); font-size: 15px; font-weight: 600; }
+.carton-total b { font-size: 17px; }
+.cartons-cell { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stock-negative, .stock-out { color: var(--error-fg); font-weight: 700; }
+.stock-low { color: var(--warning-fg); font-weight: 700; }
+.stock-inactive { color: var(--ink-muted); }

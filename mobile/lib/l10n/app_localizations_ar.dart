@@ -2779,4 +2779,60 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get logoutPendingBody =>
       'لا يمكن تسجيل الخروج قبل إرسالها، حتى لا تضيع ولا تُنسب لحساب آخر.';
+
+  @override
+  String get formByCarton => 'بالكرتونة';
+
+  @override
+  String get cartonsLabel => 'عدد الكراتين عندك';
+
+  @override
+  String get cartonsHint => 'كم كرتونة على الرف';
+
+  @override
+  String get looseLabel => 'قطع زيادة';
+
+  @override
+  String get looseHint => 'من كرتونة مفتوحة';
+
+  @override
+  String get cartonPriceLabel => 'سعر الكرتونة (جملة)';
+
+  @override
+  String get piecePriceLabel => 'سعر القطعة الواحدة';
+
+  @override
+  String cartonTotal(int total) {
+    return 'المجموع: $total قطعة';
+  }
+
+  @override
+  String get cartonsInvalid => 'أدخل عدداً صحيحاً، 0 أو أكثر.';
+
+  @override
+  String looseTooMany(int size) {
+    return 'القطع الزيادة أقل من $size؛ وإلا فهي كرتونة كاملة.';
+  }
+
+  @override
+  String get prodColName => 'المنتج';
+
+  @override
+  String get prodColCartons => 'الكراتين';
+
+  @override
+  String get prodColPieces => 'عدد القطع';
+
+  @override
+  String get prodColPrice => 'سعر القطعة';
+
+  @override
+  String cartonsCell(int count) {
+    return '$count كرتونة';
+  }
+
+  @override
+  String cartonsCellLoose(int count, int pieces) {
+    return '$count كرتونة + $pieces قطعة';
+  }
 }

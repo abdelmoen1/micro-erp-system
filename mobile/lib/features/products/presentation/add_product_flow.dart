@@ -111,8 +111,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _minimum = TextEditingController();
   final _packSize = TextEditingController();
   final _packPrice = TextEditingController();
-  bool _pack = false;
-  ProductUnit _unit = ProductUnit.piece;
+  final _cartons = TextEditingController();
+  final _loose = TextEditingController();
+
+  /// By the carton unless the code or the shared catalog says it is weighed.
+  StockEntry _entry = StockEntry.carton;
+
+  ProductUnit get _unit => _entry.unit;
+
+  bool get _byCarton => _entry == StockEntry.carton;
 
   /// In screen order: a failed check focuses the first field with an error, which also scrolls it
   /// into view above the keyboard.
@@ -122,7 +129,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       'barcode',
       'selling_price',
       'cost_price',
+      'cartons',
       'pack_size',
+      'loose',
       'pack_price',
       'current_stock',
       'minimum_stock',
@@ -150,7 +159,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       _name.text = data.name ?? '';
       _barcode.text = data.barcode ?? '';
       _price.text = data.sellingPrice ?? '';
-      _unit = data.unit ?? ProductUnit.piece;
+      _entry = StockEntry.of(data.unit ?? ProductUnit.piece);
       if (data.barcode != null) {
         _stage = _Stage.checking;
         _checkDuplicate(data.barcode!);
@@ -160,7 +169,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   @override
   void dispose() {
-    for (final c in [_name, _barcode, _price, _cost, _stock, _minimum, _packSize, _packPrice]) {
+    for (final c in [_name, _barcode, _price, _cost, _stock, _minimum, _packSize, _packPrice, _cartons, _loose]) {
       c.dispose();
     }
     for (final node in _focus.values) {
@@ -180,7 +189,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         if (match.product == null && match.inCatalog) {
           _fromCatalog = true;
           _name.text = match.catalogName!;
-          _unit = match.catalogUnit ?? _unit;
+          if (match.catalogUnit != null) _entry = StockEntry.of(match.catalogUnit!);
         }
         _stage = match.product == null ? _Stage.form : _Stage.duplicate;
       });
@@ -202,9 +211,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     cost: _cost.text,
     stock: _stock.text,
     minimum: _minimum.text,
-    pack: _pack,
     packSize: _packSize.text,
     packPrice: _packPrice.text,
+    cartonEntry: _byCarton,
+    cartons: _cartons.text,
+    loose: _loose.text,
   );
 
   Future<void> _save(AppLocalizations t) async {
@@ -225,10 +236,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               unit: _unit,
               sellingPrice: _price.text,
               costPrice: _cost.text,
-              currentStock: _stock.text,
+              // By the carton the server gets the pieces: cartons × per carton + extras.
+              currentStock: _byCarton ? '${cartonPieces(_packSize.text, _cartons.text, _loose.text)}' : _stock.text,
               minimumStock: _minimum.text,
-              packSize: _pack ? _packSize.text : null,
-              packPrice: _pack ? _packPrice.text : null,
+              packSize: _byCarton ? _packSize.text : null,
+              packPrice: _byCarton ? _packPrice.text : null,
             ),
           );
       if (!mounted) return;
@@ -242,7 +254,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _stage = _Stage.form;
         _errors = {
           for (final e in failure.fieldErrors.entries)
-            if (e.value.isNotEmpty) e.key: e.value.first,
+            if (e.value.isNotEmpty) (_byCarton && e.key == 'current_stock' ? 'cartons' : e.key): e.value.first,
         };
         if (_errors.isEmpty) _banner = failure.message ?? t.formFailed;
       });
@@ -260,8 +272,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
   }
 
-  void _setUnit(ProductUnit unit) => setState(() {
-    _unit = unit;
+  void _setEntry(StockEntry entry) => setState(() {
+    _entry = entry;
+    _errors = const {};
     _edited = true;
   });
 
@@ -516,54 +529,48 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              OptionRow(
-                children: [
-                  OptionButton(
-                    label: t.formByPiece,
-                    selected: _unit == ProductUnit.piece,
-                    onTap: saving ? null : () => _setUnit(ProductUnit.piece),
-                  ),
-                  OptionButton(
-                    label: t.formByKg,
-                    selected: _unit == ProductUnit.kg,
-                    onTap: saving ? null : () => _setUnit(ProductUnit.kg),
-                  ),
-                ],
-              ),
+              StockEntryChoice(value: _entry, onChanged: _setEntry, enabled: !saving),
               if (_errors['unit'] != null)
                 Text(_errors['unit']!, style: TextStyle(color: StatusTone.error.fg, fontSize: 13)),
               const SizedBox(height: 12),
               field(
                 'selling_price',
-                t.formPrice,
+                _byCarton ? t.piecePriceLabel : t.formPrice,
                 _price,
                 number: true,
                 helper: _unit == ProductUnit.kg ? t.formPriceHelpKg : t.formPriceHelpPiece,
               ),
               field('cost_price', t.formCost, _cost, optional: true, number: true, helper: t.formCostHelp),
-              if (_unit == ProductUnit.piece)
-                // The per-piece hint follows what is typed in the three price / size fields.
+              if (_byCarton)
+                // The sum and the per-piece hint follow what is typed.
                 ListenableBuilder(
-                  listenable: Listenable.merge([_price, _packSize, _packPrice]),
-                  builder: (context, _) => PackSection(
-                    enabled: !saving,
-                    open: _pack,
-                    onOpen: (open) => setState(() => _pack = open),
+                  listenable: Listenable.merge([_price, _packSize, _packPrice, _cartons, _loose]),
+                  builder: (context, _) => CartonStockSection(
                     size: _packSize,
-                    price: _packPrice,
+                    cartons: _cartons,
+                    loose: _loose,
+                    packPrice: _packPrice,
                     piecePrice: _price.text,
                     errors: _errors,
-                    fieldBuilder: (key, label, controller) =>
-                        field(key, label, controller, number: true, whole: key == 'pack_size'),
+                    fieldBuilder: (key, label, controller, {optional = false, hint}) => field(
+                      key,
+                      label,
+                      controller,
+                      number: true,
+                      whole: key != 'pack_price',
+                      optional: optional,
+                      hint: hint,
+                    ),
                   ),
+                )
+              else
+                field(
+                  'current_stock',
+                  t.invOpeningStock(_unit == ProductUnit.kg ? t.prodPerKg : t.prodPerPiece),
+                  _stock,
+                  number: true,
+                  whole: _unit == ProductUnit.piece,
                 ),
-              field(
-                'current_stock',
-                t.invOpeningStock(_unit == ProductUnit.kg ? t.prodPerKg : t.prodPerPiece),
-                _stock,
-                number: true,
-                whole: _unit == ProductUnit.piece,
-              ),
               field(
                 'minimum_stock',
                 t.formMin,
@@ -605,20 +612,29 @@ Map<String, String> productFormErrors(
   bool pack = false,
   String packSize = '',
   String packPrice = '',
+  bool cartonEntry = false,
+  String cartons = '',
+  String loose = '',
 }) {
   final quantity = unit == ProductUnit.kg ? RegExp(r'^\d{1,7}(\.\d{1,3})?$') : RegExp(r'^\d{1,7}$');
   final money = RegExp(r'^\d{1,8}(\.\d{1,2})?$');
+  final whole = RegExp(r'^\d{1,6}$');
   final stockMessage = unit == ProductUnit.kg ? t.formStockKg : t.formStockPiece;
   final size = int.tryParse(packSize.trim());
   final priceOk = money.hasMatch(price.trim());
   final packPriceOk = money.hasMatch(packPrice.trim()) && Money.parse(packPrice.trim()).isPositive;
   // Same carton rules as the server (App\Support\Pack): pieces only, 2+ per carton, dearer than a piece.
-  final checkPack = pack && unit == ProductUnit.piece;
+  final checkPack = (pack || cartonEntry) && unit == ProductUnit.piece;
+  final extra = int.tryParse(loose.trim());
   return {
     if (name.trim().isEmpty) 'name': t.formNameRequired,
     if (!priceOk || !Money.parse(price.trim()).isPositive) 'selling_price': t.formPriceInvalid,
     if (cost.trim().isNotEmpty && !money.hasMatch(cost.trim())) 'cost_price': t.formPriceInvalid,
-    if (!quantity.hasMatch(stock.trim())) 'current_stock': stockMessage,
+    // By the carton the stock is the worked-out sum, so the carton count and the extras are checked.
+    if (cartonEntry && !whole.hasMatch(cartons.trim())) 'cartons': t.cartonsInvalid,
+    if (cartonEntry && loose.trim().isNotEmpty && !whole.hasMatch(loose.trim())) 'loose': t.cartonsInvalid,
+    if (cartonEntry && extra != null && size != null && size >= 2 && extra >= size) 'loose': t.looseTooMany(size),
+    if (!cartonEntry && !quantity.hasMatch(stock.trim())) 'current_stock': stockMessage,
     if (minimum.trim().isNotEmpty && !quantity.hasMatch(minimum.trim())) 'minimum_stock': stockMessage,
     if (checkPack && (size == null || size < 2 || size > 10000 || !RegExp(r'^\d+$').hasMatch(packSize.trim())))
       'pack_size': t.packSizeInvalid,
@@ -695,6 +711,135 @@ class PackSection extends StatelessWidget {
               ),
             ),
         ],
+      ],
+    );
+  }
+}
+
+/// What a new product is sold by. The carton is the main way in: the shopkeeper counts cartons,
+/// not loose pieces; a product without a carton is entered by the piece or by weight.
+enum StockEntry {
+  carton,
+  piece,
+  kg;
+
+  ProductUnit get unit => this == kg ? ProductUnit.kg : ProductUnit.piece;
+
+  static StockEntry of(ProductUnit unit) => unit == ProductUnit.kg ? kg : carton;
+}
+
+/// Pieces on hand from a carton count: cartons × pieces per carton + extra pieces of an opened
+/// carton. Null while a field is not a valid whole number (the form shows why).
+int? cartonPieces(String size, String cartons, String loose) {
+  final perCarton = int.tryParse(size.trim());
+  final count = int.tryParse(cartons.trim());
+  final extra = loose.trim().isEmpty ? 0 : int.tryParse(loose.trim());
+  if (perCarton == null || perCarton < 2 || count == null || count < 0 || extra == null || extra < 0) return null;
+  return count * perCarton + extra;
+}
+
+/// «يُباع»: by the carton (first), by the piece, or by weight.
+class StockEntryChoice extends StatelessWidget {
+  const StockEntryChoice({super.key, required this.value, required this.onChanged, required this.enabled});
+
+  final StockEntry value;
+  final ValueChanged<StockEntry> onChanged;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return OptionRow(
+      children: [
+        for (final (entry, label) in [
+          (StockEntry.carton, t.formByCarton),
+          (StockEntry.piece, t.formByPiece),
+          (StockEntry.kg, t.formByKg),
+        ])
+          OptionButton(
+            key: Key('form.unit.${entry.name}'),
+            label: label,
+            selected: value == entry,
+            onTap: enabled ? () => onChanged(entry) : null,
+          ),
+      ],
+    );
+  }
+}
+
+/// The carton way in: pieces per carton and cartons on hand, extra pieces of an opened carton, and
+/// the carton's wholesale price. The stock in pieces is worked out and shown as the sum, so the
+/// shopkeeper sees what will be saved before saving.
+class CartonStockSection extends StatelessWidget {
+  const CartonStockSection({
+    super.key,
+    required this.size,
+    required this.cartons,
+    required this.loose,
+    required this.packPrice,
+    required this.piecePrice,
+    required this.errors,
+    required this.fieldBuilder,
+  });
+
+  final TextEditingController size;
+  final TextEditingController cartons;
+  final TextEditingController loose;
+  final TextEditingController packPrice;
+  final String piecePrice;
+  final Map<String, String> errors;
+
+  /// One numeric field in the caller's style: (key, label, controller, optional?, hint).
+  final Widget Function(String key, String label, TextEditingController controller, {bool optional, String? hint})
+  fieldBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final total = cartonPieces(size.text, cartons.text, loose.text);
+    final money = RegExp(r'^\d{1,8}(\.\d{1,2})?$');
+    final pieces = int.tryParse(size.text.trim());
+    final carton = money.hasMatch(packPrice.text.trim()) ? Money.parse(packPrice.text.trim()) : null;
+    final perPiece = pieces != null && pieces >= 2 && carton != null && carton.isPositive
+        ? Money.cents((carton.cents / pieces).round())
+        : null;
+    final piece = money.hasMatch(piecePrice.trim()) ? Money.parse(piecePrice.trim()) : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: fieldBuilder('cartons', t.cartonsLabel, cartons, hint: t.cartonsHint)),
+            const SizedBox(width: 10),
+            Expanded(child: fieldBuilder('pack_size', t.packSizeLabel, size, hint: t.phPackSize)),
+          ],
+        ),
+        fieldBuilder('loose', t.looseLabel, loose, optional: true, hint: t.looseHint),
+        if (total != null && errors['loose'] == null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Container(
+              key: const Key('form.cartonTotal'),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(color: HisbahColors.primaryTint, borderRadius: BorderRadius.circular(10)),
+              child: Text(
+                t.cartonTotal(total),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: HisbahColors.primary),
+              ),
+            ),
+          ),
+        fieldBuilder('pack_price', t.cartonPriceLabel, packPrice, hint: t.phPackPrice),
+        if (perPiece != null && errors['pack_price'] == null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              piece == null ? t.packPerPiece(shekel(perPiece)) : t.packPerPieceVs(shekel(perPiece), shekel(piece)),
+              key: const Key('form.packHint'),
+              style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
+            ),
+          ),
       ],
     );
   }
