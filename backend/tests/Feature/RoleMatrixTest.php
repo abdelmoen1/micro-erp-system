@@ -110,7 +110,7 @@ class RoleMatrixTest extends TestCase
         $owner = $this->makeUser($store);
         $employee = $this->makeUser($store, 'employee', ['email' => 'staff@example.com']);
 
-        $token = $this->postJson('/api/v1/login', ['email' => 'staff@example.com', 'password' => 'password'])
+        $token = $this->postJson('/api/v1/login', ['login' => $this->phoneOf('staff@example.com'), 'password' => 'password'])
             ->assertOk()->json('token');
         $this->withToken($token)->getJson('/api/v1/me')->assertOk();
         $this->app['auth']->forgetGuards();
@@ -124,7 +124,7 @@ class RoleMatrixTest extends TestCase
         $this->assertSame(0, $employee->tokens()->count());
         $this->withToken($token)->getJson('/api/v1/me')->assertUnauthorized();
 
-        $this->postJson('/api/v1/login', ['email' => 'staff@example.com', 'password' => 'password'])
+        $this->postJson('/api/v1/login', ['login' => $this->phoneOf('staff@example.com'), 'password' => 'password'])
             ->assertForbidden()
             ->assertJsonPath('code', 'USER_INACTIVE');
 

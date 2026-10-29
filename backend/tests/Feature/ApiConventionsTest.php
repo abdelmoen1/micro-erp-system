@@ -38,7 +38,7 @@ class ApiConventionsTest extends TestCase
         $this->getJson('/api/customers')->assertNotFound();
         $this->getJson('/api/v1/customers')->assertUnauthorized();
 
-        $this->postJson('/api/v1/login', ['email' => 'owner@example.com', 'password' => 'password'])
+        $this->postJson('/api/v1/login', ['login' => $this->phoneOf('owner@example.com'), 'password' => 'password'])
             ->assertOk()
             ->assertJsonStructure(['token', 'user']);
 
@@ -64,7 +64,7 @@ class ApiConventionsTest extends TestCase
             ->assertJsonPath('code', 'UNAUTHENTICATED');
 
         $this->owner();
-        $this->postJson('/api/v1/login', ['email' => 'owner@example.com', 'password' => 'wrong'])
+        $this->postJson('/api/v1/login', ['login' => $this->phoneOf('owner@example.com'), 'password' => 'wrong'])
             ->assertUnauthorized()
             ->assertJsonPath('code', 'INVALID_CREDENTIALS');
 

@@ -71,7 +71,7 @@ class StoreDeletionService
                 'platform.store_deleted',
                 'Store',
                 ['entity_id' => (string) $locked->id, 'name' => $locked->name, 'phone' => $locked->phone]
-                    + ($owner ? ['owner' => $owner->only(['id', 'name', 'email'])] : [])
+                    + ($owner ? ['owner' => $owner->only(['id', 'name', 'phone'])] : [])
                     + ['removed' => $removed],
                 $admin,
             );

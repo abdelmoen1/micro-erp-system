@@ -26,7 +26,7 @@ class StoreController extends Controller
 {
     public function __construct(private readonly StoreAccessService $access) {}
 
-    /** Search by store name, phone, address, area or the owner's name / email; `area` filters exactly. */
+    /** Search by store name, phone, address, area or the owner's name / phone; `area` filters exactly. */
     public function index(Request $request)
     {
         $filters = $request->validate([
@@ -47,7 +47,7 @@ class StoreController extends Controller
                     ->orWhere('phone', 'like', $like)
                     ->orWhere('address', 'like', $like)
                     ->orWhere('area', 'like', $like)
-                    ->orWhereHas('users', fn($u) => $u->where('name', 'like', $like)->orWhere('email', 'like', $like)));
+                    ->orWhereHas('users', fn($u) => $u->where('name', 'like', $like)->orWhere('phone', 'like', $like)));
             })
             ->when($filters['area'] ?? null, fn($query, string $area) => $query->where('area', $area))
             ->when($filters['status'] ?? null, fn($query, string $status) => $query->where('status', $status))
@@ -72,11 +72,10 @@ class StoreController extends Controller
 
         $members = $store->users()
             ->orderBy('id')
-            ->get(['id', 'name', 'email', 'phone', 'role', 'status', 'created_at'])
+            ->get(['id', 'name', 'phone', 'role', 'status', 'created_at'])
             ->map(fn($user) => [
                 'id' => $user->id,
                 'name' => $user->name,
-                'email' => $user->email,
                 'phone' => $user->phone,
                 'role' => $user->role->value,
                 'status' => $user->status ?? 'active',

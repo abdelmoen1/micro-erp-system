@@ -36,7 +36,7 @@ FakeResponse envelope(
 Map<String, dynamic> userJson({int id = 1, String role = 'owner', bool hasAccess = true}) => {
   'id': id,
   'name': 'Demo $role',
-  'email': '$role@demo.test',
+  'phone': '0599000001',
   'role': role,
   'status': 'active',
   'store_id': 1,

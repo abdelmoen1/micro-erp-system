@@ -19,7 +19,6 @@ class CreateInvitationRequest extends FormRequest
         $allowedRoles = [UserRole::MANAGER->value, UserRole::EMPLOYEE->value];
 
         return [
-            'email' => ['nullable', 'email', 'max:255'],
             'role' => ['required', Rule::in($allowedRoles)],
             'expires_in_hours' => ['nullable', 'integer', 'min:1', 'max:168'],
         ];

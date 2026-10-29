@@ -500,12 +500,6 @@ abstract class AppLocalizations {
   /// **'رقم جوالك، مثل 0599123456'**
   String get phPhone;
 
-  /// No description provided for @phEmail.
-  ///
-  /// In ar, this message translates to:
-  /// **'بريدك الذي تدخل به، مثل name@store.ps'**
-  String get phEmail;
-
   /// No description provided for @phCustomerName.
   ///
   /// In ar, this message translates to:
@@ -560,12 +554,6 @@ abstract class AppLocalizations {
   /// **'أدخل بيانات حسابك في المتجر'**
   String get loginHelper;
 
-  /// No description provided for @emailLabel.
-  ///
-  /// In ar, this message translates to:
-  /// **'البريد الإلكتروني'**
-  String get emailLabel;
-
   /// No description provided for @passwordLabel.
   ///
   /// In ar, this message translates to:
@@ -607,18 +595,6 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'جارٍ تسجيل الدخول…'**
   String get loginSubmitting;
-
-  /// No description provided for @emailRequired.
-  ///
-  /// In ar, this message translates to:
-  /// **'أدخل البريد الإلكتروني'**
-  String get emailRequired;
-
-  /// No description provided for @emailInvalid.
-  ///
-  /// In ar, this message translates to:
-  /// **'صيغة البريد الإلكتروني غير صحيحة'**
-  String get emailInvalid;
 
   /// No description provided for @passwordRequired.
   ///
@@ -821,7 +797,7 @@ abstract class AppLocalizations {
   /// No description provided for @logoutConfirmBody.
   ///
   /// In ar, this message translates to:
-  /// **'ستحتاج إلى البريد الإلكتروني وكلمة المرور للدخول مجدداً.'**
+  /// **'ستحتاج إلى رقم الجوال وكلمة المرور للدخول مجدداً.'**
   String get logoutConfirmBody;
 
   /// No description provided for @stay.
@@ -3095,7 +3071,7 @@ abstract class AppLocalizations {
   /// No description provided for @registerStepAccountSub.
   ///
   /// In ar, this message translates to:
-  /// **'اختر البريد وكلمة المرور التي تدخل بها إلى حسبة.'**
+  /// **'اختر كلمة المرور التي تدخل بها إلى حسبة مع رقم جوالك.'**
   String get registerStepAccountSub;
 
   /// No description provided for @storeNameLabel.
@@ -3182,18 +3158,6 @@ abstract class AppLocalizations {
   /// **'يرجى إدخال عنوان المتجر.'**
   String get streetRequired;
 
-  /// No description provided for @registerEmailRequired.
-  ///
-  /// In ar, this message translates to:
-  /// **'يرجى إدخال البريد الإلكتروني.'**
-  String get registerEmailRequired;
-
-  /// No description provided for @registerEmailInvalid.
-  ///
-  /// In ar, this message translates to:
-  /// **'صيغة البريد الإلكتروني غير صحيحة.'**
-  String get registerEmailInvalid;
-
   /// No description provided for @passwordTooShort.
   ///
   /// In ar, this message translates to:
@@ -3206,16 +3170,16 @@ abstract class AppLocalizations {
   /// **'التأكيد لا يطابق كلمة المرور.'**
   String get passwordMismatch;
 
-  /// No description provided for @emailTaken.
+  /// No description provided for @phoneTaken.
   ///
   /// In ar, this message translates to:
-  /// **'هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.'**
-  String get emailTaken;
+  /// **'هذا الرقم مسجّل مسبقاً. سجّل الدخول، أو استخدم رقماً آخر.'**
+  String get phoneTaken;
 
   /// No description provided for @registerFailedTaken.
   ///
   /// In ar, this message translates to:
-  /// **'لم يُنشأ المتجر: البريد الإلكتروني مستخدم.'**
+  /// **'لم يُنشأ المتجر: رقم الجوال مستخدم.'**
   String get registerFailedTaken;
 
   /// No description provided for @registerFailedValidation.
@@ -3311,8 +3275,8 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionWhatsappMessage.
   ///
   /// In ar, this message translates to:
-  /// **'مرحباً، أريد تفعيل اشتراك متجر «{store}» على حسبة.\nالبريد: {email}'**
-  String subscriptionWhatsappMessage(String store, String email);
+  /// **'مرحباً، أريد تفعيل اشتراك متجر «{store}» على حسبة.\nالجوال: {phone}'**
+  String subscriptionWhatsappMessage(String store, String phone);
 
   /// No description provided for @subscriptionWhatsappFailed.
   ///
@@ -3638,11 +3602,11 @@ abstract class AppLocalizations {
   /// **'المتجر: {store}'**
   String subscriptionStoreLine(String store);
 
-  /// No description provided for @subscriptionEmailLine.
+  /// No description provided for @subscriptionPhoneLine.
   ///
   /// In ar, this message translates to:
-  /// **'البريد: {email}'**
-  String subscriptionEmailLine(String email);
+  /// **'الجوال: {phone}'**
+  String subscriptionPhoneLine(String phone);
 
   /// No description provided for @subscriptionCopy.
   ///
@@ -3949,18 +3913,6 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'7 أيام'**
   String get invite7d;
-
-  /// No description provided for @inviteEmail.
-  ///
-  /// In ar, this message translates to:
-  /// **'بريده الإلكتروني'**
-  String get inviteEmail;
-
-  /// No description provided for @inviteEmailHint.
-  ///
-  /// In ar, this message translates to:
-  /// **'إن كتبته، لا يعمل الرابط إلا بهذا البريد'**
-  String get inviteEmailHint;
 
   /// No description provided for @inviteCreate.
   ///
@@ -5042,24 +4994,6 @@ abstract class AppLocalizations {
   /// **'مثل 0599123456'**
   String get phLoginPhone;
 
-  /// No description provided for @loginEmailRequired.
-  ///
-  /// In ar, this message translates to:
-  /// **'اكتب البريد الإلكتروني.'**
-  String get loginEmailRequired;
-
-  /// No description provided for @loginUseEmail.
-  ///
-  /// In ar, this message translates to:
-  /// **'حسابي القديم بالبريد الإلكتروني'**
-  String get loginUseEmail;
-
-  /// No description provided for @loginUsePhone.
-  ///
-  /// In ar, this message translates to:
-  /// **'الدخول برقم الجوال'**
-  String get loginUsePhone;
-
   /// No description provided for @loginForgot.
   ///
   /// In ar, this message translates to:
@@ -5071,18 +5005,6 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'رقم جوالك (تسجّل الدخول به)'**
   String get ownerPhoneLabel;
-
-  /// No description provided for @emailOptionalLabel.
-  ///
-  /// In ar, this message translates to:
-  /// **'البريد الإلكتروني (اختياري)'**
-  String get emailOptionalLabel;
-
-  /// No description provided for @phEmailOptional.
-  ///
-  /// In ar, this message translates to:
-  /// **'لا حاجة له للدخول'**
-  String get phEmailOptional;
 
   /// No description provided for @otpTitle.
   ///
@@ -5195,7 +5117,7 @@ abstract class AppLocalizations {
   /// No description provided for @morePhoneAdd.
   ///
   /// In ar, this message translates to:
-  /// **'أضف رقمك لتدخل به بدل البريد'**
+  /// **'أضف رقم جوالك لتدخل به'**
   String get morePhoneAdd;
 
   /// No description provided for @phoneTitle.

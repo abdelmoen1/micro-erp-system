@@ -19,7 +19,7 @@ class SupportTicketResource extends JsonResource
             'reply' => $this->reply,
             'replied_at' => $this->replied_at,
             'created_at' => $this->created_at,
-            'user' => $this->whenLoaded('user', fn() => $this->user ? ['id' => $this->user->id, 'name' => $this->user->name, 'email' => $this->user->email] : null),
+            'user' => $this->whenLoaded('user', fn() => $this->user ? ['id' => $this->user->id, 'name' => $this->user->name, 'phone' => $this->user->phone] : null),
             'store' => $this->whenLoaded('store', fn() => ['id' => $this->store->id, 'name' => $this->store->name, 'phone' => $this->store->phone]),
         ];
     }

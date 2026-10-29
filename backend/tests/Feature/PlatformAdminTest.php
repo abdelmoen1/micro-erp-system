@@ -126,7 +126,6 @@ class PlatformAdminTest extends TestCase
             'store_name' => 'Sneaky',
             'owner_name' => 'Eve',
             'owner_phone' => '0599000011',
-            'email' => 'eve@example.com',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
             'is_platform_admin' => true,
@@ -135,7 +134,7 @@ class PlatformAdminTest extends TestCase
             'subscription_status' => 'active',
         ])->assertCreated()->assertJsonPath('user.is_platform_admin', false);
 
-        $user = User::where('email', 'eve@example.com')->firstOrFail();
+        $user = User::where('phone', '0599000011')->firstOrFail();
         $this->assertFalse($user->isPlatformAdmin());
         $this->assertSame('inactive', $user->store->fresh()->subscription_status);
 
@@ -189,17 +188,17 @@ class PlatformAdminTest extends TestCase
         $admin = $this->makeAdmin();
         $bakery = $this->makeStore('Bakery Al-Amal', ['address' => 'Gaza, Rimal', 'phone' => '0599000001']);
         $bakery->forceFill(['created_at' => now()->subDays(12)])->save();
-        $this->makeUser($bakery, 'owner', ['email' => 'baker@example.com', 'name' => 'Abu Samir']);
+        $this->makeUser($bakery, 'owner', ['phone' => '0599888777', 'name' => 'Abu Samir']);
         $grocer = $this->makeStore('Grocer');
         $grocer->forceFill(['status' => 'suspended', 'subscription_status' => 'active', 'subscription_expires_at' => now()->subDay(), 'trial_ends_at' => now()->subDays(3)])->save();
 
         $as = $this->actingAs($admin, 'sanctum');
 
-        $as->getJson('/api/v1/admin/stores?search=baker@example')
+        $as->getJson('/api/v1/admin/stores?search=0599888')
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $bakery->id)
-            ->assertJsonPath('data.0.owner.email', 'baker@example.com')
+            ->assertJsonPath('data.0.owner.phone', '0599888777')
             ->assertJsonPath('data.0.address', 'Gaza, Rimal')
             ->assertJsonPath('data.0.days_since_registration', 12)
             ->assertJsonPath('data.0.status', 'active')
@@ -284,7 +283,7 @@ class PlatformAdminTest extends TestCase
         $this->actingAs($owner->fresh(), 'sanctum')->getJson('/api/v1/me')
             ->assertForbidden()
             ->assertJsonPath('code', 'STORE_SUSPENDED');
-        $this->postJson('/api/v1/login', ['email' => 'owner@shop.ps', 'password' => 'password'])
+        $this->postJson('/api/v1/login', ['login' => $this->phoneOf('owner@shop.ps'), 'password' => 'password'])
             ->assertForbidden()
             ->assertJsonPath('code', 'STORE_SUSPENDED')
             ->assertJsonMissingPath('token');
@@ -298,7 +297,7 @@ class PlatformAdminTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.status', 'active')
             ->assertJsonPath('data.suspension_reason', null);
-        $this->postJson('/api/v1/login', ['email' => 'owner@shop.ps', 'password' => 'password'])->assertOk();
+        $this->postJson('/api/v1/login', ['login' => $this->phoneOf('owner@shop.ps'), 'password' => 'password'])->assertOk();
         $this->assertSame(1, AuditLog::where('action', 'store.reactivated')->count());
 
         $this->actingAs($admin, 'sanctum')->getJson("/api/v1/admin/stores/{$store->id}")
@@ -333,7 +332,7 @@ class PlatformAdminTest extends TestCase
         $this->assertSame('active', $store->fresh()->status);
     }
 
-    public function test_suspended_store_blocks_google_sign_in_and_invitations(): void
+    public function test_suspended_store_blocks_invitations(): void
     {
         $store = $this->makeStore('Shop');
         $owner = $this->makeUser($store, 'owner');
@@ -351,16 +350,11 @@ class PlatformAdminTest extends TestCase
             'token' => 'invite-token',
             'name' => 'New Hire',
             'phone' => '0599000012',
-            'email' => 'hire@example.com',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
         ])->assertForbidden()->assertJsonPath('code', 'STORE_SUSPENDED');
 
-        $this->assertFalse(User::where('email', 'hire@example.com')->exists());
-
-        // AuthService::findGoogleUser is the Google path's account check.
-        $this->expectExceptionMessage('تم إيقاف حساب هذا المتجر');
-        app(\App\Services\AuthService::class)->findGoogleUser(['sub' => 'g-1', 'email' => $owner->email]);
+        $this->assertFalse(User::where('phone', '0599000012')->exists());
     }
 
     public function test_platform_admin_of_a_suspended_store_keeps_admin_access_only(): void
@@ -370,7 +364,7 @@ class PlatformAdminTest extends TestCase
         $admin->forceFill(['email' => 'admin@hisbah.ps', 'password' => Hash::make('password')])->save();
         $store->forceFill(['status' => 'suspended'])->save();
 
-        $this->postJson('/api/v1/login', ['email' => 'admin@hisbah.ps', 'password' => 'password'])
+        $this->postJson('/api/v1/login', ['login' => $this->phoneOf('admin@hisbah.ps'), 'password' => 'password'])
             ->assertOk()
             ->assertJsonPath('user.is_platform_admin', true);
 
@@ -556,27 +550,27 @@ class PlatformAdminTest extends TestCase
     public function test_platform_admin_is_granted_and_revoked_only_by_the_console_command(): void
     {
         $store = $this->makeStore('Shop');
-        $user = $this->makeUser($store, 'owner', ['email' => 'me@hisbah.ps']);
+        $user = $this->makeUser($store, 'owner', ['phone' => '0592288354']);
         $user->createToken('device');
 
-        $this->artisan('hisbah:platform-admin', ['email' => 'nobody@hisbah.ps'])->assertExitCode(1);
+        $this->artisan('hisbah:platform-admin', ['phone' => '0599999999'])->assertExitCode(1);
         $this->assertSame(1, User::count());
 
-        $this->artisan('hisbah:platform-admin', ['email' => 'me@hisbah.ps'])->assertExitCode(0);
+        $this->artisan('hisbah:platform-admin', ['phone' => '059 228 8354'])->assertExitCode(0);
         $this->assertTrue($user->fresh()->isPlatformAdmin());
         $this->assertSame(1, $user->tokens()->count());
 
-        $this->artisan('hisbah:platform-admin', ['email' => 'me@hisbah.ps', '--revoke' => true])->assertExitCode(0);
+        $this->artisan('hisbah:platform-admin', ['phone' => '0592288354', '--revoke' => true])->assertExitCode(0);
         $this->assertFalse($user->fresh()->isPlatformAdmin());
         $this->assertSame(0, $user->tokens()->count(), 'Revocation signs the account out everywhere.');
     }
 
     public function test_deactivated_accounts_cannot_be_granted_admin(): void
     {
-        $user = $this->makeUser($this->makeStore('Shop'), 'owner', ['email' => 'gone@hisbah.ps']);
+        $user = $this->makeUser($this->makeStore('Shop'), 'owner', ['phone' => '0599111222']);
         $user->forceFill(['status' => User::STATUS_INACTIVE])->save();
 
-        $this->artisan('hisbah:platform-admin', ['email' => 'gone@hisbah.ps'])->assertExitCode(1);
+        $this->artisan('hisbah:platform-admin', ['phone' => '0599111222'])->assertExitCode(1);
         $this->assertFalse($user->fresh()->isPlatformAdmin());
     }
 
@@ -643,7 +637,7 @@ class PlatformAdminTest extends TestCase
 
         // The old token and the old password both stop working.
         $this->withHeader('Authorization', "Bearer {$token}")->getJson('/api/v1/me')->assertUnauthorized();
-        $this->postJson('/api/v1/login', ['email' => 'owner@shop.ps', 'password' => 'password'])
+        $this->postJson('/api/v1/login', ['login' => $owner->phone, 'password' => 'password'])
             ->assertUnauthorized()
             ->assertJsonPath('code', 'INVALID_CREDENTIALS');
 
@@ -658,7 +652,7 @@ class PlatformAdminTest extends TestCase
         $this->assertSame($admin->id, $log->user_id);
         $this->assertSame((string) $store->id, $log->entity_id);
         $this->assertSame('Shop', $log->metadata['name']);
-        $this->assertSame('owner@shop.ps', $log->metadata['owner']['email']);
+        $this->assertSame($owner->phone, $log->metadata['owner']['phone']);
         $this->assertSame(2, $log->metadata['removed']['users']);
     }
 

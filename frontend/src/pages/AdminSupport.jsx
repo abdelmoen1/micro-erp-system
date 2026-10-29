@@ -85,7 +85,7 @@ export default function AdminSupport() {
                   </div>
                   <span className="ticket-meta">
                     {ticketTypeLabel(ticket.type)} · <Link to={`/admin/stores/${ticket.store.id}`}>{ticket.store.name}</Link>
-                    {ticket.user ? ` · ${ticket.user.name} (${ticket.user.email})` : ""} · <span className="m">{dateTime(ticket.created_at)}</span>
+                    {ticket.user ? ` · ${ticket.user.name} (${ticket.user.phone})` : ""} · <span className="m">{dateTime(ticket.created_at)}</span>
                   </span>
                   <p className="ticket-body">{ticket.details}</p>
                   {ticket.reply ? (

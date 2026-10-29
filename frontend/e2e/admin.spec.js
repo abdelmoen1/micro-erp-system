@@ -3,8 +3,8 @@ import { expect, test } from "@playwright/test";
 // Platform owner area (/admin). The API is mocked with the shapes of the Laravel admin resources;
 // the server is what actually refuses non-admins, these tests check what each screen shows and sends.
 
-const admin = { id: 1, name: "إدارة حسبة", email: "admin@hisbah.ps", role: "owner", is_platform_admin: true, store: { id: 1, name: "حسبة" } };
-const owner = { id: 2, name: "علي أحمد", email: "ali@shop.ps", role: "owner", is_platform_admin: false, store: { id: 5, name: "بقالة الأمانة" } };
+const admin = { id: 1, name: "إدارة حسبة", phone: "0592288354", role: "owner", is_platform_admin: true, store: { id: 1, name: "حسبة" } };
+const owner = { id: 2, name: "علي أحمد", phone: "0599333444", role: "owner", is_platform_admin: false, store: { id: 5, name: "بقالة الأمانة" } };
 
 async function signIn(page, user) {
   await page.addInitScript((u) => {
@@ -23,7 +23,7 @@ const store = {
   timezone: "Asia/Gaza",
   created_at: "2026-10-12T09:00:00Z",
   days_since_registration: 12,
-  owner: { id: 2, name: "علي أحمد", email: "ali@shop.ps", phone: "0599333444", status: "active" },
+  owner: { id: 2, name: "علي أحمد", phone: "0599333444", status: "active" },
   status: "active",
   suspension_reason: null,
   status_changed_at: null,
@@ -53,13 +53,13 @@ test("signed out, /admin goes to the admin sign-in, and the platform admin lands
   await expect(page).toHaveURL(/\/admin\/login$/);
   await expect(page.getByRole("heading", { name: "دخول إدارة المنصة" })).toBeVisible();
 
-  await page.getByLabel("البريد الإلكتروني").fill("owner@example.test");
+  await page.getByLabel("رقم الجوال").fill("059 228 8354");
   await page.getByLabel("كلمة المرور", { exact: true }).fill("not-a-real-password");
   await page.getByRole("button", { name: "دخول الإدارة" }).click();
 
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByRole("heading", { name: "المتاجر" })).toBeVisible();
-  expect(sent).toEqual({ email: "owner@example.test", password: "not-a-real-password" });
+  expect(sent).toEqual({ login: "0592288354", password: "not-a-real-password" });
   expect(await page.evaluate(() => localStorage.getItem("token"))).toBe("9|admin-token");
 });
 
@@ -72,7 +72,7 @@ test("a store account is refused on the admin sign-in and signed out again", asy
   });
 
   await page.goto("/admin/login");
-  await page.getByLabel("البريد الإلكتروني").fill("ali@shop.ps");
+  await page.getByLabel("رقم الجوال").fill("0599333444");
   await page.getByLabel("كلمة المرور", { exact: true }).fill("not-a-real-password");
   await page.getByRole("button", { name: "دخول الإدارة" }).click();
 
@@ -135,7 +135,7 @@ test("the platform admin sees counts and stores, and filters by subscription sta
 
 test("suspending the account and activating the subscription are separate requests", async ({ page }) => {
   await signIn(page, admin);
-  let current = { ...store, members: [{ id: 2, name: "علي أحمد", email: "ali@shop.ps", role: "owner", status: "active" }], active_products_count: 2, history: [] };
+  let current = { ...store, members: [{ id: 2, name: "علي أحمد", phone: "0599333444", role: "owner", status: "active" }], active_products_count: 2, history: [] };
   const writes = [];
 
   await page.route("**/api/v1/admin/stores/5", (r) => r.fulfill({ json: { data: current } }));
@@ -195,7 +195,7 @@ test("suspending the account and activating the subscription are separate reques
 
 test("deleting a store needs its exact name, then returns to the list without it", async ({ page }) => {
   await signIn(page, admin);
-  const detail = { ...store, members: [{ id: 2, name: "علي أحمد", email: "ali@shop.ps", role: "owner", status: "active" }], active_products_count: 2, history: [] };
+  const detail = { ...store, members: [{ id: 2, name: "علي أحمد", phone: "0599333444", role: "owner", status: "active" }], active_products_count: 2, history: [] };
   let deleted = false;
   const deletes = [];
 
@@ -383,7 +383,7 @@ test("support: the admin sees new complaints from every store, replies and close
     reply: null,
     replied_at: null,
     created_at: "2026-10-27T08:00:00Z",
-    user: { id: 2, name: "علي أحمد", email: "ali@shop.ps" },
+    user: { id: 2, name: "علي أحمد", phone: "0599333444" },
     store: { id: 5, name: "بقالة الأمانة", phone: "0599123456" },
   };
   let answered = null;

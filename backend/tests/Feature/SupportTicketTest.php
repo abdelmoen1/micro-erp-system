@@ -102,7 +102,7 @@ class SupportTicketTest extends TestCase
             ->assertOk()
             ->assertJsonPath('meta.open_count', 1)
             ->assertJsonPath('data.0.store.name', 'Shop')
-            ->assertJsonPath('data.0.user.email', $owner->email);
+            ->assertJsonPath('data.0.user.phone', $owner->phone);
 
         $this->actingAs($admin, 'sanctum')
             ->patchJson("/api/v1/admin/support-tickets/{$ticket->id}", ['status' => 'closed', 'reply' => 'حدّث التطبيق ثم أعد المحاولة.'])

@@ -26,7 +26,7 @@ export class ApiError extends Error {
     this.retryAfter = retryAfter ?? null;
   }
 
-  /** First message for a field, e.g. fieldError("email"). */
+  /** First message for a field, e.g. fieldError("phone"). */
   fieldError(field) {
     const messages = this.errors[field];
     return Array.isArray(messages) && messages.length > 0 ? messages[0] : null;

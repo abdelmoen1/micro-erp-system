@@ -5,7 +5,7 @@
 # Runs in VS Code REST Client / JetBrains HTTP client. Use a disposable local database only.
 
 @base = http://127.0.0.1:8000/api/v1
-@email = owner@demo.test
+@login = 0599000001
 @password = password123
 
 ### 1. Login — 200
@@ -13,7 +13,7 @@
 # {
 #   "message": "تم تسجيل دخولك بنجاح",
 #   "user": {
-#     "id": 1, "name": "Demo Owner", "email": "owner@demo.test",
+#     "id": 1, "name": "Demo Owner", "phone": "0599000001",
 #     "role": "owner",                     // owner | manager | employee
 #     "status": "active",                  // active | inactive
 #     "store_id": 1, "deactivated_at": null,
@@ -30,7 +30,7 @@ POST {{base}}/login
 Accept: application/json
 Content-Type: application/json
 
-{ "email": "{{email}}", "password": "{{password}}" }
+{ "login": "{{login}}", "password": "{{password}}" }
 
 ### 2. Current user — 200 { "user": {…same shape as login…}, "meta": {…} }
 GET {{base}}/me
@@ -51,7 +51,7 @@ POST {{base}}/login
 Accept: application/json
 Content-Type: application/json
 
-{ "email": "{{email}}", "password": "wrong-password" }
+{ "login": "{{login}}", "password": "wrong-password" }
 
 ### 5. Missing fields — 422 VALIDATION_FAILED
 # { "message": "The email field is required.", "code": "VALIDATION_FAILED",

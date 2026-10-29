@@ -1,20 +1,15 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { clock, useCountdown } from "../lib/countdown";
 import Banner, { FieldError, Spinner } from "../components/Banner";
-import GoogleButton from "../components/GoogleButton";
 import HisbahLogo from "../components/HisbahLogo";
 import Icon from "../components/Icon";
 import OtpResend from "../components/OtpResend";
-import { GOOGLE_CLIENT_ID } from "../lib/google";
-import { landingPath } from "../lib/domain";
 import { latinDigits, shortReference } from "../lib/format";
 import { maskPhone, normalizePhone, PHONE_HINT, otpSendError } from "../lib/phone";
 import { sendOtp } from "../services/api";
 import { ApiError, NetworkError } from "../services/apiClient";
-import { useAuthOptions, useGoogleMutation, useGoogleRegisterMutation, useRegisterMutation } from "../services/useAuth";
-
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+import { useAuthOptions, useRegisterMutation } from "../services/useAuth";
 
 /** Cities offered on step 2; the API stores them with the street in the store's address. */
 const CITIES = [
@@ -22,19 +17,20 @@ const CITIES = [
   "سلفيت", "طوباس", "أريحا", "غزة", "شمال غزة", "دير البلح", "خان يونس", "رفح",
 ];
 
-const EMPTY = { store_name: "", owner_name: "", phone: "", city: "", street: "", email: "", password: "", password_confirmation: "", otp_code: "" };
+const EMPTY = { store_name: "", owner_name: "", phone: "", city: "", street: "", password: "", password_confirmation: "", otp_code: "" };
 
 const STEPS = [
   { title: "المتجر", heading: "المتجر", sub: "لنبدأ باسم متجرك واسم صاحبه المسؤول عنه.", fields: ["store_name", "owner_name"] },
   { title: "الموقع والتواصل", heading: "الموقع والتواصل", sub: "تدخل إلى حسبة برقم جوالك، ويظهر هو والعنوان على إيصال الزبون.", fields: ["phone", "city", "street"] },
-  { title: "بيانات الدخول", heading: "بيانات الدخول", sub: "اختر كلمة المرور التي تدخل بها مع رقم جوالك.", fields: ["email", "password", "password_confirmation"] },
+  { title: "بيانات الدخول", heading: "بيانات الدخول", sub: "اختر كلمة المرور التي تدخل بها مع رقم جوالك.", fields: ["password", "password_confirmation"] },
 ];
 
 // API field → the step that owns it (address covers city and street; area is the city).
-const FIELD_STEP = { store_name: 0, owner_name: 0, owner_phone: 1, phone: 1, address: 1, area: 1, email: 2, password: 2, password_confirmation: 2, otp_code: 2 };
+const FIELD_STEP = { store_name: 0, owner_name: 0, owner_phone: 1, phone: 1, address: 1, area: 1, password: 2, password_confirmation: 2, otp_code: 2 };
 const FIELD_INPUT = { address: "street", area: "city", owner_phone: "phone" };
+const TAKEN = /taken|مستخدم|مسجّل/i;
 
-function validate(step, v, sso) {
+function validate(step, v) {
   const e = {};
   if (step === 0) {
     if (!v.store_name.trim()) e.store_name = "يرجى إدخال اسم المتجر.";
@@ -46,22 +42,21 @@ function validate(step, v, sso) {
     if (!v.city) e.city = "يرجى اختيار المدينة.";
     if (!v.street.trim()) e.street = "يرجى إدخال عنوان المتجر.";
   }
-  if (step === 2 && !sso) {
-    if (v.email.trim() && !EMAIL_RE.test(v.email.trim())) e.email = "صيغة البريد الإلكتروني غير صحيحة.";
+  if (step === 2) {
     if (v.password.length < 8) e.password = "كلمة المرور 8 أحرف على الأقل.";
     if (!v.password_confirmation || v.password_confirmation !== v.password) e.password_confirmation = "التأكيد لا يطابق كلمة المرور.";
   }
   return e;
 }
 
-/** API field errors placed on our fields (address → street, area → city); «email taken» gets its own wording. */
+/** API field errors placed on our fields (address → street, area → city); «number taken» gets its own wording. */
 function serverFieldErrors(error) {
   const e = {};
   for (const key of Object.keys(FIELD_STEP)) {
     const message = error.fieldError(key);
     if (message) e[FIELD_INPUT[key] ?? key] = message;
   }
-  if (e.email && /taken|مستخدم|مسجّل/i.test(e.email)) e.email = "هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم بريداً آخر.";
+  if (e.phone && TAKEN.test(e.phone)) e.phone = "هذا الرقم مسجّل مسبقاً. سجّل الدخول، أو استخدم رقماً آخر.";
   return e;
 }
 
@@ -86,17 +81,9 @@ function Field({ id, label, hint, error, optional, children }) {
 function JoinBanner({ outcome, waitLeft }) {
   switch (outcome?.kind) {
     case "taken":
-      return <Banner>لم يُنشأ المتجر: البريد الإلكتروني مستخدم.</Banner>;
+      return <Banner>لم يُنشأ المتجر: رقم الجوال مستخدم.</Banner>;
     case "validation":
       return <Banner>لم يُنشأ المتجر. راجع الحقول المعلّمة.</Banner>;
-    case "expired":
-      return (
-        <Banner extra={<Link to="/login" className="sub">العودة لتسجيل الدخول</Link>}>
-          انتهت مهلة التسجيل بحساب Google. تابع بحساب Google مرة أخرى.
-        </Banner>
-      );
-    case "google":
-      return <Banner>{outcome.message}</Banner>;
     case "throttled":
       return waitLeft > 0 ? (
         <Banner tone="pending" icon="clock">
@@ -149,18 +136,12 @@ function Stepper({ current }) {
   );
 }
 
-/** SCR-W-02 · /join: create a store and its owner in three steps (US-0201, DEF-13), by email or Google. */
+/** SCR-W-02 · /join: create a store and its owner in three steps (US-0201, DEF-13); the owner signs in with the phone. */
 export default function Join() {
   const navigate = useNavigate();
-  const location = useLocation();
   const register = useRegisterMutation();
-  const googleRegister = useGoogleRegisterMutation();
-  const google = useGoogleMutation();
-
-  // Google account from the login page (router state) or from the button on step 3.
-  const [sso, setSso] = useState(() => location.state?.google ?? null);
   const [step, setStep] = useState(0);
-  const [v, setV] = useState(() => ({ ...EMPTY, owner_name: location.state?.google?.name ?? "" }));
+  const [v, setV] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [outcome, setOutcome] = useState(null);
   const [show, setShow] = useState({ password: false, password_confirmation: false });
@@ -170,9 +151,9 @@ export default function Join() {
   const [code, setCode] = useState(null);
   const [sending, setSending] = useState(false);
   const [codeError, setCodeError] = useState(null);
-  const otp = Boolean(options.data?.otp) && !sso;
+  const otp = Boolean(options.data?.otp);
 
-  const busy = register.isPending || googleRegister.isPending || google.isPending || sending;
+  const busy = register.isPending || sending;
   const throttled = outcome?.kind === "throttled" && waitLeft > 0;
   const success = outcome?.kind === "success";
   const last = step === STEPS.length - 1;
@@ -208,9 +189,7 @@ export default function Join() {
     if (error instanceof NetworkError) return setOutcome({ kind: "network" });
     if (!(error instanceof ApiError)) return setOutcome({ kind: "server" });
     if (error.status === 429) return setOutcome({ kind: "throttled", wait: error.retryAfter ?? 60 });
-    if (error.code === "GOOGLE_TOKEN_INVALID" || error.code === "SSO_UNAVAILABLE") return setOutcome({ kind: "google", message: error.message });
     if (error.status === 422) {
-      if (error.fieldError("onboarding_token")) return setOutcome({ kind: "expired" });
       const fields = serverFieldErrors(error);
       setErrors(fields);
       const steps = Object.keys(fields).map((k) => FIELD_STEP[k] ?? (k === "street" || k === "city" ? 1 : 2));
@@ -218,7 +197,7 @@ export default function Join() {
       if (first !== step) setStep(first);
       // Only a wrong code keeps the code field open.
       if (Object.keys(fields).some((k) => k !== "otp_code")) setCode(null);
-      return setOutcome({ kind: fields.email && Object.keys(fields).length === 1 ? "taken" : "validation" });
+      return setOutcome({ kind: fields.phone && TAKEN.test(fields.phone) && Object.keys(fields).length === 1 ? "taken" : "validation" });
     }
     return setOutcome({ kind: "server", reference: shortReference(error.correlationId) });
   };
@@ -241,49 +220,27 @@ export default function Join() {
 
   const create = () => {
     const phone = normalizePhone(v.phone);
-    const base = {
-      store_name: v.store_name.trim(),
-      owner_name: v.owner_name.trim(),
-      // The owner signs in with this number; it is the store's phone on receipts too.
-      owner_phone: phone,
-      phone,
-      address: `${v.street.trim()}، ${v.city}`,
-      area: v.city,
-    };
-    const done = { onSuccess: () => { setOutcome({ kind: "success" }); navigate("/dashboard", { replace: true }); }, onError: fail };
-    if (sso) googleRegister.mutate({ onboarding_token: sso.token, ...base }, done);
-    else
-      register.mutate(
-        {
-          ...base,
-          ...(v.email.trim() ? { email: v.email.trim() } : {}),
-          password: v.password,
-          password_confirmation: v.password_confirmation,
-          ...(code ? { otp_code: v.otp_code.trim() } : {}),
-        },
-        done,
-      );
-  };
-
-  const onGoogle = (credential) => {
-    if (busy) return;
-    google.mutate(credential, {
-      onSuccess: (result) => {
-        if (result.onboarding) {
-          setSso(result.onboarding);
-          setOutcome(null);
-          return;
-        }
-        navigate(landingPath(result.user), { replace: true }); // Already registered: Google signed them in.
+    register.mutate(
+      {
+        store_name: v.store_name.trim(),
+        owner_name: v.owner_name.trim(),
+        // The owner signs in with this number; it is the store's phone on receipts too.
+        owner_phone: phone,
+        phone,
+        address: `${v.street.trim()}، ${v.city}`,
+        area: v.city,
+        password: v.password,
+        password_confirmation: v.password_confirmation,
+        ...(code ? { otp_code: v.otp_code.trim() } : {}),
       },
-      onError: fail,
-    });
+      { onSuccess: () => { setOutcome({ kind: "success" }); navigate("/dashboard", { replace: true }); }, onError: fail },
+    );
   };
 
   const next = (event) => {
     event.preventDefault();
     if (busy || throttled || success) return;
-    const local = validate(step, v, sso);
+    const local = validate(step, v);
     if (last && code && !/^\d{6}$/.test(v.otp_code.trim())) local.otp_code = "الرمز 6 أرقام.";
     setErrors(local);
     if (Object.keys(local).length > 0) {
@@ -355,7 +312,7 @@ export default function Join() {
             </h2>
             <p>{STEPS[step].sub}</p>
             <p className="join-count">
-              الخطوة <span className="m">{step + 1}</span> من <span className="m">3</span> · {step === 2 && !sso ? "البريد اختياري" : "جميع الحقول مطلوبة"}
+              الخطوة <span className="m">{step + 1}</span> من <span className="m">3</span> · جميع الحقول مطلوبة
             </p>
           </div>
 
@@ -395,31 +352,9 @@ export default function Join() {
               </div>
             ) : null}
 
-            {step === 2 && sso ? (
-              <div className="note ok">
-                <Icon name="ok" size={20} />
-                <p>
-                  تدخل بحساب Google: <b className="m">{sso.email}</b>
-                  <br />
-                  لا تحتاج كلمة مرور. اضغط «إنشاء المتجر» للمتابعة.
-                </p>
-              </div>
-            ) : null}
-
-            {step === 2 && !sso ? (
+            {step === 2 ? (
               <>
-                {GOOGLE_CLIENT_ID ? (
-                  <>
-                    <GoogleButton onCredential={onGoogle} text="signup_with" disabled={busy} />
-                    <div className="or" role="separator">
-                      أو بالبريد الإلكتروني
-                    </div>
-                  </>
-                ) : null}
                 <div className="grid2">
-                  <Field id="join-email" label="البريد الإلكتروني" optional hint="لا حاجة له للدخول." error={errors.email}>
-                    <input {...input("email", { ltr: true, type: "email", inputMode: "email", autoComplete: "username", spellCheck: false, placeholder: "name@store.ps" })} />
-                  </Field>
                   {pw("password", "كلمة المرور", "8 أحرف على الأقل.")}
                   {pw("password_confirmation", "تأكيد كلمة المرور")}
                 </div>

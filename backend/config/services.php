@@ -28,11 +28,6 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
-    // Google sign-in (web): the OAuth client id the ID tokens must be issued for.
-    'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
-    ],
-
     // One-time SMS codes (sign-up, forgotten password, changed number). `textbee` sends from the
     // team's Android phone and SIM; `log` writes them to the log (local only); empty = off, and
     // sign-up works without a code. 45 a day keeps under textbee's free 50.

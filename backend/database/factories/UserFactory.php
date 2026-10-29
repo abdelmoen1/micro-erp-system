@@ -25,6 +25,8 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
+            // Accounts sign in with their mobile number.
+            'phone' => fake()->unique()->numerify('059#######'),
             'password' => static::$password ??= Hash::make('password'),
             'role' => 'employee',
         ];

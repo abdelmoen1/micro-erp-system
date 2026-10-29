@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 // acknowledged; a held payment is applied, refunded or voided with a reason; every resolution is
 // sent with an Idempotency-Key. Employees never see the page.
 
-const owner = { id: 1, name: "علي أحمد", email: "ali@shop.ps", role: "owner", store: { id: 1, name: "بقالة الأمانة" } };
+const owner = { id: 1, name: "علي أحمد", phone: "0599333444", role: "owner", store: { id: 1, name: "بقالة الأمانة" } };
 const employee = { ...owner, id: 3, name: "سامر", role: "employee" };
 
 const flagged = {

@@ -67,11 +67,12 @@ Artisan::command('hisbah:verify-debts', function () {
 
 // Platform owner dashboard: the only way to grant or revoke platform admin. It promotes an existing
 // account (no account or password is ever created here), so run it on the server after signing up.
-Artisan::command('hisbah:platform-admin {email : Email of an existing account} {--revoke : Remove platform admin instead}', function () {
-    $user = User::where('email', $this->argument('email'))->first();
+Artisan::command('hisbah:platform-admin {phone : Mobile number of an existing account} {--revoke : Remove platform admin instead}', function () {
+    $phone = \App\Support\PhoneNumber::normalize($this->argument('phone'));
+    $user = $phone ? User::where('phone', $phone)->first() : null;
 
     if (!$user) {
-        $this->error('No account uses that email. Register it first, then run this command again.');
+        $this->error('No account uses that mobile number. Register it first, then run this command again.');
 
         return 1;
     }

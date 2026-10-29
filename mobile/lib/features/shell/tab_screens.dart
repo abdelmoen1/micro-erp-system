@@ -264,9 +264,9 @@ class _MoreTab extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(user.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-                    // Emails are LTR runs inside the RTL card.
+                    // The number is an LTR run inside the RTL card.
                     Text(
-                      user.email,
+                      user.phone ?? '',
                       textDirection: TextDirection.ltr,
                       style: const TextStyle(fontSize: 14, color: HisbahColors.inkMuted),
                     ),

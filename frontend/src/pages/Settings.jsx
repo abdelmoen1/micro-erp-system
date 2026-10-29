@@ -338,7 +338,6 @@ function PhoneSection({ user }) {
       <div className="panel-head">
         <h2>رقم الجوال للدخول</h2>
       </div>
-      {!saved ? <p className="field-hint">حسابك يدخل بالبريد. أضف رقم جوالك لتدخل به.</p> : null}
       <Field id="ph-phone" label="رقم الجوال" required error={errors.phone} hint="تسجّل الدخول بهذا الرقم وكلمة مرورك.">
         <input id="ph-phone" type="tel" inputMode="tel" className="fld ltr" value={form.phone} onChange={set("phone")} autoComplete="tel" placeholder="0599123456" />
       </Field>

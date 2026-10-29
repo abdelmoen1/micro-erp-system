@@ -11,7 +11,7 @@ export default function AcceptInvite() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const token = params.get("invite") ?? "";
-  const [form, setForm] = useState({ name: "", phone: "", email: "", password: "", password_confirmation: "" });
+  const [form, setForm] = useState({ name: "", phone: "", password: "", password_confirmation: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const set = (field) => (e) => setForm({ ...form, [field]: field === "phone" ? latinDigits(e.target.value) : e.target.value });
@@ -22,13 +22,8 @@ export default function AcceptInvite() {
     setBusy(true);
     setError(null);
     try {
-      const { email, phone, ...rest } = form;
-      const result = await apiSend("POST", "/register/invitation", {
-        token,
-        ...rest,
-        phone: normalizePhone(phone) ?? phone,
-        ...(email.trim() ? { email: email.trim() } : {}),
-      });
+      const { phone, ...rest } = form;
+      const result = await apiSend("POST", "/register/invitation", { token, ...rest, phone: normalizePhone(phone) ?? phone });
       session.save(result.token, result.user);
       navigate("/dashboard", { replace: true });
     } catch (failure) {
@@ -63,9 +58,6 @@ export default function AcceptInvite() {
                 </Field>
                 <Field id="ai-phone" label="رقم جوالك (تسجّل الدخول به)" required error={err("phone")}>
                   <input id="ai-phone" type="tel" inputMode="tel" className="fld ltr" value={form.phone} onChange={set("phone")} autoComplete="tel" placeholder="0599123456" />
-                </Field>
-                <Field id="ai-email" label="البريد الإلكتروني" optional error={err("email")}>
-                  <input id="ai-email" type="email" className="fld ltr" value={form.email} onChange={set("email")} autoComplete="username" />
                 </Field>
                 <Field id="ai-pass" label="كلمة المرور" error={err("password")}>
                   <input id="ai-pass" type="password" className="fld ltr" value={form.password} onChange={set("password")} autoComplete="new-password" />
