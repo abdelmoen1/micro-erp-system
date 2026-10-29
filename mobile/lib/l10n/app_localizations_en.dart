@@ -290,7 +290,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordRequired => 'Enter your password';
 
   @override
-  String get invalidCredentials => 'The email or password is incorrect.';
+  String get invalidCredentials => 'The phone number or password is incorrect.';
 
   @override
   String get tooManyAttempts => 'Too many attempts. You can try again in';
@@ -1744,11 +1744,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ownerNameRequired => 'Enter the owner\'s name.';
 
   @override
-  String get phoneRequired => 'Enter the phone number.';
+  String get phoneRequired => 'Enter your mobile number.';
 
   @override
   String get phoneInvalid =>
-      'The phone number has 9 or 10 digits, e.g. 0599123456.';
+      'A mobile number has 10 digits and starts with 05, like 0599123456.';
 
   @override
   String get cityRequired => 'Choose the city.';
@@ -2856,4 +2856,111 @@ class AppLocalizationsEn extends AppLocalizations {
   String cartonsCellLoose(int count, int pieces) {
     return '$count cartons + $pieces';
   }
+
+  @override
+  String get loginPhoneLabel => 'Mobile number';
+
+  @override
+  String get phLoginPhone => 'e.g. 0599123456';
+
+  @override
+  String get loginEmailRequired => 'Enter the e-mail.';
+
+  @override
+  String get loginUseEmail => 'My older account uses an e-mail';
+
+  @override
+  String get loginUsePhone => 'Sign in with the mobile number';
+
+  @override
+  String get loginForgot => 'Forgot the password?';
+
+  @override
+  String get ownerPhoneLabel => 'Your mobile number (you sign in with it)';
+
+  @override
+  String get emailOptionalLabel => 'E-mail (optional)';
+
+  @override
+  String get phEmailOptional => 'Not needed to sign in';
+
+  @override
+  String get otpTitle => 'Confirmation code';
+
+  @override
+  String otpSentTo(String phone) {
+    return 'We sent a 6-digit code by SMS to $phone.';
+  }
+
+  @override
+  String get otpCodeLabel => 'Code';
+
+  @override
+  String get phOtpCode => '6 digits';
+
+  @override
+  String get otpCodeInvalid => 'The code has 6 digits.';
+
+  @override
+  String get otpResend => 'Send a new code';
+
+  @override
+  String otpResendIn(int seconds) {
+    return 'New code in ${seconds}s';
+  }
+
+  @override
+  String get otpChangeNumber => 'Change the number';
+
+  @override
+  String get otpSend => 'Send the code';
+
+  @override
+  String get otpDailyLimit =>
+      'Code messages are paused for today. Try tomorrow or contact support.';
+
+  @override
+  String get otpSendFailed =>
+      'The message could not be sent. Try again shortly.';
+
+  @override
+  String get otpUnavailable => 'Code messages are not available now.';
+
+  @override
+  String get registerConfirmCode => 'Confirm the code and create the store';
+
+  @override
+  String get resetTitle => 'Reset the password';
+
+  @override
+  String get resetHelper =>
+      'Enter your mobile number and we will text you a code to choose a new password.';
+
+  @override
+  String get resetSave => 'Save the new password';
+
+  @override
+  String get resetDone =>
+      'Password changed. Sign in with your number and the new password.';
+
+  @override
+  String get morePhone => 'Sign-in mobile number';
+
+  @override
+  String get morePhoneAdd => 'Add your number to sign in with it';
+
+  @override
+  String get phoneTitle => 'Sign-in mobile number';
+
+  @override
+  String get phoneHelper => 'You sign in with this number and your password.';
+
+  @override
+  String get phoneNewLabel => 'Mobile number';
+
+  @override
+  String get phoneSave => 'Save the number';
+
+  @override
+  String get phoneDone => 'Number saved. Sign in with it from now on.';
 }

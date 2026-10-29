@@ -260,3 +260,8 @@ select.fld { padding-inline: 12px; }
 .stock-negative, .stock-out { color: var(--error-fg); font-weight: 700; }
 .stock-low { color: var(--warning-fg); font-weight: 700; }
 .stock-inactive { color: var(--ink-muted); }
+
+/* Sign-in by mobile number: «forgot password» under the field, and the SMS code on /join. */
+.forgot-link { align-self: flex-end; margin-top: 6px; font-size: 14px; }
+.otp-box { display: grid; gap: 10px; padding: 14px; border-radius: 12px; background: var(--primary-tint); }
+.otp-box p { margin: 0; font-size: 15px; }

@@ -47,7 +47,7 @@ Every error response under `/api/v1` has this shape and the `X-Correlation-ID` h
 
 | HTTP | `code` | Where | Client behaviour |
 |---|---|---|---|
-| 401 | `INVALID_CREDENTIALS` | `POST /login` | "Email or password is incorrect"; keep the email field |
+| 401 | `INVALID_CREDENTIALS` | `POST /login` (`login` = mobile number, or the e-mail of an older account) | "Phone number or password is incorrect"; keep the phone field |
 | 403 | `USER_INACTIVE` | `POST /login` with correct password; **any** authenticated call by a deactivated user (the token is revoked at the same time) | Clear the token; show the "account deactivated" screen |
 | 403 | `STORE_REQUIRED` | Any authenticated call by a user with no store | Show error; contact support |
 | 403 | `SUBSCRIPTION_EXPIRED` | Any **business** route (everything except `POST /logout`, `GET /me`, `GET /subscription`) for a store whose 7-day trial has ended without a valid paid subscription, or whose paid subscription passed its expiry. Sign-in still works. `details`: `state` (`expired`/`inactive`), `has_access`, `trial_ends_at`, `subscription_expires_at`, `trial_days_left`, `support_whatsapp` (digits or null). No data is changed; access returns as soon as the platform admin activates the subscription. A suspended store gets `STORE_SUSPENDED` instead | Show the "subscription expired" screen with the WhatsApp contact (when `support_whatsapp` is set); keep the session; offer "check again" (`GET /subscription`) |
@@ -59,6 +59,16 @@ Every error response under `/api/v1` has this shape and the `X-Correlation-ID` h
 Google sign-in: `POST /auth/google {credential}` returns `{user, token}` for a known account (linked by email on first use) or `{onboarding: {token, name, email}}` for a new one; `POST /register/google {onboarding_token, store_name, owner_name, …}` then creates the store (token valid 30 min). `/auth/google` allows 10 requests/min per IP.
 
 Login throttling: after 5 failed attempts per email + IP within 60 s, `POST /login` returns 429 `TOO_MANY_REQUESTS` with `Retry-After`. A successful login resets the counter. `POST /register` and `POST /register/invitation` allow 5 requests/min per IP.
+
+### One-time SMS codes (sign-up, forgotten password, changed number)
+
+`POST /auth/otp` sends a 6-digit code (10 minutes, 5 tries, one use). `GET /auth/options` says whether codes are on (`data.otp`). A wrong or expired code is `VALIDATION_FAILED` on `otp_code`; sending too often is `TOO_MANY_REQUESTS` with `Retry-After`.
+
+| HTTP | `code` | Where | Client behaviour |
+|---|---|---|---|
+| 503 | `OTP_UNAVAILABLE` | `POST /auth/otp` while no SMS gateway is configured | Hide the code step; sign-up works without it |
+| 503 | `OTP_DAILY_LIMIT` | `POST /auth/otp` after the day's SMS allowance (`SMS_DAILY_LIMIT`) | Say codes are paused until tomorrow; offer support |
+| 503 | `OTP_SEND_FAILED` | `POST /auth/otp` when the gateway refused the message (nothing is saved) | Let the user try again in a minute |
 
 ### Financial writes (idempotency, US-0101)
 

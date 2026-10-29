@@ -56,7 +56,7 @@ class ApiConventionsTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonStructure($envelope)
             ->assertJsonPath('code', 'VALIDATION_FAILED')
-            ->assertJsonStructure(['errors' => ['email', 'password']]);
+            ->assertJsonStructure(['errors' => ['login', 'password']]);
 
         $this->getJson('/api/v1/me')
             ->assertUnauthorized()

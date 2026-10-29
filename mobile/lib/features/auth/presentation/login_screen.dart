@@ -10,9 +10,12 @@ import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/hisbah_logo.dart';
+import '../../../core/widgets/latin_digits.dart';
 import '../../../core/widgets/message_banner.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/session_controller.dart';
+import '../domain/phone_number.dart';
+import 'forgot_password_screen.dart';
 
 /// SCR-M-01 (US-0205), hi-fi board US-1507 P2: the logo on the ivory ground, the form on a
 /// surface rising from the bottom. States follow docs/design/ia.md §4.1.
@@ -29,7 +32,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   final _formKey = GlobalKey<FormState>();
-  final _email = TextEditingController();
+  final _login = TextEditingController();
+
+  /// An account made before sign-in by phone may still enter its e-mail.
+  bool _byEmail = false;
   final _password = TextEditingController();
   final _passwordFocus = FocusNode();
 
@@ -43,7 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void dispose() {
     _countdown?.cancel();
-    _email.dispose();
+    _login.dispose();
     _password.dispose();
     _passwordFocus.dispose();
     super.dispose();
@@ -61,7 +67,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _failure = null;
     });
     try {
-      await ref.read(sessionProvider.notifier).login(_email.text, _password.text);
+      final login = _byEmail ? _login.text.trim() : (normalizePhone(_login.text) ?? _login.text);
+      await ref.read(sessionProvider.notifier).login(login, _password.text);
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       setState(() {
@@ -95,12 +102,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String _clock(int seconds) => '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}';
 
   /// Client-side validation in Arabic; known server field errors use the same Arabic text (DEF-19).
-  String? _validateEmail(String? value, AppLocalizations t) {
+  String? _validateLogin(String? value, AppLocalizations t) {
     final v = value?.trim() ?? '';
-    if (v.isEmpty) return t.emailRequired;
-    if (!_emailPattern.hasMatch(v)) return t.emailInvalid;
-    if (_serverFieldErrors.containsKey('email')) return t.emailInvalid;
+    if (_byEmail) {
+      if (v.isEmpty) return t.loginEmailRequired;
+      if (!_emailPattern.hasMatch(v)) return t.emailInvalid;
+      return null;
+    }
+    if (v.isEmpty) return t.phoneRequired;
+    if (normalizePhone(v) == null || _serverFieldErrors.containsKey('login')) return t.phoneInvalid;
     return null;
+  }
+
+  void _toggleMode() => setState(() {
+    _byEmail = !_byEmail;
+    _login.clear();
+    _failure = null;
+    _formKey.currentState?.reset();
+  });
+
+  Future<void> _forgot() async {
+    final done = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()));
+    if (done == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).resetDone)));
+    }
   }
 
   String? _validatePassword(String? value, AppLocalizations t) {
@@ -182,6 +207,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final theme = Theme.of(context);
     final session = ref.watch(sessionProvider);
     final banner = _banner(t, session);
+    final otp = ref.watch(authOptionsProvider).value?.otp ?? false;
     final scaled = MediaQuery.textScalerOf(context).scale(16) > 18;
     final label = theme.textTheme.labelMedium;
 
@@ -225,25 +251,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               Text(t.loginHelper, style: const TextStyle(fontSize: 16, color: HisbahColors.inkMuted)),
                               const SizedBox(height: 16),
                               if (banner != null) ...[banner, const SizedBox(height: 16)],
-                              Text(t.emailLabel, style: label),
+                              Text(_byEmail ? t.emailLabel : t.loginPhoneLabel, style: label),
                               const SizedBox(height: 8),
                               TextFormField(
-                                key: const Key('login.email'),
-                                controller: _email,
+                                key: const Key('login.id'),
+                                controller: _login,
                                 enabled: !_submitting,
-                                keyboardType: TextInputType.emailAddress,
+                                keyboardType: _byEmail ? TextInputType.emailAddress : TextInputType.phone,
+                                // A number typed on an Arabic keyboard (٠٥٩…) is read as 059….
+                                inputFormatters: _byEmail ? null : const [LatinDigitsFormatter()],
                                 autocorrect: false,
                                 textDirection: TextDirection.ltr,
                                 textInputAction: TextInputAction.next,
-                                autofillHints: const [AutofillHints.username, AutofillHints.email],
+                                autofillHints: _byEmail
+                                    ? const [AutofillHints.username, AutofillHints.email]
+                                    : const [AutofillHints.username, AutofillHints.telephoneNumber],
                                 style: const TextStyle(fontSize: 16),
                                 decoration: InputDecoration(
-                                  hintText: t.phEmail,
+                                  hintText: _byEmail ? t.phEmail : t.phLoginPhone,
                                   hintTextDirection: Directionality.of(context),
                                 ),
-                                validator: (v) => _validateEmail(v, t),
+                                validator: (v) => _validateLogin(v, t),
                                 errorBuilder: (_, error) => _errorLine(error),
                                 onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
+                              ),
+                              Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: TextButton(
+                                  key: const Key('login.mode'),
+                                  onPressed: _submitting ? null : _toggleMode,
+                                  child: Text(_byEmail ? t.loginUsePhone : t.loginUseEmail),
+                                ),
                               ),
                               const SizedBox(height: 16),
                               Text(t.passwordLabel, style: label),
@@ -289,6 +327,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 errorBuilder: (_, error) => _errorLine(error),
                                 onFieldSubmitted: (_) => _submit(),
                               ),
+                              if (otp)
+                                Align(
+                                  alignment: AlignmentDirectional.centerEnd,
+                                  child: TextButton(
+                                    key: const Key('login.forgot'),
+                                    onPressed: _submitting ? null : _forgot,
+                                    child: Text(t.loginForgot),
+                                  ),
+                                ),
                               const SizedBox(height: 20),
                               FilledButton(
                                 key: const Key('login.submit'),

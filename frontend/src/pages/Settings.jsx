@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon";
+import OtpResend from "../components/OtpResend";
 import { ErrorBanner, ErrorState, Field, PageHeader, StatusBadge } from "../components/ui";
 import { roleOf } from "../lib/domain";
 import { dateOnly, dateTime, latinDigits } from "../lib/format";
+import { maskPhone, normalizePhone, PHONE_HINT, otpSendError } from "../lib/phone";
 import { TICKET_STATUS, TICKET_TYPES, ticketTypeLabel } from "../lib/support";
+import { changePhone, sendOtp } from "../services/api";
 import { ApiError, session } from "../services/apiClient";
 import { useChangePassword, useMyStore, useSaveStore, useSendTicket, useSupportTickets } from "../services/backoffice";
 import { useSubscription } from "../services/dashboard";
+import { useAuthOptions } from "../services/useAuth";
 
 /** Server field messages as { field: first message }; empty when the error is not about fields. */
 const fieldErrors = (error) =>
@@ -28,6 +32,7 @@ export default function Settings() {
         {owner ? <StoreSection /> : null}
         <div className="form-stack" style={{ flex: "1 1 380px", minWidth: 0 }}>
           <SubscriptionSection user={me} />
+          <PhoneSection user={me} />
           <PasswordSection />
           {owner ? (
             <Link className="card panel settings-link" to="/staff">
@@ -276,6 +281,109 @@ function SubscriptionSection({ user }) {
         </div>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * The mobile number this account signs in with. The current password guards it; with SMS codes
+ * on, the new number receives a code first. An account made with an e-mail adds its number here.
+ */
+function PhoneSection({ user }) {
+  const options = useAuthOptions();
+  const otp = Boolean(options.data?.otp);
+  const [form, setForm] = useState({ phone: user.phone ?? "", current_password: "", otp_code: "" });
+  const [sent, setSent] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [banner, setBanner] = useState(null);
+  const [saved, setSaved] = useState(user.phone ?? null);
+  const [busy, setBusy] = useState(false);
+  const set = (key) => (e) => {
+    const value = key === "current_password" ? e.target.value : latinDigits(e.target.value);
+    setForm({ ...form, [key]: value });
+    setErrors((old) => ({ ...old, [key]: undefined }));
+    if (key === "phone") setSent(null); // A changed number needs its own code.
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const phone = normalizePhone(form.phone);
+    const found = {};
+    if (!phone) found.phone = form.phone.trim() ? PHONE_HINT : "اكتب رقم جوالك.";
+    if (!form.current_password) found.current_password = "اكتب كلمة المرور الحالية.";
+    if (otp && sent && !/^\d{6}$/.test(form.otp_code.trim())) found.otp_code = "الرمز 6 أرقام.";
+    setErrors(found);
+    setBanner(null);
+    if (Object.keys(found).length) return;
+    setBusy(true);
+    try {
+      if (otp && !sent) {
+        const wait = await sendOtp(phone, "change_phone");
+        setSent({ phone, availableAt: Date.now() + wait * 1000 });
+        return;
+      }
+      const result = await changePhone({ phone, current_password: form.current_password, ...(otp ? { otp_code: form.otp_code.trim() } : {}) });
+      setSaved(result.user.phone);
+      setSent(null);
+      setForm({ phone: result.user.phone, current_password: "", otp_code: "" });
+    } catch (error) {
+      if (error?.status === 422) setErrors(fieldErrors(error));
+      else setBanner(otpSendError(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form className="card panel form-stack" onSubmit={submit} noValidate>
+      <div className="panel-head">
+        <h2>رقم الجوال للدخول</h2>
+      </div>
+      {!saved ? <p className="field-hint">حسابك يدخل بالبريد. أضف رقم جوالك لتدخل به.</p> : null}
+      <Field id="ph-phone" label="رقم الجوال" required error={errors.phone} hint="تسجّل الدخول بهذا الرقم وكلمة مرورك.">
+        <input id="ph-phone" type="tel" inputMode="tel" className="fld ltr" value={form.phone} onChange={set("phone")} autoComplete="tel" placeholder="0599123456" />
+      </Field>
+      <Field id="ph-current" label="كلمة المرور الحالية" required error={errors.current_password}>
+        <input id="ph-current" type="password" className="fld ltr" value={form.current_password} onChange={set("current_password")} autoComplete="current-password" />
+      </Field>
+      {sent ? (
+        <>
+          <p className="field-hint">
+            أرسلنا رمزاً من 6 أرقام برسالة إلى <b className="m">{maskPhone(sent.phone)}</b>.
+          </p>
+          <Field id="ph-code" label="رمز التأكيد" required error={errors.otp_code}>
+            <input id="ph-code" inputMode="numeric" className="fld ltr" value={form.otp_code} onChange={set("otp_code")} autoComplete="one-time-code" maxLength={6} />
+          </Field>
+          <OtpResend
+            availableAt={sent.availableAt}
+            disabled={busy}
+            onResend={async () => {
+              try {
+                const wait = await sendOtp(sent.phone, "change_phone");
+                setSent({ ...sent, availableAt: Date.now() + wait * 1000 });
+              } catch (error) {
+                setBanner(otpSendError(error));
+              }
+            }}
+          />
+        </>
+      ) : null}
+      {banner ? (
+        <p role="alert" className="banner tone-error">
+          {banner}
+        </p>
+      ) : null}
+      {saved && saved === normalizePhone(form.phone) && !form.current_password ? (
+        <p role="status" className="banner tone-success">
+          <Icon name="ok" size={20} />
+          <span>تدخل الآن بالرقم <span className="m">{saved}</span>.</span>
+        </p>
+      ) : null}
+      <div>
+        <button type="submit" className="btn btn-p" disabled={busy}>
+          {busy ? "لحظة…" : otp && !sent ? "أرسل رمز التأكيد" : "حفظ الرقم"}
+        </button>
+      </div>
+    </form>
   );
 }
 

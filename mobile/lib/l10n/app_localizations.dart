@@ -629,7 +629,7 @@ abstract class AppLocalizations {
   /// No description provided for @invalidCredentials.
   ///
   /// In ar, this message translates to:
-  /// **'البريد الإلكتروني أو كلمة المرور غير صحيحة.'**
+  /// **'رقم الجوال أو كلمة المرور غير صحيحة.'**
   String get invalidCredentials;
 
   /// No description provided for @tooManyAttempts.
@@ -3161,13 +3161,13 @@ abstract class AppLocalizations {
   /// No description provided for @phoneRequired.
   ///
   /// In ar, this message translates to:
-  /// **'يرجى إدخال رقم الهاتف.'**
+  /// **'اكتب رقم جوالك.'**
   String get phoneRequired;
 
   /// No description provided for @phoneInvalid.
   ///
   /// In ar, this message translates to:
-  /// **'رقم الهاتف 9 أو 10 أرقام، مثل 0599123456.'**
+  /// **'رقم الجوال 10 أرقام يبدأ بـ 05، مثل 0599123456.'**
   String get phoneInvalid;
 
   /// No description provided for @cityRequired.
@@ -5029,6 +5029,204 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'{count} كرتونة + {pieces} قطعة'**
   String cartonsCellLoose(int count, int pieces);
+
+  /// No description provided for @loginPhoneLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الجوال'**
+  String get loginPhoneLabel;
+
+  /// No description provided for @phLoginPhone.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثل 0599123456'**
+  String get phLoginPhone;
+
+  /// No description provided for @loginEmailRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب البريد الإلكتروني.'**
+  String get loginEmailRequired;
+
+  /// No description provided for @loginUseEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسابي القديم بالبريد الإلكتروني'**
+  String get loginUseEmail;
+
+  /// No description provided for @loginUsePhone.
+  ///
+  /// In ar, this message translates to:
+  /// **'الدخول برقم الجوال'**
+  String get loginUsePhone;
+
+  /// No description provided for @loginForgot.
+  ///
+  /// In ar, this message translates to:
+  /// **'نسيت كلمة المرور؟'**
+  String get loginForgot;
+
+  /// No description provided for @ownerPhoneLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم جوالك (تسجّل الدخول به)'**
+  String get ownerPhoneLabel;
+
+  /// No description provided for @emailOptionalLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'البريد الإلكتروني (اختياري)'**
+  String get emailOptionalLabel;
+
+  /// No description provided for @phEmailOptional.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا حاجة له للدخول'**
+  String get phEmailOptional;
+
+  /// No description provided for @otpTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'رمز التأكيد'**
+  String get otpTitle;
+
+  /// No description provided for @otpSentTo.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسلنا رمزاً من 6 أرقام برسالة إلى {phone}.'**
+  String otpSentTo(String phone);
+
+  /// No description provided for @otpCodeLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز'**
+  String get otpCodeLabel;
+
+  /// No description provided for @phOtpCode.
+  ///
+  /// In ar, this message translates to:
+  /// **'6 أرقام'**
+  String get phOtpCode;
+
+  /// No description provided for @otpCodeInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز 6 أرقام.'**
+  String get otpCodeInvalid;
+
+  /// No description provided for @otpResend.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسل رمزاً جديداً'**
+  String get otpResend;
+
+  /// No description provided for @otpResendIn.
+  ///
+  /// In ar, this message translates to:
+  /// **'رمز جديد بعد {seconds} ث'**
+  String otpResendIn(int seconds);
+
+  /// No description provided for @otpChangeNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل الرقم'**
+  String get otpChangeNumber;
+
+  /// No description provided for @otpSend.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسل الرمز'**
+  String get otpSend;
+
+  /// No description provided for @otpDailyLimit.
+  ///
+  /// In ar, this message translates to:
+  /// **'توقّفت رسائل الرمز لليوم. حاول غداً أو تواصل مع الدعم.'**
+  String get otpDailyLimit;
+
+  /// No description provided for @otpSendFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر إرسال الرسالة الآن. حاول بعد قليل.'**
+  String get otpSendFailed;
+
+  /// No description provided for @otpUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'رسائل الرمز غير متاحة الآن.'**
+  String get otpUnavailable;
+
+  /// No description provided for @registerConfirmCode.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد الرمز وإنشاء المتجر'**
+  String get registerConfirmCode;
+
+  /// No description provided for @resetTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'استعادة كلمة المرور'**
+  String get resetTitle;
+
+  /// No description provided for @resetHelper.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب رقم جوالك، ونرسل لك رمزاً برسالة لتختار كلمة مرور جديدة.'**
+  String get resetHelper;
+
+  /// No description provided for @resetSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ كلمة المرور الجديدة'**
+  String get resetSave;
+
+  /// No description provided for @resetDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تغيير كلمة المرور. سجّل الدخول برقم جوالك وكلمة المرور الجديدة.'**
+  String get resetDone;
+
+  /// No description provided for @morePhone.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الجوال للدخول'**
+  String get morePhone;
+
+  /// No description provided for @morePhoneAdd.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف رقمك لتدخل به بدل البريد'**
+  String get morePhoneAdd;
+
+  /// No description provided for @phoneTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الجوال للدخول'**
+  String get phoneTitle;
+
+  /// No description provided for @phoneHelper.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجّل الدخول بهذا الرقم وكلمة مرورك.'**
+  String get phoneHelper;
+
+  /// No description provided for @phoneNewLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الجوال'**
+  String get phoneNewLabel;
+
+  /// No description provided for @phoneSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ الرقم'**
+  String get phoneSave;
+
+  /// No description provided for @phoneDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حفظ الرقم. سجّل الدخول به من الآن.'**
+  String get phoneDone;
 }
 
 class _AppLocalizationsDelegate

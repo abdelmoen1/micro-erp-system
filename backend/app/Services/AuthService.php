@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Enums\UserRole;
 use App\Exceptions\ApiException;
+use App\Models\PhoneOtp;
 use App\Models\Store;
 use App\Models\StoreInvitation;
 use App\Models\User;
+use App\Support\PhoneNumber;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -25,12 +27,14 @@ class AuthService
     public const ONBOARDING_MINUTES = 30;
 
     /**
-     * Stateless credential check (no session), throttled per email + IP
-     * on failed attempts only (US-0104), and refused for inactive staff (US-0105).
+     * Stateless credential check (no session), throttled per login + IP on failed attempts only
+     * (US-0104), and refused for inactive staff (US-0105). [$login] is the mobile number; accounts
+     * made with an e-mail before sign-in by phone may still give their e-mail.
      */
-    public function login(string $email, string $password, string $ip): User
+    public function login(string $login, string $password, string $ip): User
     {
-        $key = 'login:' . sha1(Str::lower($email) . '|' . $ip);
+        $phone = str_contains($login, '@') ? null : PhoneNumber::normalize($login);
+        $key = 'login:' . sha1(Str::lower($phone ?? trim($login)) . '|' . $ip);
 
         if (RateLimiter::tooManyAttempts($key, self::MAX_LOGIN_ATTEMPTS)) {
             $seconds = RateLimiter::availableIn($key);
@@ -44,7 +48,9 @@ class AuthService
             );
         }
 
-        $user = User::where('email', $email)->first();
+        $user = $phone !== null
+            ? User::where('phone', $phone)->first()
+            : (str_contains($login, '@') ? User::where('email', trim($login))->first() : null);
 
         if (!$user || !Hash::check($password, $user->password)) {
             RateLimiter::hit($key, self::LOGIN_DECAY_SECONDS);
@@ -92,6 +98,7 @@ class AuthService
         )->plainTextToken;
     }
 
+    /** [$data]['phone_verified'] is set when the owner's number was confirmed by an SMS code. */
     public function registerStore(array $data): User
     {
         return DB::transaction(function () use ($data) {
@@ -107,10 +114,11 @@ class AuthService
 
             $owner = new User([
                 'name' => $data['owner_name'],
-                'email' => $data['email'],
+                'email' => $data['email'] ?? null,
                 'phone' => $data['owner_phone'] ?? null,
                 'password' => $data['password'] ?? null,
             ]);
+            $owner->phone_verified_at = ($data['phone_verified'] ?? false) ? now() : null;
             $owner->store_id = $store->id;
             $owner->role = UserRole::OWNER;
             $owner->google_id = $data['google_id'] ?? null;
@@ -184,6 +192,45 @@ class AuthService
         ]);
     }
 
+    /**
+     * A forgotten password: the SMS code proves the number, the new password is set, and every
+     * device is signed out. An unknown number gets the same refusal as a wrong code.
+     */
+    public function resetPassword(OtpService $otp, string $phone, string $code, string $password, AuditService $audit): void
+    {
+        $otp->verify($phone, PhoneOtp::PURPOSE_RESET, $code);
+        $user = User::where('phone', $phone)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages(['otp_code' => ['الرمز غير صحيح.']]);
+        }
+
+        DB::transaction(function () use ($user, $password, $audit) {
+            $user->forceFill(['password' => $password, 'phone_verified_at' => $user->phone_verified_at ?? now()])->save();
+            $user->tokens()->delete();
+            $audit->record('user.password_reset', $user, ['by' => 'sms_code'], $user);
+        });
+    }
+
+    /** The number this account signs in with; [$code] is checked when SMS codes are on. */
+    public function changePhone(OtpService $otp, User $user, string $phone, ?string $code, AuditService $audit): User
+    {
+        if ($otp->enabled()) {
+            $otp->verify($phone, PhoneOtp::PURPOSE_CHANGE_PHONE, $code);
+        }
+
+        DB::transaction(function () use ($otp, $user, $phone, $audit) {
+            $before = $user->phone;
+            $user->forceFill(['phone' => $phone, 'phone_verified_at' => $otp->enabled() ? now() : null])->save();
+            $audit->record('user.phone_changed', $user, [
+                'from' => $before ? PhoneNumber::masked($before) : null,
+                'to' => PhoneNumber::masked($phone),
+            ], $user);
+        });
+
+        return $user->load('store');
+    }
+
     public function createInvitation(User $inviter, array $data): array
     {
         $token = Str::random(64);
@@ -216,7 +263,8 @@ class AuthService
                 throw self::storeSuspended();
             }
 
-            if ($invitation->email && !hash_equals(strtolower($invitation->email), strtolower($data['email']))) {
+            // An invitation made for an e-mail is kept for it when the new member gives an e-mail.
+            if ($invitation->email && !empty($data['email']) && !hash_equals(strtolower($invitation->email), strtolower($data['email']))) {
                 throw ValidationException::withMessages([
                     'email' => 'البريد الإلكتروني لا يطابق الدعوة.',
                 ]);
@@ -224,7 +272,8 @@ class AuthService
 
             $user = new User([
                 'name' => $data['name'],
-                'email' => $data['email'],
+                'email' => $data['email'] ?? null,
+                'phone' => $data['phone'],
                 'password' => $data['password'],
             ]);
             $user->store_id = $invitation->store_id;

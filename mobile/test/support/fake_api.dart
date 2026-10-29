@@ -100,7 +100,14 @@ FakeResponse dashboardOk({List<Map<String, dynamic>> recentInvoices = const []})
 /// Routes `METHOD /path` to a response (or a queue of responses), records every
 /// request, and simulates a dropped connection for [FakeApi.offline] routes.
 class FakeApi implements HttpClientAdapter {
-  final Map<String, List<FakeResponse>> _routes = {};
+  /// SMS codes are off unless a test turns them on with its own `GET /auth/options`.
+  final Map<String, List<FakeResponse>> _routes = {
+    'GET /auth/options': [
+      const FakeResponse(200, {
+        'data': {'login': 'phone', 'otp': false},
+      }),
+    ],
+  };
   final Set<String> _offline = {};
   final Set<String> _timeouts = {};
   final List<RequestOptions> requests = [];
