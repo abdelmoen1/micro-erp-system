@@ -10,6 +10,7 @@ import '../features/auth/data/auth_repository.dart';
 import '../features/customers/data/customer_repository.dart';
 import '../features/more/data/more_repository.dart';
 import '../features/products/data/product_repository.dart';
+import '../features/goods/data/goods_repository.dart';
 import '../features/products/data/stock_repository.dart';
 import '../features/sale/data/sale_repository.dart';
 import 'api/api_client.dart';
@@ -100,6 +101,10 @@ final saleRepositoryProvider = Provider<SaleRepository>(
 
 final stockRepositoryProvider = Provider<StockRepository>(
   (ref) => StockRepository(ref.watch(apiClientProvider), ref.watch(idempotencyKeyStoreProvider)),
+);
+
+final goodsRepositoryProvider = Provider<GoodsRepository>(
+  (ref) => GoodsRepository(ref.watch(apiClientProvider), ref.watch(idempotencyKeyStoreProvider)),
 );
 
 final customerRepositoryProvider = Provider<CustomerRepository>(

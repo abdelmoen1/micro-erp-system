@@ -1430,7 +1430,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get prodSearchHint => 'بحث بالاسم أو الباركود';
 
   @override
-  String get prodAdd => '+ صنف';
+  String get prodAdd => '+ بضاعة';
 
   @override
   String get prodFilterAll => 'الكل';
@@ -2900,4 +2900,250 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get phoneDone => 'تم حفظ الرقم. سجّل الدخول به من الآن.';
+
+  @override
+  String get goodsTitle => 'تسجيل بضاعة';
+
+  @override
+  String get goodsStepItems => 'البضاعة';
+
+  @override
+  String get goodsStepSupplier => 'المورد';
+
+  @override
+  String get goodsStepPay => 'الدفع';
+
+  @override
+  String get goodsScan => 'امسح باركود';
+
+  @override
+  String get goodsManual => 'أضف يدوي';
+
+  @override
+  String get goodsEmpty => 'امسح أول صنف';
+
+  @override
+  String get goodsNextSupplier => 'التالي: المورد';
+
+  @override
+  String get goodsNextPay => 'التالي: الدفع';
+
+  @override
+  String get goodsItemEdit => 'الصنف';
+
+  @override
+  String get goodsScanned => 'تم المسح';
+
+  @override
+  String get goodsKindCarton => 'كرتونة';
+
+  @override
+  String get goodsKindWeight => 'وزن';
+
+  @override
+  String get goodsName => 'الاسم';
+
+  @override
+  String get goodsCartons => 'الكراتين';
+
+  @override
+  String get goodsPackSize => 'قطع بالكرتونة';
+
+  @override
+  String get goodsQuantity => 'الكمية';
+
+  @override
+  String get goodsKilos => 'الكمية (كغ)';
+
+  @override
+  String get goodsSellPiece => 'سعر بيع القطعة';
+
+  @override
+  String get goodsSellKilo => 'سعر بيع الكيلو';
+
+  @override
+  String get goodsAddToList => 'أضف للقائمة';
+
+  @override
+  String get goodsSaveLine => 'حفظ';
+
+  @override
+  String get goodsNumberRequired => 'اكتب رقم صحيح';
+
+  @override
+  String get goodsRemove => 'حذف';
+
+  @override
+  String get goodsSupplierName => 'اسم المورد';
+
+  @override
+  String get goodsSupplierRequired => 'اكتب اسم المورد';
+
+  @override
+  String get goodsBuyCarton => 'سعر الكرتونة';
+
+  @override
+  String get goodsBuyKilo => 'سعر الكيلو';
+
+  @override
+  String get goodsBuyRequired => 'مطلوب';
+
+  @override
+  String get goodsLineTotal => 'المجموع';
+
+  @override
+  String get goodsTotal => 'الإجمالي';
+
+  @override
+  String get goodsPaid => 'المدفوع';
+
+  @override
+  String get goodsPaidAll => 'دفعت كله';
+
+  @override
+  String get goodsAllDebt => 'كله دين';
+
+  @override
+  String get goodsRemaining => 'المتبقي عليك';
+
+  @override
+  String get goodsPaidFull => 'مدفوعة بالكامل';
+
+  @override
+  String get goodsOverpaid => 'أكثر من الإجمالي';
+
+  @override
+  String get goodsSave => 'سجّل البضاعة';
+
+  @override
+  String get goodsSaved => 'تم تسجيل البضاعة';
+
+  @override
+  String get goodsAnother => 'سجّل بضاعة ثانية';
+
+  @override
+  String get goodsFinish => 'تم';
+
+  @override
+  String get supplierAccount => 'حساب المورد';
+
+  @override
+  String get suppliersTitle => 'الموردين';
+
+  @override
+  String get suppliersSub => 'الفواتير والدفعات';
+
+  @override
+  String get suppliersEmpty => 'لسا ما في موردين';
+
+  @override
+  String get supplierOwed => 'عليك للمورد';
+
+  @override
+  String get supplierMoves => 'الحركات';
+
+  @override
+  String get supplierInvoice => 'فاتورة بضاعة';
+
+  @override
+  String get supplierPay => 'سجّل دفعة';
+
+  @override
+  String get supplierPayTitle => 'دفعة للمورد';
+
+  @override
+  String get supplierOwes => 'عليك';
+
+  @override
+  String get supplierAmount => 'المبلغ';
+
+  @override
+  String get supplierStillOwed => 'بيضل عليك';
+
+  @override
+  String get supplierPaySave => 'سجّل الدفعة';
+
+  @override
+  String get supplierPayTooMuch => 'أكبر من المبلغ اللي عليك';
+
+  @override
+  String get coachSkip => 'تخطي';
+
+  @override
+  String get coachWelcomeBody =>
+      'جرّب معنا: سجّل بضاعة، وبعدها بيع أول فاتورة.';
+
+  @override
+  String get coachProductsTitle => 'اضغط «البضاعة»';
+
+  @override
+  String get coachProductsBody => 'هون بتسجل اللي جبته من المورد.';
+
+  @override
+  String get coachAddTitle => 'اضغط «+ بضاعة»';
+
+  @override
+  String get coachAddBody => 'من هون بتبدأ تسجيل البضاعة.';
+
+  @override
+  String get coachScanTitle => 'امسح أي صنف عندك';
+
+  @override
+  String get coachScanBody => 'جرّب هلأ، على علبة قدامك.';
+
+  @override
+  String get coachNextTitle => 'كمّل للمورد';
+
+  @override
+  String get coachNextBody => 'بعدها بتكتب سعر الشراء والمدفوع.';
+
+  @override
+  String get coachSellTitle => 'اضغط «بيع»';
+
+  @override
+  String get coachSellBody => 'هون بتعمل فاتورة الزبون.';
+
+  @override
+  String get otpNoSmsTitle => 'ما وصلتك الرسالة؟';
+
+  @override
+  String get otpNoSmsBody => 'احكي معنا على واتساب ومنعطيك الرمز.';
+
+  @override
+  String get otpNoSmsAction => 'اطلب الرمز على واتساب';
+
+  @override
+  String goodsPieces(String count) {
+    return '$count قطعة';
+  }
+
+  @override
+  String goodsKilosValue(String kilos) {
+    return '$kilos كغ';
+  }
+
+  @override
+  String goodsCartonsValue(String cartons, String pieces) {
+    return '$cartons كرتونة، $pieces قطعة';
+  }
+
+  @override
+  String goodsPieceCost(String price) {
+    return 'القطعة $price';
+  }
+
+  @override
+  String goodsStockUp(String count) {
+    return 'زاد المخزون: $count أصناف';
+  }
+
+  @override
+  String supplierPayment(String method) {
+    return 'دفعة $method';
+  }
+
+  @override
+  String otpWhatsappText(String phone) {
+    return 'بدي رمز تفعيل حسبة لرقم $phone';
+  }
 }

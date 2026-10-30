@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/guide/coach_tour.dart';
 import 'l10n/app_localizations.dart';
 
 class SmartShopApp extends ConsumerWidget {
@@ -27,6 +28,7 @@ class SmartShopApp extends ConsumerWidget {
       ],
       theme: AppTheme.directionA(),
       routerConfig: ref.watch(routerProvider),
+      builder: (context, child) => CoachOverlay(child: child ?? const SizedBox.shrink()),
     );
   }
 }

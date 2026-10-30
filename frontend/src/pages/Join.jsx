@@ -5,6 +5,7 @@ import Banner, { FieldError, Spinner } from "../components/Banner";
 import HisbahLogo from "../components/HisbahLogo";
 import Icon from "../components/Icon";
 import OtpResend from "../components/OtpResend";
+import OtpWhatsapp from "../components/OtpWhatsapp";
 import { latinDigits, shortReference } from "../lib/format";
 import { maskPhone, normalizePhone, PHONE_HINT, otpSendError } from "../lib/phone";
 import { sendOtp } from "../services/api";
@@ -367,6 +368,7 @@ export default function Join() {
                       <input {...input("otp_code", { ltr: true, inputMode: "numeric", autoComplete: "one-time-code", maxLength: 6, placeholder: "6 أرقام" })} />
                     </Field>
                     <OtpResend availableAt={code.availableAt} onResend={send} disabled={busy} />
+                    <OtpWhatsapp phone={code.sentTo} />
                   </div>
                 ) : null}
               </>

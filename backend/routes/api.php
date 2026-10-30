@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StockAdjustmentController;
 use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\SupplierController;
+use App\Http\Controllers\Api\Admin\OtpCodeController as AdminOtpCodeController;
 use App\Http\Controllers\Api\SupportTicketController;
 use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\Admin\OverviewController as AdminOverviewController;
@@ -51,6 +53,7 @@ Route::middleware(['auth:sanctum', 'active', 'platform.admin'])->prefix('admin')
     Route::get('catalog-products/{catalogProduct}', [AdminProductController::class, 'catalog']);
     Route::get('support-tickets', [AdminSupportTicketController::class, 'index']);
     Route::patch('support-tickets/{ticket}', [AdminSupportTicketController::class, 'update']);
+    Route::post('otp-codes', AdminOtpCodeController::class)->middleware('throttle:20,1');
 });
 
 // Protected API
@@ -106,6 +109,12 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
 
     // Stock adjustments (US-0402): idempotent like the financial writes (05 §2).
     Route::post('stock-adjustments', [StockAdjustmentController::class, 'store'])->middleware('idempotent');
+
+    // Goods from suppliers: invoice, stock and payment together; later payments on the account.
+    Route::post('purchases', [SupplierController::class, 'purchase'])->middleware('idempotent');
+    Route::get('suppliers', [SupplierController::class, 'index']);
+    Route::get('suppliers/{supplier}', [SupplierController::class, 'show']);
+    Route::post('suppliers/{supplier}/payments', [SupplierController::class, 'pay'])->middleware('idempotent');
 
     // Customers
     Route::apiResource('customers', CustomerController::class);

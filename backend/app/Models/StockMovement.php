@@ -30,6 +30,9 @@ class StockMovement extends Model
     // US-0601: stock put back by a sale return.
     public const TYPE_SALE_RETURN = 'sale_return';
 
+    // Goods received from a supplier.
+    public const TYPE_PURCHASE = 'purchase';
+
     protected $fillable = [
         'store_id',
         'product_id',

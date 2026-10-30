@@ -21,6 +21,7 @@ import '../more/presentation/store_settings_screen.dart';
 import '../more/presentation/support_screen.dart';
 import '../sync/application/sync_engine.dart';
 import '../sync/presentation/sync_screen.dart';
+import '../goods/presentation/supplier_screens.dart';
 import '../guide/usage_guide.dart';
 import '../products/presentation/stock_lists_screen.dart';
 import '../sale/presentation/sale_widgets.dart' show GroupLabel, LineCard;
@@ -321,6 +322,14 @@ class _MoreTab extends ConsumerWidget {
               subtitle: t.moreLowStockSub,
               onTap: () => pushScreen<void>(context, const LowStockScreen()),
             ),
+            if (user.canOverride)
+              MoreTile(
+                key: const Key('more.suppliers'),
+                icon: Icons.local_shipping_outlined,
+                title: t.suppliersTitle,
+                subtitle: t.suppliersSub,
+                onTap: () => pushScreen<void>(context, const SuppliersScreen()),
+              ),
             if (user.canOverride)
               MoreTile(
                 key: const Key('more.negative'),

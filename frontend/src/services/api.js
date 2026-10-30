@@ -22,7 +22,7 @@ export async function registerStore(data) {
 export async function authOptions() {
   try {
     const result = await apiGet("/auth/options");
-    return { otp: Boolean(result.data?.otp) };
+    return { otp: Boolean(result.data?.otp), supportWhatsapp: result.data?.support_whatsapp ?? null };
   } catch {
     return { otp: false };
   }

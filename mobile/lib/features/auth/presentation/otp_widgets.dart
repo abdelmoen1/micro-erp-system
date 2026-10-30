@@ -1,9 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_failure.dart';
+import '../../../core/providers.dart';
+import '../../../core/theme/hisbah_tokens.dart';
 import '../../../l10n/app_localizations.dart';
+import 'subscription_expired_screen.dart' show externalLinkLauncherProvider;
 
 /// «أرسل رمزاً جديداً», off with a countdown until [availableAt] (the server's `resend_in`).
 class OtpResendButton extends StatefulWidget {
@@ -77,3 +81,40 @@ String otpSendError(ApiFailure failure, AppLocalizations t) => switch (failure) 
   ServerError(:final message) => message ?? t.otpSendFailed,
   _ => failure.message ?? t.otpSendFailed,
 };
+
+/// When the SMS does not arrive: ask the team on WhatsApp, who read the code from the admin page.
+class OtpWhatsappHelp extends ConsumerWidget {
+  const OtpWhatsappHelp({super.key, required this.phone});
+
+  final String phone;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final number = ref.watch(authOptionsProvider).value?.supportWhatsapp;
+    if (number == null) return const SizedBox.shrink();
+    return Container(
+      key: const Key('otp.whatsapp'),
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: HisbahColors.raised, borderRadius: BorderRadius.circular(HisbahRadius.card)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(t.otpNoSmsTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 2),
+          Text(t.otpNoSmsBody, style: const TextStyle(fontSize: 15, color: HisbahColors.inkMuted)),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            key: const Key('otp.whatsapp.open'),
+            icon: const Icon(Icons.chat_outlined),
+            label: Text(t.otpNoSmsAction),
+            onPressed: () => ref.read(externalLinkLauncherProvider)(
+              Uri.https('wa.me', '/$number', {'text': t.otpWhatsappText(phone)}),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

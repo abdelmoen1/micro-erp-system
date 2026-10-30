@@ -8,7 +8,16 @@
   "guideStart": "ابدأ الدليل",
   "guideLater": "لاحقاً",
   "guideStep": "الخطوة {n} من {total}",
-  "@guideStep": {"placeholders": {"n": {"type": "int"}, "total": {"type": "int"}}},
+  "@guideStep": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "guideWelcomeTitle": "أهلاً بك في حسبة",
   "guideWelcomeBody": "سنجرب معاً أهم شيئين في المحل: إضافة صنف بالباركود، وعمل فاتورة بالباركود. كل ما تفعله هنا حقيقي ويُحفظ في متجرك.",
   "guideAddTitle": "أضف صنفك الأول بالباركود",
@@ -768,7 +777,7 @@
   },
   "payDoneButton": "تم",
   "prodSearchHint": "بحث بالاسم أو الباركود",
-  "prodAdd": "+ صنف",
+  "prodAdd": "+ بضاعة",
   "prodFilterAll": "الكل",
   "prodFilterLow": "منخفض",
   "prodFilterNegative": "سالب",
@@ -1496,36 +1505,102 @@
   "legacyUncertain": "انقطع الاتصال قبل ما يوصل رد الخادم، ويمكن يكون الدين تسجّل. اضغط «أعد المحاولة» وما رح يتسجّل مرتين.",
   "legacyConfirmTitle": "تأكيد الدين القديم",
   "legacyConfirmBody": "رح يتسجّل على {name} دين قديم بقيمة {amount}. بتقدر تعدّله أو تحذفه لاحقاً من لوحة الويب.",
-  "@legacyConfirmBody": {"placeholders": {"name": {"type": "String"}, "amount": {"type": "String"}}},
+  "@legacyConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "legacyConfirmOk": "نعم، سجّل",
   "legacyBack": "رجوع",
   "legacyDone": "تسجّل الدين القديم",
   "legacyDoneBody": "صار على {name} دين قديم بقيمة {amount}.",
-  "@legacyDoneBody": {"placeholders": {"name": {"type": "String"}, "amount": {"type": "String"}}},
+  "@legacyDoneBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "legacyDoneButton": "تمام",
   "legacyForbidden": "تسجيل الديون القديمة للمالك أو المدير.",
   "legacySince": "من {date}",
-  "@legacySince": {"placeholders": {"date": {"type": "String"}}},
+  "@legacySince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "offlineSavedBanner": "لا يوجد اتصال — البيع والدفعات تُحفظ على الهاتف وتُرسل عند عودة الإنترنت",
   "offlineSavedBannerCount": "لا يوجد اتصال — {count} عملية محفوظة على الهاتف بانتظار الإرسال",
-  "@offlineSavedBannerCount": {"placeholders":{"count":{"type":"int"}}},
+  "@offlineSavedBannerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "syncSynced": "متزامن",
   "syncSyncing": "جارٍ المزامنة…",
   "syncPending": "بانتظار المزامنة ({count})",
-  "@syncPending": {"placeholders":{"count":{"type":"int"}}},
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "syncOfflinePending": "غير متصل · {count}",
-  "@syncOfflinePending": {"placeholders":{"count":{"type":"int"}}},
+  "@syncOfflinePending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "syncNeedsReview": "يحتاج مراجعة ({count})",
-  "@syncNeedsReview": {"placeholders":{"count":{"type":"int"}}},
+  "@syncNeedsReview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "syncNow": "مزامنة الآن",
   "syncTitle": "المزامنة",
   "syncOfflineTitle": "لا يوجد اتصال · {count} عملية بانتظار الإرسال",
-  "@syncOfflineTitle": {"placeholders":{"count":{"type":"int"}}},
+  "@syncOfflineTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "syncAllSent": "كل العمليات وصلت إلى الخادم",
   "syncStuck": "{count} عملية تعذّر إرسالها عدة مرات. تواصل مع الدعم إن استمر ذلك.",
-  "@syncStuck": {"placeholders":{"count":{"type":"int"}}},
+  "@syncStuck": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "syncHeldTitle": "أوقفها الخادم للمراجعة ({count})",
-  "@syncHeldTitle": {"placeholders":{"count":{"type":"int"}}},
+  "@syncHeldTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "syncHeldHelp": "لم تُحذف. يراجعها المالك أو المدير من موقع حسبة على الويب.",
   "syncHeldPayment": "الدفعة أكبر من رصيد العميل الآن على الخادم.",
   "syncHeldClock": "وقت العملية خارج المدة المسموحة. راجع ساعة الهاتف.",
@@ -1535,17 +1610,44 @@
   "syncItemCreditSale": "بيع بالدين",
   "syncItemPayment": "دفعة",
   "syncItemStuck": "تعذّر الإرسال {count} مرة",
-  "@syncItemStuck": {"placeholders":{"count":{"type":"int"}}},
+  "@syncItemStuck": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "queueWarnBody": "{count} عملية بانتظار المزامنة من أصل {limit}. اتصل بالإنترنت وزامن الآن.",
-  "@queueWarnBody": {"placeholders":{"count":{"type":"int"},"limit":{"type":"int"}}},
+  "@queueWarnBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
   "queueFullTitle": "امتلأت قائمة الانتظار — لا يمكن حفظ بيع أو دفعة جديدة دون اتصال",
   "queueFullBody": "على الهاتف 1000 عملية لم تُرسل بعد. اتصل بالإنترنت لإرسالها، ثم تابع. البحث والعرض يعملان.",
   "receiptPendingNote": "محفوظ على الهاتف بانتظار الإرسال. يُرسل تلقائيًا عند عودة الإنترنت.",
   "receiptLocalRef": "رقم مؤقت",
   "payPendingNote": "محفوظة على الهاتف ({ref}) وتُرسل عند عودة الإنترنت.",
-  "@payPendingNote": {"placeholders":{"ref":{"type":"String"}}},
+  "@payPendingNote": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
   "logoutPendingTitle": "{count} عملية لم تُرسل بعد",
-  "@logoutPendingTitle": {"placeholders":{"count":{"type":"int"}}},
+  "@logoutPendingTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "logoutPendingBody": "لا يمكن تسجيل الخروج قبل إرسالها، حتى لا تضيع ولا تُنسب لحساب آخر.",
   "formByCarton": "بالكرتونة",
   "cartonsLabel": "عدد الكراتين عندك",
@@ -1555,31 +1657,70 @@
   "cartonPriceLabel": "سعر الكرتونة (جملة)",
   "piecePriceLabel": "سعر القطعة الواحدة",
   "cartonTotal": "المجموع: {total} قطعة",
-  "@cartonTotal": {"placeholders":{"total":{"type":"int"}}},
+  "@cartonTotal": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "cartonsInvalid": "أدخل عدداً صحيحاً، 0 أو أكثر.",
   "looseTooMany": "القطع الزيادة أقل من {size}؛ وإلا فهي كرتونة كاملة.",
-  "@looseTooMany": {"placeholders":{"size":{"type":"int"}}},
+  "@looseTooMany": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
   "prodColName": "المنتج",
   "prodColCartons": "الكراتين",
   "prodColPieces": "عدد القطع",
   "prodColPrice": "سعر القطعة",
   "cartonsCell": "{count} كرتونة",
-  "@cartonsCell": {"placeholders":{"count":{"type":"int"}}},
+  "@cartonsCell": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cartonsCellLoose": "{count} كرتونة + {pieces} قطعة",
-  "@cartonsCellLoose": {"placeholders":{"count":{"type":"int"},"pieces":{"type":"int"}}},
+  "@cartonsCellLoose": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "pieces": {
+        "type": "int"
+      }
+    }
+  },
   "loginPhoneLabel": "رقم الجوال",
   "phLoginPhone": "مثل 0599123456",
   "loginForgot": "نسيت كلمة المرور؟",
   "ownerPhoneLabel": "رقم جوالك (تسجّل الدخول به)",
   "otpTitle": "رمز التأكيد",
   "otpSentTo": "أرسلنا رمزاً من 6 أرقام برسالة إلى {phone}.",
-  "@otpSentTo": {"placeholders":{"phone":{"type":"String"}}},
+  "@otpSentTo": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
   "otpCodeLabel": "الرمز",
   "phOtpCode": "6 أرقام",
   "otpCodeInvalid": "الرمز 6 أرقام.",
   "otpResend": "أرسل رمزاً جديداً",
   "otpResendIn": "رمز جديد بعد {seconds} ث",
-  "@otpResendIn": {"placeholders":{"seconds":{"type":"int"}}},
+  "@otpResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "otpChangeNumber": "تعديل الرقم",
   "otpSend": "أرسل الرمز",
   "otpDailyLimit": "توقّفت رسائل الرمز لليوم. حاول غداً أو تواصل مع الدعم.",
@@ -1596,5 +1737,134 @@
   "phoneHelper": "تسجّل الدخول بهذا الرقم وكلمة مرورك.",
   "phoneNewLabel": "رقم الجوال",
   "phoneSave": "حفظ الرقم",
-  "phoneDone": "تم حفظ الرقم. سجّل الدخول به من الآن."
+  "phoneDone": "تم حفظ الرقم. سجّل الدخول به من الآن.",
+  "goodsTitle": "تسجيل بضاعة",
+  "goodsStepItems": "البضاعة",
+  "goodsStepSupplier": "المورد",
+  "goodsStepPay": "الدفع",
+  "goodsScan": "امسح باركود",
+  "goodsManual": "أضف يدوي",
+  "goodsEmpty": "امسح أول صنف",
+  "goodsNextSupplier": "التالي: المورد",
+  "goodsNextPay": "التالي: الدفع",
+  "goodsItemEdit": "الصنف",
+  "goodsScanned": "تم المسح",
+  "goodsKindCarton": "كرتونة",
+  "goodsKindWeight": "وزن",
+  "goodsName": "الاسم",
+  "goodsCartons": "الكراتين",
+  "goodsPackSize": "قطع بالكرتونة",
+  "goodsQuantity": "الكمية",
+  "goodsKilos": "الكمية (كغ)",
+  "goodsSellPiece": "سعر بيع القطعة",
+  "goodsSellKilo": "سعر بيع الكيلو",
+  "goodsAddToList": "أضف للقائمة",
+  "goodsSaveLine": "حفظ",
+  "goodsNumberRequired": "اكتب رقم صحيح",
+  "goodsRemove": "حذف",
+  "goodsSupplierName": "اسم المورد",
+  "goodsSupplierRequired": "اكتب اسم المورد",
+  "goodsBuyCarton": "سعر الكرتونة",
+  "goodsBuyKilo": "سعر الكيلو",
+  "goodsBuyRequired": "مطلوب",
+  "goodsLineTotal": "المجموع",
+  "goodsTotal": "الإجمالي",
+  "goodsPaid": "المدفوع",
+  "goodsPaidAll": "دفعت كله",
+  "goodsAllDebt": "كله دين",
+  "goodsRemaining": "المتبقي عليك",
+  "goodsPaidFull": "مدفوعة بالكامل",
+  "goodsOverpaid": "أكثر من الإجمالي",
+  "goodsSave": "سجّل البضاعة",
+  "goodsSaved": "تم تسجيل البضاعة",
+  "goodsAnother": "سجّل بضاعة ثانية",
+  "goodsFinish": "تم",
+  "supplierAccount": "حساب المورد",
+  "suppliersTitle": "الموردين",
+  "suppliersSub": "الفواتير والدفعات",
+  "suppliersEmpty": "لسا ما في موردين",
+  "supplierOwed": "عليك للمورد",
+  "supplierMoves": "الحركات",
+  "supplierInvoice": "فاتورة بضاعة",
+  "supplierPay": "سجّل دفعة",
+  "supplierPayTitle": "دفعة للمورد",
+  "supplierOwes": "عليك",
+  "supplierAmount": "المبلغ",
+  "supplierStillOwed": "بيضل عليك",
+  "supplierPaySave": "سجّل الدفعة",
+  "supplierPayTooMuch": "أكبر من المبلغ اللي عليك",
+  "coachSkip": "تخطي",
+  "coachWelcomeBody": "جرّب معنا: سجّل بضاعة، وبعدها بيع أول فاتورة.",
+  "coachProductsTitle": "اضغط «البضاعة»",
+  "coachProductsBody": "هون بتسجل اللي جبته من المورد.",
+  "coachAddTitle": "اضغط «+ بضاعة»",
+  "coachAddBody": "من هون بتبدأ تسجيل البضاعة.",
+  "coachScanTitle": "امسح أي صنف عندك",
+  "coachScanBody": "جرّب هلأ، على علبة قدامك.",
+  "coachNextTitle": "كمّل للمورد",
+  "coachNextBody": "بعدها بتكتب سعر الشراء والمدفوع.",
+  "coachSellTitle": "اضغط «بيع»",
+  "coachSellBody": "هون بتعمل فاتورة الزبون.",
+  "otpNoSmsTitle": "ما وصلتك الرسالة؟",
+  "otpNoSmsBody": "احكي معنا على واتساب ومنعطيك الرمز.",
+  "otpNoSmsAction": "اطلب الرمز على واتساب",
+  "goodsPieces": "{count} قطعة",
+  "@goodsPieces": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "goodsKilosValue": "{kilos} كغ",
+  "@goodsKilosValue": {
+    "placeholders": {
+      "kilos": {
+        "type": "String"
+      }
+    }
+  },
+  "goodsCartonsValue": "{cartons} كرتونة، {pieces} قطعة",
+  "@goodsCartonsValue": {
+    "placeholders": {
+      "cartons": {
+        "type": "String"
+      },
+      "pieces": {
+        "type": "String"
+      }
+    }
+  },
+  "goodsPieceCost": "القطعة {price}",
+  "@goodsPieceCost": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "goodsStockUp": "زاد المخزون: {count} أصناف",
+  "@goodsStockUp": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "supplierPayment": "دفعة {method}",
+  "@supplierPayment": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "otpWhatsappText": "بدي رمز تفعيل حسبة لرقم {phone}",
+  "@otpWhatsappText": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  }
 }

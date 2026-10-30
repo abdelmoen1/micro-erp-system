@@ -25,7 +25,12 @@ class AuthController extends Controller
     /** GET /auth/options: what the sign-in screens should offer (SMS codes on or off). */
     public function options(OtpService $otp)
     {
-        return response()->json(['data' => ['login' => 'phone', 'otp' => $otp->enabled()]]);
+        return response()->json(['data' => [
+            'login' => 'phone',
+            'otp' => $otp->enabled(),
+            // Where to ask for a code when the SMS does not arrive.
+            'support_whatsapp' => config('hisbah.support_whatsapp'),
+        ]]);
     }
 
     /** POST /auth/otp: a one-time code by SMS for sign-up, a forgotten password or a new number. */
