@@ -149,6 +149,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       autofillHints: const [AutofillHints.oneTimeCode],
                     ),
                     OtpResendButton(availableAt: _resendAt, onResend: _send, enabled: !_busy),
+                    OtpWhatsappHelp(phone: sentTo),
                     MoreField(
                       fieldKey: 'reset.password',
                       label: t.pwNew,

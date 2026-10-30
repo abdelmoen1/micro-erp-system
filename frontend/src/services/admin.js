@@ -59,6 +59,11 @@ export function useAnswerTicket() {
   });
 }
 
+/** { phone, purpose }: a code to read to someone whose SMS did not arrive. */
+export function useIssueOtp() {
+  return useMutation({ mutationFn: (body) => apiSend("POST", "/admin/otp-codes", body).then((r) => r.data) });
+}
+
 /** After either write: the store page, the lists and the overview counts. */
 function useStoreWrite(path) {
   const client = useQueryClient();

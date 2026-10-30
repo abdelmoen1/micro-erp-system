@@ -17,6 +17,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../sale/presentation/sale_widgets.dart' show BodyText;
 import '../domain/phone_number.dart';
 import '../domain/registration_form.dart';
+import '../../guide/coach_tour.dart';
 import 'otp_widgets.dart';
 
 /// Store-owner registration: the web /join form's three steps, fields, rules and request
@@ -154,7 +155,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     setState(() => _submitting = true);
     try {
       await ref.read(sessionProvider.notifier).register(_draft.toRequest());
-      // Signed in: the router leaves /register for the owner's home.
+      // Signed in: the router leaves /register for the owner's home, and the guide starts there.
+      ref.read(guideTourProvider.notifier).start();
     } on ValidationFailed catch (failure) {
       _showServerErrors(failure.fieldErrors, t);
     } on TooManyRequests catch (failure) {
@@ -354,6 +356,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       onDone: () => _next(t),
     ),
     OtpResendButton(availableAt: _resendAt, onResend: () => _sendCode(t), enabled: !_submitting),
+    OtpWhatsappHelp(phone: _codeSentTo!),
   ];
 
   List<Widget> _stepFields(AppLocalizations t) => switch (_step) {
