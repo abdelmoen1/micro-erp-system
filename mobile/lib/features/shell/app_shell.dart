@@ -6,6 +6,7 @@ import '../../core/offline/offline_store.dart';
 import '../../core/providers.dart';
 import '../../core/theme/hisbah_tokens.dart';
 import '../../l10n/app_localizations.dart';
+import '../guide/coach_tour.dart';
 import '../sync/application/sync_engine.dart';
 import '../sync/presentation/sync_screen.dart';
 
@@ -134,19 +135,25 @@ class HisbahNavBar extends StatelessWidget {
                 for (final tab in AppTab.values)
                   Expanded(
                     child: tab == AppTab.pos
-                        ? _SellButton(
-                            key: const Key('nav.pos'),
-                            current: current == tab,
-                            label: tab.label(t),
-                            a11y: current == tab ? t.sellCurrentA11y : t.sellA11y,
-                            onTap: () => onSelect(tab),
+                        ? CoachTarget(
+                            id: CoachStep.sell,
+                            child: _SellButton(
+                              key: const Key('nav.pos'),
+                              current: current == tab,
+                              label: tab.label(t),
+                              a11y: current == tab ? t.sellCurrentA11y : t.sellA11y,
+                              onTap: () => onSelect(tab),
+                            ),
                           )
-                        : _SideTab(
-                            key: Key('nav.${tab.name}'),
-                            icon: tab.icon,
-                            label: tab.label(t),
-                            active: current == tab,
-                            onTap: () => onSelect(tab),
+                        : _guided(
+                            tab,
+                            _SideTab(
+                              key: Key('nav.${tab.name}'),
+                              icon: tab.icon,
+                              label: tab.label(t),
+                              active: current == tab,
+                              onTap: () => onSelect(tab),
+                            ),
                           ),
                   ),
               ],
@@ -157,6 +164,10 @@ class HisbahNavBar extends StatelessWidget {
     );
   }
 }
+
+/// The goods tab is where the guide starts.
+Widget _guided(AppTab tab, Widget child) =>
+    tab == AppTab.products ? CoachTarget(id: CoachStep.products, child: child) : child;
 
 class _SideTab extends StatelessWidget {
   const _SideTab({super.key, required this.icon, required this.label, required this.active, required this.onTap});

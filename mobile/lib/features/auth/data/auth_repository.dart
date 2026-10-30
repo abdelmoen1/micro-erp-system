@@ -7,9 +7,12 @@ import '../domain/app_user.dart';
 
 /// What the sign-in screens offer: SMS codes for sign-up, a forgotten password and a new number.
 class AuthOptions {
-  const AuthOptions({required this.otp});
+  const AuthOptions({required this.otp, this.supportWhatsapp});
 
   final bool otp;
+
+  /// Where to ask for a code when the SMS does not arrive (digits, international form).
+  final String? supportWhatsapp;
 }
 
 /// Talks to the v1 auth endpoints and owns the token in secure storage (US-0205).
@@ -46,7 +49,7 @@ class AuthRepository {
     try {
       final body = await _api.get('/auth/options', auth: false);
       final data = body['data'] as Map<String, dynamic>? ?? const {};
-      return AuthOptions(otp: data['otp'] as bool? ?? false);
+      return AuthOptions(otp: data['otp'] as bool? ?? false, supportWhatsapp: data['support_whatsapp'] as String?);
     } on ApiFailure {
       return const AuthOptions(otp: false);
     }

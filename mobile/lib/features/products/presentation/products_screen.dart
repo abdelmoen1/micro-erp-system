@@ -11,10 +11,11 @@ import '../../../core/widgets/ltr_value.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/session_controller.dart';
+import '../../goods/presentation/goods_flow.dart';
+import '../../guide/coach_tour.dart';
 import '../../sale/presentation/sale_widgets.dart';
 import '../../shell/tab_screens.dart';
 import '../domain/product.dart';
-import 'add_product_flow.dart';
 import 'product_detail_screen.dart';
 
 /// SCR-M-11 · products tab: search, stock badge, low / negative filter (US-0406). Owners and
@@ -74,7 +75,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   }
 
   Future<void> _add() async {
-    final added = await showAddProduct(context);
+    final added = await openGoodsFlow(context);
     if (added && mounted) unawaited(_load());
   }
 
@@ -117,11 +118,14 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   ),
                   if (canAdd) ...[
                     const SizedBox(width: 8),
-                    OutlinedButton(
-                      key: const Key('products.add'),
-                      onPressed: _add,
-                      style: OutlinedButton.styleFrom(minimumSize: const Size(48, 52)),
-                      child: Text(t.prodAdd),
+                    CoachTarget(
+                      id: CoachStep.add,
+                      child: OutlinedButton(
+                        key: const Key('products.add'),
+                        onPressed: _add,
+                        style: OutlinedButton.styleFrom(minimumSize: const Size(48, 52)),
+                        child: Text(t.prodAdd),
+                      ),
                     ),
                   ],
                 ],

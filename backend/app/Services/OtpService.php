@@ -78,6 +78,25 @@ class OtpService
         }
     }
 
+    /**
+     * A code the platform admin reads to the person over WhatsApp when the SMS does not arrive.
+     * It replaces any earlier code and is checked like one sent by SMS.
+     */
+    public function issue(string $phone, string $purpose): string
+    {
+        $code = (string) random_int(100000, 999999);
+
+        PhoneOtp::query()->where('phone', $phone)->where('purpose', $purpose)->whereNull('consumed_at')->update(['consumed_at' => now()]);
+        PhoneOtp::create([
+            'phone' => $phone,
+            'purpose' => $purpose,
+            'code_hash' => Hash::make($code),
+            'expires_at' => now()->addMinutes(self::TTL_MINUTES),
+        ]);
+
+        return $code;
+    }
+
     /** Checks and uses up the code; a wrong code counts a try. Errors are on `otp_code`. */
     public function verify(string $phone, string $purpose, ?string $code): void
     {

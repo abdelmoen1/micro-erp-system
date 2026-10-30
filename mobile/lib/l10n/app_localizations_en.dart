@@ -1438,7 +1438,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get prodSearchHint => 'Search by name or barcode';
 
   @override
-  String get prodAdd => '+ Product';
+  String get prodAdd => '+ Goods';
 
   @override
   String get prodFilterAll => 'All';
@@ -2924,4 +2924,250 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get phoneDone => 'Number saved. Sign in with it from now on.';
+
+  @override
+  String get goodsTitle => 'Receive goods';
+
+  @override
+  String get goodsStepItems => 'Goods';
+
+  @override
+  String get goodsStepSupplier => 'Supplier';
+
+  @override
+  String get goodsStepPay => 'Payment';
+
+  @override
+  String get goodsScan => 'Scan barcode';
+
+  @override
+  String get goodsManual => 'Add by hand';
+
+  @override
+  String get goodsEmpty => 'Scan the first item';
+
+  @override
+  String get goodsNextSupplier => 'Next: supplier';
+
+  @override
+  String get goodsNextPay => 'Next: payment';
+
+  @override
+  String get goodsItemEdit => 'Item';
+
+  @override
+  String get goodsScanned => 'Scanned';
+
+  @override
+  String get goodsKindCarton => 'Carton';
+
+  @override
+  String get goodsKindWeight => 'Weight';
+
+  @override
+  String get goodsName => 'Name';
+
+  @override
+  String get goodsCartons => 'Cartons';
+
+  @override
+  String get goodsPackSize => 'Pieces per carton';
+
+  @override
+  String get goodsQuantity => 'Quantity';
+
+  @override
+  String get goodsKilos => 'Quantity (kg)';
+
+  @override
+  String get goodsSellPiece => 'Piece selling price';
+
+  @override
+  String get goodsSellKilo => 'Kilo selling price';
+
+  @override
+  String get goodsAddToList => 'Add to list';
+
+  @override
+  String get goodsSaveLine => 'Save';
+
+  @override
+  String get goodsNumberRequired => 'Enter a number';
+
+  @override
+  String get goodsRemove => 'Remove';
+
+  @override
+  String get goodsSupplierName => 'Supplier name';
+
+  @override
+  String get goodsSupplierRequired => 'Enter the supplier';
+
+  @override
+  String get goodsBuyCarton => 'Carton price';
+
+  @override
+  String get goodsBuyKilo => 'Kilo price';
+
+  @override
+  String get goodsBuyRequired => 'Required';
+
+  @override
+  String get goodsLineTotal => 'Subtotal';
+
+  @override
+  String get goodsTotal => 'Total';
+
+  @override
+  String get goodsPaid => 'Paid';
+
+  @override
+  String get goodsPaidAll => 'Paid in full';
+
+  @override
+  String get goodsAllDebt => 'All on credit';
+
+  @override
+  String get goodsRemaining => 'Left to pay';
+
+  @override
+  String get goodsPaidFull => 'Paid in full';
+
+  @override
+  String get goodsOverpaid => 'Over the total';
+
+  @override
+  String get goodsSave => 'Record goods';
+
+  @override
+  String get goodsSaved => 'Goods recorded';
+
+  @override
+  String get goodsAnother => 'Record more goods';
+
+  @override
+  String get goodsFinish => 'Done';
+
+  @override
+  String get supplierAccount => 'Supplier account';
+
+  @override
+  String get suppliersTitle => 'Suppliers';
+
+  @override
+  String get suppliersSub => 'Invoices and payments';
+
+  @override
+  String get suppliersEmpty => 'No suppliers yet';
+
+  @override
+  String get supplierOwed => 'You owe the supplier';
+
+  @override
+  String get supplierMoves => 'Activity';
+
+  @override
+  String get supplierInvoice => 'Goods invoice';
+
+  @override
+  String get supplierPay => 'Record payment';
+
+  @override
+  String get supplierPayTitle => 'Pay the supplier';
+
+  @override
+  String get supplierOwes => 'You owe';
+
+  @override
+  String get supplierAmount => 'Amount';
+
+  @override
+  String get supplierStillOwed => 'Still owed';
+
+  @override
+  String get supplierPaySave => 'Save payment';
+
+  @override
+  String get supplierPayTooMuch => 'More than you owe';
+
+  @override
+  String get coachSkip => 'Skip';
+
+  @override
+  String get coachWelcomeBody =>
+      'Try it: record goods, then make your first sale.';
+
+  @override
+  String get coachProductsTitle => 'Tap Goods';
+
+  @override
+  String get coachProductsBody => 'Record what you bought here.';
+
+  @override
+  String get coachAddTitle => 'Tap + Goods';
+
+  @override
+  String get coachAddBody => 'Start recording goods here.';
+
+  @override
+  String get coachScanTitle => 'Scan any item';
+
+  @override
+  String get coachScanBody => 'Try it now on a box in front of you.';
+
+  @override
+  String get coachNextTitle => 'Go on to the supplier';
+
+  @override
+  String get coachNextBody => 'Then enter the cost and what you paid.';
+
+  @override
+  String get coachSellTitle => 'Tap Sell';
+
+  @override
+  String get coachSellBody => 'Make the customer invoice here.';
+
+  @override
+  String get otpNoSmsTitle => 'No SMS?';
+
+  @override
+  String get otpNoSmsBody => 'Message us on WhatsApp for the code.';
+
+  @override
+  String get otpNoSmsAction => 'Ask on WhatsApp';
+
+  @override
+  String goodsPieces(String count) {
+    return '$count pieces';
+  }
+
+  @override
+  String goodsKilosValue(String kilos) {
+    return '$kilos kg';
+  }
+
+  @override
+  String goodsCartonsValue(String cartons, String pieces) {
+    return '$cartons cartons, $pieces pieces';
+  }
+
+  @override
+  String goodsPieceCost(String price) {
+    return 'Piece $price';
+  }
+
+  @override
+  String goodsStockUp(String count) {
+    return 'Stock added: $count items';
+  }
+
+  @override
+  String supplierPayment(String method) {
+    return '$method payment';
+  }
+
+  @override
+  String otpWhatsappText(String phone) {
+    return 'I need a Hisbah code for $phone';
+  }
 }

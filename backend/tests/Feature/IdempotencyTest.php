@@ -8,7 +8,10 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\PurchaseInvoice;
 use App\Models\SaleReturn;
+use App\Models\Supplier;
+use App\Models\SupplierPayment;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\SyncConflict;
@@ -44,6 +47,8 @@ class IdempotencyTest extends TestCase
         'POST api/v1/invoices/{invoice}/returns',
         'POST api/v1/stock-adjustments',
         'POST api/v1/sync/conflicts/{conflict}/resolve',
+        'POST api/v1/purchases',
+        'POST api/v1/suppliers/{supplier}/payments',
     ];
 
     private Store $store;
@@ -244,6 +249,8 @@ class IdempotencyTest extends TestCase
             'sale return via the invoices alias' => ['return-alias'],
             'stock adjustment' => ['stock-adjustment'],
             'resolve a held offline payment' => ['resolve-sync-conflict'],
+            'goods from a supplier' => ['purchase'],
+            'payment to a supplier' => ['supplier-payment'],
         ];
     }
 
@@ -267,6 +274,8 @@ class IdempotencyTest extends TestCase
             'stock' => Product::orderBy('id')->pluck('current_stock')->all(),
             'returns' => SaleReturn::count(),
             'returned' => InvoiceItem::orderBy('id')->pluck('returned_quantity')->map(fn($v) => (string) $v)->all(),
+            'purchases' => PurchaseInvoice::count(),
+            'supplier_payments' => SupplierPayment::count(),
         ]);
 
         return match ($name) {
@@ -320,6 +329,18 @@ class IdempotencyTest extends TestCase
                 'quantity' => -3,
                 'reason' => 'Shelf count',
             ], $state],
+            'purchase' => ['POST', '/api/v1/purchases', [
+                'supplier_name' => 'شركة الأمل',
+                'paid_amount' => '10.00',
+                'method' => 'cash',
+                'lines' => [['name' => 'كولا', 'cartons' => 2, 'pack_size' => 24, 'buy_price' => '60.00', 'selling_price' => '3.50']],
+            ], $state],
+            'supplier-payment' => (function () use ($state) {
+                $supplier = Supplier::create(['store_id' => $this->store->id, 'name' => 'شركة الأمل']);
+                $supplier->invoices()->create(['store_id' => $this->store->id, 'total' => '100.00']);
+
+                return ['POST', "/api/v1/suppliers/{$supplier->id}/payments", ['amount' => '40.00', 'method' => 'palpay'], $state];
+            })(),
             'resolve-sync-conflict' => (function () use ($customer, $state) {
                 $conflict = SyncConflict::create([
                     'store_id' => $this->store->id,

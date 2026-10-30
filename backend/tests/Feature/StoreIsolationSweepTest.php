@@ -75,6 +75,7 @@ class StoreIsolationSweepTest extends TestCase
             'paymentGroupId' => $group,
             'user' => $theirStaff->id,
             'product' => $this->makeProduct($theirs)->id,
+            'supplier' => \App\Models\Supplier::create(['store_id' => $theirs->id, 'name' => 'Theirs'])->id,
             'conflict' => SyncConflict::create([
                 'store_id' => $theirs->id,
                 'client_transaction_id' => (string) Str::uuid(),

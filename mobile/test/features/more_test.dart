@@ -177,34 +177,48 @@ void main() {
     expect(find.text('حُفظت بيانات المحل.'), findsOneWidget);
   });
 
-  testWidgets('user guide: offered on Home until finished, walks the add-product and sale steps, then reopens from More', (tester) async {
+  /// The guide's pulse never settles, so these pump a fixed time.
+  Future<void> press(WidgetTester tester, Finder finder) async {
+    await tester.tap(finder);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+
+  testWidgets('user guide: lights the real control, only that control takes the touch, and skip ends it', (tester) async {
+    api.on('GET /products', const FakeResponse(200, {'data': []}));
     await pumpApp(tester);
     expect(find.byKey(const Key('guide.card')), findsOneWidget);
 
-    await tap(tester, find.byKey(const Key('guide.start')));
-    expect(find.text('الخطوة 1 من 4'), findsOneWidget);
-    await tap(tester, find.byKey(const Key('guide.next')));
-    expect(find.byKey(const Key('guide.step.addProduct')), findsOneWidget);
-    expect(find.byKey(const Key('guide.addProduct')), findsOneWidget);
-    await tap(tester, find.byKey(const Key('guide.skip')));
-    expect(find.byKey(const Key('guide.step.sale')), findsOneWidget);
-    expect(find.byKey(const Key('guide.sell')), findsOneWidget);
-    await tap(tester, find.byKey(const Key('guide.skip')));
-    await tap(tester, find.byKey(const Key('guide.finish')));
-
-    expect(find.byKey(const Key('guide.card')), findsNothing, reason: 'finished: not offered again');
-    await openMore(tester);
-    await tap(tester, find.byKey(const Key('more.guide')));
+    await press(tester, find.byKey(const Key('guide.start')));
     expect(find.byKey(const Key('guide.step.welcome')), findsOneWidget);
+    await press(tester, find.byKey(const Key('guide.next')));
+    expect(find.byKey(const Key('guide.step.products')), findsOneWidget);
+
+    // Around the lit tab the screen is blocked.
+    await tester.tap(find.byKey(const Key('nav.more')), warnIfMissed: false);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byKey(const Key('more.guide')), findsNothing);
+    expect(find.byKey(const Key('guide.step.products')), findsOneWidget);
+
+    await press(tester, find.byKey(const Key('nav.products')));
+    expect(find.byKey(const Key('guide.step.add')), findsOneWidget);
+    await press(tester, find.byKey(const Key('guide.skip')));
+    expect(find.byKey(const Key('guide.step.add')), findsNothing);
+
+    await tester.pumpAndSettle();
+    await tap(tester, find.byKey(const Key('nav.home')));
+    expect(find.byKey(const Key('guide.card')), findsNothing, reason: 'skipped: not offered again');
   });
 
-  testWidgets('user guide: an employee gets the sale step only; «later» hides the card', (tester) async {
+  testWidgets('user guide: an employee goes straight to selling; it reopens from More', (tester) async {
     await pumpApp(tester, role: 'employee');
     await openMore(tester);
-    await tap(tester, find.byKey(const Key('more.guide')));
-    expect(find.text('الخطوة 1 من 3'), findsOneWidget);
-    await tap(tester, find.byKey(const Key('guide.next')));
-    expect(find.byKey(const Key('guide.step.sale')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('more.guide')));
+    await tester.pumpAndSettle();
+    await press(tester, find.byKey(const Key('more.guide')));
+    await press(tester, find.byKey(const Key('guide.next')));
+    expect(find.byKey(const Key('guide.step.sell')), findsOneWidget);
+    expect(find.text('الخطوة 2 من 3'), findsOneWidget);
   });
 
   testWidgets('support: type, subject and details are required; a sent complaint is listed with the team’s reply', (tester) async {

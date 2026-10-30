@@ -4,7 +4,39 @@ import Icon from "../components/Icon";
 import { Dialog, EmptyState, ErrorBanner, ErrorState, Field, PageHeader, Pager, Segments, StatusBadge } from "../components/ui";
 import { dateTime } from "../lib/format";
 import { TICKET_STATUS, TICKET_TYPES, ticketTypeLabel } from "../lib/support";
-import { useAdminTickets, useAnswerTicket } from "../services/admin";
+import { useAdminTickets, useAnswerTicket, useIssueOtp } from "../services/admin";
+
+/** Someone's SMS did not arrive and they asked on WhatsApp: a code to read back to them. */
+function IssueCode() {
+  const [phone, setPhone] = useState("");
+  const [purpose, setPurpose] = useState("register");
+  const issue = useIssueOtp();
+
+  const submit = (event) => {
+    event.preventDefault();
+    issue.mutate({ phone: phone.trim(), purpose });
+  };
+
+  return (
+    <section className="card panel" aria-label="رمز تحقق لزبون" style={{ marginBottom: 16 }}>
+      <form onSubmit={submit} className="toolbar" style={{ marginBottom: 0 }}>
+        <Field id="otp-phone" label="رقم الزبون">
+          <input id="otp-phone" className="fld m" dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05XXXXXXXX" />
+        </Field>
+        <Segments label="الرمز لأجل" value={purpose} options={[["register", "إنشاء متجر"], ["reset", "نسيت كلمة المرور"]]} onChange={setPurpose} />
+        <button type="submit" className="btn btn-p" disabled={issue.isPending || !phone.trim()}>
+          أصدر رمزاً
+        </button>
+      </form>
+      {issue.isError ? <ErrorBanner error={issue.error} /> : null}
+      {issue.data ? (
+        <p>
+          الرمز: <b className="m">{issue.data.code}</b>، صالح {issue.data.expires_in_minutes} دقائق.
+        </p>
+      ) : null}
+    </section>
+  );
+}
 
 /** Platform owner · technical support: every store's complaints, newest first, with a reply. */
 export default function AdminSupport() {
@@ -21,6 +53,7 @@ export default function AdminSupport() {
   return (
     <>
       <PageHeader title="الدعم الفني" sub={openCount === undefined ? " " : openCount === 0 ? "لا شكاوى جديدة" : `${openCount} شكوى جديدة بانتظار الرد`} />
+      <IssueCode />
       <div className="toolbar">
         <Segments
           label="الحالة"

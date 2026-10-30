@@ -38,3 +38,13 @@ code, and "forgot password" is hidden (`GET /auth/options` → `otp: false`).
 
 `SMS_DRIVER=log` writes each message to `storage/logs/laravel.log` instead of sending it (never in
 production).
+
+## When the SMS does not arrive
+
+textbee reaches the phone over the internet, so a phone that is offline, asleep or out of charge
+sends nothing, while the API still answers as if it had. Keep it plugged in, online and exempt from
+battery optimisation, and read a stuck message's status in the textbee dashboard.
+
+Set `SUPPORT_WHATSAPP` on Render (digits only, e.g. `970599000000`). The code screens then offer
+«اطلب الرمز على واتساب»; the person asks there, and the platform admin issues a code at
+**/admin/support** (`POST /admin/otp-codes`) and reads it back. It is checked like an SMS code.

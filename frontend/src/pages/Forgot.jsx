@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import HisbahLogo from "../components/HisbahLogo";
 import OtpResend from "../components/OtpResend";
+import OtpWhatsapp from "../components/OtpWhatsapp";
 import { Field } from "../components/ui";
 import { latinDigits } from "../lib/format";
 import { maskPhone, normalizePhone, PHONE_HINT, otpSendError } from "../lib/phone";
@@ -103,6 +104,7 @@ export default function Forgot() {
                     <input id="fp-code" inputMode="numeric" className="fld ltr" value={form.otp_code} onChange={set("otp_code")} autoComplete="one-time-code" maxLength={6} placeholder="6 أرقام" />
                   </Field>
                   <OtpResend availableAt={sent.availableAt} onResend={send} disabled={busy} />
+                  <OtpWhatsapp phone={sent.phone} />
                   <Field id="fp-pass" label="كلمة المرور الجديدة" required error={errors.password} hint="8 أحرف على الأقل. يُسجَّل الخروج من كل الأجهزة.">
                     <input id="fp-pass" type="password" className="fld ltr" value={form.password} onChange={set("password")} autoComplete="new-password" />
                   </Field>
