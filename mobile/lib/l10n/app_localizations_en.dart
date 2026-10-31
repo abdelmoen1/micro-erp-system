@@ -2935,9 +2935,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goodsStepSupplier => 'Supplier';
 
   @override
-  String get goodsStepPay => 'Payment';
-
-  @override
   String get goodsScan => 'Scan barcode';
 
   @override
@@ -2948,9 +2945,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get goodsNextSupplier => 'Next: supplier';
-
-  @override
-  String get goodsNextPay => 'Next: payment';
 
   @override
   String get goodsItemEdit => 'Item';
@@ -3004,10 +2998,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goodsSupplierRequired => 'Enter the supplier';
 
   @override
-  String get goodsBuyCarton => 'Carton price';
+  String get goodsBuyCarton => 'Buying price';
 
   @override
-  String get goodsBuyKilo => 'Kilo price';
+  String get goodsBuyKilo => 'Buying price per kilo';
 
   @override
   String get goodsBuyRequired => 'Required';
@@ -3019,37 +3013,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goodsTotal => 'Total';
 
   @override
-  String get goodsPaid => 'Paid';
-
-  @override
-  String get goodsPaidAll => 'Paid in full';
-
-  @override
-  String get goodsAllDebt => 'All on credit';
-
-  @override
   String get goodsRemaining => 'Left to pay';
-
-  @override
-  String get goodsPaidFull => 'Paid in full';
-
-  @override
-  String get goodsOverpaid => 'Over the total';
 
   @override
   String get goodsSave => 'Record goods';
 
   @override
-  String get goodsSaved => 'Goods recorded';
-
-  @override
-  String get goodsAnother => 'Record more goods';
-
-  @override
   String get goodsFinish => 'Done';
-
-  @override
-  String get supplierAccount => 'Supplier account';
 
   @override
   String get suppliersTitle => 'Suppliers';
@@ -3062,12 +3032,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get supplierOwed => 'You owe the supplier';
-
-  @override
-  String get supplierMoves => 'Activity';
-
-  @override
-  String get supplierInvoice => 'Goods invoice';
 
   @override
   String get supplierPay => 'Record payment';
@@ -3119,7 +3083,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coachNextTitle => 'Go on to the supplier';
 
   @override
-  String get coachNextBody => 'Then enter the cost and what you paid.';
+  String get coachNextBody => 'Then enter the buying and selling prices.';
 
   @override
   String get coachSellTitle => 'Tap Sell';
@@ -3157,17 +3121,63 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String goodsStockUp(String count) {
-    return 'Stock added: $count items';
-  }
-
-  @override
-  String supplierPayment(String method) {
-    return '$method payment';
-  }
-
-  @override
   String otpWhatsappText(String phone) {
     return 'I need a Hisbah code for $phone';
+  }
+
+  @override
+  String get goodsInvoiceTitle => 'Goods invoice';
+
+  @override
+  String get goodsBarcode => 'Barcode';
+
+  @override
+  String get goodsBarcodeRequired => 'Enter the barcode';
+
+  @override
+  String get goodsSellCarton => 'Carton selling price';
+
+  @override
+  String get goodsCartonPriceLow => 'Above the piece price';
+
+  @override
+  String get supplierProducts => 'Items';
+
+  @override
+  String get supplierInvoices => 'Invoices';
+
+  @override
+  String get supplierPayments => 'Payments';
+
+  @override
+  String get supplierNoPayments => 'No payments yet';
+
+  @override
+  String get supplierTime => 'Time';
+
+  @override
+  String get supplierPieces => 'Pieces';
+
+  @override
+  String get supplierBy => 'Recorded by';
+
+  @override
+  String get supplierFinalPrice => 'Final price';
+
+  @override
+  String get supplierPaymentDetail => 'Payment details';
+
+  @override
+  String get supplierMethod => 'Method';
+
+  @override
+  String get moreWeb => 'Web dashboard';
+
+  @override
+  String get moreWebSub => 'Open in the browser';
+
+  @override
+  String supplierInvoiceNumber(String number) {
+    return 'Invoice $number';
   }
 }

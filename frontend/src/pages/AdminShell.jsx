@@ -68,8 +68,8 @@ export default function AdminShell() {
           <NavLink to="/admin" className="side-brand" aria-label="حسبة — إدارة المنصة">
             <HisbahLogo size={30} />
           </NavLink>
-          <button type="button" className="menubtn ic" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="platform-nav" aria-label="القائمة">
-            <Icon name="menu" size={20} />
+          <button type="button" className="menubtn ic" onClick={() => setOpen(false)} aria-label="إغلاق القائمة">
+            <Icon name="close" size={20} />
           </button>
         </div>
         <div className="navwrap">
@@ -112,9 +112,16 @@ export default function AdminShell() {
           </div>
         </div>
       </aside>
+      {/* On a phone the sidebar slides over the page; a press outside closes it. */}
+      <button type="button" className="side-scrim" onClick={() => setOpen(false)} aria-label="إغلاق القائمة" tabIndex={-1} />
       <div className="workspace">
         <header className="topbar">
-          <span className="topbar-title">إدارة المنصة</span>
+          <span className="topbar-start">
+            <button type="button" className="menubtn ic" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="platform-nav" aria-label="فتح القائمة">
+              <Icon name="menu" size={20} />
+            </button>
+            <span className="topbar-title">إدارة المنصة</span>
+          </span>
           <span className="topbar-meta">
             <span className="role-chip">مالك المنصة</span>
             <span className="m">{user.phone}</span>

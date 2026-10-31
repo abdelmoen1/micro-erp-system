@@ -18,16 +18,20 @@ class GoodsRepository {
     return [for (final row in body['data'] as List<dynamic>? ?? const []) Supplier.fromJson(row as Map<String, dynamic>)];
   }
 
-  Future<SupplierAccount> account(int supplierId) async {
+  Future<SupplierDetail> supplier(int supplierId) async {
     final body = await _api.get('/suppliers/$supplierId');
-    return SupplierAccount.fromJson(body['data'] as Map<String, dynamic>);
+    return SupplierDetail.fromJson(body['data'] as Map<String, dynamic>);
   }
 
+  Future<ProductAccount> productAccount(int supplierId, int productId) async {
+    final body = await _api.get('/suppliers/$supplierId/products/$productId');
+    return ProductAccount.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  /// Saved on the supplier's account in full; payments are recorded per product afterwards.
   Future<GoodsReceipt> record({
     required String supplierName,
     required List<GoodsLine> lines,
-    required Money paid,
-    required String method,
     required String operationId,
   }) async {
     final key = await _keys.keyFor(operationId);
@@ -36,8 +40,6 @@ class GoodsRepository {
         '/purchases',
         body: {
           'supplier_name': supplierName.trim(),
-          'paid_amount': paid.toApi(),
-          'method': method,
           'lines': [for (final line in lines) line.toApi()],
         },
         idempotencyKey: key,
@@ -52,6 +54,7 @@ class GoodsRepository {
 
   Future<void> pay({
     required int supplierId,
+    required int productId,
     required Money amount,
     required String method,
     required String operationId,
@@ -60,7 +63,7 @@ class GoodsRepository {
     try {
       await _api.post(
         '/suppliers/$supplierId/payments',
-        body: {'amount': amount.toApi(), 'method': method},
+        body: {'product_id': productId, 'amount': amount.toApi(), 'method': method},
         idempotencyKey: key,
       );
       await _keys.complete(operationId);

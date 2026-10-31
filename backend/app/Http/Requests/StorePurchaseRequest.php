@@ -55,6 +55,7 @@ class StorePurchaseRequest extends FormRequest
             'lines.*.quantity' => ['nullable', 'numeric', 'decimal:0,3', 'gt:0', 'max:999999'],
             'lines.*.buy_price' => ['required', ...Money::inputRules()],
             'lines.*.selling_price' => ['nullable', ...Money::inputRules()],
+            'lines.*.carton_price' => ['nullable', ...Money::inputRules()],
         ];
     }
 
@@ -84,6 +85,13 @@ class StorePurchaseRequest extends FormRequest
             if (blank($line['selling_price'] ?? null)) {
                 $validator->errors()->add("lines.$index.selling_price", 'اكتب سعر البيع.');
             }
+            // A carton is always found by its barcode; a weighed item never has one.
+            if ($unit === Quantity::UNIT_PIECE && blank($line['barcode'] ?? null)) {
+                $validator->errors()->add("lines.$index.barcode", 'اكتب رقم الباركود.');
+            }
+            if ($unit === Quantity::UNIT_KG && !blank($line['barcode'] ?? null)) {
+                $validator->errors()->add("lines.$index.barcode", 'الصنف بالوزن ليس له باركود.');
+            }
         }
         if ($unit === Quantity::UNIT_KG) {
             if (blank($line['quantity'] ?? null)) {
@@ -96,6 +104,10 @@ class StorePurchaseRequest extends FormRequest
         }
         if (blank($line['pack_size'] ?? null) && blank($product?->pack_size)) {
             $validator->errors()->add("lines.$index.pack_size", 'اكتب عدد القطع بالكرتونة.');
+        }
+        $selling = $line['selling_price'] ?? $product?->selling_price;
+        if (!blank($line['carton_price'] ?? null) && Money::compare($line['carton_price'], $selling) <= 0) {
+            $validator->errors()->add("lines.$index.carton_price", 'سعر الكرتونة لازم يكون أعلى من سعر القطعة.');
         }
     }
 

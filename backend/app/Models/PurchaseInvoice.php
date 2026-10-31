@@ -19,6 +19,11 @@ class PurchaseInvoice extends Model
         return ['total' => 'decimal:2'];
     }
 
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);

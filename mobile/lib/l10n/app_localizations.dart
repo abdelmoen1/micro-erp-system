@@ -5168,12 +5168,6 @@ abstract class AppLocalizations {
   /// **'المورد'**
   String get goodsStepSupplier;
 
-  /// No description provided for @goodsStepPay.
-  ///
-  /// In ar, this message translates to:
-  /// **'الدفع'**
-  String get goodsStepPay;
-
   /// No description provided for @goodsScan.
   ///
   /// In ar, this message translates to:
@@ -5197,12 +5191,6 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'التالي: المورد'**
   String get goodsNextSupplier;
-
-  /// No description provided for @goodsNextPay.
-  ///
-  /// In ar, this message translates to:
-  /// **'التالي: الدفع'**
-  String get goodsNextPay;
 
   /// No description provided for @goodsItemEdit.
   ///
@@ -5309,13 +5297,13 @@ abstract class AppLocalizations {
   /// No description provided for @goodsBuyCarton.
   ///
   /// In ar, this message translates to:
-  /// **'سعر الكرتونة'**
+  /// **'سعر الشراء'**
   String get goodsBuyCarton;
 
   /// No description provided for @goodsBuyKilo.
   ///
   /// In ar, this message translates to:
-  /// **'سعر الكيلو'**
+  /// **'شراء الكيلو'**
   String get goodsBuyKilo;
 
   /// No description provided for @goodsBuyRequired.
@@ -5336,41 +5324,11 @@ abstract class AppLocalizations {
   /// **'الإجمالي'**
   String get goodsTotal;
 
-  /// No description provided for @goodsPaid.
-  ///
-  /// In ar, this message translates to:
-  /// **'المدفوع'**
-  String get goodsPaid;
-
-  /// No description provided for @goodsPaidAll.
-  ///
-  /// In ar, this message translates to:
-  /// **'دفعت كله'**
-  String get goodsPaidAll;
-
-  /// No description provided for @goodsAllDebt.
-  ///
-  /// In ar, this message translates to:
-  /// **'كله دين'**
-  String get goodsAllDebt;
-
   /// No description provided for @goodsRemaining.
   ///
   /// In ar, this message translates to:
   /// **'المتبقي عليك'**
   String get goodsRemaining;
-
-  /// No description provided for @goodsPaidFull.
-  ///
-  /// In ar, this message translates to:
-  /// **'مدفوعة بالكامل'**
-  String get goodsPaidFull;
-
-  /// No description provided for @goodsOverpaid.
-  ///
-  /// In ar, this message translates to:
-  /// **'أكثر من الإجمالي'**
-  String get goodsOverpaid;
 
   /// No description provided for @goodsSave.
   ///
@@ -5378,29 +5336,11 @@ abstract class AppLocalizations {
   /// **'سجّل البضاعة'**
   String get goodsSave;
 
-  /// No description provided for @goodsSaved.
-  ///
-  /// In ar, this message translates to:
-  /// **'تم تسجيل البضاعة'**
-  String get goodsSaved;
-
-  /// No description provided for @goodsAnother.
-  ///
-  /// In ar, this message translates to:
-  /// **'سجّل بضاعة ثانية'**
-  String get goodsAnother;
-
   /// No description provided for @goodsFinish.
   ///
   /// In ar, this message translates to:
   /// **'تم'**
   String get goodsFinish;
-
-  /// No description provided for @supplierAccount.
-  ///
-  /// In ar, this message translates to:
-  /// **'حساب المورد'**
-  String get supplierAccount;
 
   /// No description provided for @suppliersTitle.
   ///
@@ -5425,18 +5365,6 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'عليك للمورد'**
   String get supplierOwed;
-
-  /// No description provided for @supplierMoves.
-  ///
-  /// In ar, this message translates to:
-  /// **'الحركات'**
-  String get supplierMoves;
-
-  /// No description provided for @supplierInvoice.
-  ///
-  /// In ar, this message translates to:
-  /// **'فاتورة بضاعة'**
-  String get supplierInvoice;
 
   /// No description provided for @supplierPay.
   ///
@@ -5537,7 +5465,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachNextBody.
   ///
   /// In ar, this message translates to:
-  /// **'بعدها بتكتب سعر الشراء والمدفوع.'**
+  /// **'بعدها بتكتب سعر الشراء وسعر البيع.'**
   String get coachNextBody;
 
   /// No description provided for @coachSellTitle.
@@ -5594,23 +5522,119 @@ abstract class AppLocalizations {
   /// **'القطعة {price}'**
   String goodsPieceCost(String price);
 
-  /// No description provided for @goodsStockUp.
-  ///
-  /// In ar, this message translates to:
-  /// **'زاد المخزون: {count} أصناف'**
-  String goodsStockUp(String count);
-
-  /// No description provided for @supplierPayment.
-  ///
-  /// In ar, this message translates to:
-  /// **'دفعة {method}'**
-  String supplierPayment(String method);
-
   /// No description provided for @otpWhatsappText.
   ///
   /// In ar, this message translates to:
   /// **'بدي رمز تفعيل حسبة لرقم {phone}'**
   String otpWhatsappText(String phone);
+
+  /// No description provided for @goodsInvoiceTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'فاتورة البضاعة'**
+  String get goodsInvoiceTitle;
+
+  /// No description provided for @goodsBarcode.
+  ///
+  /// In ar, this message translates to:
+  /// **'الباركود'**
+  String get goodsBarcode;
+
+  /// No description provided for @goodsBarcodeRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب رقم الباركود'**
+  String get goodsBarcodeRequired;
+
+  /// No description provided for @goodsSellCarton.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر بيع الكرتونة'**
+  String get goodsSellCarton;
+
+  /// No description provided for @goodsCartonPriceLow.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعلى من سعر القطعة'**
+  String get goodsCartonPriceLow;
+
+  /// No description provided for @supplierProducts.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأصناف'**
+  String get supplierProducts;
+
+  /// No description provided for @supplierInvoices.
+  ///
+  /// In ar, this message translates to:
+  /// **'الفواتير'**
+  String get supplierInvoices;
+
+  /// No description provided for @supplierPayments.
+  ///
+  /// In ar, this message translates to:
+  /// **'الدفعات'**
+  String get supplierPayments;
+
+  /// No description provided for @supplierNoPayments.
+  ///
+  /// In ar, this message translates to:
+  /// **'لسا ما في دفعات'**
+  String get supplierNoPayments;
+
+  /// No description provided for @supplierTime.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوقت'**
+  String get supplierTime;
+
+  /// No description provided for @supplierPieces.
+  ///
+  /// In ar, this message translates to:
+  /// **'القطع'**
+  String get supplierPieces;
+
+  /// No description provided for @supplierBy.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّلها'**
+  String get supplierBy;
+
+  /// No description provided for @supplierFinalPrice.
+  ///
+  /// In ar, this message translates to:
+  /// **'السعر النهائي'**
+  String get supplierFinalPrice;
+
+  /// No description provided for @supplierPaymentDetail.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاصيل الدفعة'**
+  String get supplierPaymentDetail;
+
+  /// No description provided for @supplierMethod.
+  ///
+  /// In ar, this message translates to:
+  /// **'طريقة الدفع'**
+  String get supplierMethod;
+
+  /// No description provided for @moreWeb.
+  ///
+  /// In ar, this message translates to:
+  /// **'لوحة التحكم على الويب'**
+  String get moreWeb;
+
+  /// No description provided for @moreWebSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'افتحها في المتصفح'**
+  String get moreWebSub;
+
+  /// No description provided for @supplierInvoiceNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'فاتورة رقم {number}'**
+  String supplierInvoiceNumber(String number);
 }
 
 class _AppLocalizationsDelegate

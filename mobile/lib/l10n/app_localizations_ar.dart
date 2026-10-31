@@ -2911,9 +2911,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get goodsStepSupplier => 'المورد';
 
   @override
-  String get goodsStepPay => 'الدفع';
-
-  @override
   String get goodsScan => 'امسح باركود';
 
   @override
@@ -2924,9 +2921,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get goodsNextSupplier => 'التالي: المورد';
-
-  @override
-  String get goodsNextPay => 'التالي: الدفع';
 
   @override
   String get goodsItemEdit => 'الصنف';
@@ -2980,10 +2974,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get goodsSupplierRequired => 'اكتب اسم المورد';
 
   @override
-  String get goodsBuyCarton => 'سعر الكرتونة';
+  String get goodsBuyCarton => 'سعر الشراء';
 
   @override
-  String get goodsBuyKilo => 'سعر الكيلو';
+  String get goodsBuyKilo => 'شراء الكيلو';
 
   @override
   String get goodsBuyRequired => 'مطلوب';
@@ -2995,37 +2989,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get goodsTotal => 'الإجمالي';
 
   @override
-  String get goodsPaid => 'المدفوع';
-
-  @override
-  String get goodsPaidAll => 'دفعت كله';
-
-  @override
-  String get goodsAllDebt => 'كله دين';
-
-  @override
   String get goodsRemaining => 'المتبقي عليك';
-
-  @override
-  String get goodsPaidFull => 'مدفوعة بالكامل';
-
-  @override
-  String get goodsOverpaid => 'أكثر من الإجمالي';
 
   @override
   String get goodsSave => 'سجّل البضاعة';
 
   @override
-  String get goodsSaved => 'تم تسجيل البضاعة';
-
-  @override
-  String get goodsAnother => 'سجّل بضاعة ثانية';
-
-  @override
   String get goodsFinish => 'تم';
-
-  @override
-  String get supplierAccount => 'حساب المورد';
 
   @override
   String get suppliersTitle => 'الموردين';
@@ -3038,12 +3008,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get supplierOwed => 'عليك للمورد';
-
-  @override
-  String get supplierMoves => 'الحركات';
-
-  @override
-  String get supplierInvoice => 'فاتورة بضاعة';
 
   @override
   String get supplierPay => 'سجّل دفعة';
@@ -3095,7 +3059,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get coachNextTitle => 'كمّل للمورد';
 
   @override
-  String get coachNextBody => 'بعدها بتكتب سعر الشراء والمدفوع.';
+  String get coachNextBody => 'بعدها بتكتب سعر الشراء وسعر البيع.';
 
   @override
   String get coachSellTitle => 'اضغط «بيع»';
@@ -3133,17 +3097,63 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String goodsStockUp(String count) {
-    return 'زاد المخزون: $count أصناف';
-  }
-
-  @override
-  String supplierPayment(String method) {
-    return 'دفعة $method';
-  }
-
-  @override
   String otpWhatsappText(String phone) {
     return 'بدي رمز تفعيل حسبة لرقم $phone';
+  }
+
+  @override
+  String get goodsInvoiceTitle => 'فاتورة البضاعة';
+
+  @override
+  String get goodsBarcode => 'الباركود';
+
+  @override
+  String get goodsBarcodeRequired => 'اكتب رقم الباركود';
+
+  @override
+  String get goodsSellCarton => 'سعر بيع الكرتونة';
+
+  @override
+  String get goodsCartonPriceLow => 'أعلى من سعر القطعة';
+
+  @override
+  String get supplierProducts => 'الأصناف';
+
+  @override
+  String get supplierInvoices => 'الفواتير';
+
+  @override
+  String get supplierPayments => 'الدفعات';
+
+  @override
+  String get supplierNoPayments => 'لسا ما في دفعات';
+
+  @override
+  String get supplierTime => 'الوقت';
+
+  @override
+  String get supplierPieces => 'القطع';
+
+  @override
+  String get supplierBy => 'سجّلها';
+
+  @override
+  String get supplierFinalPrice => 'السعر النهائي';
+
+  @override
+  String get supplierPaymentDetail => 'تفاصيل الدفعة';
+
+  @override
+  String get supplierMethod => 'طريقة الدفع';
+
+  @override
+  String get moreWeb => 'لوحة التحكم على الويب';
+
+  @override
+  String get moreWebSub => 'افتحها في المتصفح';
+
+  @override
+  String supplierInvoiceNumber(String number) {
+    return 'فاتورة رقم $number';
   }
 }
