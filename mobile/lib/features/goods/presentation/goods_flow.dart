@@ -27,7 +27,7 @@ Future<bool> openGoodsFlow(BuildContext context) async {
 enum _Step { items, supplier, invoice }
 
 /// Two steps on a page of their own: what came in, then from whom and at what prices. The delivery
-/// is saved on the supplier's account and shown as an invoice; payments are recorded per product.
+/// is saved on the supplier's account and shown as an invoice; payments are recorded there.
 /// Totals are computed here for the screen and again by the server; nobody types them.
 class GoodsFlowScreen extends ConsumerStatefulWidget {
   const GoodsFlowScreen({super.key});

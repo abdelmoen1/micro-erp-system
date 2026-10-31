@@ -146,7 +146,7 @@ class PurchaseTest extends TestCase
         $this->deliver($body)->assertUnprocessable()->assertJsonValidationErrors('supplier_name');
     }
 
-    public function test_the_account_shows_the_balance_and_a_payment_lowers_it(): void
+    public function test_a_payment_goes_to_the_supplier_and_lowers_the_total_owed(): void
     {
         $this->deliver($this->delivery())->assertCreated();
         $supplier = Supplier::firstOrFail();
@@ -156,55 +156,44 @@ class PurchaseTest extends TestCase
         $owner->getJson("/api/v1/suppliers/{$supplier->id}")
             ->assertOk()
             ->assertJsonPath('data.balance', '318.00')
-            ->assertJsonCount(3, 'data.products');
+            ->assertJsonCount(3, 'data.products')
+            ->assertJsonFragment(['name' => 'كولا علبة', 'unit' => 'piece', 'total' => '240.00'])
+            ->assertJsonCount(1, 'data.payments')
+            ->assertJsonPath('data.payments.0.amount', '400.00');
 
-        $almond = Product::where('name', 'لوز نيء')->firstOrFail();
-        $owner->postJson("/api/v1/suppliers/{$supplier->id}/payments", ['product_id' => $almond->id, 'amount' => '118.00', 'method' => 'palpay'], $this->idem())
+        $owner->postJson("/api/v1/suppliers/{$supplier->id}/payments", ['amount' => '118.00', 'method' => 'palpay'], $this->idem())
             ->assertCreated()
-            ->assertJsonPath('data.balance', '162.00');
+            ->assertJsonPath('data.balance', '200.00');
 
-        $owner->postJson("/api/v1/suppliers/{$supplier->id}/payments", ['product_id' => $almond->id, 'amount' => '162.01', 'method' => 'cash'], $this->idem())
+        $owner->getJson("/api/v1/suppliers/{$supplier->id}")
+            ->assertJsonPath('data.balance', '200.00')
+            ->assertJsonPath('data.payments.0.amount', '118.00')
+            ->assertJsonPath('data.payments.0.method', 'palpay');
+
+        $owner->postJson("/api/v1/suppliers/{$supplier->id}/payments", ['amount' => '200.01', 'method' => 'cash'], $this->idem())
             ->assertUnprocessable()
             ->assertJsonValidationErrors('amount');
     }
 
-    public function test_each_product_has_its_own_balance_invoices_and_payments(): void
+    public function test_a_product_opens_its_invoices_only(): void
     {
-        $body = $this->delivery();
-        unset($body['paid_amount'], $body['method']);
-        $this->deliver($body)->assertCreated();
+        $this->deliver($this->delivery())->assertCreated();
         $this->deliver(['supplier_name' => 'شركة الأمل', 'lines' => [['barcode' => '6251234567890', 'cartons' => 1, 'pack_size' => 24, 'buy_price' => '60.00']]])->assertCreated();
 
         $supplier = Supplier::firstOrFail();
         $cola = Product::where('name', 'كولا علبة')->firstOrFail();
-        $milk = Product::where('name', 'حليب 1 لتر')->firstOrFail();
-        $owner = $this->actingAs($this->owner, 'sanctum');
 
-        $owner->getJson("/api/v1/suppliers/{$supplier->id}")
+        $this->actingAs($this->owner, 'sanctum')
+            ->getJson("/api/v1/suppliers/{$supplier->id}/products/{$cola->id}")
             ->assertOk()
-            ->assertJsonPath('data.balance', '778.00')
-            ->assertJsonCount(3, 'data.products')
-            ->assertJsonFragment(['id' => $cola->id, 'name' => 'كولا علبة', 'unit' => 'piece', 'balance' => '300.00']);
-
-        $owner->postJson("/api/v1/suppliers/{$supplier->id}/payments", ['product_id' => $cola->id, 'amount' => '100.00', 'method' => 'palpay'], $this->idem())
-            ->assertCreated()
-            ->assertJsonPath('data.balance', '200.00');
-
-        $owner->postJson("/api/v1/suppliers/{$supplier->id}/payments", ['product_id' => $milk->id, 'amount' => '198.01', 'method' => 'cash'], $this->idem())
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('amount');
-
-        $owner->getJson("/api/v1/suppliers/{$supplier->id}/products/{$cola->id}")
-            ->assertOk()
-            ->assertJsonPath('data.balance', '200.00')
             ->assertJsonCount(2, 'data.invoices')
             ->assertJsonPath('data.invoices.1.cartons', 4)
             ->assertJsonPath('data.invoices.1.pack_size', 24)
             ->assertJsonPath('data.invoices.1.quantity', '96')
             ->assertJsonPath('data.invoices.1.buy_price', '60.00')
             ->assertJsonPath('data.invoices.1.total', '240.00')
-            ->assertJsonPath('data.payments.0.amount', '100.00')
-            ->assertJsonPath('data.payments.0.method', 'palpay');
+            ->assertJsonMissingPath('data.payments')
+            ->assertJsonMissingPath('data.balance');
     }
 
     public function test_older_payments_are_spread_over_the_lines_oldest_first(): void
@@ -219,21 +208,15 @@ class PurchaseTest extends TestCase
         $migration = require database_path('migrations/2026_10_31_000001_add_product_to_supplier_payments.php');
         (new ReflectionMethod($migration, 'spread'))->invoke($migration, $supplier->id);
 
-        $balance = fn(string $name) => $supplier->productBalance(Product::where('name', $name)->value('id'));
-        $this->assertSame('0.00', $balance('كولا علبة'));
-        $this->assertSame('0.00', $balance('حليب 1 لتر'), 'the rest of the first payment and part of the second');
-        $this->assertSame('268.00', $balance('لوز نيء'));
         $this->assertSame('268.00', $supplier->balance());
         $this->assertSame(0, $supplier->payments()->whereNull('product_id')->count());
     }
 
-    public function test_money_paid_with_the_delivery_goes_to_the_lines_in_order(): void
+    public function test_money_paid_with_a_delivery_from_an_older_app_lowers_what_is_owed(): void
     {
         $this->deliver($this->delivery())->assertCreated();
 
-        $supplier = Supplier::firstOrFail();
-        $this->assertSame('0.00', $supplier->productBalance(Product::where('name', 'كولا علبة')->value('id')));
-        $this->assertSame('38.00', $supplier->productBalance(Product::where('name', 'حليب 1 لتر')->value('id')));
+        $this->assertSame('318.00', Supplier::firstOrFail()->balance());
     }
 
     public function test_a_retry_with_the_same_key_counts_once(): void

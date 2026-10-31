@@ -2989,9 +2989,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get goodsTotal => 'الإجمالي';
 
   @override
-  String get goodsRemaining => 'المتبقي عليك';
-
-  @override
   String get goodsSave => 'سجّل البضاعة';
 
   @override

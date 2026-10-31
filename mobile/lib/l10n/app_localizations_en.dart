@@ -3013,9 +3013,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goodsTotal => 'Total';
 
   @override
-  String get goodsRemaining => 'Left to pay';
-
-  @override
   String get goodsSave => 'Record goods';
 
   @override

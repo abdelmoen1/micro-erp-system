@@ -107,23 +107,43 @@ class Supplier {
   final Money balance;
 }
 
-/// A product bought from a supplier, with what is left to pay for it.
+/// A product bought from a supplier, with everything bought of it so far.
 class SupplierProduct {
-  const SupplierProduct({required this.id, required this.name, required this.balance});
+  const SupplierProduct({required this.id, required this.name, required this.total});
 
   factory SupplierProduct.fromJson(Map<String, dynamic> json) => SupplierProduct(
     id: (json['id'] as num).toInt(),
     name: json['name'] as String? ?? '',
-    balance: Money.parse(json['balance'] as String? ?? '0'),
+    total: Money.parse(json['total'] as String? ?? '0'),
   );
 
   final int id;
   final String name;
-  final Money balance;
+  final Money total;
 }
 
+DateTime _time(Object? value) => DateTime.tryParse(value as String? ?? '')?.toLocal() ?? DateTime.now();
+
+/// A payment to the supplier: it lowers the total owed to them.
+class SupplierPayment {
+  const SupplierPayment({required this.at, required this.amount, required this.method, this.by});
+
+  factory SupplierPayment.fromJson(Map<String, dynamic> json) => SupplierPayment(
+    at: _time(json['at']),
+    amount: Money.parse(json['amount'] as String? ?? '0'),
+    method: json['method'] as String? ?? 'cash',
+    by: json['by'] as String?,
+  );
+
+  final DateTime at;
+  final Money amount;
+  final String method;
+  final String? by;
+}
+
+/// One supplier: what is owed in all, the products bought, and the payments made.
 class SupplierDetail {
-  const SupplierDetail({required this.supplier, required this.products});
+  const SupplierDetail({required this.supplier, required this.products, required this.payments});
 
   factory SupplierDetail.fromJson(Map<String, dynamic> json) => SupplierDetail(
     supplier: Supplier.fromJson(json),
@@ -131,13 +151,16 @@ class SupplierDetail {
       for (final row in json['products'] as List<dynamic>? ?? const [])
         SupplierProduct.fromJson(row as Map<String, dynamic>),
     ],
+    payments: [
+      for (final row in json['payments'] as List<dynamic>? ?? const [])
+        SupplierPayment.fromJson(row as Map<String, dynamic>),
+    ],
   );
 
   final Supplier supplier;
   final List<SupplierProduct> products;
+  final List<SupplierPayment> payments;
 }
-
-DateTime _time(Object? value) => DateTime.tryParse(value as String? ?? '')?.toLocal() ?? DateTime.now();
 
 /// One delivery of a product from the supplier.
 class ProductInvoice {
@@ -177,54 +200,20 @@ class ProductInvoice {
   final String? by;
 }
 
-class ProductPayment {
-  const ProductPayment({required this.at, required this.amount, required this.method, this.by});
+/// One product at one supplier: its invoices.
+class ProductInvoices {
+  const ProductInvoices({required this.weighed, required this.invoices});
 
-  factory ProductPayment.fromJson(Map<String, dynamic> json) => ProductPayment(
-    at: _time(json['at']),
-    amount: Money.parse(json['amount'] as String? ?? '0'),
-    method: json['method'] as String? ?? 'cash',
-    by: json['by'] as String?,
+  factory ProductInvoices.fromJson(Map<String, dynamic> json) => ProductInvoices(
+    weighed: (json['product'] as Map<String, dynamic>)['unit'] == 'kg',
+    invoices: [
+      for (final row in json['invoices'] as List<dynamic>? ?? const [])
+        ProductInvoice.fromJson(row as Map<String, dynamic>),
+    ],
   );
 
-  final DateTime at;
-  final Money amount;
-  final String method;
-  final String? by;
-}
-
-/// One product at one supplier: what is left, then its invoices and payments.
-class ProductAccount {
-  const ProductAccount({
-    required this.productName,
-    required this.weighed,
-    required this.balance,
-    required this.invoices,
-    required this.payments,
-  });
-
-  factory ProductAccount.fromJson(Map<String, dynamic> json) {
-    final product = json['product'] as Map<String, dynamic>;
-    return ProductAccount(
-      productName: product['name'] as String? ?? '',
-      weighed: product['unit'] == 'kg',
-      balance: Money.parse(json['balance'] as String? ?? '0'),
-      invoices: [
-        for (final row in json['invoices'] as List<dynamic>? ?? const [])
-          ProductInvoice.fromJson(row as Map<String, dynamic>),
-      ],
-      payments: [
-        for (final row in json['payments'] as List<dynamic>? ?? const [])
-          ProductPayment.fromJson(row as Map<String, dynamic>),
-      ],
-    );
-  }
-
-  final String productName;
   final bool weighed;
-  final Money balance;
   final List<ProductInvoice> invoices;
-  final List<ProductPayment> payments;
 }
 
 /// The server's answer to a recorded delivery.

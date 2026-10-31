@@ -5324,12 +5324,6 @@ abstract class AppLocalizations {
   /// **'الإجمالي'**
   String get goodsTotal;
 
-  /// No description provided for @goodsRemaining.
-  ///
-  /// In ar, this message translates to:
-  /// **'المتبقي عليك'**
-  String get goodsRemaining;
-
   /// No description provided for @goodsSave.
   ///
   /// In ar, this message translates to:
