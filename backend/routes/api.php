@@ -114,6 +114,7 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     Route::post('purchases', [SupplierController::class, 'purchase'])->middleware('idempotent');
     Route::get('suppliers', [SupplierController::class, 'index']);
     Route::get('suppliers/{supplier}', [SupplierController::class, 'show']);
+    Route::get('suppliers/{supplier}/products/{product}', [SupplierController::class, 'product']);
     Route::post('suppliers/{supplier}/payments', [SupplierController::class, 'pay'])->middleware('idempotent');
 
     // Customers

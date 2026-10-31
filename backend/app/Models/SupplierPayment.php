@@ -10,11 +10,21 @@ class SupplierPayment extends Model
 {
     use BelongsToStore;
 
-    protected $fillable = ['store_id', 'supplier_id', 'purchase_invoice_id', 'amount', 'method', 'created_by'];
+    protected $fillable = ['store_id', 'supplier_id', 'purchase_invoice_id', 'product_id', 'amount', 'method', 'created_by'];
 
     protected function casts(): array
     {
         return ['amount' => 'decimal:2'];
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function supplier(): BelongsTo

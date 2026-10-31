@@ -77,6 +77,24 @@ function readHidden() {
   }
 }
 
+/** On the landing page: the same download and steps as the dashboard, for anyone. */
+export function AppDownloadSection() {
+  const apk = useLatestApk();
+  return (
+    <section id="app" className="lp-app" aria-labelledby="app-t" data-reveal>
+      <div className="lp-wrap">
+        <p className="lp-kicker">تطبيق الجوال</p>
+        <h2 id="app-t">حمّل حسبة على جوالك</h2>
+        <p className="lp-text">
+          أندرويد{apk.data ? <> <span className="m">{apk.data.version.split("+")[0]}</span></> : null}. البيع والدين والمخزون من الجوال.
+        </p>
+        <Steps />
+        <DownloadButton apk={apk} className="lp-btn solid big" />
+      </div>
+    </section>
+  );
+}
+
 /** On the dashboard: the app, its version and how to install it. «إخفاء» folds it to one line. */
 export function AppDownloadCard() {
   const apk = useLatestApk();

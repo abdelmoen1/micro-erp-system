@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PaymentMethods;
 use App\Http\Requests\StorePurchaseRequest;
 use App\Models\Product;
-use App\Models\PurchaseInvoice;
+use App\Models\PurchaseItem;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
 use App\Services\PurchaseService;
 use App\Support\Money;
+use App\Support\Quantity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -37,41 +38,76 @@ class SupplierController extends Controller
         return response()->json(['data' => $suppliers->map(fn(Supplier $s) => $this->row($s))]);
     }
 
-    /** The account: balance, then invoices and payments together, newest first. */
+    /** The supplier: what is owed, and each product bought from them with its own balance. */
     public function show(Request $request, Supplier $supplier)
     {
         Gate::authorize('adjustStock', Product::class);
         $supplier->loadSum('invoices as purchased', 'total')->loadSum('payments as paid', 'amount');
 
-        $invoices = $supplier->invoices()->withCount('items')->latest('id')->limit(100)->get()
-            ->map(fn(PurchaseInvoice $i) => [
-                'type' => 'invoice',
-                'id' => $i->id,
-                'amount' => Money::of($i->total),
-                'items' => $i->items_count,
-                'at' => $i->created_at,
-            ]);
-        $payments = $supplier->payments()->latest('id')->limit(100)->get()
-            ->map(fn(SupplierPayment $p) => [
-                'type' => 'payment',
-                'id' => $p->id,
-                'amount' => Money::of($p->amount),
-                'method' => $p->method,
-                'at' => $p->created_at,
-            ]);
+        $lines = PurchaseItem::query()
+            ->whereIn('purchase_invoice_id', $supplier->invoices()->select('id'))
+            ->with('product')
+            ->get()
+            ->groupBy('product_id');
+        $paid = $supplier->payments()->whereNotNull('product_id')->get()->groupBy('product_id');
 
-        // On the same second the invoice comes first in the sort, so it reads before its payment.
-        $entries = $invoices->concat($payments)
-            ->sortBy([['at', 'desc'], ['type', 'desc'], ['id', 'desc']])
+        $products = $lines
+            ->map(fn($rows, $productId) => [
+                'id' => (int) $productId,
+                'name' => $rows->first()->product->name,
+                'unit' => $rows->first()->product->unit,
+                'balance' => Money::sub(
+                    Money::sum($rows->pluck('line_total')),
+                    Money::sum(($paid[$productId] ?? collect())->pluck('amount')),
+                ),
+            ])
+            ->sortBy('name')
             ->values();
 
-        return response()->json(['data' => $this->row($supplier) + ['entries' => $entries]]);
+        return response()->json(['data' => $this->row($supplier) + ['products' => $products]]);
+    }
+
+    /** One product at this supplier: what is left, then its invoices and its payments. */
+    public function product(Request $request, Supplier $supplier, Product $product)
+    {
+        Gate::authorize('adjustStock', Product::class);
+
+        $invoices = $supplier->productLines($product->id)->with('invoice.creator')->latest('id')->limit(200)->get()
+            ->map(fn(PurchaseItem $item) => [
+                'id' => $item->id,
+                'invoice_id' => $item->purchase_invoice_id,
+                'at' => $item->created_at,
+                'by' => $item->invoice->creator?->name,
+                'quantity' => Quantity::format($item->quantity, $product->unit),
+                'cartons' => $item->cartons,
+                'pack_size' => $item->pack_size,
+                'buy_price' => Money::of($item->buy_price),
+                'total' => Money::of($item->line_total),
+            ]);
+
+        $payments = $supplier->payments()->where('product_id', $product->id)->with('creator')->latest('id')->limit(200)->get()
+            ->map(fn(SupplierPayment $payment) => [
+                'id' => $payment->id,
+                'at' => $payment->created_at,
+                'by' => $payment->creator?->name,
+                'amount' => Money::of($payment->amount),
+                'method' => $payment->method,
+            ]);
+
+        return response()->json(['data' => [
+            'supplier' => ['id' => $supplier->id, 'name' => $supplier->name],
+            'product' => ['id' => $product->id, 'name' => $product->name, 'unit' => $product->unit],
+            'balance' => $supplier->productBalance($product->id),
+            'invoices' => $invoices,
+            'payments' => $payments,
+        ]]);
     }
 
     public function pay(Request $request, Supplier $supplier)
     {
         Gate::authorize('adjustStock', Product::class);
         $data = $request->validate([
+            'product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('store_id', $request->user()->store_id)],
             'amount' => ['required', ...Money::inputRules()],
             'method' => ['required', 'string', Rule::in(PaymentMethods::ALL)],
         ], [
@@ -80,12 +116,12 @@ class SupplierController extends Controller
             'method.required' => 'اختر طريقة الدفع.',
         ]);
 
-        $this->purchases->pay($request->user(), $supplier, (string) $data['amount'], $data['method']);
+        $this->purchases->pay($request->user(), $supplier, (int) $data['product_id'], (string) $data['amount'], $data['method']);
 
-        return response()->json(['data' => ['balance' => $supplier->balance()]], 201);
+        return response()->json(['data' => ['balance' => $supplier->productBalance((int) $data['product_id'])]], 201);
     }
 
-    /** POST /purchases: the three steps of «تسجيل بضاعة» in one transaction. */
+    /** POST /purchases: «تسجيل بضاعة» in one transaction. */
     public function purchase(StorePurchaseRequest $request)
     {
         $invoice = $this->purchases->record($request->user(), $request->validated());
@@ -98,6 +134,7 @@ class SupplierController extends Controller
             'paid' => $paid,
             'remaining' => Money::sub($invoice->total, $paid),
             'lines' => $invoice->items->count(),
+            'at' => $invoice->created_at,
         ]], 201);
     }
 

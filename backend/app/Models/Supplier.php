@@ -34,4 +34,18 @@ class Supplier extends Model
     {
         return Money::sub($this->invoices()->sum('total'), $this->payments()->sum('amount'));
     }
+
+    /** What is left to pay this supplier for one product: its purchases less its payments. */
+    public function productBalance(int $productId): string
+    {
+        return Money::sub($this->productLines($productId)->sum('line_total'), $this->payments()->where('product_id', $productId)->sum('amount'));
+    }
+
+    /** Every delivery line of a product from this supplier. Each one is that product's invoice. */
+    public function productLines(int $productId): Builder
+    {
+        return PurchaseItem::query()
+            ->where('product_id', $productId)
+            ->whereIn('purchase_invoice_id', $this->invoices()->select('id'));
+    }
 }

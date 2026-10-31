@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { AppDownloadSection } from "../components/AppDownload";
 import HisbahLogo, { HisbahMark } from "../components/HisbahLogo";
 import Icon from "../components/Icon";
 import { session } from "../services/apiClient";
@@ -13,6 +14,7 @@ const NAV = [
   ["#pos", "البيع"],
   ["#debts", "الديون"],
   ["#dashboard", "لوحة الإدارة"],
+  ["#app", "التطبيق"],
   ["#faq", "الأسئلة"],
 ];
 
@@ -415,6 +417,8 @@ export default function Landing() {
           </Link>
         </Feature>
         <p className="lp-wrap lp-fineprint">الشاشات توضيحية ببيانات تجريبية.</p>
+
+        <AppDownloadSection />
 
         <section id="faq" className="lp-faq" aria-labelledby="faq-t">
           <div className="lp-wrap narrow" data-reveal>

@@ -333,13 +333,15 @@ class IdempotencyTest extends TestCase
                 'supplier_name' => 'شركة الأمل',
                 'paid_amount' => '10.00',
                 'method' => 'cash',
-                'lines' => [['name' => 'كولا', 'cartons' => 2, 'pack_size' => 24, 'buy_price' => '60.00', 'selling_price' => '3.50']],
+                'lines' => [['name' => 'كولا', 'barcode' => '6251234567890', 'cartons' => 2, 'pack_size' => 24, 'buy_price' => '60.00', 'selling_price' => '3.50']],
             ], $state],
             'supplier-payment' => (function () use ($state) {
                 $supplier = Supplier::create(['store_id' => $this->store->id, 'name' => 'شركة الأمل']);
-                $supplier->invoices()->create(['store_id' => $this->store->id, 'total' => '100.00']);
+                $product = $this->makeProduct($this->store);
+                $invoice = $supplier->invoices()->create(['store_id' => $this->store->id, 'total' => '100.00']);
+                $invoice->items()->create(['product_id' => $product->id, 'quantity' => 1, 'buy_price' => '100.00', 'line_total' => '100.00']);
 
-                return ['POST', "/api/v1/suppliers/{$supplier->id}/payments", ['amount' => '40.00', 'method' => 'palpay'], $state];
+                return ['POST', "/api/v1/suppliers/{$supplier->id}/payments", ['product_id' => $product->id, 'amount' => '40.00', 'method' => 'palpay'], $state];
             })(),
             'resolve-sync-conflict' => (function () use ($customer, $state) {
                 $conflict = SyncConflict::create([
