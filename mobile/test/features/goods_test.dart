@@ -155,7 +155,7 @@ void main() {
     expect(find.byKey(const Key('goods.invoice')), findsNothing);
   });
 
-  testWidgets('supplier → product → its invoices and payments; a payment belongs to the product', (tester) async {
+  testWidgets('the supplier page holds the products and the payments; a product opens only its invoice', (tester) async {
     api.on('GET /suppliers', const FakeResponse(200, {
       'data': [
         {'id': 7, 'name': 'التاج مول', 'phone': null, 'balance': '318.00'},
@@ -168,7 +168,10 @@ void main() {
         'phone': null,
         'balance': '318.00',
         'products': [
-          {'id': 3, 'name': 'كولا علبة', 'unit': 'piece', 'balance': '140.00'},
+          {'id': 3, 'name': 'كولا علبة', 'unit': 'piece', 'total': '240.00'},
+        ],
+        'payments': [
+          {'id': 1, 'at': '2026-10-30T09:00:00Z', 'by': 'أبو محمد', 'amount': '100.00', 'method': 'cash'},
         ],
       },
     }));
@@ -176,30 +179,29 @@ void main() {
       'data': {
         'supplier': {'id': 7, 'name': 'التاج مول'},
         'product': {'id': 3, 'name': 'كولا علبة', 'unit': 'piece'},
-        'balance': '140.00',
         'invoices': [
           {'id': 1, 'invoice_id': 12, 'at': '2026-10-30T08:00:00Z', 'by': 'أبو محمد', 'quantity': '96', 'cartons': 4, 'pack_size': 24, 'buy_price': '60.00', 'total': '240.00'},
         ],
-        'payments': [
-          {'id': 1, 'at': '2026-10-30T09:00:00Z', 'by': 'أبو محمد', 'amount': '100.00', 'method': 'cash'},
-        ],
       },
     }));
-    api.on('POST /suppliers/7/payments', const FakeResponse(201, {'data': {'balance': '40.00'}}));
+    api.on('POST /suppliers/7/payments', const FakeResponse(201, {'data': {'balance': '218.00'}}));
 
     await pumpApp(tester);
     await tap(tester, find.byKey(const Key('nav.more')));
     await tap(tester, find.byKey(const Key('more.suppliers')));
     await tap(tester, find.byKey(const Key('suppliers.row.7')));
-    await tap(tester, find.byKey(const Key('supplier.product.3')));
-    expect(find.text('₪ 140.00'), findsOneWidget);
 
-    await tap(tester, find.byKey(const Key('supplier.invoice.12')));
+    expect(find.descendant(of: find.byKey(const Key('supplier.balance')), matching: find.text('₪ 318.00')), findsOneWidget);
+    expect(find.byKey(const Key('supplier.product.3')), findsOneWidget);
+    expect(find.byKey(const Key('supplier.payment.0')), findsOneWidget);
+
+    await tap(tester, find.byKey(const Key('supplier.product.3')));
+    expect(find.byKey(const Key('supplier.invoice.12')), findsOneWidget);
     expect(find.text('₪ 60.00'), findsOneWidget);
     expect(find.text('96'), findsOneWidget);
-    expect(find.text('سعر الشراء'), findsOneWidget);
-    await tester.tapAt(const Offset(10, 10));
-    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('supplier.pay')), findsNothing, reason: 'payments are on the supplier page');
+    expect(find.byKey(const Key('supplier.payment.0')), findsNothing);
+    await tap(tester, find.byType(BackButton));
 
     await tap(tester, find.byKey(const Key('supplier.payment.0')));
     expect(find.text('طريقة الدفع'), findsOneWidget);
@@ -216,6 +218,6 @@ void main() {
     await tap(tester, find.byKey(const Key('supplier.savePayment')));
 
     final body = api.requestsTo('POST /suppliers/7/payments').single.data as Map<String, dynamic>;
-    expect(body, {'product_id': 3, 'amount': '100.00', 'method': 'jawwal_pay'});
+    expect(body, {'amount': '100.00', 'method': 'jawwal_pay'});
   });
 }

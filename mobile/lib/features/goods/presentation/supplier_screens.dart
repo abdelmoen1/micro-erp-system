@@ -21,8 +21,8 @@ final supplierProvider = FutureProvider.autoDispose.family<SupplierDetail, int>(
   (ref, id) => ref.watch(goodsRepositoryProvider).supplier(id),
 );
 
-final productAccountProvider = FutureProvider.autoDispose.family<ProductAccount, (int, int)>(
-  (ref, ids) => ref.watch(goodsRepositoryProvider).productAccount(ids.$1, ids.$2),
+final productInvoicesProvider = FutureProvider.autoDispose.family<ProductInvoices, (int, int)>(
+  (ref, ids) => ref.watch(goodsRepositoryProvider).productInvoices(ids.$1, ids.$2),
 );
 
 final _clock = DateFormat('dd/MM/yyyy  HH:mm', 'en');
@@ -153,7 +153,7 @@ class SuppliersScreen extends ConsumerWidget {
   }
 }
 
-/// One supplier: what is owed in all, and the products bought from them.
+/// One supplier: what is owed in all, the products bought, the payments, and «سجّل دفعة».
 class SupplierScreen extends ConsumerWidget {
   const SupplierScreen({super.key, required this.supplierId, required this.name});
 
@@ -170,72 +170,25 @@ class SupplierScreen extends ConsumerWidget {
         child: detail.when(
           loading: () => const LoadingView.detail(),
           error: (_, _) => ErrorView(message: t.listLoadError, onRetry: () => ref.invalidate(supplierProvider(supplierId))),
-          data: (data) => ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              _BalanceCard(label: t.supplierOwed, amount: data.supplier.balance),
-              _SectionTitle(t.supplierProducts),
-              _Rows(
-                rows: [
-                  for (final product in data.products)
-                    _Row(
-                      key: Key('supplier.product.${product.id}'),
-                      title: product.name,
-                      trailing: Num(shekel(product.balance), size: 16, weight: FontWeight.w700, color: _owedColor(product.balance)),
-                      onTap: () async {
-                        await pushScreen<void>(
-                          context,
-                          SupplierProductScreen(supplierId: supplierId, productId: product.id, name: product.name),
-                        );
-                        ref.invalidate(supplierProvider(supplierId));
-                      },
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// One product at one supplier: what is left, its invoices, its payments, then «سجّل دفعة».
-class SupplierProductScreen extends ConsumerWidget {
-  const SupplierProductScreen({super.key, required this.supplierId, required this.productId, required this.name});
-
-  final int supplierId;
-  final int productId;
-  final String name;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
-    final provider = productAccountProvider((supplierId, productId));
-    final account = ref.watch(provider);
-    return Scaffold(
-      appBar: AppBar(title: Text(name)),
-      body: SafeArea(
-        child: account.when(
-          loading: () => const LoadingView.detail(),
-          error: (_, _) => ErrorView(message: t.listLoadError, onRetry: () => ref.invalidate(provider)),
           data: (data) => Column(
             children: [
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    _BalanceCard(label: t.goodsRemaining, amount: data.balance),
-                    _SectionTitle(t.supplierInvoices),
+                    _BalanceCard(label: t.supplierOwed, amount: data.supplier.balance),
+                    _SectionTitle(t.supplierProducts),
                     _Rows(
                       rows: [
-                        for (final invoice in data.invoices)
+                        for (final product in data.products)
                           _Row(
-                            key: Key('supplier.invoice.${invoice.number}'),
-                            title: t.supplierInvoiceNumber('${invoice.number}'),
-                            sub: fullTime(invoice.at),
-                            trailing: Num(shekel(invoice.total), size: 16, weight: FontWeight.w700),
-                            onTap: () => showSaleSheet<void>(context, builder: (_) => _InvoiceSheet(invoice: invoice, weighed: data.weighed)),
+                            key: Key('supplier.product.${product.id}'),
+                            title: product.name,
+                            trailing: Num(shekel(product.total), size: 16, weight: FontWeight.w700),
+                            onTap: () => pushScreen<void>(
+                              context,
+                              SupplierProductScreen(supplierId: supplierId, productId: product.id, name: product.name),
+                            ),
                           ),
                       ],
                     ),
@@ -258,20 +211,54 @@ class SupplierProductScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (data.balance.isPositive)
+              if (data.supplier.balance.isPositive)
                 ActionBar(
                   child: FilledButton(
                     key: const Key('supplier.pay'),
                     onPressed: () async {
                       final paid = await showSaleSheet<bool>(
                         context,
-                        builder: (_) => SupplierPaySheet(supplierId: supplierId, productId: productId, balance: data.balance),
+                        builder: (_) => SupplierPaySheet(supplierId: supplierId, balance: data.supplier.balance),
                       );
-                      if (paid ?? false) ref.invalidate(provider);
+                      if (paid ?? false) ref.invalidate(supplierProvider(supplierId));
                     },
                     child: Text(t.supplierPay),
                   ),
                 ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A product at a supplier: only its invoice, or its invoices when it was bought more than once.
+class SupplierProductScreen extends ConsumerWidget {
+  const SupplierProductScreen({super.key, required this.supplierId, required this.productId, required this.name});
+
+  final int supplierId;
+  final int productId;
+  final String name;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final provider = productInvoicesProvider((supplierId, productId));
+    final invoices = ref.watch(provider);
+    return Scaffold(
+      appBar: AppBar(title: Text(name)),
+      body: SafeArea(
+        child: invoices.when(
+          loading: () => const LoadingView.detail(),
+          error: (_, _) => ErrorView(message: t.listLoadError, onRetry: () => ref.invalidate(provider)),
+          data: (data) => ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              for (final invoice in data.invoices) ...[
+                _InvoiceCard(key: Key('supplier.invoice.${invoice.number}'), invoice: invoice, weighed: data.weighed),
+                const SizedBox(height: 12),
+              ],
             ],
           ),
         ),
@@ -300,6 +287,44 @@ class _Fact extends StatelessWidget {
   );
 }
 
+class _InvoiceCard extends StatelessWidget {
+  const _InvoiceCard({super.key, required this.invoice, required this.weighed});
+
+  final ProductInvoice invoice;
+  final bool weighed;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final cartons = invoice.cartons;
+    return LineCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(t.supplierInvoiceNumber('${invoice.number}'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            _Fact(t.supplierTime, fullTime(invoice.at)),
+            if (weighed) ...[
+              _Fact(t.goodsBuyKilo, shekel(invoice.buyPrice)),
+              _Fact(t.goodsKilos, invoice.quantity),
+            ] else ...[
+              _Fact(t.goodsBuyCarton, shekel(invoice.buyPrice)),
+              if (cartons != null) _Fact(t.goodsCartons, '$cartons'),
+              if (invoice.packSize != null) _Fact(t.goodsPackSize, '${invoice.packSize}'),
+              _Fact(t.supplierPieces, invoice.quantity),
+            ],
+            if (invoice.by != null) _Fact(t.supplierBy, invoice.by!),
+            const Divider(height: 16),
+            _Fact(t.supplierFinalPrice, shekel(invoice.total), strong: true),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _DetailSheet extends StatelessWidget {
   const _DetailSheet({required this.title, required this.facts});
 
@@ -321,41 +346,10 @@ class _DetailSheet extends StatelessWidget {
   );
 }
 
-class _InvoiceSheet extends StatelessWidget {
-  const _InvoiceSheet({required this.invoice, required this.weighed});
-
-  final ProductInvoice invoice;
-  final bool weighed;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final cartons = invoice.cartons;
-    return _DetailSheet(
-      title: t.supplierInvoiceNumber('${invoice.number}'),
-      facts: [
-        _Fact(t.supplierTime, fullTime(invoice.at)),
-        if (weighed) ...[
-          _Fact(t.goodsBuyKilo, shekel(invoice.buyPrice)),
-          _Fact(t.goodsKilos, invoice.quantity),
-        ] else ...[
-          _Fact(t.goodsBuyCarton, shekel(invoice.buyPrice)),
-          if (cartons != null) _Fact(t.goodsCartons, '$cartons'),
-          if (invoice.packSize != null) _Fact(t.goodsPackSize, '${invoice.packSize}'),
-          _Fact(t.supplierPieces, invoice.quantity),
-        ],
-        if (invoice.by != null) _Fact(t.supplierBy, invoice.by!),
-        const Divider(height: 16),
-        _Fact(t.supplierFinalPrice, shekel(invoice.total), strong: true),
-      ],
-    );
-  }
-}
-
 class _PaymentSheet extends StatelessWidget {
   const _PaymentSheet({required this.payment});
 
-  final ProductPayment payment;
+  final SupplierPayment payment;
 
   @override
   Widget build(BuildContext context) {
@@ -403,12 +397,11 @@ class MethodChoices extends StatelessWidget {
   }
 }
 
-/// A payment on one product's account. Pops true when it was recorded.
+/// A payment to the supplier. Pops true when it was recorded.
 class SupplierPaySheet extends ConsumerStatefulWidget {
-  const SupplierPaySheet({super.key, required this.supplierId, required this.productId, required this.balance});
+  const SupplierPaySheet({super.key, required this.supplierId, required this.balance});
 
   final int supplierId;
-  final int productId;
   final Money balance;
 
   @override
@@ -448,7 +441,7 @@ class _SupplierPaySheetState extends ConsumerState<SupplierPaySheet> {
     try {
       await ref
           .read(goodsRepositoryProvider)
-          .pay(supplierId: widget.supplierId, productId: widget.productId, amount: amount, method: _method, operationId: _operationId);
+          .pay(supplierId: widget.supplierId, amount: amount, method: _method, operationId: _operationId);
       if (mounted) Navigator.of(context).pop(true);
     } on ValidationFailed catch (failure) {
       if (!mounted) return;

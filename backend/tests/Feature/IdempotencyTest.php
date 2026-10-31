@@ -341,7 +341,7 @@ class IdempotencyTest extends TestCase
                 $invoice = $supplier->invoices()->create(['store_id' => $this->store->id, 'total' => '100.00']);
                 $invoice->items()->create(['product_id' => $product->id, 'quantity' => 1, 'buy_price' => '100.00', 'line_total' => '100.00']);
 
-                return ['POST', "/api/v1/suppliers/{$supplier->id}/payments", ['product_id' => $product->id, 'amount' => '40.00', 'method' => 'palpay'], $state];
+                return ['POST', "/api/v1/suppliers/{$supplier->id}/payments", ['amount' => '40.00', 'method' => 'palpay'], $state];
             })(),
             'resolve-sync-conflict' => (function () use ($customer, $state) {
                 $conflict = SyncConflict::create([
