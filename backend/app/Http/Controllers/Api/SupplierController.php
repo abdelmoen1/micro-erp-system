@@ -38,36 +38,39 @@ class SupplierController extends Controller
         return response()->json(['data' => $suppliers->map(fn(Supplier $s) => $this->row($s))]);
     }
 
-    /** The supplier: what is owed, and each product bought from them with its own balance. */
+    /** The supplier: what is owed in all, the products bought from them, and the payments made. */
     public function show(Request $request, Supplier $supplier)
     {
         Gate::authorize('adjustStock', Product::class);
         $supplier->loadSum('invoices as purchased', 'total')->loadSum('payments as paid', 'amount');
 
-        $lines = PurchaseItem::query()
+        $products = PurchaseItem::query()
             ->whereIn('purchase_invoice_id', $supplier->invoices()->select('id'))
             ->with('product')
             ->get()
-            ->groupBy('product_id');
-        $paid = $supplier->payments()->whereNotNull('product_id')->get()->groupBy('product_id');
-
-        $products = $lines
+            ->groupBy('product_id')
             ->map(fn($rows, $productId) => [
                 'id' => (int) $productId,
                 'name' => $rows->first()->product->name,
                 'unit' => $rows->first()->product->unit,
-                'balance' => Money::sub(
-                    Money::sum($rows->pluck('line_total')),
-                    Money::sum(($paid[$productId] ?? collect())->pluck('amount')),
-                ),
+                'total' => Money::sum($rows->pluck('line_total')),
             ])
             ->sortBy('name')
             ->values();
 
-        return response()->json(['data' => $this->row($supplier) + ['products' => $products]]);
+        $payments = $supplier->payments()->with('creator')->latest('id')->limit(200)->get()
+            ->map(fn(SupplierPayment $payment) => [
+                'id' => $payment->id,
+                'at' => $payment->created_at,
+                'by' => $payment->creator?->name,
+                'amount' => Money::of($payment->amount),
+                'method' => $payment->method,
+            ]);
+
+        return response()->json(['data' => $this->row($supplier) + ['products' => $products, 'payments' => $payments]]);
     }
 
-    /** One product at this supplier: what is left, then its invoices and its payments. */
+    /** One product at this supplier: its invoices. */
     public function product(Request $request, Supplier $supplier, Product $product)
     {
         Gate::authorize('adjustStock', Product::class);
@@ -85,21 +88,10 @@ class SupplierController extends Controller
                 'total' => Money::of($item->line_total),
             ]);
 
-        $payments = $supplier->payments()->where('product_id', $product->id)->with('creator')->latest('id')->limit(200)->get()
-            ->map(fn(SupplierPayment $payment) => [
-                'id' => $payment->id,
-                'at' => $payment->created_at,
-                'by' => $payment->creator?->name,
-                'amount' => Money::of($payment->amount),
-                'method' => $payment->method,
-            ]);
-
         return response()->json(['data' => [
             'supplier' => ['id' => $supplier->id, 'name' => $supplier->name],
             'product' => ['id' => $product->id, 'name' => $product->name, 'unit' => $product->unit],
-            'balance' => $supplier->productBalance($product->id),
             'invoices' => $invoices,
-            'payments' => $payments,
         ]]);
     }
 
@@ -107,7 +99,6 @@ class SupplierController extends Controller
     {
         Gate::authorize('adjustStock', Product::class);
         $data = $request->validate([
-            'product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('store_id', $request->user()->store_id)],
             'amount' => ['required', ...Money::inputRules()],
             'method' => ['required', 'string', Rule::in(PaymentMethods::ALL)],
         ], [
@@ -116,9 +107,9 @@ class SupplierController extends Controller
             'method.required' => 'اختر طريقة الدفع.',
         ]);
 
-        $this->purchases->pay($request->user(), $supplier, (int) $data['product_id'], (string) $data['amount'], $data['method']);
+        $this->purchases->pay($request->user(), $supplier, (string) $data['amount'], $data['method']);
 
-        return response()->json(['data' => ['balance' => $supplier->productBalance((int) $data['product_id'])]], 201);
+        return response()->json(['data' => ['balance' => $supplier->balance()]], 201);
     }
 
     /** POST /purchases: «تسجيل بضاعة» in one transaction. */

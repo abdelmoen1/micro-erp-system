@@ -67,8 +67,17 @@ class PurchaseService
                 ]);
             }
 
-            // Apps from before payments moved to each product still send what was paid.
-            $this->payLines($user, $supplier, $invoice, $paid, $data['method'] ?? 'cash');
+            // Older apps still send what was paid with the delivery.
+            if (Money::isPositive($paid)) {
+                SupplierPayment::create([
+                    'store_id' => $user->store_id,
+                    'supplier_id' => $supplier->id,
+                    'purchase_invoice_id' => $invoice->id,
+                    'amount' => $paid,
+                    'method' => $data['method'] ?? 'cash',
+                    'created_by' => $user->id,
+                ]);
+            }
 
             $this->audit->record('purchase.recorded', $invoice, [
                 'supplier_id' => $supplier->id,
@@ -81,49 +90,27 @@ class PurchaseService
         });
     }
 
-    /** A payment on one product's account with this supplier. */
-    public function pay(User $user, Supplier $supplier, int $productId, string $amount, string $method): SupplierPayment
+    /** A payment to the supplier: it lowers the total owed to them. */
+    public function pay(User $user, Supplier $supplier, string $amount, string $method): SupplierPayment
     {
-        return DB::transaction(function () use ($user, $supplier, $productId, $amount, $method) {
+        return DB::transaction(function () use ($user, $supplier, $amount, $method) {
             $locked = Supplier::query()->whereKey($supplier->id)->lockForUpdate()->firstOrFail();
 
-            if (Money::compare($amount, $locked->productBalance($productId)) > 0) {
+            if (Money::compare($amount, $locked->balance()) > 0) {
                 throw ValidationException::withMessages(['amount' => ['الدفعة أكبر من المبلغ المتبقي.']]);
             }
 
             $payment = SupplierPayment::create([
                 'store_id' => $user->store_id,
                 'supplier_id' => $locked->id,
-                'product_id' => $productId,
                 'amount' => Money::of($amount),
                 'method' => $method,
                 'created_by' => $user->id,
             ]);
-            $this->audit->record('supplier.paid', $payment, ['supplier_id' => $locked->id, 'product_id' => $productId, 'amount' => $payment->amount, 'method' => $method]);
+            $this->audit->record('supplier.paid', $payment, ['supplier_id' => $locked->id, 'amount' => $payment->amount, 'method' => $method]);
 
             return $payment;
         });
-    }
-
-    /** What was paid with the invoice, line by line in order: payments belong to a product. */
-    private function payLines(User $user, Supplier $supplier, PurchaseInvoice $invoice, string $paid, string $method): void
-    {
-        foreach ($invoice->items as $item) {
-            if (!Money::isPositive($paid)) {
-                return;
-            }
-            $amount = Money::compare($paid, $item->line_total) > 0 ? Money::of($item->line_total) : $paid;
-            SupplierPayment::create([
-                'store_id' => $user->store_id,
-                'supplier_id' => $supplier->id,
-                'purchase_invoice_id' => $invoice->id,
-                'product_id' => $item->product_id,
-                'amount' => $amount,
-                'method' => $method,
-                'created_by' => $user->id,
-            ]);
-            $paid = Money::sub($paid, $amount);
-        }
     }
 
     /** An existing supplier by id, or by name typed in the goods flow (created the first time). */
