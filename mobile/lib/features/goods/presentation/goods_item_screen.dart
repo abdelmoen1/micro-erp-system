@@ -11,12 +11,11 @@ import '../domain/goods.dart';
 
 /// What the item page opens with: a scan fills what it can, a known product fills the rest.
 class GoodsItemSeed {
-  const GoodsItemSeed({this.product, this.barcode, this.name, this.kind});
+  const GoodsItemSeed({this.product, this.barcode, this.name});
 
   final Product? product;
   final String? barcode;
   final String? name;
-  final GoodsKind? kind;
 }
 
 /// One item of the delivery, on its own page after the camera closes: carton or weight, how many,
@@ -35,11 +34,12 @@ class GoodsItemScreen extends StatefulWidget {
 
 class _GoodsItemScreenState extends State<GoodsItemScreen> {
   late final _name = TextEditingController(text: widget.line?.name ?? widget.seed.product?.name ?? widget.seed.name);
+  late final _barcode = TextEditingController(text: _scanned ?? widget.line?.barcode);
   late final _cartons = TextEditingController(text: _lineCartons);
   late final _packSize = TextEditingController(text: _startingPackSize);
   late final _kilos = TextEditingController(text: _lineKilos);
   late final _sell = TextEditingController(text: widget.line?.sellingPrice ?? widget.seed.product?.sellingPrice);
-  late GoodsKind _kind = widget.line?.kind ?? widget.seed.kind ?? _productKind;
+  late GoodsKind _kind = widget.line?.kind ?? _productKind;
   Map<String, String> _errors = const {};
 
   String get _lineCartons => widget.line != null && !widget.line!.isWeighed ? '${widget.line!.cartons}' : '';
@@ -55,16 +55,17 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
 
   GoodsKind get _productKind => (widget.seed.product?.isWeighed ?? false) ? GoodsKind.weight : GoodsKind.carton;
 
-  /// A known product keeps its unit: it was sold that way, and its stock is counted in it.
-  bool get _kindLocked => widget.seed.product != null || (widget.line?.productId != null);
+  /// The code the camera read: it stays as read, and a scanned item is never weighed.
+  String? get _scanned => widget.seed.barcode;
 
-  String? get _barcode => widget.line?.barcode ?? widget.seed.barcode ?? widget.seed.product?.barcode;
+  bool get _known => widget.seed.product != null || widget.line?.productId != null;
 
-  bool get _named => widget.seed.product != null || widget.line?.productId != null;
+  /// A known product keeps its unit, and anything with a barcode is sold by the carton.
+  bool get _kindLocked => _known || _scanned != null || (widget.line?.barcode != null);
 
   @override
   void dispose() {
-    for (final c in [_name, _cartons, _packSize, _kilos, _sell]) {
+    for (final c in [_name, _barcode, _cartons, _packSize, _kilos, _sell]) {
       c.dispose();
     }
     super.dispose();
@@ -100,8 +101,10 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
 
   void _save(AppLocalizations t) {
     final weighed = _kind == GoodsKind.weight;
+    final barcode = _barcode.text.trim();
     final errors = <String, String>{
       if (_name.text.trim().isEmpty) 'name': t.formNameRequired,
+      if (!weighed && barcode.isEmpty) 'barcode': t.goodsBarcodeRequired,
       if (!weighed && _whole(_cartons) == null) 'cartons': t.goodsNumberRequired,
       if (!weighed && _whole(_packSize) == null) 'pack': t.goodsNumberRequired,
       if (weighed && _kg() == null) 'kilos': t.goodsNumberRequired,
@@ -113,14 +116,14 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
       GoodsLine(
         productId: widget.line?.productId ?? widget.seed.product?.id,
         name: _name.text.trim(),
-        // A weighed item has no barcode.
-        barcode: weighed ? null : _barcode,
+        barcode: weighed ? null : barcode,
         kind: _kind,
         cartons: weighed ? 0 : _whole(_cartons)!,
         packSize: weighed ? 1 : _whole(_packSize)!,
         kilos: weighed ? _kg()! : Quantity.zero,
         sellingPrice: _price()!.toApi(),
         buyPrice: widget.line?.buyPrice,
+        cartonPrice: widget.line?.cartonPrice,
       ),
     );
   }
@@ -149,7 +152,7 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
     final weighed = _kind == GoodsKind.weight;
     final cartons = _whole(_cartons);
     final size = _whole(_packSize);
-    final barcode = _barcode;
+    final scanned = _scanned;
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.line == null ? t.formNewTitle : t.goodsItemEdit)),
@@ -160,7 +163,7 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 children: [
-                  if (barcode != null && !weighed) ...[
+                  if (scanned != null) ...[
                     Container(
                       key: const Key('goodsItem.scanned'),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -172,7 +175,7 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
                           Expanded(
                             child: Text(t.goodsScanned, style: TextStyle(color: StatusTone.success.fg, fontWeight: FontWeight.w600)),
                           ),
-                          Text(formatBarcode(barcode), textDirection: TextDirection.ltr, style: TextStyle(color: StatusTone.success.fg)),
+                          Text(formatBarcode(scanned), textDirection: TextDirection.ltr, style: TextStyle(color: StatusTone.success.fg)),
                         ],
                       ),
                     ),
@@ -195,11 +198,15 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
                     ),
                     const SizedBox(height: 14),
                   ],
-                  _field('name', t.goodsName, _name, enabled: !_named),
+                  _field('name', t.goodsName, _name, enabled: !_known),
                   const SizedBox(height: 14),
                   if (weighed)
                     _field('kilos', t.goodsKilos, _kilos, number: true, decimal: true)
                   else ...[
+                    if (scanned == null) ...[
+                      _field('barcode', t.goodsBarcode, _barcode, number: true),
+                      const SizedBox(height: 14),
+                    ],
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

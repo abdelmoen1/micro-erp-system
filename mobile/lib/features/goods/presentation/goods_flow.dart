@@ -8,17 +8,15 @@ import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/message_banner.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../guide/coach_tour.dart';
-import '../../customers/presentation/record_payment_screen.dart' show paymentMethods;
 import '../../more/presentation/more_widgets.dart' show pushScreen;
 import '../../products/domain/product.dart';
 import '../../products/domain/product_code_payload.dart';
 import '../../products/presentation/add_product_flow.dart' show confirmDiscard;
-import '../../sale/presentation/checkout_screen.dart' show paymentMethodLabel;
 import '../../sale/presentation/sale_widgets.dart';
 import '../../scanner/presentation/scanner_screen.dart';
 import '../domain/goods.dart';
 import 'goods_item_screen.dart';
-import 'supplier_screens.dart';
+import 'supplier_screens.dart' show fullTime;
 
 /// «تسجيل بضاعة». True when a delivery was recorded.
 Future<bool> openGoodsFlow(BuildContext context) async {
@@ -26,9 +24,10 @@ Future<bool> openGoodsFlow(BuildContext context) async {
   return done ?? false;
 }
 
-enum _Step { items, supplier, payment, done }
+enum _Step { items, supplier, invoice }
 
-/// Three steps on a page of their own: what came in, from whom and at what price, what was paid.
+/// Two steps on a page of their own: what came in, then from whom and at what prices. The delivery
+/// is saved on the supplier's account and shown as an invoice; payments are recorded per product.
 /// Totals are computed here for the screen and again by the server; nobody types them.
 class GoodsFlowScreen extends ConsumerStatefulWidget {
   const GoodsFlowScreen({super.key});
@@ -39,16 +38,15 @@ class GoodsFlowScreen extends ConsumerStatefulWidget {
 
 class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
   final _supplier = TextEditingController();
-  final _paid = TextEditingController();
 
-  /// Buying prices by line, kept across steps. Same order as [_lines].
+  /// Prices by line, kept across steps. Same order as [_lines].
   final List<TextEditingController> _buy = [];
+  final List<TextEditingController> _carton = [];
   final List<GoodsLine> _lines = [];
   final String _operationId = 'goods-${DateTime.now().microsecondsSinceEpoch}';
 
   _Step _step = _Step.items;
   List<Supplier> _known = const [];
-  String _method = paymentMethods.first;
   bool _busy = false;
   bool _checking = false;
   bool _showErrors = false;
@@ -64,8 +62,7 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
   @override
   void dispose() {
     _supplier.dispose();
-    _paid.dispose();
-    for (final c in _buy) {
+    for (final c in [..._buy, ..._carton]) {
       c.dispose();
     }
     super.dispose();
@@ -81,9 +78,10 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
     }
   }
 
-  void _addLine(GoodsLine line) {
+  void _addLine(GoodsLine line, {Money? buy, Money? carton}) {
     _lines.add(line);
-    _buy.add(TextEditingController(text: line.buyPrice?.toApi() ?? ''));
+    _buy.add(TextEditingController(text: buy?.toApi() ?? ''));
+    _carton.add(TextEditingController(text: carton?.toApi() ?? ''));
   }
 
   Future<void> _scan() async {
@@ -99,14 +97,12 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
 
     Product? product;
     String? catalogName;
-    ProductUnit? catalogUnit;
     if (barcode != null) {
       setState(() => _checking = true);
       try {
         final match = await ref.read(productRepositoryProvider).catalogLookup(barcode);
         product = match.product;
         catalogName = match.catalogName;
-        catalogUnit = match.catalogUnit;
       } on ApiFailure {
         // The server finds the product by its barcode when the delivery is saved.
       }
@@ -114,28 +110,28 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
       setState(() => _checking = false);
     }
 
-    final unit = catalogUnit ?? code?.unit;
     final line = await navigator.push<GoodsLine>(
       MaterialPageRoute(
         builder: (_) => GoodsItemScreen(
-          seed: GoodsItemSeed(
-            product: product,
-            barcode: barcode,
-            name: catalogName ?? code?.name,
-            kind: unit == ProductUnit.kg ? GoodsKind.weight : null,
-          ),
+          seed: GoodsItemSeed(product: product, barcode: barcode, name: catalogName ?? code?.name),
         ),
       ),
     );
-    if (line != null && mounted) setState(() => _addLine(_withKnownCost(line, product)));
+    if (line == null || !mounted) return;
+    setState(() => _addLine(line, buy: _lastCost(line, product), carton: _lastCarton(line, product)));
   }
 
-  /// The last cost is the likely one: shown ready on the supplier step, still changeable.
-  GoodsLine _withKnownCost(GoodsLine line, Product? product) {
+  /// The last prices are the likely ones: shown ready on the supplier step, still changeable.
+  Money? _lastCost(GoodsLine line, Product? product) {
     final cost = product?.costPrice;
-    if (cost == null) return line;
-    final piece = Money.parse(cost);
-    return line.withBuyPrice(line.isWeighed ? piece : Money.cents(piece.cents * line.packSize));
+    if (cost == null) return null;
+    final unit = Money.parse(cost);
+    return line.isWeighed ? unit : Money.cents(unit.cents * line.packSize);
+  }
+
+  Money? _lastCarton(GoodsLine line, Product? product) {
+    final price = product?.packPrice;
+    return price == null || product?.packSize != line.packSize ? null : Money.parse(price);
   }
 
   Future<void> _addByHand() async {
@@ -153,40 +149,36 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
   void _remove(int index) => setState(() {
     _lines.removeAt(index);
     _buy.removeAt(index).dispose();
+    _carton.removeAt(index).dispose();
   });
 
   Money? _money(String text) {
     try {
-      return Money.parse(text.trim());
+      final value = Money.parse(text.trim());
+      return value.isPositive ? value : null;
     } on FormatException {
       return null;
     }
   }
 
   /// [_lines] with the prices typed so far.
-  List<GoodsLine> get _priced {
-    return [
-      for (var i = 0; i < _lines.length; i++)
-        _lines[i].withBuyPrice(switch (_money(_buy[i].text)) {
-          final Money price when price.isPositive => price,
-          _ => null,
-        }),
-    ];
-  }
+  List<GoodsLine> get _priced => [
+    for (var i = 0; i < _lines.length; i++)
+      _lines[i].withPrices(buy: _money(_buy[i].text), carton: _money(_carton[i].text)),
+  ];
 
   Money get _total => _priced.fold(Money.zero, (sum, line) => sum + line.total);
 
-  Money get _paidNow => _money(_paid.text) ?? Money.zero;
-
-  void _toPayment() {
-    final ready = _supplier.text.trim().isNotEmpty && _priced.every((l) => l.buyPrice != null);
-    setState(() {
-      _showErrors = !ready;
-      if (ready) _step = _Step.payment;
-    });
-  }
-
   Future<void> _save(AppLocalizations t) async {
+    final lines = _priced;
+    final ready = _supplier.text.trim().isNotEmpty && lines.every((l) => l.buyPrice != null && l.cartonPriceOk);
+    if (!ready) {
+      return setState(() {
+        _showErrors = true;
+        _banner = t.formFixErrors;
+      });
+    }
+
     setState(() {
       _busy = true;
       _banner = null;
@@ -194,17 +186,11 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
     try {
       final receipt = await ref
           .read(goodsRepositoryProvider)
-          .record(
-            supplierName: _supplier.text,
-            lines: _priced,
-            paid: _paidNow,
-            method: _method,
-            operationId: _operationId,
-          );
+          .record(supplierName: _supplier.text, lines: lines, operationId: _operationId);
       if (!mounted) return;
       setState(() {
         _receipt = receipt;
-        _step = _Step.done;
+        _step = _Step.invoice;
         _busy = false;
       });
     } on ValidationFailed catch (failure) {
@@ -226,34 +212,34 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
     }
   }
 
-  void _back() => setState(() {
-    _banner = null;
-    _step = _step == _Step.payment ? _Step.supplier : _Step.items;
-  });
-
-  void _again() => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const GoodsFlowScreen()));
-
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final dirty = _lines.isNotEmpty && _step != _Step.done;
+    final dirty = _lines.isNotEmpty && _step == _Step.items;
 
     return PopScope(
-      canPop: !dirty && _step != _Step.supplier && _step != _Step.payment && !_busy,
+      canPop: !dirty && _step != _Step.supplier && !_busy,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop || _busy) return;
-        if (_step == _Step.supplier || _step == _Step.payment) return _back();
+        if (_step == _Step.supplier) {
+          return setState(() {
+            _banner = null;
+            _step = _Step.items;
+          });
+        }
         final navigator = Navigator.of(context);
         if (await confirmDiscard(context)) navigator.pop(false);
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(_step == _Step.done ? t.goodsSaved : t.goodsTitle), automaticallyImplyLeading: _step != _Step.done),
+        appBar: AppBar(
+          title: Text(_step == _Step.invoice ? t.goodsInvoiceTitle : t.goodsTitle),
+          automaticallyImplyLeading: _step != _Step.invoice,
+        ),
         body: SafeArea(
           child: switch (_step) {
             _Step.items => _items(t),
             _Step.supplier => _supplierStep(t),
-            _Step.payment => _payment(t),
-            _Step.done => _done(t),
+            _Step.invoice => _invoice(t),
           },
         ),
       ),
@@ -363,12 +349,13 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
               ],
               const SizedBox(height: 14),
               for (var i = 0; i < priced.length; i++) ...[
-                _BuyTile(
+                _PriceTile(
                   key: Key('goods.buy.$i'),
+                  index: i,
                   line: priced[i],
-                  controller: _buy[i],
-                  fieldKey: Key('goods.buyPrice.$i'),
-                  missing: _showErrors && priced[i].buyPrice == null,
+                  buy: _buy[i],
+                  carton: _carton[i],
+                  showErrors: _showErrors,
                   onChanged: () => setState(() {}),
                 ),
                 const SizedBox(height: 10),
@@ -376,109 +363,18 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
             ],
           ),
         ),
+        if (_banner != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: MessageBanner(icon: Icons.warning_amber_rounded, text: _banner!),
+          ),
         _TotalBar(
           label: t.goodsTotal,
           total: _total,
           child: FilledButton(
-            key: const Key('goods.toPayment'),
-            style: FilledButton.styleFrom(backgroundColor: HisbahColors.raised, foregroundColor: HisbahColors.primary),
-            onPressed: _toPayment,
-            child: Text(t.goodsNextPay),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _payment(AppLocalizations t) {
-    final total = _total;
-    final paid = _paidNow;
-    final left = total - paid;
-    final over = left.isNegative;
-    final tone = over ? StatusTone.error : (left.isZero ? StatusTone.success : StatusTone.debt);
-    final label = over ? t.goodsOverpaid : (left.isZero ? t.goodsPaidFull : t.goodsRemaining);
-    final shown = over ? paid - total : left;
-
-    return Column(
-      children: [
-        const _Steps(current: 2),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            children: [
-              Container(
-                key: const Key('goods.total'),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: HisbahColors.primary, borderRadius: BorderRadius.circular(HisbahRadius.card)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.lock_outline_rounded, size: 18, color: HisbahColors.onPrimary),
-                        const SizedBox(width: 6),
-                        Text(t.goodsTotal, style: const TextStyle(color: HisbahColors.onPrimary, fontSize: 16)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Num(shekel(total), size: 34, weight: FontWeight.w700, color: HisbahColors.onPrimary),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              GoodsField(
-                fieldKey: const Key('goods.paid'),
-                label: t.goodsPaid,
-                controller: _paid,
-                number: true,
-                decimal: true,
-                onChanged: () => setState(() {}),
-              ),
-              const SizedBox(height: 8),
-              OptionRow(
-                children: [
-                  OptionButton(
-                    key: const Key('goods.paidAll'),
-                    label: t.goodsPaidAll,
-                    selected: false,
-                    onTap: () => setState(() => _paid.text = total.toApi()),
-                  ),
-                  OptionButton(
-                    key: const Key('goods.allDebt'),
-                    label: t.goodsAllDebt,
-                    selected: false,
-                    onTap: () => setState(_paid.clear),
-                  ),
-                ],
-              ),
-              if (paid.isPositive) ...[
-                const SizedBox(height: 12),
-                MethodChoices(selected: _method, onPick: (m) => setState(() => _method = m)),
-              ],
-              const SizedBox(height: 14),
-              Container(
-                key: const Key('goods.remaining'),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(color: tone.bg, borderRadius: BorderRadius.circular(HisbahRadius.card)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(child: Text(label, style: TextStyle(color: tone.fg, fontSize: 16, fontWeight: FontWeight.w600))),
-                    Num(shekel(shown), size: 24, weight: FontWeight.w700, color: tone.fg),
-                  ],
-                ),
-              ),
-              if (_banner != null) ...[
-                const SizedBox(height: 12),
-                MessageBanner(icon: Icons.warning_amber_rounded, text: _banner!),
-              ],
-            ],
-          ),
-        ),
-        ActionBar(
-          child: FilledButton(
             key: const Key('goods.save'),
-            onPressed: _busy || over ? null : () => _save(t),
+            style: FilledButton.styleFrom(backgroundColor: HisbahColors.raised, foregroundColor: HisbahColors.primary),
+            onPressed: _busy ? null : () => _save(t),
             child: BusyLabel(busy: _busy, label: _busy ? t.formSaving : t.goodsSave),
           ),
         ),
@@ -486,89 +382,53 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
     );
   }
 
-  Widget _done(AppLocalizations t) {
+  /// The delivery as it was saved, for the supplier: every item, its prices and the total.
+  Widget _invoice(AppLocalizations t) {
     final receipt = _receipt!;
-    Widget row(String label, Money amount, {bool strong = false}) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(child: Text(label, style: TextStyle(fontSize: 16, color: strong ? StatusTone.debt.fg : HisbahColors.inkMuted))),
-          Num(
-            shekel(amount),
-            size: strong ? 22 : 16,
-            weight: strong ? FontWeight.w700 : FontWeight.w600,
-            color: strong ? StatusTone.debt.fg : HisbahColors.ink,
-          ),
-        ],
-      ),
-    );
-
+    final lines = _priced;
     return Column(
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
+            padding: const EdgeInsets.all(16),
             children: [
-              Icon(Icons.check_circle_rounded, size: 72, color: StatusTone.success.fg),
+              Container(
+                key: const Key('goods.invoice'),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: HisbahColors.primary, borderRadius: BorderRadius.circular(HisbahRadius.card)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      receipt.supplierName,
+                      style: const TextStyle(color: HisbahColors.onPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+                    ),
+                    Text(fullTime(receipt.at), style: const TextStyle(color: HisbahColors.onPrimaryMuted, fontSize: 14)),
+                    const SizedBox(height: 10),
+                    Text(t.goodsTotal, style: const TextStyle(color: HisbahColors.onPrimary, fontSize: 16)),
+                    Num(shekel(receipt.total), size: 34, weight: FontWeight.w700, color: HisbahColors.onPrimary),
+                  ],
+                ),
+              ),
               const SizedBox(height: 12),
-              Text(
-                t.goodsSaved,
-                key: const Key('goods.saved'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                t.goodsStockUp('${receipt.lines}'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, color: HisbahColors.inkMuted),
-              ),
-              const SizedBox(height: 20),
               LineCard(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(t.goodsStepSupplier, style: const TextStyle(fontSize: 16, color: HisbahColors.inkMuted)),
-                          Flexible(child: Text(receipt.supplierName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
-                        ],
-                      ),
-                      row(t.goodsTotal, receipt.total),
-                      row(t.goodsPaid, receipt.paid),
-                      const Divider(height: 16),
-                      row(t.goodsRemaining, receipt.remaining, strong: true),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < lines.length; i++) ...[
+                      if (i > 0) const Divider(height: 1),
+                      _InvoiceRow(line: lines[i]),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FilledButton(
-                key: const Key('goods.account'),
-                onPressed: () => Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => SupplierAccountScreen(supplierId: receipt.supplierId)),
-                ),
-                child: Text(t.supplierAccount),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton(key: const Key('goods.another'), onPressed: _again, child: Text(t.goodsAnother)),
-              const SizedBox(height: 4),
-              TextButton(
-                key: const Key('goods.finish'),
-                onPressed: () => Navigator.of(context).pop(true),
-                child: Text(t.goodsFinish),
-              ),
-            ],
+        ActionBar(
+          child: FilledButton(
+            key: const Key('goods.finish'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(t.goodsFinish),
           ),
         ),
       ],
@@ -576,7 +436,7 @@ class _GoodsFlowScreenState extends ConsumerState<GoodsFlowScreen> {
   }
 }
 
-/// Where the person is: البضاعة، المورد، الدفع.
+/// Where the person is: البضاعة، المورد.
 class _Steps extends StatelessWidget {
   const _Steps({required this.current});
 
@@ -585,34 +445,28 @@ class _Steps extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final labels = [t.goodsStepItems, t.goodsStepSupplier, t.goodsStepPay];
+    final labels = [t.goodsStepItems, t.goodsStepSupplier];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           for (var i = 0; i < labels.length; i++) ...[
             if (i > 0)
-              Container(width: 14, height: 2, color: i <= current ? HisbahColors.primary : HisbahColors.progressTrack),
-            Flexible(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _StepDot(number: i + 1, done: i < current, active: i == current),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      labels[i],
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: i == current ? FontWeight.w700 : FontWeight.w400,
-                        color: i == current ? HisbahColors.ink : HisbahColors.inkMuted,
-                      ),
-                    ),
-                  ),
-                ],
+              Expanded(
+                child: Container(
+                  height: 2,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  color: i <= current ? HisbahColors.primary : HisbahColors.progressTrack,
+                ),
+              ),
+            _StepDot(number: i + 1, done: i < current, active: i == current),
+            const SizedBox(width: 6),
+            Text(
+              labels[i],
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: i == current ? FontWeight.w700 : FontWeight.w400,
+                color: i == current ? HisbahColors.ink : HisbahColors.inkMuted,
               ),
             ),
           ],
@@ -652,6 +506,10 @@ class _StepDot extends StatelessWidget {
   );
 }
 
+String _amount(AppLocalizations t, GoodsLine line) => line.isWeighed
+    ? t.goodsKilosValue(line.kilos.format(ProductUnit.kg))
+    : t.goodsCartonsValue('${line.cartons}', '${line.pieces}');
+
 class _LineTile extends StatelessWidget {
   const _LineTile({super.key, required this.line, required this.onTap, required this.onRemove});
 
@@ -674,12 +532,7 @@ class _LineTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(line.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-                    Text(
-                      line.isWeighed
-                          ? t.goodsKilosValue(line.kilos.format(ProductUnit.kg))
-                          : t.goodsCartonsValue('${line.cartons}', '${line.pieces}'),
-                      style: const TextStyle(fontSize: 15, color: HisbahColors.inkMuted),
-                    ),
+                    Text(_amount(t, line), style: const TextStyle(fontSize: 15, color: HisbahColors.inkMuted)),
                   ],
                 ),
               ),
@@ -696,20 +549,23 @@ class _LineTile extends StatelessWidget {
   }
 }
 
-class _BuyTile extends StatelessWidget {
-  const _BuyTile({
+/// What the item cost and what a whole carton sells for, with the line's total under them.
+class _PriceTile extends StatelessWidget {
+  const _PriceTile({
     super.key,
+    required this.index,
     required this.line,
-    required this.controller,
-    required this.fieldKey,
-    required this.missing,
+    required this.buy,
+    required this.carton,
+    required this.showErrors,
     required this.onChanged,
   });
 
+  final int index;
   final GoodsLine line;
-  final TextEditingController controller;
-  final Key fieldKey;
-  final bool missing;
+  final TextEditingController buy;
+  final TextEditingController carton;
+  final bool showErrors;
   final VoidCallback onChanged;
 
   @override
@@ -720,51 +576,84 @@ class _BuyTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Text(line.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(_amount(t, line), style: const TextStyle(fontSize: 14, color: HisbahColors.inkMuted)),
+            const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(line.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      Text(
-                        line.isWeighed
-                            ? t.goodsKilosValue(line.kilos.format(ProductUnit.kg))
-                            : t.goodsCartonsValue('${line.cartons}', '${line.pieces}'),
-                        style: const TextStyle(fontSize: 14, color: HisbahColors.inkMuted),
-                      ),
-                      if (cost != null)
-                        Text(t.goodsPieceCost(shekel(cost)), style: const TextStyle(fontSize: 14, color: HisbahColors.inkMuted)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 124,
                   child: GoodsField(
-                    fieldKey: fieldKey,
+                    fieldKey: Key('goods.buyPrice.$index'),
                     label: line.isWeighed ? t.goodsBuyKilo : t.goodsBuyCarton,
-                    controller: controller,
+                    controller: buy,
                     number: true,
                     decimal: true,
-                    error: missing ? t.goodsBuyRequired : null,
+                    error: showErrors && line.buyPrice == null ? t.goodsBuyRequired : null,
                     onChanged: onChanged,
                   ),
                 ),
+                if (line.sellsByCarton) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GoodsField(
+                      fieldKey: Key('goods.cartonPrice.$index'),
+                      label: t.goodsSellCarton,
+                      controller: carton,
+                      number: true,
+                      decimal: true,
+                      error: showErrors && !line.cartonPriceOk ? t.goodsCartonPriceLow : null,
+                      onChanged: onChanged,
+                    ),
+                  ),
+                ],
               ],
             ),
             const Divider(height: 18),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(t.goodsLineTotal, style: const TextStyle(color: HisbahColors.inkMuted)),
+                Flexible(
+                  child: Text(
+                    cost == null ? t.goodsLineTotal : t.goodsPieceCost(shekel(cost)),
+                    style: const TextStyle(color: HisbahColors.inkMuted),
+                  ),
+                ),
                 Num(shekel(line.total), size: 16, weight: FontWeight.w700),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InvoiceRow extends StatelessWidget {
+  const _InvoiceRow({required this.line});
+
+  final GoodsLine line;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(line.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                Text(_amount(t, line), style: const TextStyle(fontSize: 14, color: HisbahColors.inkMuted)),
+              ],
+            ),
+          ),
+          Num(shekel(line.total), size: 16, weight: FontWeight.w700),
+        ],
       ),
     );
   }
@@ -798,35 +687,3 @@ class _TotalBar extends StatelessWidget {
     ),
   );
 }
-
-/// How the supplier was paid, in the checkout's order.
-class MethodChoices extends StatelessWidget {
-  const MethodChoices({super.key, required this.selected, required this.onPick});
-
-  final String selected;
-  final ValueChanged<String> onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Column(
-      children: [
-        for (var row = 0; row < (paymentMethods.length + 1) ~/ 2; row++) ...[
-          if (row > 0) const SizedBox(height: 8),
-          OptionRow(
-            children: [
-              for (final method in paymentMethods.skip(row * 2).take(2))
-                OptionButton(
-                  key: Key('goods.method.$method'),
-                  label: paymentMethodLabel(t, method),
-                  selected: selected == method,
-                  onTap: () => onPick(method),
-                ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-}
-

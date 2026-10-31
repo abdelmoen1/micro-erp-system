@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../../core/config/env.dart';
 import '../../core/providers.dart';
 import '../../core/theme/hisbah_tokens.dart';
 import '../../core/widgets/dashed_card.dart';
@@ -370,6 +371,14 @@ class _MoreTab extends ConsumerWidget {
               title: t.morePassword,
               subtitle: t.morePasswordSub,
               onTap: () => pushScreen<void>(context, const ChangePasswordScreen()),
+            ),
+            MoreTile(
+              key: const Key('more.web'),
+              icon: Icons.open_in_browser_rounded,
+              title: t.moreWeb,
+              subtitle: t.moreWebSub,
+              // The browser keeps its own session: signed in it stays, otherwise it asks to sign in.
+              onTap: () => ref.read(externalLinkLauncherProvider)(Uri.parse('${Env.webBaseUrl}/dashboard')),
             ),
             MoreTile(
               key: const Key('more.guide'),

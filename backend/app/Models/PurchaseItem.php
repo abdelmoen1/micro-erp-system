@@ -28,6 +28,11 @@ class PurchaseItem extends Model
         ];
     }
 
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseInvoice::class, 'purchase_invoice_id');
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

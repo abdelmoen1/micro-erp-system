@@ -1,6 +1,6 @@
 import '../../../core/money/fixed_point.dart';
 
-/// Goods arrive by the carton or by weight; a weighed item has no barcode.
+/// Goods arrive by the carton or by weight. A carton always has a barcode; a weighed item never does.
 enum GoodsKind {
   carton,
   weight;
@@ -8,7 +8,7 @@ enum GoodsKind {
   ProductUnit get unit => this == weight ? ProductUnit.kg : ProductUnit.piece;
 }
 
-/// One line of a delivery. The buying price is added on the supplier step.
+/// One line of a delivery. Its buying and carton prices are added on the supplier step.
 class GoodsLine {
   const GoodsLine({
     required this.name,
@@ -20,6 +20,7 @@ class GoodsLine {
     this.packSize = 1,
     this.kilos = Quantity.zero,
     this.buyPrice,
+    this.cartonPrice,
   });
 
   final int? productId;
@@ -34,9 +35,15 @@ class GoodsLine {
   /// Per carton, or per kilo for a weighed item. Null until it is typed.
   final Money? buyPrice;
 
+  /// What a whole carton sells for, wholesale. Null until it is typed; never for a weighed item.
+  final Money? cartonPrice;
+
   bool get isWeighed => kind == GoodsKind.weight;
 
   int get pieces => cartons * packSize;
+
+  /// A "carton" of one piece has no wholesale price.
+  bool get sellsByCarton => !isWeighed && packSize > 1;
 
   /// Half-up like the server, which recomputes it (the total is never sent).
   Money get total {
@@ -52,7 +59,14 @@ class GoodsLine {
     return Money.cents((price.cents * 2 + packSize) ~/ (packSize * 2));
   }
 
-  GoodsLine withBuyPrice(Money? price) => GoodsLine(
+  /// The carton sells above one piece: a lower figure is the piece price in the wrong field.
+  bool get cartonPriceOk {
+    if (!sellsByCarton) return true;
+    final price = cartonPrice;
+    return price != null && price > Money.parse(sellingPrice);
+  }
+
+  GoodsLine withPrices({Money? buy, Money? carton}) => GoodsLine(
     name: name,
     kind: kind,
     sellingPrice: sellingPrice,
@@ -61,7 +75,8 @@ class GoodsLine {
     cartons: cartons,
     packSize: packSize,
     kilos: kilos,
-    buyPrice: price,
+    buyPrice: buy,
+    cartonPrice: carton,
   );
 
   Map<String, Object?> toApi() => {
@@ -72,6 +87,7 @@ class GoodsLine {
     if (isWeighed) 'quantity': kilos.toString() else ...{'cartons': cartons, 'pack_size': packSize},
     'buy_price': buyPrice?.toApi(),
     'selling_price': sellingPrice,
+    if (sellsByCarton) 'carton_price': cartonPrice?.toApi(),
   };
 }
 
@@ -91,65 +107,137 @@ class Supplier {
   final Money balance;
 }
 
-/// A line of the account: an invoice (adds to what is owed) or a payment (lowers it).
-class SupplierEntry {
-  const SupplierEntry({required this.isInvoice, required this.amount, required this.at, this.method});
+/// A product bought from a supplier, with what is left to pay for it.
+class SupplierProduct {
+  const SupplierProduct({required this.id, required this.name, required this.balance});
 
-  factory SupplierEntry.fromJson(Map<String, dynamic> json) => SupplierEntry(
-    isInvoice: json['type'] == 'invoice',
-    amount: Money.parse(json['amount'] as String? ?? '0'),
-    at: DateTime.tryParse(json['at'] as String? ?? '')?.toLocal() ?? DateTime.now(),
-    method: json['method'] as String?,
+  factory SupplierProduct.fromJson(Map<String, dynamic> json) => SupplierProduct(
+    id: (json['id'] as num).toInt(),
+    name: json['name'] as String? ?? '',
+    balance: Money.parse(json['balance'] as String? ?? '0'),
   );
 
-  final bool isInvoice;
-  final Money amount;
-  final DateTime at;
-  final String? method;
+  final int id;
+  final String name;
+  final Money balance;
 }
 
-class SupplierAccount {
-  const SupplierAccount({required this.supplier, required this.entries});
+class SupplierDetail {
+  const SupplierDetail({required this.supplier, required this.products});
 
-  factory SupplierAccount.fromJson(Map<String, dynamic> json) => SupplierAccount(
+  factory SupplierDetail.fromJson(Map<String, dynamic> json) => SupplierDetail(
     supplier: Supplier.fromJson(json),
-    entries: [
-      for (final row in json['entries'] as List<dynamic>? ?? const [])
-        SupplierEntry.fromJson(row as Map<String, dynamic>),
+    products: [
+      for (final row in json['products'] as List<dynamic>? ?? const [])
+        SupplierProduct.fromJson(row as Map<String, dynamic>),
     ],
   );
 
   final Supplier supplier;
-  final List<SupplierEntry> entries;
+  final List<SupplierProduct> products;
+}
+
+DateTime _time(Object? value) => DateTime.tryParse(value as String? ?? '')?.toLocal() ?? DateTime.now();
+
+/// One delivery of a product from the supplier.
+class ProductInvoice {
+  const ProductInvoice({
+    required this.number,
+    required this.at,
+    required this.quantity,
+    required this.buyPrice,
+    required this.total,
+    this.cartons,
+    this.packSize,
+    this.by,
+  });
+
+  factory ProductInvoice.fromJson(Map<String, dynamic> json) => ProductInvoice(
+    number: (json['invoice_id'] as num).toInt(),
+    at: _time(json['at']),
+    quantity: json['quantity'] as String? ?? '0',
+    buyPrice: Money.parse(json['buy_price'] as String? ?? '0'),
+    total: Money.parse(json['total'] as String? ?? '0'),
+    cartons: (json['cartons'] as num?)?.toInt(),
+    packSize: (json['pack_size'] as num?)?.toInt(),
+    by: json['by'] as String?,
+  );
+
+  final int number;
+  final DateTime at;
+
+  /// Pieces, or kg for a weighed product.
+  final String quantity;
+
+  /// Per carton, or per kilo for a weighed product.
+  final Money buyPrice;
+  final Money total;
+  final int? cartons;
+  final int? packSize;
+  final String? by;
+}
+
+class ProductPayment {
+  const ProductPayment({required this.at, required this.amount, required this.method, this.by});
+
+  factory ProductPayment.fromJson(Map<String, dynamic> json) => ProductPayment(
+    at: _time(json['at']),
+    amount: Money.parse(json['amount'] as String? ?? '0'),
+    method: json['method'] as String? ?? 'cash',
+    by: json['by'] as String?,
+  );
+
+  final DateTime at;
+  final Money amount;
+  final String method;
+  final String? by;
+}
+
+/// One product at one supplier: what is left, then its invoices and payments.
+class ProductAccount {
+  const ProductAccount({
+    required this.productName,
+    required this.weighed,
+    required this.balance,
+    required this.invoices,
+    required this.payments,
+  });
+
+  factory ProductAccount.fromJson(Map<String, dynamic> json) {
+    final product = json['product'] as Map<String, dynamic>;
+    return ProductAccount(
+      productName: product['name'] as String? ?? '',
+      weighed: product['unit'] == 'kg',
+      balance: Money.parse(json['balance'] as String? ?? '0'),
+      invoices: [
+        for (final row in json['invoices'] as List<dynamic>? ?? const [])
+          ProductInvoice.fromJson(row as Map<String, dynamic>),
+      ],
+      payments: [
+        for (final row in json['payments'] as List<dynamic>? ?? const [])
+          ProductPayment.fromJson(row as Map<String, dynamic>),
+      ],
+    );
+  }
+
+  final String productName;
+  final bool weighed;
+  final Money balance;
+  final List<ProductInvoice> invoices;
+  final List<ProductPayment> payments;
 }
 
 /// The server's answer to a recorded delivery.
 class GoodsReceipt {
-  const GoodsReceipt({
-    required this.supplierId,
-    required this.supplierName,
-    required this.total,
-    required this.paid,
-    required this.remaining,
-    required this.lines,
-  });
+  const GoodsReceipt({required this.supplierName, required this.total, required this.at});
 
-  factory GoodsReceipt.fromJson(Map<String, dynamic> json) {
-    final supplier = json['supplier'] as Map<String, dynamic>;
-    return GoodsReceipt(
-      supplierId: (supplier['id'] as num).toInt(),
-      supplierName: supplier['name'] as String? ?? '',
-      total: Money.parse(json['total'] as String),
-      paid: Money.parse(json['paid'] as String),
-      remaining: Money.parse(json['remaining'] as String),
-      lines: (json['lines'] as num).toInt(),
-    );
-  }
+  factory GoodsReceipt.fromJson(Map<String, dynamic> json) => GoodsReceipt(
+    supplierName: (json['supplier'] as Map<String, dynamic>)['name'] as String? ?? '',
+    total: Money.parse(json['total'] as String),
+    at: _time(json['at']),
+  );
 
-  final int supplierId;
   final String supplierName;
   final Money total;
-  final Money paid;
-  final Money remaining;
-  final int lines;
+  final DateTime at;
 }

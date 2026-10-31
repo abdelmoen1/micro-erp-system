@@ -84,6 +84,12 @@
 @keyframes drop { from { opacity: 0; transform: translateY(-40px) rotate(0deg); } to { opacity: 1; transform: rotate(var(--r)); } }
 
 /* ---------- feature rows ---------- */
+.lp-app { padding: 56px 0; }
+.lp-app .lp-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.lp-app .app-steps { width: 100%; margin: 8px 0; }
+.lp-app .app-step-n { background: var(--lp-ink); color: #fff; }
+.lp-app .lp-btn { display: inline-flex; align-items: center; gap: 8px; }
+.lp-app .app-dl-size { border-inline-start-color: rgb(255 255 255 / 0.4); }
 .lp-feature { padding: 64px 0; }
 .lp-feature-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 64px 88px; align-items: center; }
 .lp-feature.flip .lp-copy { order: 2; }

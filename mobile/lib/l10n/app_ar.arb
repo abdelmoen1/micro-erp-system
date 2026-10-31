@@ -1741,12 +1741,10 @@
   "goodsTitle": "تسجيل بضاعة",
   "goodsStepItems": "البضاعة",
   "goodsStepSupplier": "المورد",
-  "goodsStepPay": "الدفع",
   "goodsScan": "امسح باركود",
   "goodsManual": "أضف يدوي",
   "goodsEmpty": "امسح أول صنف",
   "goodsNextSupplier": "التالي: المورد",
-  "goodsNextPay": "التالي: الدفع",
   "goodsItemEdit": "الصنف",
   "goodsScanned": "تم المسح",
   "goodsKindCarton": "كرتونة",
@@ -1764,28 +1762,18 @@
   "goodsRemove": "حذف",
   "goodsSupplierName": "اسم المورد",
   "goodsSupplierRequired": "اكتب اسم المورد",
-  "goodsBuyCarton": "سعر الكرتونة",
-  "goodsBuyKilo": "سعر الكيلو",
+  "goodsBuyCarton": "سعر الشراء",
+  "goodsBuyKilo": "شراء الكيلو",
   "goodsBuyRequired": "مطلوب",
   "goodsLineTotal": "المجموع",
   "goodsTotal": "الإجمالي",
-  "goodsPaid": "المدفوع",
-  "goodsPaidAll": "دفعت كله",
-  "goodsAllDebt": "كله دين",
   "goodsRemaining": "المتبقي عليك",
-  "goodsPaidFull": "مدفوعة بالكامل",
-  "goodsOverpaid": "أكثر من الإجمالي",
   "goodsSave": "سجّل البضاعة",
-  "goodsSaved": "تم تسجيل البضاعة",
-  "goodsAnother": "سجّل بضاعة ثانية",
   "goodsFinish": "تم",
-  "supplierAccount": "حساب المورد",
   "suppliersTitle": "الموردين",
   "suppliersSub": "الفواتير والدفعات",
   "suppliersEmpty": "لسا ما في موردين",
   "supplierOwed": "عليك للمورد",
-  "supplierMoves": "الحركات",
-  "supplierInvoice": "فاتورة بضاعة",
   "supplierPay": "سجّل دفعة",
   "supplierPayTitle": "دفعة للمورد",
   "supplierOwes": "عليك",
@@ -1802,7 +1790,7 @@
   "coachScanTitle": "امسح أي صنف عندك",
   "coachScanBody": "جرّب هلأ، على علبة قدامك.",
   "coachNextTitle": "كمّل للمورد",
-  "coachNextBody": "بعدها بتكتب سعر الشراء والمدفوع.",
+  "coachNextBody": "بعدها بتكتب سعر الشراء وسعر البيع.",
   "coachSellTitle": "اضغط «بيع»",
   "coachSellBody": "هون بتعمل فاتورة الزبون.",
   "otpNoSmsTitle": "ما وصلتك الرسالة؟",
@@ -1843,26 +1831,35 @@
       }
     }
   },
-  "goodsStockUp": "زاد المخزون: {count} أصناف",
-  "@goodsStockUp": {
-    "placeholders": {
-      "count": {
-        "type": "String"
-      }
-    }
-  },
-  "supplierPayment": "دفعة {method}",
-  "@supplierPayment": {
-    "placeholders": {
-      "method": {
-        "type": "String"
-      }
-    }
-  },
   "otpWhatsappText": "بدي رمز تفعيل حسبة لرقم {phone}",
   "@otpWhatsappText": {
     "placeholders": {
       "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "goodsInvoiceTitle": "فاتورة البضاعة",
+  "goodsBarcode": "الباركود",
+  "goodsBarcodeRequired": "اكتب رقم الباركود",
+  "goodsSellCarton": "سعر بيع الكرتونة",
+  "goodsCartonPriceLow": "أعلى من سعر القطعة",
+  "supplierProducts": "الأصناف",
+  "supplierInvoices": "الفواتير",
+  "supplierPayments": "الدفعات",
+  "supplierNoPayments": "لسا ما في دفعات",
+  "supplierTime": "الوقت",
+  "supplierPieces": "القطع",
+  "supplierBy": "سجّلها",
+  "supplierFinalPrice": "السعر النهائي",
+  "supplierPaymentDetail": "تفاصيل الدفعة",
+  "supplierMethod": "طريقة الدفع",
+  "moreWeb": "لوحة التحكم على الويب",
+  "moreWebSub": "افتحها في المتصفح",
+  "supplierInvoiceNumber": "فاتورة رقم {number}",
+  "@supplierInvoiceNumber": {
+    "placeholders": {
+      "number": {
         "type": "String"
       }
     }
