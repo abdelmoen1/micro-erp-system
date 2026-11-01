@@ -61,6 +61,21 @@ export const queryKeys = {
     all: ["payments"],
     list: (filters) => ["payments", "list", filters],
   },
+  purchases: {
+    all: ["purchases"],
+    list: (filters) => ["purchases", "list", filters],
+    detail: (id) => ["purchases", "detail", id],
+  },
+  suppliers: {
+    all: ["suppliers"],
+    list: (filters) => ["suppliers", "list", filters],
+    detail: (id) => ["suppliers", "detail", id],
+  },
+  returns: {
+    all: ["returns"],
+    sales: (filters) => ["returns", "sales", filters],
+    purchases: (filters) => ["returns", "purchases", filters],
+  },
   staff: { all: ["staff"] },
   sync: {
     all: ["sync"],

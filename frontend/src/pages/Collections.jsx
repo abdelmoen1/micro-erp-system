@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Icon from "../components/Icon";
 import { OpeningDebtDialog, RecordPaymentDialog } from "../components/dialogs";
 import { ConfirmSummary, DataTable, Dialog, EmptyState, ErrorBanner, Field, MoneyText, PageHeader, Pager, ReasonField, StatusBadge } from "../components/ui";
@@ -21,7 +21,8 @@ const daysLate = (due) => Math.max(0, Math.round((Date.now() - new Date(`${due}T
 /** SCR-W-13 · debts: due today, this week, overdue, highest balance, all; opening debt (US-0704). */
 export function Debts() {
   const manager = canManage(session.user());
-  const [bucket, setBucket] = useState("overdue");
+  const [params] = useSearchParams();
+  const [bucket, setBucket] = useState(() => (BUCKETS.some(([key]) => key === params.get("bucket")) ? params.get("bucket") : "overdue"));
   const [pageNo, setPageNo] = useState(1);
   const [dialog, setDialog] = useState(null);
   const byCustomer = bucket === "balance";
@@ -144,7 +145,8 @@ function PayFromList({ customer, remaining, onClose }) {
 /** SCR-W-14 · payments: history with filters, record, reverse single or whole group (US-0704). */
 export function Payments() {
   const manager = canManage(session.user());
-  const [filters, setFilters] = useState({ from: "", to: "" });
+  const [params] = useSearchParams();
+  const [filters, setFilters] = useState({ from: params.get("from") ?? "", to: params.get("to") ?? "" });
   const [pageNo, setPageNo] = useState(1);
   const [reversing, setReversing] = useState(null);
   const setRange = (patch) => {

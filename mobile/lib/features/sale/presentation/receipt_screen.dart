@@ -8,6 +8,8 @@ import '../../../core/theme/hisbah_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/domain/app_user.dart';
+import '../../print/application/print_documents.dart';
+import '../../print/presentation/print_sheet.dart';
 import '../data/sale_repository.dart';
 import 'checkout_screen.dart';
 import 'sale_widgets.dart';
@@ -150,6 +152,8 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    PrintButton(key: const Key('receipt.print'), document: () => saleDocument(t, _receipt, user)),
+                    const SizedBox(height: 8),
                     FilledButton.icon(
                       key: const Key('receipt.newSale'),
                       onPressed: () => Navigator.of(context).pop(),

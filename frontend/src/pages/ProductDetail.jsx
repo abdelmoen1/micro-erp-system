@@ -12,6 +12,8 @@ const MOVEMENT = {
   sale: "بيع",
   sale_void: "إلغاء فاتورة",
   sale_return: "مرتجع",
+  purchase: "مشتريات",
+  purchase_return: "مرتجع مشتريات",
   adjustment_in: "تعديل: زيادة",
   adjustment_out: "تعديل: خصم",
 };
@@ -52,7 +54,7 @@ export default function ProductDetail() {
 
   return (
     <>
-      <Crumbs items={[["البضاعة", "/products"], [isNew ? "صنف جديد" : p.name]]} />
+      <Crumbs items={[["المخزن", "/products"], [isNew ? "صنف جديد" : p.name]]} />
       <div className="split">
         <ProductForm key={p?.id ?? "new"} product={p} manager={manager} onSaved={(saved) => (isNew ? navigate(`/products/${saved.id}`, { replace: true }) : null)} />
 
@@ -78,7 +80,7 @@ export default function ProductDetail() {
               <div role="status" className="banner tone-pending">
                 <Icon name="ban" size={20} />
                 <span>
-                  هذا الصنف موقوف: لا يظهر في البيع ولا في قائمة البضاعة.
+                  هذا الصنف موقوف: لا يظهر في البيع ولا في قائمة المخزن.
                   {manager ? <span className="sub">أعِده ليرجع كما كان بسعره ومخزونه.</span> : null}
                 </span>
               </div>
@@ -136,8 +138,8 @@ export default function ProductDetail() {
       {adjusting ? <AdjustDialog product={p} onClose={() => setParams({})} /> : null}
       {confirmStop ? (
         <Dialog title={`إيقاف «${p.name}»؟`} role="alertdialog" tone="warning" icon="ban" onClose={() => setConfirmStop(false)}>
-          <p>لن يظهر في البيع ولا في قائمة البضاعة. حركاته وفواتيره السابقة تبقى في السجل.</p>
-          <p className="field-hint">تستطيع إعادته متى شئت من «البضاعة ← موقوفة»، فيرجع كما كان.</p>
+          <p>لن يظهر في البيع ولا في قائمة المخزن. حركاته وفواتيره السابقة تبقى في السجل.</p>
+          <p className="field-hint">تستطيع إعادته متى شئت من «المخزن ← موقوفة»، فيرجع كما كان.</p>
           <div className="dlg-actions">
             <button
               type="button"

@@ -447,6 +447,8 @@ a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border
 .kpi { padding: 16px; display: flex; flex-direction: column; gap: 6px; min-height: 128px; }
 .kpi:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--line-2), var(--sh-md); }
 .kpi-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.kpi-link, .kpi-link:hover { color: inherit; text-decoration: none; }
+.kpi-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .kpi-label { font-size: 13px; color: var(--tx-2); font-weight: 600; }
 .kpi-ic { flex: none; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--brand-tint); color: var(--deep); transition: transform 0.3s var(--ease); }
 .kpi:hover .kpi-ic { transform: rotate(-8deg) scale(1.06); }
@@ -510,4 +512,34 @@ tbody tr:hover { background: #f7f9f9; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* A return in a list: what went back on one side, its value and print on the other. */
+.return-row { display: flex; justify-content: space-between; gap: 10px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 14px; }
+.return-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; }
+
+/* The printed invoice: black on white, as wide as the paper, whether a roll or A4. */
+.print-doc { display: none; }
+@media print {
+  @page { margin: 8mm; }
+  html, body { background: #fff !important; }
+  body > *:not(.print-doc) { display: none !important; }
+  .print-doc { display: block; max-width: 180mm; margin: 0 auto; color: #000; font-size: 12pt; line-height: 1.5; }
+  .print-head { text-align: center; }
+  .print-head h1 { font-size: 18pt; }
+  .print-head h2 { font-size: 14pt; margin-top: 6pt; }
+  .print-head p { margin: 0; }
+  .print-stamp { border: 2px solid #000; font-size: 16pt; font-weight: 700; margin-top: 6pt !important; }
+  .print-facts, .print-totals { margin: 8pt 0; padding: 6pt 0; border-top: 1px dashed #000; }
+  .print-facts div, .print-totals div { display: flex; justify-content: space-between; gap: 12pt; }
+  .print-facts dd, .print-totals dd { margin: 0; font-weight: 600; }
+  .print-totals .strong { font-size: 15pt; font-weight: 700; }
+  .print-lines { width: 100%; border-collapse: collapse; }
+  .print-lines tr { break-inside: avoid; }
+  .print-lines td { padding: 3pt 0; vertical-align: top; }
+  .print-lines td:last-child { text-align: left; white-space: nowrap; font-weight: 700; }
+  .print-lines b, .print-lines small { display: block; }
+  .print-lines small { font-size: 10pt; }
+  .print-note { margin: 0; }
+  .print-foot { text-align: center; margin-top: 8pt; }
 }

@@ -31,7 +31,8 @@ class InvoiceController extends Controller
 
     /**
      * W-10 sales list (US-0504 AC1): local-date range in the store timezone, type (cash = nothing
-     * owed at the sale, credit = nothing paid, partial = both), status and customer. `source`
+     * owed at the sale, credit = nothing paid, partial = both, on_credit = credit or partial, as the
+     * dashboard's credit figure counts them), status and customer. `source`
      * keeps opening debts out of the sales list when set to `sale`.
      */
     public function index(Request $request)
@@ -39,7 +40,7 @@ class InvoiceController extends Controller
         $filters = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
-            'type' => ['nullable', Rule::in(['cash', 'credit', 'partial'])],
+            'type' => ['nullable', Rule::in(['cash', 'credit', 'partial', 'on_credit'])],
             'status' => ['nullable', Rule::in([Invoice::STATUS_ACTIVE, Invoice::STATUS_VOIDED, 'all'])],
             'source' => ['nullable', Rule::in(['sale', 'opening_debt', 'all'])],
             'customer_id' => ['nullable', 'integer'],
@@ -60,6 +61,7 @@ class InvoiceController extends Controller
                 'cash' => $q->where('has_debt', false),
                 'credit' => $q->where('has_debt', true)->where('paid_amount', 0),
                 'partial' => $q->where('has_debt', true)->where('paid_amount', '>', 0),
+                'on_credit' => $q->where('has_debt', true),
             })
             ->latest()
             ->orderByDesc('id')

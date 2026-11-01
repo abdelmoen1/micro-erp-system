@@ -33,6 +33,9 @@ class StockMovement extends Model
     // Goods received from a supplier.
     public const TYPE_PURCHASE = 'purchase';
 
+    // Goods sent back to the supplier.
+    public const TYPE_PURCHASE_RETURN = 'purchase_return';
+
     protected $fillable = [
         'store_id',
         'product_id',

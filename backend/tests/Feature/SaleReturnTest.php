@@ -140,6 +140,55 @@ class SaleReturnTest extends TestCase
             ->assertJsonPath('code', 'INVOICE_HAS_RETURNS');
     }
 
+    public function test_a_damaged_line_is_refunded_but_never_goes_back_on_the_shelf(): void
+    {
+        $tea = $this->makeProduct($this->store, ['selling_price' => '6.50', 'current_stock' => 10]);
+        $sale = $this->sale(['items' => [['product_id' => $tea->id, 'quantity' => 3]], 'paid_amount' => '19.50', 'payment_method' => 'cash']);
+
+        $this->actingAs($this->owner, 'sanctum')->postJson("/api/v1/sales/{$sale->id}/returns", [
+            'items' => [
+                ['invoice_item_id' => $sale->items[0]->id, 'quantity' => 2, 'damaged' => true],
+            ],
+            'reason' => 'علبة مفتوحة',
+        ], $this->idem())
+            ->assertCreated()
+            ->assertJsonPath('data.refund_amount', '13.00')
+            ->assertJsonPath('data.items.0.damaged', true)
+            ->assertJsonPath('invoice.items.0.returned_quantity', '2');
+
+        $this->assertSame('7.000', $tea->fresh()->current_stock);
+        $this->assertDatabaseMissing('stock_movements', ['product_id' => $tea->id, 'type' => 'sale_return']);
+    }
+
+    public function test_the_returns_register_lists_sale_returns_with_the_customer(): void
+    {
+        $customer = $this->makeCustomer($this->store);
+        $oil = $this->makeProduct($this->store, ['selling_price' => '15.00']);
+        $sale = $this->sale(['customer_id' => $customer->id, 'items' => [['product_id' => $oil->id, 'quantity' => 2]], 'paid_amount' => '0']);
+        $this->returnLines($sale, [[$sale->items[0]->id, 1]])->assertCreated();
+
+        $this->actingAs($this->owner, 'sanctum')->getJson('/api/v1/returns/sales')
+            ->assertOk()
+            ->assertJsonPath('data.0.invoice_id', $sale->id)
+            ->assertJsonPath('data.0.customer.name', $customer->name)
+            ->assertJsonPath('data.0.items.0.item_name', $oil->name);
+
+        $stranger = $this->makeUser($this->makeStore());
+        $this->actingAs($stranger, 'sanctum')->getJson('/api/v1/returns/sales')->assertJsonCount(0, 'data');
+    }
+
+    public function test_the_sales_list_finds_everything_sold_on_credit(): void
+    {
+        $customer = $this->makeCustomer($this->store);
+        $oil = $this->makeProduct($this->store, ['selling_price' => '15.00']);
+        $this->sale(['items' => [['product_id' => $oil->id, 'quantity' => 1]], 'paid_amount' => '15.00', 'payment_method' => 'cash']);
+        $this->sale(['customer_id' => $customer->id, 'items' => [['product_id' => $oil->id, 'quantity' => 1]], 'paid_amount' => '0']);
+        $this->sale(['customer_id' => $customer->id, 'items' => [['product_id' => $oil->id, 'quantity' => 2]], 'paid_amount' => '5.00', 'payment_method' => 'cash']);
+
+        $this->actingAs($this->owner, 'sanctum')->getJson('/api/v1/sales?type=on_credit')->assertOk()->assertJsonCount(2, 'data');
+        $this->actingAs($this->owner, 'sanctum')->getJson('/api/v1/sales?type=cash')->assertOk()->assertJsonCount(1, 'data');
+    }
+
     private function sale(array $body): Invoice
     {
         return app(SaleService::class)->create($this->owner, $body)['invoice'];

@@ -59,6 +59,7 @@ class StoreIsolationSweepTest extends TestCase
     private function foreignIds(): array
     {
         $theirs = $this->makeStore('Theirs');
+        $theirSupplier = \App\Models\Supplier::create(['store_id' => $theirs->id, 'name' => 'Theirs']);
         $theirStaff = $this->makeUser($theirs, 'employee');
         $customer = $this->makeCustomer($theirs);
         $invoice = $this->makeCreditInvoice($theirs, $customer);
@@ -75,7 +76,8 @@ class StoreIsolationSweepTest extends TestCase
             'paymentGroupId' => $group,
             'user' => $theirStaff->id,
             'product' => $this->makeProduct($theirs)->id,
-            'supplier' => \App\Models\Supplier::create(['store_id' => $theirs->id, 'name' => 'Theirs'])->id,
+            'supplier' => $theirSupplier->id,
+            'purchaseInvoice' => $theirSupplier->invoices()->create(['store_id' => $theirs->id, 'total' => '10.00'])->id,
             'conflict' => SyncConflict::create([
                 'store_id' => $theirs->id,
                 'client_transaction_id' => (string) Str::uuid(),

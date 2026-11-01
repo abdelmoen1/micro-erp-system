@@ -14,19 +14,37 @@ import 'sale_widgets.dart';
 
 enum SalesPeriod { today, week, month, all }
 
+/// As the dashboard's figures split sales; [onCredit] is anything that left a debt.
+enum SalesType {
+  all(null),
+  cash('cash'),
+  onCredit('on_credit');
+
+  const SalesType(this.apiValue);
+
+  final String? apiValue;
+}
+
 final _day = DateFormat('yyyy-MM-dd', 'en');
 final _when = DateFormat('dd/MM · HH:mm', 'en');
 
 /// Every sale of the store, newest first, by period; a tap opens the invoice in full.
 class SalesHistoryScreen extends ConsumerStatefulWidget {
-  const SalesHistoryScreen({super.key});
+  const SalesHistoryScreen({super.key, this.period = SalesPeriod.today, this.type = SalesType.all, this.activeOnly = false});
+
+  final SalesPeriod period;
+  final SalesType type;
+
+  /// Leaves voided sales out, so the list adds up to the figure that opened it.
+  final bool activeOnly;
 
   @override
   ConsumerState<SalesHistoryScreen> createState() => _SalesHistoryScreenState();
 }
 
 class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
-  SalesPeriod _period = SalesPeriod.today;
+  late SalesPeriod _period = widget.period;
+  late SalesType _type = widget.type;
   final List<SaleReceipt> _sales = [];
   int _page = 0;
   bool _hasMore = false;
@@ -71,7 +89,9 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
     });
     final (from, to) = _range();
     try {
-      final page = await ref.read(saleRepositoryProvider).history(from: from, to: to, page: _page + 1);
+      final page = await ref
+          .read(saleRepositoryProvider)
+          .history(from: from, to: to, page: _page + 1, type: _type.apiValue, activeOnly: widget.activeOnly);
       if (!mounted || generation != _generation) return;
       setState(() {
         _page++;
@@ -160,6 +180,30 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                     onTap: () {
                       if (_period == period) return;
                       setState(() => _period = period);
+                      _reload();
+                    },
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: OptionRow(
+              gap: 4,
+              children: [
+                for (final (type, label) in [
+                  (SalesType.all, t.salesAll),
+                  (SalesType.cash, t.homeCash),
+                  (SalesType.onCredit, t.homeCredit),
+                ])
+                  OptionButton(
+                    key: Key('sales.type.${type.name}'),
+                    label: label,
+                    fontSize: 13,
+                    selected: _type == type,
+                    onTap: () {
+                      if (_type == type) return;
+                      setState(() => _type = type);
                       _reload();
                     },
                   ),

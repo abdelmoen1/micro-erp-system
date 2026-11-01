@@ -15,8 +15,11 @@ const ROLE_LABEL = { owner: "مالك المتجر", manager: "مدير", employ
 const NAV = [
   { label: "الرئيسية", icon: "home", to: "/dashboard" },
   { label: "المبيعات", icon: "sales", to: "/sales" },
+  { label: "المشتريات", icon: "bag", to: "/purchases", managerOnly: true },
+  { label: "المرتجعات", icon: "undo", to: "/returns" },
   { label: "الزبائن", icon: "customers", to: "/customers" },
-  { label: "البضاعة", icon: "products", to: "/products" },
+  { label: "الموردين", icon: "truck", to: "/suppliers", managerOnly: true },
+  { label: "المخزن", icon: "products", to: "/products" },
   { label: "الديون", icon: "debts", to: "/debts" },
   { label: "المدفوعات", icon: "payments", to: "/payments" },
   { label: "الموظفون", icon: "staff", to: "/staff", ownerOnly: true },

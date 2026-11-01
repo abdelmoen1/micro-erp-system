@@ -24,7 +24,17 @@ function useInvalidateLedger() {
   const client = useQueryClient();
   return () =>
     Promise.all(
-      [queryKeys.customers.all, queryKeys.debts.all, queryKeys.payments.all, queryKeys.sales.all, queryKeys.products.all, ["dashboard"]].map(
+      [
+        queryKeys.customers.all,
+        queryKeys.debts.all,
+        queryKeys.payments.all,
+        queryKeys.sales.all,
+        queryKeys.products.all,
+        queryKeys.purchases.all,
+        queryKeys.suppliers.all,
+        queryKeys.returns.all,
+        ["dashboard"],
+      ].map(
         (queryKey) => client.invalidateQueries({ queryKey }),
       ),
     );
@@ -137,6 +147,39 @@ export function useReturnSale() {
     onSuccess: invalidate,
   });
 }
+
+// ---------------------------------------------------------------- purchases, suppliers, returns
+export const usePurchases = (filters) =>
+  useQuery({ queryKey: queryKeys.purchases.list(filters), queryFn: page(`/purchases${qs(filters)}`), placeholderData: (p) => p });
+
+export const usePurchase = (id) => useQuery({ queryKey: queryKeys.purchases.detail(id), queryFn: data(`/purchases/${id}`) });
+
+export function useReturnPurchase() {
+  const invalidate = useInvalidateLedger();
+  return useMutation({
+    mutationFn: ({ id, items, reason, key }) => apiIdempotent("POST", `/purchases/${id}/returns`, { items, reason }, { idempotencyKey: key }),
+    onSuccess: invalidate,
+  });
+}
+
+export const useSuppliers = (filters) =>
+  useQuery({ queryKey: queryKeys.suppliers.list(filters), queryFn: data(`/suppliers${qs(filters)}`), placeholderData: (p) => p });
+
+export const useSupplier = (id) => useQuery({ queryKey: queryKeys.suppliers.detail(String(id)), queryFn: data(`/suppliers/${id}`) });
+
+export function usePaySupplier() {
+  const invalidate = useInvalidateLedger();
+  return useMutation({
+    mutationFn: ({ id, amount, method, key }) => apiIdempotent("POST", `/suppliers/${id}/payments`, { amount, method }, { idempotencyKey: key }),
+    onSuccess: invalidate,
+  });
+}
+
+export const useSaleReturns = (filters, enabled = true) =>
+  useQuery({ queryKey: queryKeys.returns.sales(filters), queryFn: page(`/returns/sales${qs(filters)}`), placeholderData: (p) => p, enabled });
+
+export const usePurchaseReturns = (filters, enabled = true) =>
+  useQuery({ queryKey: queryKeys.returns.purchases(filters), queryFn: page(`/returns/purchases${qs(filters)}`), placeholderData: (p) => p, enabled });
 
 // ---------------------------------------------------------------- debts and payments (W-13, W-14)
 export const useDebts = (filters) =>

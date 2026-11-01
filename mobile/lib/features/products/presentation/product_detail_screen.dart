@@ -267,6 +267,8 @@ class _MoveRow extends StatelessWidget {
       'sale' => t.moveSale,
       'sale_void' => t.moveVoid,
       'sale_return' => t.moveReturn,
+      'purchase' => t.movePurchase,
+      'purchase_return' => t.movePurchaseReturn,
       'adjustment_in' => t.moveIn,
       'adjustment_out' => t.moveOut,
       _ => m.type,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PaymentMethods;
 use App\Http\Requests\StorePurchaseRequest;
+use App\Http\Resources\PurchaseReturnResource;
 use App\Models\Product;
 use App\Models\PurchaseItem;
 use App\Models\Supplier;
@@ -38,11 +39,13 @@ class SupplierController extends Controller
         return response()->json(['data' => $suppliers->map(fn(Supplier $s) => $this->row($s))]);
     }
 
-    /** The supplier: what is owed in all, the products bought from them, and the payments made. */
+    /** The supplier: what is owed in all, the products bought, the payments made, the goods sent back. */
     public function show(Request $request, Supplier $supplier)
     {
         Gate::authorize('adjustStock', Product::class);
-        $supplier->loadSum('invoices as purchased', 'total')->loadSum('payments as paid', 'amount');
+        $supplier->loadSum('invoices as purchased', 'total')
+            ->loadSum('payments as paid', 'amount')
+            ->loadSum('returns as returned', 'balance_reduction');
 
         $products = PurchaseItem::query()
             ->whereIn('purchase_invoice_id', $supplier->invoices()->select('id'))
@@ -67,7 +70,13 @@ class SupplierController extends Controller
                 'method' => $payment->method,
             ]);
 
-        return response()->json(['data' => $this->row($supplier) + ['products' => $products, 'payments' => $payments]]);
+        $returns = $supplier->returns()->with(['creator', 'items.purchaseItem.product'])->latest('id')->limit(200)->get();
+
+        return response()->json(['data' => $this->row($supplier) + [
+            'products' => $products,
+            'payments' => $payments,
+            'returns' => PurchaseReturnResource::collection($returns),
+        ]]);
     }
 
     /** One product at this supplier: its invoices. */
@@ -135,7 +144,7 @@ class SupplierController extends Controller
             'id' => $supplier->id,
             'name' => $supplier->name,
             'phone' => $supplier->phone,
-            'balance' => Money::sub($supplier->purchased, $supplier->paid),
+            'balance' => Money::sub(Money::sub($supplier->purchased, $supplier->paid), $supplier->returned),
         ];
     }
 }

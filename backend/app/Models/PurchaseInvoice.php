@@ -38,4 +38,9 @@ class PurchaseInvoice extends Model
     {
         return $this->hasMany(SupplierPayment::class);
     }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(PurchaseReturn::class);
+    }
 }
