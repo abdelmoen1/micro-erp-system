@@ -1,0 +1,50 @@
+### Purchases, suppliers and both return registers. Owner / Manager, except GET /returns/sales.
+### The server computes every split; a client only previews it.
+
+@base = https://hisbah-api-alur.onrender.com/api/v1
+@token = {{login.response.body.token}}
+
+### The purchases register: newest first, local dates in the store timezone.
+GET {{base}}/purchases?from=2026-11-01&to=2026-11-01&supplier_id=7&per_page=20
+Authorization: Bearer {{token}}
+
+### One invoice with its lines (quantity and returned_quantity in pieces or kg) and its returns.
+GET {{base}}/purchases/12
+Authorization: Bearer {{token}}
+
+### Goods back to the supplier. The value lowers the supplier's balance first (balance_reduction);
+### what is left comes back from the supplier (refund_amount). from_stock false: the goods are
+### already off the shelf (a customer returned them damaged), so the stock does not move.
+### 422 INSUFFICIENT_STOCK when the shelf holds less than what is going back.
+POST {{base}}/purchases/12/returns
+Authorization: Bearer {{token}}
+Idempotency-Key: 6f1d2c3e-0000-4000-8000-000000000001
+Content-Type: application/json
+
+{
+  "items": [{ "purchase_item_id": 21, "quantity": "24", "from_stock": true }],
+  "reason": "بضاعة تالفة"
+}
+
+### Goods back from a customer: a line marked damaged is valued like the rest but stays off the shelf.
+POST {{base}}/sales/40/returns
+Authorization: Bearer {{token}}
+Idempotency-Key: 6f1d2c3e-0000-4000-8000-000000000002
+Content-Type: application/json
+
+{
+  "items": [{ "invoice_item_id": 9, "quantity": "1", "damaged": true }],
+  "reason": "علبة مفتوحة"
+}
+
+### The return registers.
+GET {{base}}/returns/sales?from=2026-11-01&to=2026-11-01
+Authorization: Bearer {{token}}
+
+###
+GET {{base}}/returns/purchases?from=2026-11-01&to=2026-11-01&supplier_id=7
+Authorization: Bearer {{token}}
+
+### Sales by kind. on_credit = credit + partial, as the dashboard's credit figure counts them.
+GET {{base}}/sales?type=on_credit&status=active&source=sale&from=2026-11-01&to=2026-11-01
+Authorization: Bearer {{token}}

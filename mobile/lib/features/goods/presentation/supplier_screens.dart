@@ -10,10 +10,13 @@ import '../../../core/widgets/state_views.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../customers/presentation/record_payment_screen.dart' show paymentMethods;
 import '../../more/presentation/more_widgets.dart' show pushScreen;
+import '../../returns/presentation/period_list.dart' show ListPeriod;
+import '../../returns/presentation/returns_screen.dart' show ReturnRow, showPurchaseReturn;
 import '../../sale/presentation/checkout_screen.dart' show paymentMethodLabel;
 import '../../sale/presentation/sale_widgets.dart';
 import '../domain/goods.dart';
 import 'goods_item_screen.dart' show GoodsField;
+import 'purchases_screen.dart';
 
 final suppliersProvider = FutureProvider.autoDispose<List<Supplier>>((ref) => ref.watch(goodsRepositoryProvider).suppliers());
 
@@ -177,6 +180,19 @@ class SupplierScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   children: [
                     _BalanceCard(label: t.supplierOwed, amount: data.supplier.balance),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      key: const Key('supplier.invoices'),
+                      onPressed: () async {
+                        await pushScreen<void>(
+                          context,
+                          PurchasesScreen(period: ListPeriod.all, supplierId: supplierId, supplierName: name),
+                        );
+                        ref.invalidate(supplierProvider(supplierId));
+                      },
+                      icon: const Icon(Icons.receipt_long_outlined, size: 20),
+                      label: Text(t.supplierInvoices),
+                    ),
                     _SectionTitle(t.supplierProducts),
                     _Rows(
                       rows: [
@@ -208,6 +224,21 @@ class SupplierScreen extends ConsumerWidget {
                             ),
                         ],
                       ),
+                    if (data.returns.isNotEmpty) ...[
+                      _SectionTitle(t.returnsTitle),
+                      _Rows(
+                        rows: [
+                          for (final row in data.returns)
+                            ReturnRow(
+                              key: Key('supplier.return.${row.id}'),
+                              title: row.reason,
+                              at: row.at,
+                              amount: row.total,
+                              onTap: () => showPurchaseReturn(context, ref, row),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -256,7 +287,11 @@ class SupplierProductScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             children: [
               for (final invoice in data.invoices) ...[
-                _InvoiceCard(key: Key('supplier.invoice.${invoice.number}'), invoice: invoice, weighed: data.weighed),
+                InkWell(
+                  onTap: () => pushScreen<void>(context, PurchaseDetailScreen(purchaseId: invoice.number)),
+                  borderRadius: BorderRadius.circular(HisbahRadius.card),
+                  child: _InvoiceCard(key: Key('supplier.invoice.${invoice.number}'), invoice: invoice, weighed: data.weighed),
+                ),
                 const SizedBox(height: 12),
               ],
             ],

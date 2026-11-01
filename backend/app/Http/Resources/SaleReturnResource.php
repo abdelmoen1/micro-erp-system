@@ -18,6 +18,7 @@ class SaleReturnResource extends JsonResource
         return [
             'id' => $this->id,
             'invoice_id' => $this->invoice_id,
+            'customer' => $this->whenLoaded('customer', fn() => $this->customer ? ['id' => $this->customer->id, 'name' => $this->customer->name] : null),
             'total_amount' => Money::of($this->total_amount),
             'debt_reduction' => Money::of($this->debt_reduction),
             'refund_amount' => Money::of($this->refund_amount),
@@ -32,6 +33,7 @@ class SaleReturnResource extends JsonResource
                 'quantity' => Quantity::format($item->quantity, $item->invoiceItem?->unit),
                 'unit_price' => Money::of($item->unit_price),
                 'total' => Money::of($item->total),
+                'damaged' => (bool) $item->damaged,
             ])->values()),
         ];
     }

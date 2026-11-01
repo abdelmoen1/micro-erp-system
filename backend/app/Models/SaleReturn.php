@@ -35,6 +35,11 @@ class SaleReturn extends Model
         return $this->belongsTo(Invoice::class);
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function items()
     {
         return $this->hasMany(SaleReturnItem::class);

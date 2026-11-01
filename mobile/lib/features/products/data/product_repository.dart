@@ -192,7 +192,7 @@ class StockMove {
     createdAt: DateTime.tryParse(json['created_at'] as String? ?? '')?.toLocal(),
   );
 
-  /// `opening`, `sale`, `sale_void`, `sale_return`, `adjustment_in`, `adjustment_out`.
+  /// `opening`, `sale`, `sale_void`, `sale_return`, `purchase`, `purchase_return`, `adjustment_in`, `adjustment_out`.
   final String type;
 
   /// Signed: negative when stock left the shelf.

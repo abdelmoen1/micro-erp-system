@@ -75,7 +75,7 @@ export default function Products() {
 
   return (
     <>
-      <PageHeader title="البضاعة" sub={list.data?.meta ? `${list.data.meta.total} صنفاً في هذه القائمة` : " "}>
+      <PageHeader title="المخزن" sub={list.data?.meta ? `${list.data.meta.total} صنفاً في هذه القائمة` : " "}>
         {manager ? (
           <>
             <button type="button" className="btn btn-s btn-sm" onClick={() => setImporting(true)}>
@@ -132,7 +132,7 @@ export default function Products() {
         />
       </div>
 
-      <DataTable query={list} rows={rows} columns={columns} caption="قائمة البضاعة" empty={empty} minWidth={680} />
+      <DataTable query={list} rows={rows} columns={columns} caption="قائمة المخزن" empty={empty} minWidth={680} />
       <Pager meta={list.data?.meta} onPage={setPageNo} />
 
       {importing ? <ImportDialog onClose={() => setImporting(false)} /> : null}
@@ -167,7 +167,7 @@ function ImportDialog({ onClose }) {
           <b className="state-title">استُورد {done.imported} صنفاً</b>
           <span className="state-text">سُجّلت كميات البداية كحركة «رصيد افتتاحي» لكل صنف.</span>
           <button type="button" className="btn btn-p btn-sm" onClick={onClose}>
-            عرض البضاعة
+            عرض المخزن
           </button>
         </div>
       ) : (

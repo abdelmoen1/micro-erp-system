@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_failure.dart';
 import '../../../core/api/idempotency_key_store.dart';
 import '../../../core/money/fixed_point.dart';
 import '../../../core/offline/offline_store.dart';
+import '../../returns/domain/returns.dart';
 import '../domain/cart.dart';
 
 /// The body of POST /sales (docs/api/sales.http). Built from the cart; no prices are sent.
@@ -66,6 +69,9 @@ class SaleLine {
     required this.unitPrice,
     required this.lineTotal,
     this.packSize,
+    this.id = 0,
+    this.productId,
+    this.returned = Quantity.zero,
   });
 
   factory SaleLine.fromJson(Map<String, dynamic> json) => SaleLine(
@@ -75,8 +81,16 @@ class SaleLine {
     unitPrice: Money.parse(json['unit_price'] as String? ?? '0.00'),
     lineTotal: Money.parse((json['line_total'] ?? json['total']) as String? ?? '0.00'),
     packSize: (json['pack_size'] as num?)?.toInt(),
+    id: (json['id'] as num?)?.toInt() ?? 0,
+    productId: (json['product_id'] as num?)?.toInt(),
+    returned: Quantity.parse(json['returned_quantity'] ?? '0'),
   );
 
+  final int id;
+  final int? productId;
+
+  /// Already returned, in this line's own unit.
+  final Quantity returned;
   final String name;
   final ProductUnit unit;
   final Quantity quantity;
@@ -87,6 +101,8 @@ class SaleLine {
   final int? packSize;
 
   bool get isPack => packSize != null;
+
+  Quantity get returnable => quantity - returned;
 
   /// The pieces behind a carton line (or the quantity itself).
   Quantity get baseQuantity => isPack ? Quantity.milli(quantity.milli * packSize!) : quantity;
@@ -115,6 +131,8 @@ class SaleReceipt {
     this.voidReason,
     this.returned,
     this.localRef,
+    this.openDebt = Money.zero,
+    this.returns = const [],
   });
 
   factory SaleReceipt.fromJson(Map<String, dynamic> body) {
@@ -141,6 +159,10 @@ class SaleReceipt {
       voidedByName: data['voided_by_name'] as String?,
       voidReason: data['void_reason'] as String?,
       returned: data['returned_amount'] is String ? Money.parse(data['returned_amount'] as String) : null,
+      openDebt: debt != null && debt['status'] != 'cancelled' ? Money.parse('${debt['remaining_amount'] ?? '0.00'}') : Money.zero,
+      returns: [
+        for (final row in data['returns'] as List<dynamic>? ?? const []) SaleReturnRecord.fromJson(row as Map<String, dynamic>),
+      ],
       flags: [for (final f in body['flags'] as List<dynamic>? ?? const []) f as String],
       warnings: [
         for (final w in body['warnings'] as List<dynamic>? ?? const [])
@@ -178,6 +200,10 @@ class SaleReceipt {
 
   /// Value of the goods returned against this sale (GET /sales/{id} only; null elsewhere).
   final Money? returned;
+
+  /// What is still owed on this sale now; a return lowers it before any cash goes back.
+  final Money openDebt;
+  final List<SaleReturnRecord> returns;
 
   /// R2: saved on the phone, waiting for the sync. There is no server number (and no void) yet.
   final String? localRef;
@@ -230,10 +256,19 @@ class SaleRepository {
 
   /// GET /sales: the store's sales (voided ones too, marked), newest first, 20 a page. [from] and
   /// [to] are store days `YYYY-MM-DD`; the server reads them in the store's timezone.
-  Future<SalesPage> history({String? from, String? to, int page = 1}) async {
+  /// [type] and [activeOnly] narrow it to what a dashboard figure counts.
+  Future<SalesPage> history({String? from, String? to, int page = 1, String? type, bool activeOnly = false}) async {
     final body = await _api.get(
       '/sales',
-      query: {'source': 'sale', 'status': 'all', 'per_page': 20, 'page': page, 'from': ?from, 'to': ?to},
+      query: {
+        'source': 'sale',
+        'status': activeOnly ? 'active' : 'all',
+        'per_page': 20,
+        'page': page,
+        'from': ?from,
+        'to': ?to,
+        'type': ?type,
+      },
     );
     final meta = body['meta'] is Map<String, dynamic> ? body['meta'] as Map<String, dynamic> : const {};
     return SalesPage(
@@ -243,6 +278,33 @@ class SaleRepository {
       ],
       hasMore: ((meta['current_page'] as num?) ?? 1) < ((meta['last_page'] as num?) ?? 1),
     );
+  }
+
+  Future<RegisterPage<SaleReturnRecord>> saleReturns({String? from, String? to, int page = 1}) async {
+    final body = await _api.get('/returns/sales', query: {'per_page': 20, 'page': page, 'from': ?from, 'to': ?to});
+    return RegisterPage.fromBody(body, SaleReturnRecord.fromJson);
+  }
+
+  /// POST /sales/{id}/returns (US-0601). The operation follows the body, so a retry of the same
+  /// return is one return, and an edited one is new.
+  Future<SaleReturnRecord> returnSale(int saleId, {required List<ReturnChoice> lines, required String reason}) async {
+    final body = {
+      'items': [
+        for (final line in lines)
+          {'invoice_item_id': line.id, 'quantity': line.quantity.toString(), 'damaged': line.flagged},
+      ],
+      'reason': reason,
+    };
+    final operationId = 'sale-return-$saleId-${stableHash(jsonEncode(body))}';
+    final key = await _keys.keyFor(operationId);
+    try {
+      final answer = await _api.post('/sales/$saleId/returns', body: body, idempotencyKey: key);
+      await _keys.complete(operationId);
+      return SaleReturnRecord.fromJson(answer['data'] as Map<String, dynamic>);
+    } on ApiFailure catch (failure) {
+      if (isFinalAnswer(failure)) await _keys.complete(operationId);
+      rethrow;
+    }
   }
 
   /// GET /sales/{id}: one sale with its lines, payment, debt, void and returns.
@@ -334,7 +396,7 @@ class SaleRepository {
   Future<SaleReceipt> voidSale(int saleId, {required String reason}) async {
     // The reason is part of the body, so an edited reason is a new operation (a reused key with a
     // different body is a 409). A second void of an already voided sale is refused by the server.
-    final operationId = 'void-$saleId-${_stableHash(reason.trim())}';
+    final operationId = 'void-$saleId-${stableHash(reason.trim())}';
     final key = await _keys.keyFor(operationId);
     try {
       final body = await _api.post('/sales/$saleId/void', body: {'reason': reason.trim()}, idempotencyKey: key);
@@ -347,7 +409,7 @@ class SaleRepository {
   }
 
   /// Same value across app restarts (unlike [String.hashCode]).
-  static String _stableHash(String text) {
+  static String stableHash(String text) {
     var hash = 0;
     for (final unit in text.codeUnits) {
       hash = (hash * 31 + unit) & 0x7fffffff;

@@ -40,6 +40,10 @@ const PATHS = {
   phone: "M7 2.5h10a1 1 0 0 1 1 1v17a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1zM10.5 18.5h3",
   download: "M12 3v12M7 10l5 5 5-5M4 19v2h16v-2",
   settings:"M4 6h9M17 6h3M15 4v4M4 12h3M11 12h9M9 10v4M4 18h11M19 18h1M17 16v4",
+  print: "M7 8V3h10v5M7 17H4V8h16v9h-3M7 14h10v7H7z",
+  truck: "M2 6h12v11H2zM14 10h4l4 4v3h-8zM7 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
+  undo: "M9 7 4 12l5 5M4 12h11a5 5 0 0 1 0 10h-3",
+  bag: "M6 8h12l1 13H5zM9 8V6a3 3 0 0 1 6 0v2",
 };
 
 export default function Icon({ name, size = 20, color = "currentColor", strokeWidth = 2, className, title }) {

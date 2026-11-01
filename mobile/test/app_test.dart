@@ -194,7 +194,7 @@ void main() {
     expect(api.requestsTo('GET /dashboard').single.queryParameters, {'period': 'today'});
   });
 
-  testWidgets("Home lists today's latest invoices and its shortcut opens POS", (tester) async {
+  testWidgets("Home lists today's latest invoices and its shortcut opens the customers", (tester) async {
     disk.values[AuthRepository.tokenKey] = 'tok';
     api.on('GET /me', meOk(role: 'owner'));
     api.on(
@@ -213,11 +213,11 @@ void main() {
     expect(find.text('4 زبائن مدينون'), findsOneWidget);
 
     // Scroll the shortcuts (below the first-time guide card) out from under the bottom bar before tapping.
-    await tester.drag(find.byKey(const Key('home.today')), const Offset(0, -460));
+    await tester.drag(find.byKey(const Key('home.today')), const Offset(0, -640));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('home.shortcut.pos')));
+    await tester.tap(find.byKey(const Key('home.shortcut.customers')));
     await tester.pumpAndSettle();
-    expect(find.text('امسح أول صنف لتبدأ'), findsOneWidget); // M-02 empty cart
+    expect(find.byKey(const Key('customers.query')), findsOneWidget);
   });
 
   testWidgets('Home shows a retry when the dashboard fails to load', (tester) async {

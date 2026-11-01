@@ -233,7 +233,7 @@ abstract class AppLocalizations {
   /// No description provided for @guideDoneBody.
   ///
   /// In ar, this message translates to:
-  /// **'الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «البضاعة». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.'**
+  /// **'الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «المخزن». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.'**
   String get guideDoneBody;
 
   /// No description provided for @guideFinish.
@@ -533,7 +533,7 @@ abstract class AppLocalizations {
   /// No description provided for @splashSubline.
   ///
   /// In ar, this message translates to:
-  /// **'المبيعات والديون والبضاعة في مكان واحد'**
+  /// **'المبيعات والديون والمخزن في مكان واحد'**
   String get splashSubline;
 
   /// No description provided for @splashChecking.
@@ -689,7 +689,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabProducts.
   ///
   /// In ar, this message translates to:
-  /// **'البضاعة'**
+  /// **'المخزن'**
   String get tabProducts;
 
   /// No description provided for @tabMore.
@@ -743,7 +743,7 @@ abstract class AppLocalizations {
   /// No description provided for @placeholderProducts.
   ///
   /// In ar, this message translates to:
-  /// **'البضاعة والأصناف اللي قرّبت تخلص'**
+  /// **'المخزن والأصناف اللي قرّبت تخلص'**
   String get placeholderProducts;
 
   /// No description provided for @placeholderPos.
@@ -2951,7 +2951,7 @@ abstract class AppLocalizations {
   /// No description provided for @savedBack.
   ///
   /// In ar, this message translates to:
-  /// **'الرجوع للبضاعة'**
+  /// **'الرجوع للمخزن'**
   String get savedBack;
 
   /// No description provided for @homeAttention.
@@ -3257,7 +3257,7 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionDataSafe.
   ///
   /// In ar, this message translates to:
-  /// **'بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والبضاعة. يعود كل شيء فور تفعيل الاشتراك.'**
+  /// **'بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والمخزن. يعود كل شيء فور تفعيل الاشتراك.'**
   String get subscriptionDataSafe;
 
   /// No description provided for @subscriptionContactWhatsapp.
@@ -3365,7 +3365,7 @@ abstract class AppLocalizations {
   /// No description provided for @invCloseA11y.
   ///
   /// In ar, this message translates to:
-  /// **'إغلاق الكاميرا والرجوع للبضاعة'**
+  /// **'إغلاق الكاميرا والرجوع للمخزن'**
   String get invCloseA11y;
 
   /// No description provided for @invBackToScanning.
@@ -3689,7 +3689,7 @@ abstract class AppLocalizations {
   /// No description provided for @moreSectionStock.
   ///
   /// In ar, this message translates to:
-  /// **'البضاعة والكميات'**
+  /// **'المخزن والكميات'**
   String get moreSectionStock;
 
   /// No description provided for @moreLowStock.
@@ -3725,7 +3725,7 @@ abstract class AppLocalizations {
   /// No description provided for @moreSalesHistory.
   ///
   /// In ar, this message translates to:
-  /// **'سجل المبيعات'**
+  /// **'المبيعات'**
   String get moreSalesHistory;
 
   /// No description provided for @moreSalesHistorySub.
@@ -4109,7 +4109,7 @@ abstract class AppLocalizations {
   /// No description provided for @salesTitle.
   ///
   /// In ar, this message translates to:
-  /// **'سجل المبيعات'**
+  /// **'المبيعات'**
   String get salesTitle;
 
   /// No description provided for @salesToday.
@@ -4259,7 +4259,7 @@ abstract class AppLocalizations {
   /// No description provided for @prodDeactivateBody.
   ///
   /// In ar, this message translates to:
-  /// **'لن يظهر في البيع ولا في قائمة البضاعة. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».'**
+  /// **'لن يظهر في البيع ولا في قائمة المخزن. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».'**
   String get prodDeactivateBody;
 
   /// No description provided for @prodDeactivated.
@@ -5153,7 +5153,7 @@ abstract class AppLocalizations {
   /// No description provided for @goodsTitle.
   ///
   /// In ar, this message translates to:
-  /// **'تسجيل بضاعة'**
+  /// **'فاتورة مشتريات'**
   String get goodsTitle;
 
   /// No description provided for @goodsStepItems.
@@ -5417,7 +5417,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachProductsTitle.
   ///
   /// In ar, this message translates to:
-  /// **'اضغط «البضاعة»'**
+  /// **'اضغط «المخزن»'**
   String get coachProductsTitle;
 
   /// No description provided for @coachProductsBody.
@@ -5525,7 +5525,7 @@ abstract class AppLocalizations {
   /// No description provided for @goodsInvoiceTitle.
   ///
   /// In ar, this message translates to:
-  /// **'فاتورة البضاعة'**
+  /// **'فاتورة مشتريات'**
   String get goodsInvoiceTitle;
 
   /// No description provided for @goodsBarcode.
@@ -5561,7 +5561,7 @@ abstract class AppLocalizations {
   /// No description provided for @supplierInvoices.
   ///
   /// In ar, this message translates to:
-  /// **'الفواتير'**
+  /// **'فواتير المورد'**
   String get supplierInvoices;
 
   /// No description provided for @supplierPayments.
@@ -5629,6 +5629,468 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'فاتورة رقم {number}'**
   String supplierInvoiceNumber(String number);
+
+  /// No description provided for @printAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'طباعة'**
+  String get printAction;
+
+  /// No description provided for @printPrinter.
+  ///
+  /// In ar, this message translates to:
+  /// **'الطابعة'**
+  String get printPrinter;
+
+  /// No description provided for @printPaper.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض الورق'**
+  String get printPaper;
+
+  /// No description provided for @printPaper58.
+  ///
+  /// In ar, this message translates to:
+  /// **'58 ملم'**
+  String get printPaper58;
+
+  /// No description provided for @printPaper80.
+  ///
+  /// In ar, this message translates to:
+  /// **'80 ملم'**
+  String get printPaper80;
+
+  /// No description provided for @printNeedsPermission.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسمح للتطبيق باستخدام البلوتوث عشان يوصل للطابعة.'**
+  String get printNeedsPermission;
+
+  /// No description provided for @printBluetoothOff.
+  ///
+  /// In ar, this message translates to:
+  /// **'البلوتوث مطفي. شغّله من إعدادات الجوال، وبعدها اضغط «إعادة المحاولة».'**
+  String get printBluetoothOff;
+
+  /// No description provided for @printNoPrinters.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما في طابعة مقترنة. شغّل الطابعة واقرنها من إعدادات البلوتوث في الجوال، وبعدها اضغط «إعادة المحاولة».'**
+  String get printNoPrinters;
+
+  /// No description provided for @printRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get printRetry;
+
+  /// No description provided for @printNow.
+  ///
+  /// In ar, this message translates to:
+  /// **'اطبع'**
+  String get printNow;
+
+  /// No description provided for @printing.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ الطباعة…'**
+  String get printing;
+
+  /// No description provided for @printDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'انبعتت للطابعة.'**
+  String get printDone;
+
+  /// No description provided for @printFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما قدرنا نطبع. تأكد إن الطابعة شغالة وقريبة من الجوال، وجرّب مرة ثانية.'**
+  String get printFailed;
+
+  /// No description provided for @printOther.
+  ///
+  /// In ar, this message translates to:
+  /// **'طابعة ثانية أو ملف PDF'**
+  String get printOther;
+
+  /// No description provided for @docSale.
+  ///
+  /// In ar, this message translates to:
+  /// **'فاتورة مبيعات'**
+  String get docSale;
+
+  /// No description provided for @docSaleReturn.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرتجع مبيعات'**
+  String get docSaleReturn;
+
+  /// No description provided for @docPurchase.
+  ///
+  /// In ar, this message translates to:
+  /// **'فاتورة مشتريات'**
+  String get docPurchase;
+
+  /// No description provided for @docPurchaseReturn.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرتجع مشتريات'**
+  String get docPurchaseReturn;
+
+  /// No description provided for @docThanks.
+  ///
+  /// In ar, this message translates to:
+  /// **'شكراً لتعاملكم معنا'**
+  String get docThanks;
+
+  /// No description provided for @docSupplier.
+  ///
+  /// In ar, this message translates to:
+  /// **'المورد'**
+  String get docSupplier;
+
+  /// No description provided for @docForInvoice.
+  ///
+  /// In ar, this message translates to:
+  /// **'عن الفاتورة'**
+  String get docForInvoice;
+
+  /// No description provided for @docReturned.
+  ///
+  /// In ar, this message translates to:
+  /// **'المرتجعات'**
+  String get docReturned;
+
+  /// No description provided for @docToDebt.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُخصم من الدين'**
+  String get docToDebt;
+
+  /// No description provided for @docToBalance.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُخصم من حساب المورد'**
+  String get docToBalance;
+
+  /// No description provided for @docRefunded.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُعاد للزبون نقداً'**
+  String get docRefunded;
+
+  /// No description provided for @docRefundFromSupplier.
+  ///
+  /// In ar, this message translates to:
+  /// **'يردّه المورد نقداً'**
+  String get docRefundFromSupplier;
+
+  /// No description provided for @docDamaged.
+  ///
+  /// In ar, this message translates to:
+  /// **'تالفة'**
+  String get docDamaged;
+
+  /// No description provided for @docOffShelf.
+  ///
+  /// In ar, this message translates to:
+  /// **'خارج المخزن'**
+  String get docOffShelf;
+
+  /// No description provided for @retHelp.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب الكمية المرتجعة من كل صنف.'**
+  String get retHelp;
+
+  /// No description provided for @retQuantity.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكمية المرتجعة'**
+  String get retQuantity;
+
+  /// No description provided for @retDamaged.
+  ///
+  /// In ar, this message translates to:
+  /// **'تالفة، ما بترجع للمخزن'**
+  String get retDamaged;
+
+  /// No description provided for @retOffShelf.
+  ///
+  /// In ar, this message translates to:
+  /// **'مش موجودة بالمخزن، رجعت تالفة من زبون'**
+  String get retOffShelf;
+
+  /// No description provided for @retReason.
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب الإرجاع'**
+  String get retReason;
+
+  /// No description provided for @retReasonDamaged.
+  ///
+  /// In ar, this message translates to:
+  /// **'بضاعة تالفة'**
+  String get retReasonDamaged;
+
+  /// No description provided for @retReasonExpired.
+  ///
+  /// In ar, this message translates to:
+  /// **'منتهية الصلاحية'**
+  String get retReasonExpired;
+
+  /// No description provided for @retReasonWrong.
+  ///
+  /// In ar, this message translates to:
+  /// **'صنف غلط'**
+  String get retReasonWrong;
+
+  /// No description provided for @retReasonDispute.
+  ///
+  /// In ar, this message translates to:
+  /// **'خلاف على البضاعة'**
+  String get retReasonDispute;
+
+  /// No description provided for @retReasonRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب سبب الإرجاع.'**
+  String get retReasonRequired;
+
+  /// No description provided for @retChooseLine.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب كمية لصنف واحد على الأقل.'**
+  String get retChooseLine;
+
+  /// No description provided for @retValue.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيمة المرتجع'**
+  String get retValue;
+
+  /// No description provided for @retConfirm.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل المرتجع'**
+  String get retConfirm;
+
+  /// No description provided for @retDoneTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تسجيل المرتجع'**
+  String get retDoneTitle;
+
+  /// No description provided for @retClose.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم'**
+  String get retClose;
+
+  /// No description provided for @retAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرتجع'**
+  String get retAction;
+
+  /// No description provided for @retToSupplier.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرجاع للمورد'**
+  String get retToSupplier;
+
+  /// No description provided for @returnsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المرتجعات'**
+  String get returnsTitle;
+
+  /// No description provided for @returnsSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'من الزبائن وللموردين'**
+  String get returnsSub;
+
+  /// No description provided for @returnsSales.
+  ///
+  /// In ar, this message translates to:
+  /// **'من الزبائن'**
+  String get returnsSales;
+
+  /// No description provided for @returnsPurchases.
+  ///
+  /// In ar, this message translates to:
+  /// **'للموردين'**
+  String get returnsPurchases;
+
+  /// No description provided for @returnsEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مرتجعات في هذه الفترة.'**
+  String get returnsEmpty;
+
+  /// No description provided for @purchasesTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المشتريات'**
+  String get purchasesTitle;
+
+  /// No description provided for @purchasesSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'فواتير الموردين'**
+  String get purchasesSub;
+
+  /// No description provided for @purchasesEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مشتريات في هذه الفترة.'**
+  String get purchasesEmpty;
+
+  /// No description provided for @purchasesAdd.
+  ///
+  /// In ar, this message translates to:
+  /// **'+ فاتورة'**
+  String get purchasesAdd;
+
+  /// No description provided for @homePurchasesToday.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشتريات اليوم'**
+  String get homePurchasesToday;
+
+  /// No description provided for @homeReturnsToday.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرتجعات اليوم'**
+  String get homeReturnsToday;
+
+  /// No description provided for @collectionsAtSale.
+  ///
+  /// In ar, this message translates to:
+  /// **'عند البيع'**
+  String get collectionsAtSale;
+
+  /// No description provided for @collectionsRepayments.
+  ///
+  /// In ar, this message translates to:
+  /// **'سداد ديون'**
+  String get collectionsRepayments;
+
+  /// No description provided for @collectionsRefunded.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرتجع نقداً للزبائن'**
+  String get collectionsRefunded;
+
+  /// No description provided for @collectionsNet.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصافي في الصندوق'**
+  String get collectionsNet;
+
+  /// No description provided for @collectionsEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما في سداد ديون اليوم.'**
+  String get collectionsEmpty;
+
+  /// No description provided for @debtorsEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما في ديون مفتوحة.'**
+  String get debtorsEmpty;
+
+  /// No description provided for @movePurchase.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشتريات'**
+  String get movePurchase;
+
+  /// No description provided for @movePurchaseReturn.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرتجع مشتريات'**
+  String get movePurchaseReturn;
+
+  /// No description provided for @moreSectionPurchases.
+  ///
+  /// In ar, this message translates to:
+  /// **'المشتريات والموردين'**
+  String get moreSectionPurchases;
+
+  /// No description provided for @printTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'طباعة {title} {number}'**
+  String printTitle(String title, String number);
+
+  /// No description provided for @docReason.
+  ///
+  /// In ar, this message translates to:
+  /// **'السبب: {reason}'**
+  String docReason(String reason);
+
+  /// No description provided for @retTitleSale.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرتجع من الفاتورة #{id}'**
+  String retTitleSale(String id);
+
+  /// No description provided for @retTitlePurchase.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرجاع من الفاتورة #{id}'**
+  String retTitlePurchase(String id);
+
+  /// No description provided for @retAvailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'المتاح للإرجاع: {quantity}'**
+  String retAvailable(String quantity);
+
+  /// No description provided for @retTooMuch.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحد الأقصى {max}'**
+  String retTooMuch(String max);
+
+  /// No description provided for @purchaseReturned.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرتجع {amount}'**
+  String purchaseReturned(String amount);
+
+  /// No description provided for @purchasePieces.
+  ///
+  /// In ar, this message translates to:
+  /// **'{quantity} قطعة'**
+  String purchasePieces(String quantity);
+
+  /// No description provided for @purchaseLineReturned.
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرجع منها {quantity}'**
+  String purchaseLineReturned(String quantity);
+
+  /// No description provided for @homeOwedSuppliers.
+  ///
+  /// In ar, this message translates to:
+  /// **'للموردين {amount}'**
+  String homeOwedSuppliers(String amount);
+
+  /// No description provided for @homeReturnsCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} مرتجع'**
+  String homeReturnsCount(int count);
+
+  /// No description provided for @debtorsOpen.
+  ///
+  /// In ar, this message translates to:
+  /// **'ديون مفتوحة: {count}'**
+  String debtorsOpen(int count);
 }
 
 class _AppLocalizationsDelegate

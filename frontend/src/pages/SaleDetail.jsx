@@ -1,23 +1,15 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Icon from "../components/Icon";
+import { usePrint } from "../components/usePrint";
 import { ConfirmSummary, Crumbs, Dialog, ErrorBanner, ErrorState, MoneyText, ReasonField, StatusBadge } from "../components/ui";
-import { dateOnly, dateTime, isPositiveAmount, latinDigits, shekel } from "../lib/format";
+import { centsOf as cents, dateOnly, dateTime, isPositiveAmount, latinDigits, milliOf as milli, moneyOf as money, shekel } from "../lib/format";
+import { saleDoc, saleReturnDoc } from "../lib/printDocs";
 import { newIdempotencyKey, session } from "../services/apiClient";
 import { useReturnSale, useSale, useVoidSale } from "../services/backoffice";
 import { canManage, saleType } from "../lib/domain";
 
 const TYPE_LABEL = { cash: "نقدي", partial: "جزئي", credit: "دين" };
-
-const milli = (q) => {
-  const [w, f = ""] = String(q ?? "0").replace("-", "").split(".");
-  return Number(w || 0) * 1000 + Number(f.padEnd(3, "0").slice(0, 3));
-};
-const cents = (m) => {
-  const [w, f = ""] = String(m ?? "0").split(".");
-  return Number(w || 0) * 100 + Number(f.padEnd(2, "0").slice(0, 2));
-};
-const money = (c) => `${Math.floor(c / 100)}.${String(c % 100).padStart(2, "0")}`;
 
 /** SCR-W-11 · sale detail: lines with returned quantities, payment and debt, returns, void. */
 export default function SaleDetail() {
@@ -25,6 +17,7 @@ export default function SaleDetail() {
   const manager = canManage(session.user());
   const sale = useSale(id);
   const [dialog, setDialog] = useState(null);
+  const { print, sheet } = usePrint();
 
   if (sale.isError) return <ErrorState error={sale.error} title="تعذّر فتح الفاتورة" onRetry={() => sale.refetch()} />;
   if (sale.isPending) return <div className="card sk" style={{ height: 320 }} />;
@@ -72,16 +65,23 @@ export default function SaleDetail() {
             {s.seller ? ` · البائع ${s.seller.name}` : ""} · {s.items?.length ?? 0} أصناف
           </span>
         </div>
-        {manager && !voided && !opening ? (
-          <div className="head-actions" style={{ display: "flex", gap: 8 }}>
-            <button type="button" className="btn btn-s btn-sm" disabled={!returnable} onClick={() => setDialog("return")}>
-              مرتجع
+        <div className="head-actions" style={{ display: "flex", gap: 8 }}>
+          {!opening ? (
+            <button type="button" className="btn btn-s btn-sm" onClick={() => print(saleDoc(s))}>
+              <Icon name="print" size={16} /> طباعة
             </button>
-            <button type="button" className="btn btn-dl btn-sm" disabled={Boolean(voidBlock)} aria-describedby={voidBlock ? "void-why" : undefined} onClick={() => setDialog("void")}>
-              إلغاء الفاتورة
-            </button>
-          </div>
-        ) : null}
+          ) : null}
+          {manager && !voided && !opening ? (
+            <>
+              <button type="button" className="btn btn-s btn-sm" disabled={!returnable} onClick={() => setDialog("return")}>
+                مرتجع
+              </button>
+              <button type="button" className="btn btn-dl btn-sm" disabled={Boolean(voidBlock)} aria-describedby={voidBlock ? "void-why" : undefined} onClick={() => setDialog("void")}>
+                إلغاء الفاتورة
+              </button>
+            </>
+          ) : null}
+        </div>
       </header>
       {manager && !voided && voidBlock ? (
         <p id="void-why" className="field-hint" style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -186,7 +186,7 @@ export default function SaleDetail() {
               s.returns.map((r) => (
                 <div key={r.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, paddingTop: 8, borderTop: "1px solid var(--border)", fontSize: 14 }}>
                   <span>
-                    <b className="m">{dateTime(r.created_at)}</b> · {(r.items ?? []).map((i) => `${i.quantity} × ${i.item_name}`).join("، ")}
+                    <b className="m">{dateTime(r.created_at)}</b> · {(r.items ?? []).map((i) => `${i.quantity} × ${i.item_name}${i.damaged ? " (تالفة)" : ""}`).join("، ")}
                     <span className="cell-sub">
                       {r.created_by ?? ""} · السبب: {r.reason}
                     </span>
@@ -197,6 +197,9 @@ export default function SaleDetail() {
                       {isPositiveAmount(r.debt_reduction) ? `من الدين ${shekel(r.debt_reduction)}` : ""}
                       {isPositiveAmount(r.refund_amount) ? ` · نقداً ${shekel(r.refund_amount)}` : ""}
                     </span>
+                    <button type="button" className="text-btn" onClick={() => print(saleReturnDoc(r, s.id, s.customer?.name))}>
+                      طباعة
+                    </button>
                   </span>
                 </div>
               ))
@@ -209,6 +212,7 @@ export default function SaleDetail() {
 
       {dialog === "return" ? <ReturnDialog sale={s} onClose={() => setDialog(null)} /> : null}
       {dialog === "void" ? <VoidDialog sale={s} onClose={() => setDialog(null)} /> : null}
+      {sheet}
     </>
   );
 }
@@ -217,6 +221,7 @@ export default function SaleDetail() {
 function ReturnDialog({ sale, onClose }) {
   const lines = sale.items.filter((i) => i.product_id && milli(i.quantity) > milli(i.returned_quantity));
   const [qty, setQty] = useState(() => Object.fromEntries(lines.map((i) => [i.id, ""])));
+  const [damaged, setDamaged] = useState({});
   const [reason, setReason] = useState("");
   const [tried, setTried] = useState(false);
   const [key] = useState(newIdempotencyKey);
@@ -248,7 +253,7 @@ function ReturnDialog({ sale, onClose }) {
         id: sale.id,
         key,
         reason: reason.trim(),
-        items: chosen.map((c) => ({ invoice_item_id: c.item.id, quantity: c.text })),
+        items: chosen.map((c) => ({ invoice_item_id: c.item.id, quantity: c.text, ...(damaged[c.item.id] ? { damaged: true } : {}) })),
       },
       { onSuccess: onClose },
     );
@@ -269,6 +274,7 @@ function ReturnDialog({ sale, onClose }) {
                   المتاح للإرجاع
                 </th>
                 <th scope="col">الكمية المرتجعة</th>
+                <th scope="col">تالفة</th>
               </tr>
             </thead>
             <tbody>
@@ -306,6 +312,14 @@ function ReturnDialog({ sale, onClose }) {
                     )}
                     {c.over ? <div className="field-error">الحد الأقصى {c.item.unit === "kg" ? (c.max / 1000).toFixed(3) : c.max / 1000}</div> : null}
                   </td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      aria-label={`${c.item.item_name} تالفة`}
+                      checked={Boolean(damaged[c.item.id])}
+                      onChange={(e) => setDamaged({ ...damaged, [c.item.id]: e.target.checked })}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -320,7 +334,7 @@ function ReturnDialog({ sale, onClose }) {
         />
         <ReasonField id="rt-reason" label="سبب الإرجاع" value={reason} onChange={setReason} error={tried && !reason.trim() ? "اكتب سبب الإرجاع. يظهر في سجل الفاتورة." : submitReturn.error?.fieldError?.("reason")} />
         {tried && chosen.length === 0 ? <p className="field-error">اختر كمية لصنف واحد على الأقل.</p> : null}
-        <p className="field-hint">المخزون يزيد بالكميات المرتجعة. الأرقام هنا تقدير؛ الخادم يحسبها نهائياً عند التأكيد.</p>
+        <p className="field-hint">المخزن يزيد بالكميات المرتجعة، إلا التالفة فلا ترجع إليه. الأرقام هنا تقدير؛ الخادم يحسبها نهائياً عند التأكيد.</p>
         <ErrorBanner error={submitReturn.error} />
         <div className="dlg-actions">
           <button type="submit" className="btn btn-p" disabled={submitReturn.isPending || bad}>

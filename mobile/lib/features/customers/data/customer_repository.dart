@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart' show DateFormat;
+
 import '../../../core/api/api_client.dart';
 import '../../../core/money/fixed_point.dart';
 import '../../../core/offline/offline_fallback.dart';
@@ -73,6 +75,20 @@ class CustomerRepository {
       final data = body['data'] as List<dynamic>? ?? const [];
       return [for (final row in data) PaymentRow.fromJson(row as Map<String, dynamic>)];
     }, (_) async => const []);
+  }
+
+  /// Today's debt repayments, newest first (the server reads the day in the store's timezone).
+  Future<List<CollectedPayment>> collectedToday() async {
+    final day = DateFormat('yyyy-MM-dd', 'en').format(DateTime.now());
+    final body = await _api.get('/payments', query: {'from': day, 'to': day, 'per_page': 50});
+    final data = body['data'] as List<dynamic>? ?? const [];
+    return [for (final row in data) CollectedPayment.fromJson(row as Map<String, dynamic>)];
+  }
+
+  Future<List<Debtor>> debtors() async {
+    final body = await _api.get('/debts/balances');
+    final data = body['data'] as List<dynamic>? ?? const [];
+    return [for (final row in data) Debtor.fromJson(row as Map<String, dynamic>)];
   }
 
   /// POST /debts: an old debt from before Hisbah (owner or manager). It is an obligation only; the
