@@ -7,8 +7,11 @@ use App\Models\Debt;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\PurchaseInvoice;
+use App\Models\PurchaseReturn;
 use App\Models\SaleReturn;
 use App\Models\Store;
+use App\Models\SupplierPayment;
 use App\Support\BusinessClock;
 use App\Support\Money;
 use App\Support\Quantity;
@@ -20,7 +23,7 @@ class DashboardService
 {
     public function __construct(private readonly DebtService $debts) {}
 
-    public function dashboard(Store $store, string $period): array
+    public function dashboard(Store $store, string $period, bool $withCosts = false): array
     {
         $storeId = $store->id;
         $clock = BusinessClock::forStore($store);
@@ -33,6 +36,9 @@ class DashboardService
         // US-0801 AC5: debts created in the period minus those cancelled by a void in the period.
         $invoiceMetrics['new_debt'] = $this->newDebt($storeId, $from, $to);
         $insights = $this->insights($store);
+        $returns = $this->returnMetrics($storeId, $from, $to);
+        $atSale = $invoiceMetrics['collected_at_sale'];
+        $collected = Money::add($atSale, $paymentMetrics['total_collected']);
 
         return [
             'period' => [
@@ -43,6 +49,7 @@ class DashboardService
             ],
             'summary' => [
                 'total_sales' => $invoiceMetrics['total_sales'],
+                'net_sales' => Money::sub($invoiceMetrics['total_sales'], $returns['total']),
                 'cash_sales' => $invoiceMetrics['cash_sales'],
                 'credit_sales' => $invoiceMetrics['credit_sales'],
                 // D-08: money taken at the till vs. what the period's sales left on credit.
@@ -51,17 +58,22 @@ class DashboardService
                 'total_collected_payments' => $paymentMetrics['total_collected'],
                 'total_remaining_debt' => $debtMetrics['total_remaining'],
                 'customers_count' => $customerMetrics['total'],
-                'invoices_count' => $invoiceMetrics['total'],
+                'invoices_count' => $invoiceMetrics['sales_count'],
                 'low_stock_count' => $insights['low_stock']['count'],
             ],
             // US-0801 AC1: money in at the till vs repayments of debts, and their total.
             'collections' => [
-                'at_sale' => $invoiceMetrics['collected_at_sale'],
+                'at_sale' => $atSale,
                 'debt_repayments' => $paymentMetrics['total_collected'],
-                'total' => Money::add($invoiceMetrics['collected_at_sale'], $paymentMetrics['total_collected']),
+                'total' => $collected,
+                // What stayed in the till after cash refunds to customers.
+                'refunded' => $returns['refunded'],
+                'net' => Money::sub($collected, $returns['refunded']),
             ],
             // AC4: returns are their own figure; voided sales are already out of the totals.
-            'returns' => $this->returnMetrics($storeId, $from, $to),
+            'returns' => $returns,
+            // Owner / Manager only, like the suppliers themselves.
+            'purchases' => $withCosts ? $this->purchaseMetrics($storeId, $from, $to) : null,
             'insights' => $insights,
             'customers' => $customerMetrics,
             'invoices' => [
@@ -122,6 +134,28 @@ class DashboardService
         ];
     }
 
+    /** The period's purchases and goods sent back, and what the store owes all its suppliers now. */
+    private function purchaseMetrics(int $storeId, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $range = BusinessClock::toUtc($from, $to);
+        $invoices = PurchaseInvoice::query()->where('store_id', $storeId);
+        $returns = PurchaseReturn::query()->where('store_id', $storeId);
+        $period = (clone $invoices)->whereBetween('created_at', $range)->pluck('total');
+        $sentBack = (clone $returns)->whereBetween('created_at', $range)->pluck('total_amount');
+        $paid = SupplierPayment::query()->where('store_id', $storeId)->pluck('amount');
+
+        return [
+            'total' => Money::sum($period),
+            'count' => $period->count(),
+            'returns_total' => Money::sum($sentBack),
+            'returns_count' => $sentBack->count(),
+            'owed_to_suppliers' => Money::sub(
+                Money::sub(Money::sum($invoices->pluck('total')), Money::sum($paid)),
+                Money::sum($returns->pluck('balance_reduction')),
+            ),
+        ];
+    }
+
     /** US-0801 AC2–AC3: the cards that tell the owner what needs attention now. */
     private function insights(Store $store): array
     {
@@ -169,6 +203,7 @@ class DashboardService
             'collected_at_sale' => $collected,
             'new_debt' => Money::sub(Money::sum($sales->pluck('total_amount')), $collected),
             'total' => $invoices->count(),
+            'sales_count' => $sales->count(),
             'cash' => $invoices->where('has_debt', false)->count(),
             'debt' => $invoices->where('has_debt', true)->count(),
             'total_value' => Money::sum($invoices->pluck('total_amount')),

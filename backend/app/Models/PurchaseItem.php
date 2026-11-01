@@ -11,6 +11,7 @@ class PurchaseItem extends Model
         'purchase_invoice_id',
         'product_id',
         'quantity',
+        'returned_quantity',
         'cartons',
         'pack_size',
         'buy_price',
@@ -21,6 +22,7 @@ class PurchaseItem extends Model
     {
         return [
             'quantity' => 'decimal:3',
+            'returned_quantity' => 'decimal:3',
             'cartons' => 'integer',
             'pack_size' => 'integer',
             'buy_price' => 'decimal:2',

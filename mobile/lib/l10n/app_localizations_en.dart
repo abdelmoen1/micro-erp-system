@@ -327,7 +327,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabCustomers => 'Customers';
 
   @override
-  String get tabProducts => 'Products';
+  String get tabProducts => 'Warehouse';
 
   @override
   String get tabMore => 'More';
@@ -3141,7 +3141,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get supplierProducts => 'Items';
 
   @override
-  String get supplierInvoices => 'Invoices';
+  String get supplierInvoices => 'Supplier invoices';
 
   @override
   String get supplierPayments => 'Payments';
@@ -3176,5 +3176,265 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String supplierInvoiceNumber(String number) {
     return 'Invoice $number';
+  }
+
+  @override
+  String get printAction => 'Print';
+
+  @override
+  String get printPrinter => 'Printer';
+
+  @override
+  String get printPaper => 'Paper width';
+
+  @override
+  String get printPaper58 => '58 mm';
+
+  @override
+  String get printPaper80 => '80 mm';
+
+  @override
+  String get printNeedsPermission =>
+      'Allow Bluetooth so the app can reach the printer.';
+
+  @override
+  String get printBluetoothOff =>
+      'Bluetooth is off. Turn it on, then press Try again.';
+
+  @override
+  String get printNoPrinters =>
+      'No paired printer. Pair it in the phone\'s Bluetooth settings, then press Try again.';
+
+  @override
+  String get printRetry => 'Try again';
+
+  @override
+  String get printNow => 'Print';
+
+  @override
+  String get printing => 'Printing…';
+
+  @override
+  String get printDone => 'Sent to the printer.';
+
+  @override
+  String get printFailed =>
+      'Could not print. Check the printer is on and nearby, then try again.';
+
+  @override
+  String get printOther => 'Another printer or a PDF';
+
+  @override
+  String get docSale => 'Sales invoice';
+
+  @override
+  String get docSaleReturn => 'Sales return';
+
+  @override
+  String get docPurchase => 'Purchase invoice';
+
+  @override
+  String get docPurchaseReturn => 'Purchase return';
+
+  @override
+  String get docThanks => 'Thank you';
+
+  @override
+  String get docSupplier => 'Supplier';
+
+  @override
+  String get docForInvoice => 'For invoice';
+
+  @override
+  String get docReturned => 'Returned';
+
+  @override
+  String get docToDebt => 'Off the debt';
+
+  @override
+  String get docToBalance => 'Off the supplier balance';
+
+  @override
+  String get docRefunded => 'Refund to the customer';
+
+  @override
+  String get docRefundFromSupplier => 'Refund from the supplier';
+
+  @override
+  String get docDamaged => 'Damaged';
+
+  @override
+  String get docOffShelf => 'Off the shelf';
+
+  @override
+  String get retHelp => 'Type the quantity going back for each item.';
+
+  @override
+  String get retQuantity => 'Quantity returned';
+
+  @override
+  String get retDamaged => 'Damaged: does not go back to the warehouse';
+
+  @override
+  String get retOffShelf =>
+      'Not in the warehouse: a customer returned it damaged';
+
+  @override
+  String get retReason => 'Reason';
+
+  @override
+  String get retReasonDamaged => 'Damaged';
+
+  @override
+  String get retReasonExpired => 'Expired';
+
+  @override
+  String get retReasonWrong => 'Wrong item';
+
+  @override
+  String get retReasonDispute => 'Dispute';
+
+  @override
+  String get retReasonRequired => 'Type the reason.';
+
+  @override
+  String get retChooseLine => 'Type a quantity for at least one item.';
+
+  @override
+  String get retValue => 'Return value';
+
+  @override
+  String get retConfirm => 'Record the return';
+
+  @override
+  String get retDoneTitle => 'Return recorded';
+
+  @override
+  String get retClose => 'Done';
+
+  @override
+  String get retAction => 'Return';
+
+  @override
+  String get retToSupplier => 'Return to supplier';
+
+  @override
+  String get returnsTitle => 'Returns';
+
+  @override
+  String get returnsSub => 'From customers and to suppliers';
+
+  @override
+  String get returnsSales => 'From customers';
+
+  @override
+  String get returnsPurchases => 'To suppliers';
+
+  @override
+  String get returnsEmpty => 'No returns in this period.';
+
+  @override
+  String get purchasesTitle => 'Purchases';
+
+  @override
+  String get purchasesSub => 'Supplier invoices';
+
+  @override
+  String get purchasesEmpty => 'No purchases in this period.';
+
+  @override
+  String get purchasesAdd => '+ Invoice';
+
+  @override
+  String get homePurchasesToday => 'Purchases today';
+
+  @override
+  String get homeReturnsToday => 'Returns today';
+
+  @override
+  String get collectionsAtSale => 'At the sale';
+
+  @override
+  String get collectionsRepayments => 'Debt repayments';
+
+  @override
+  String get collectionsRefunded => 'Cash refunded';
+
+  @override
+  String get collectionsNet => 'Net in the till';
+
+  @override
+  String get collectionsEmpty => 'No debt repayments today.';
+
+  @override
+  String get debtorsEmpty => 'No open debts.';
+
+  @override
+  String get movePurchase => 'Purchase';
+
+  @override
+  String get movePurchaseReturn => 'Purchase return';
+
+  @override
+  String get moreSectionPurchases => 'Purchases and suppliers';
+
+  @override
+  String printTitle(String title, String number) {
+    return 'Print $title $number';
+  }
+
+  @override
+  String docReason(String reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
+  String retTitleSale(String id) {
+    return 'Return from invoice #$id';
+  }
+
+  @override
+  String retTitlePurchase(String id) {
+    return 'Return from invoice #$id';
+  }
+
+  @override
+  String retAvailable(String quantity) {
+    return 'Can go back: $quantity';
+  }
+
+  @override
+  String retTooMuch(String max) {
+    return 'At most $max';
+  }
+
+  @override
+  String purchaseReturned(String amount) {
+    return 'Returned $amount';
+  }
+
+  @override
+  String purchasePieces(String quantity) {
+    return '$quantity pieces';
+  }
+
+  @override
+  String purchaseLineReturned(String quantity) {
+    return '$quantity returned';
+  }
+
+  @override
+  String homeOwedSuppliers(String amount) {
+    return 'Owed $amount';
+  }
+
+  @override
+  String homeReturnsCount(int count) {
+    return '$count returns';
+  }
+
+  @override
+  String debtorsOpen(int count) {
+    return 'Open debts: $count';
   }
 }

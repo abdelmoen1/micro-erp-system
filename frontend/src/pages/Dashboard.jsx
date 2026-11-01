@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { AppDownloadCard, AppGuideDialog } from "../components/AppDownload";
 import Icon from "../components/Icon";
 import { amountNumber, arCount, dayMonthYear, isPositiveAmount, monthName, shekel, shortReference, weekdayName } from "../lib/format";
+import { canManage } from "../lib/domain";
 import { session } from "../services/apiClient";
 import { useDashboard, useLowStock, useProductCount } from "../services/dashboard";
 
@@ -62,9 +63,18 @@ function buckets(period, data) {
   });
 }
 
-function Kpi({ label, icon, tone = "brand", value, sub, loading, color }) {
+/** The period's store days, for the links from each figure to the list behind it. */
+function periodRange(data) {
+  if (!data?.period?.from) return {};
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: data.period.timezone });
+  return { from: day.format(new Date(data.period.from)), to: day.format(new Date(data.period.to)) };
+}
+
+const linkTo = (path, params) => `${path}?${new URLSearchParams(params)}`;
+
+function Kpi({ label, icon, tone = "brand", value, sub, loading, color, to }) {
   return (
-    <div className="card kpi">
+    <Link className="card kpi kpi-link" to={to} aria-label={`${label}: افتح التفاصيل`}>
       <div className="kpi-top">
         <span className="kpi-label">{label}</span>
         <span className={`kpi-ic ${tone}`} aria-hidden="true">
@@ -84,7 +94,7 @@ function Kpi({ label, icon, tone = "brand", value, sub, loading, color }) {
           <span className="kpi-sub">{sub}</span>
         </>
       )}
-    </div>
+    </Link>
   );
 }
 
@@ -272,7 +282,9 @@ function LowStock({ loading }) {
             return (
               <li key={p.id}>
                 <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600 }}>{p.name}</span>
+                  <Link className="row-link" to={`/products/${p.id}`} style={{ fontSize: 14, fontWeight: 600 }}>
+                    {p.name}
+                  </Link>
                   <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>
                     الحد الأدنى <span className="m">{p.minimum_stock}</span>
                     {unit}
@@ -333,7 +345,7 @@ function RecentSales({ rows, loading }) {
                 return (
                   <tr key={r.id} style={{ borderTop: "1px solid var(--border)" }}>
                     <td className="m" style={{ padding: 10, textAlign: "right", fontWeight: 600 }}>
-                      #{r.id}
+                      <Link to={`/sales/${r.id}`}>#{r.id}</Link>
                     </td>
                     <td style={{ padding: 10, color: r.customer ? "var(--ink)" : "var(--ink-muted)" }}>{r.customer?.name ?? "بدون زبون"}</td>
                     <td style={{ padding: 10 }}>
@@ -365,7 +377,7 @@ export default function Dashboard() {
   const data = dashboard.data;
   const loading = dashboard.isPending;
   const role = session.user()?.role ?? "employee";
-  const [sub, range] = periodLine(period, data);
+  const [sub, rangeText] = periodLine(period, data);
 
   const s = data?.summary;
   const invoices = s?.invoices_count ?? 0;
@@ -381,6 +393,10 @@ export default function Dashboard() {
   const cashPart = s?.collected_at_sale ?? s?.cash_sales;
   const debtPart = s?.new_debt ?? s?.credit_sales;
   const firstName = (session.user()?.name ?? "").split(" ")[0];
+  const manager = canManage(session.user());
+  const range = periodRange(data);
+  const returns = data?.returns;
+  const purchases = data?.purchases;
 
   return (
     <>
@@ -389,7 +405,7 @@ export default function Dashboard() {
           <h1>الرئيسية</h1>
           <span className="sub">
             {firstName ? `أهلاً ${firstName} · ` : ""}
-            {sub} · <span className="m">{range}</span>
+            {sub} · <span className="m">{rangeText}</span>
           </span>
         </div>
         <div className="segs" role="group" aria-label="الفترة">
@@ -442,6 +458,7 @@ export default function Dashboard() {
             <Kpi
               label="المبيعات"
               icon="sales"
+              to={linkTo("/sales", range)}
               loading={loading}
               value={shekel(s?.total_sales)}
               sub={
@@ -455,9 +472,27 @@ export default function Dashboard() {
               }
             />
             <Kpi
+              label="نقدي"
+              icon="payments"
+              to={linkTo("/sales", { ...range, type: "cash" })}
+              loading={loading}
+              value={shekel(s?.cash_sales)}
+              sub="فواتير دُفعت كاملة"
+            />
+            <Kpi
+              label="آجل (دين)"
+              icon="clock"
+              tone="info"
+              to={linkTo("/sales", { ...range, type: "on_credit" })}
+              loading={loading}
+              value={shekel(s?.credit_sales)}
+              sub="فواتير عليها دين"
+            />
+            <Kpi
               label="تحصيلات الديون"
               icon="payments"
               tone="ok"
+              to={linkTo("/payments", range)}
               loading={loading}
               value={shekel(data?.payments?.total_collected)}
               sub={payments === 0 ? "لا دفعات" : `${arCount(payments, { one: "دفعة واحدة", two: "دفعتان", few: "دفعات", many: "دفعة" })} من زبائن`}
@@ -466,12 +501,32 @@ export default function Dashboard() {
               label="الديون المستحقة"
               icon="debts"
               tone="danger"
+              to="/debts?bucket=balance"
               loading={loading}
               value={shekel(s?.total_remaining_debt)}
               color={isPositiveAmount(s?.total_remaining_debt) ? "var(--debt-fg)" : undefined}
               sub={debtors === 0 ? "لا ديون مفتوحة" : `على ${arCount(debtors, { one: "زبون واحد", two: "زبونين", few: "زبائن", many: "زبوناً" })}`}
             />
-            <Kpi label="عدد الفواتير" icon="products" tone="info" loading={loading} value={<span className="m">{invoices}</span>} sub={invoices === 0 ? "ابدأ البيع من تطبيق الجوال" : "في الفترة المحددة"} />
+            <Kpi label="عدد الفواتير" icon="sales" tone="info" to={linkTo("/sales", range)} loading={loading} value={<span className="m">{invoices}</span>} sub={invoices === 0 ? "ابدأ البيع من تطبيق الجوال" : "في الفترة المحددة"} />
+            {manager ? (
+              <Kpi
+                label="المشتريات"
+                icon="bag"
+                to={linkTo("/purchases", range)}
+                loading={loading}
+                value={shekel(purchases?.total)}
+                sub={<>للموردين <span className="m">{shekel(purchases?.owed_to_suppliers)}</span></>}
+              />
+            ) : null}
+            <Kpi
+              label="المرتجعات"
+              icon="undo"
+              tone="danger"
+              to={linkTo("/returns", range)}
+              loading={loading}
+              value={shekel(returns?.total)}
+              sub={returns?.count ? <>صافي المبيعات <span className="m">{shekel(s?.net_sales)}</span></> : "لا مرتجعات في هذه الفترة"}
+            />
           </div>
           <div className="row2">
             <SalesChart key={period} period={period} rows={buckets(period, data)} loading={loading} />

@@ -22,9 +22,11 @@ import '../more/presentation/store_settings_screen.dart';
 import '../more/presentation/support_screen.dart';
 import '../sync/application/sync_engine.dart';
 import '../sync/presentation/sync_screen.dart';
+import '../goods/presentation/purchases_screen.dart';
 import '../goods/presentation/supplier_screens.dart';
 import '../guide/usage_guide.dart';
 import '../products/presentation/stock_lists_screen.dart';
+import '../returns/presentation/returns_screen.dart';
 import '../sale/presentation/sale_widgets.dart' show GroupLabel, LineCard;
 import '../sale/presentation/sales_history_screen.dart';
 import '../products/presentation/products_screen.dart';
@@ -325,14 +327,6 @@ class _MoreTab extends ConsumerWidget {
             ),
             if (user.canOverride)
               MoreTile(
-                key: const Key('more.suppliers'),
-                icon: Icons.local_shipping_outlined,
-                title: t.suppliersTitle,
-                subtitle: t.suppliersSub,
-                onTap: () => pushScreen<void>(context, const SuppliersScreen()),
-              ),
-            if (user.canOverride)
-              MoreTile(
                 key: const Key('more.negative'),
                 icon: Icons.report_gmailerrorred_outlined,
                 title: t.moreNegative,
@@ -351,8 +345,35 @@ class _MoreTab extends ConsumerWidget {
               subtitle: t.moreSalesHistorySub,
               onTap: () => pushScreen<void>(context, const SalesHistoryScreen()),
             ),
+            MoreTile(
+              key: const Key('more.returns'),
+              icon: Icons.assignment_return_outlined,
+              title: t.returnsTitle,
+              subtitle: user.canOverride ? t.returnsSub : t.returnsSales,
+              onTap: () => pushScreen<void>(context, const ReturnsScreen()),
+            ),
           ],
         ),
+        if (user.canOverride)
+          _MoreSection(
+            title: t.moreSectionPurchases,
+            tiles: [
+              MoreTile(
+                key: const Key('more.purchases'),
+                icon: Icons.shopping_bag_outlined,
+                title: t.purchasesTitle,
+                subtitle: t.purchasesSub,
+                onTap: () => pushScreen<void>(context, const PurchasesScreen()),
+              ),
+              MoreTile(
+                key: const Key('more.suppliers'),
+                icon: Icons.local_shipping_outlined,
+                title: t.suppliersTitle,
+                subtitle: t.suppliersSub,
+                onTap: () => pushScreen<void>(context, const SuppliersScreen()),
+              ),
+            ],
+          ),
         _MoreSection(
           title: t.moreSectionSettings,
           tiles: [

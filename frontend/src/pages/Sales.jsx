@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { DataTable, EmptyState, Field, MoneyText, PageHeader, Pager, Segments, StatusBadge } from "../components/ui";
 import { saleType } from "../lib/domain";
 import { dateTime, isPositiveAmount } from "../lib/format";
@@ -8,7 +8,8 @@ import { useSales } from "../services/backoffice";
 
 /** SCR-W-10 · sales list: date range, type and status filters (US-0504 AC1). */
 export default function Sales() {
-  const [filters, setFilters] = useState({ from: "", to: "", type: "", status: "active" });
+  const [params] = useSearchParams();
+  const [filters, setFilters] = useState({ from: params.get("from") ?? "", to: params.get("to") ?? "", type: params.get("type") ?? "", status: "active" });
   const [pageNo, setPageNo] = useState(1);
   const set = (patch) => {
     setFilters({ ...filters, ...patch });
@@ -53,6 +54,7 @@ export default function Sales() {
                 ["cash", "نقدي"],
                 ["partial", "جزئي"],
                 ["credit", "دين"],
+                ["on_credit", "كل الآجل"],
               ]}
               onChange={(type) => set({ type })}
             />

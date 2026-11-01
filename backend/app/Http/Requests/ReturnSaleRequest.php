@@ -18,6 +18,7 @@ class ReturnSaleRequest extends FormRequest
             'items' => ['required', 'array', 'min:1', 'max:200'],
             'items.*.invoice_item_id' => ['required', 'integer'],
             'items.*.quantity' => ['required', 'numeric', 'decimal:0,3'],
+            'items.*.damaged' => ['sometimes', 'boolean'],
             'reason' => ['required', 'string', 'max:500'],
         ];
     }

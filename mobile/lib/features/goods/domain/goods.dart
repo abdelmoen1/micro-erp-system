@@ -1,4 +1,5 @@
 import '../../../core/money/fixed_point.dart';
+import '../../returns/domain/returns.dart';
 
 /// Goods arrive by the carton or by weight. A carton always has a barcode; a weighed item never does.
 enum GoodsKind {
@@ -143,7 +144,7 @@ class SupplierPayment {
 
 /// One supplier: what is owed in all, the products bought, and the payments made.
 class SupplierDetail {
-  const SupplierDetail({required this.supplier, required this.products, required this.payments});
+  const SupplierDetail({required this.supplier, required this.products, required this.payments, this.returns = const []});
 
   factory SupplierDetail.fromJson(Map<String, dynamic> json) => SupplierDetail(
     supplier: Supplier.fromJson(json),
@@ -155,11 +156,16 @@ class SupplierDetail {
       for (final row in json['payments'] as List<dynamic>? ?? const [])
         SupplierPayment.fromJson(row as Map<String, dynamic>),
     ],
+    returns: [
+      for (final row in json['returns'] as List<dynamic>? ?? const [])
+        PurchaseReturnRecord.fromJson(row as Map<String, dynamic>),
+    ],
   );
 
   final Supplier supplier;
   final List<SupplierProduct> products;
   final List<SupplierPayment> payments;
+  final List<PurchaseReturnRecord> returns;
 }
 
 /// One delivery of a product from the supplier.
@@ -214,6 +220,102 @@ class ProductInvoices {
 
   final bool weighed;
   final List<ProductInvoice> invoices;
+}
+
+/// A row of the purchases register.
+class PurchaseRow {
+  const PurchaseRow({
+    required this.id,
+    required this.supplierId,
+    required this.supplierName,
+    required this.total,
+    required this.returned,
+    required this.linesCount,
+    required this.at,
+    this.by,
+  });
+
+  factory PurchaseRow.fromJson(Map<String, dynamic> json) {
+    final supplier = json['supplier'] as Map<String, dynamic>? ?? const {};
+    return PurchaseRow(
+      id: (json['id'] as num).toInt(),
+      supplierId: (supplier['id'] as num?)?.toInt() ?? 0,
+      supplierName: supplier['name'] as String? ?? '',
+      total: Money.parse(json['total'] as String? ?? '0'),
+      returned: Money.parse(json['returned_amount'] as String? ?? '0'),
+      linesCount: (json['lines_count'] as num?)?.toInt() ?? 0,
+      at: _time(json['at']),
+      by: json['by'] as String?,
+    );
+  }
+
+  final int id;
+  final int supplierId;
+  final String supplierName;
+  final Money total;
+  final Money returned;
+  final int linesCount;
+  final DateTime at;
+  final String? by;
+}
+
+/// One line of a purchase invoice. Quantities are pieces, or kg for a weighed product.
+class PurchaseLine {
+  const PurchaseLine({
+    required this.id,
+    required this.name,
+    required this.unit,
+    required this.quantity,
+    required this.returned,
+    required this.buyPrice,
+    required this.total,
+    this.cartons,
+  });
+
+  factory PurchaseLine.fromJson(Map<String, dynamic> json) => PurchaseLine(
+    id: (json['id'] as num).toInt(),
+    name: json['item_name'] as String? ?? '',
+    unit: ProductUnit.fromApi(json['unit']),
+    quantity: Quantity.parse(json['quantity'] ?? '0'),
+    returned: Quantity.parse(json['returned_quantity'] ?? '0'),
+    buyPrice: Money.parse(json['buy_price'] as String? ?? '0'),
+    total: Money.parse(json['line_total'] as String? ?? '0'),
+    cartons: (json['cartons'] as num?)?.toInt(),
+  );
+
+  final int id;
+  final String name;
+  final ProductUnit unit;
+  final Quantity quantity;
+  final Quantity returned;
+
+  /// Per carton, or per kilo for a weighed product.
+  final Money buyPrice;
+  final Money total;
+  final int? cartons;
+
+  Quantity get returnable => quantity - returned;
+
+  /// This line's share for the preview, half-up; the server's figure is the final one.
+  Money valueOf(Quantity part) => Money.cents((total.cents * part.milli * 2 + quantity.milli) ~/ (quantity.milli * 2));
+}
+
+/// A purchase invoice in full.
+class PurchaseDetail {
+  const PurchaseDetail({required this.row, required this.lines, required this.returns});
+
+  factory PurchaseDetail.fromJson(Map<String, dynamic> json) => PurchaseDetail(
+    row: PurchaseRow.fromJson(json),
+    lines: [for (final row in json['items'] as List<dynamic>? ?? const []) PurchaseLine.fromJson(row as Map<String, dynamic>)],
+    returns: [
+      for (final row in json['returns'] as List<dynamic>? ?? const [])
+        PurchaseReturnRecord.fromJson(row as Map<String, dynamic>),
+    ],
+  );
+
+  final PurchaseRow row;
+  final List<PurchaseLine> lines;
+  final List<PurchaseReturnRecord> returns;
 }
 
 /// The server's answer to a recorded delivery.

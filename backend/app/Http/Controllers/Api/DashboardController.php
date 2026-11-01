@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DashboardRequest;
 use App\Http\Resources\DashboardResource;
+use App\Models\Product;
 use App\Services\DashboardService;
 
 class DashboardController extends Controller
@@ -17,6 +18,8 @@ class DashboardController extends Controller
             $this->dashboardService->dashboard(
                 $request->user()->store,
                 $request->period(),
+                // Costs and what the store owes stay off staff phones.
+                $request->user()->can('adjustStock', Product::class),
             )
         );
     }

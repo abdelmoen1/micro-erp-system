@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\StoreSettingsController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\PurchaseController;
 use App\Http\Controllers\Api\StockAdjustmentController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\SupplierController;
@@ -112,6 +113,12 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
 
     // Goods from suppliers: invoice, stock and payment together; later payments on the account.
     Route::post('purchases', [SupplierController::class, 'purchase'])->middleware('idempotent');
+    Route::get('purchases', [PurchaseController::class, 'index']);
+    Route::get('purchases/{purchaseInvoice}', [PurchaseController::class, 'show']);
+    // Goods back to the supplier: the balance first, then a refund (the mirror of US-0601).
+    Route::post('purchases/{purchaseInvoice}/returns', [PurchaseController::class, 'storeReturn'])->middleware('idempotent');
+    Route::get('returns/purchases', [PurchaseController::class, 'purchaseReturns']);
+    Route::get('returns/sales', [PurchaseController::class, 'saleReturns']);
     Route::get('suppliers', [SupplierController::class, 'index']);
     Route::get('suppliers/{supplier}', [SupplierController::class, 'show']);
     Route::get('suppliers/{supplier}/products/{product}', [SupplierController::class, 'product']);

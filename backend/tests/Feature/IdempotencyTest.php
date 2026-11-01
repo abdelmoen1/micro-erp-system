@@ -9,6 +9,7 @@ use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
+use App\Models\PurchaseReturn;
 use App\Models\SaleReturn;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
@@ -48,6 +49,7 @@ class IdempotencyTest extends TestCase
         'POST api/v1/stock-adjustments',
         'POST api/v1/sync/conflicts/{conflict}/resolve',
         'POST api/v1/purchases',
+        'POST api/v1/purchases/{purchaseInvoice}/returns',
         'POST api/v1/suppliers/{supplier}/payments',
     ];
 
@@ -250,6 +252,7 @@ class IdempotencyTest extends TestCase
             'stock adjustment' => ['stock-adjustment'],
             'resolve a held offline payment' => ['resolve-sync-conflict'],
             'goods from a supplier' => ['purchase'],
+            'goods back to a supplier' => ['purchase-return'],
             'payment to a supplier' => ['supplier-payment'],
         ];
     }
@@ -276,6 +279,7 @@ class IdempotencyTest extends TestCase
             'returned' => InvoiceItem::orderBy('id')->pluck('returned_quantity')->map(fn($v) => (string) $v)->all(),
             'purchases' => PurchaseInvoice::count(),
             'supplier_payments' => SupplierPayment::count(),
+            'purchase_returns' => PurchaseReturn::count(),
         ]);
 
         return match ($name) {
@@ -335,6 +339,14 @@ class IdempotencyTest extends TestCase
                 'method' => 'cash',
                 'lines' => [['name' => 'كولا', 'barcode' => '6251234567890', 'cartons' => 2, 'pack_size' => 24, 'buy_price' => '60.00', 'selling_price' => '3.50']],
             ], $state],
+            'purchase-return' => (function () use ($state) {
+                $supplier = Supplier::create(['store_id' => $this->store->id, 'name' => 'شركة الأمل']);
+                $product = $this->makeProduct($this->store, ['current_stock' => 10]);
+                $invoice = $supplier->invoices()->create(['store_id' => $this->store->id, 'total' => '100.00']);
+                $item = $invoice->items()->create(['product_id' => $product->id, 'quantity' => 10, 'buy_price' => '10.00', 'line_total' => '100.00']);
+
+                return ['POST', "/api/v1/purchases/{$invoice->id}/returns", ['items' => [['purchase_item_id' => $item->id, 'quantity' => 2]], 'reason' => 'تالف'], $state];
+            })(),
             'supplier-payment' => (function () use ($state) {
                 $supplier = Supplier::create(['store_id' => $this->store->id, 'name' => 'شركة الأمل']);
                 $product = $this->makeProduct($this->store);

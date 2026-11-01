@@ -86,7 +86,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get guideDoneBody =>
-      'الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «البضاعة». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.';
+      'الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «المخزن». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.';
 
   @override
   String get guideFinish => 'ابدأ العمل';
@@ -238,7 +238,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get splashTagline => 'دفتر متجرك، في جيبك';
 
   @override
-  String get splashSubline => 'المبيعات والديون والبضاعة في مكان واحد';
+  String get splashSubline => 'المبيعات والديون والمخزن في مكان واحد';
 
   @override
   String get splashChecking => 'جارٍ التحقق من الجلسة';
@@ -323,7 +323,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tabCustomers => 'الزبائن';
 
   @override
-  String get tabProducts => 'البضاعة';
+  String get tabProducts => 'المخزن';
 
   @override
   String get tabMore => 'المزيد';
@@ -350,7 +350,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get placeholderCustomers => 'قائمة الزبائن';
 
   @override
-  String get placeholderProducts => 'البضاعة والأصناف اللي قرّبت تخلص';
+  String get placeholderProducts => 'المخزن والأصناف اللي قرّبت تخلص';
 
   @override
   String get placeholderPos => 'سلة البيع — شاشة هبوط الموظف';
@@ -1613,7 +1613,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get savedScanNext => 'امسح صنف ثاني';
 
   @override
-  String get savedBack => 'الرجوع للبضاعة';
+  String get savedBack => 'الرجوع للمخزن';
 
   @override
   String get homeAttention => 'يحتاج انتباهك';
@@ -1788,7 +1788,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get subscriptionDataSafe =>
-      'بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والبضاعة. يعود كل شيء فور تفعيل الاشتراك.';
+      'بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والمخزن. يعود كل شيء فور تفعيل الاشتراك.';
 
   @override
   String get subscriptionContactWhatsapp => 'تواصل معنا عبر واتساب';
@@ -1852,7 +1852,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get invWaiting => 'أكمل النموذج أو أغلقه لمسح الصنف التالي';
 
   @override
-  String get invCloseA11y => 'إغلاق الكاميرا والرجوع للبضاعة';
+  String get invCloseA11y => 'إغلاق الكاميرا والرجوع للمخزن';
 
   @override
   String get invBackToScanning => 'إغلاق والعودة إلى المسح';
@@ -2047,7 +2047,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get moreStoreInfoSub => 'الاسم والهاتف والعنوان على الإيصال';
 
   @override
-  String get moreSectionStock => 'البضاعة والكميات';
+  String get moreSectionStock => 'المخزن والكميات';
 
   @override
   String get moreLowStock => 'بضاعة قرّبت تخلص';
@@ -2065,7 +2065,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get moreSectionSales => 'المبيعات';
 
   @override
-  String get moreSalesHistory => 'سجل المبيعات';
+  String get moreSalesHistory => 'المبيعات';
 
   @override
   String get moreSalesHistorySub => 'كل الفواتير، وفتح أي فاتورة كاملة';
@@ -2281,7 +2281,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pwMismatch => 'تأكيد كلمة المرور لا يطابقها.';
 
   @override
-  String get salesTitle => 'سجل المبيعات';
+  String get salesTitle => 'المبيعات';
 
   @override
   String get salesToday => 'اليوم';
@@ -2378,7 +2378,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get prodDeactivateBody =>
-      'لن يظهر في البيع ولا في قائمة البضاعة. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».';
+      'لن يظهر في البيع ولا في قائمة المخزن. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».';
 
   @override
   String prodDeactivated(String name) {
@@ -2902,7 +2902,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get phoneDone => 'تم حفظ الرقم. سجّل الدخول به من الآن.';
 
   @override
-  String get goodsTitle => 'تسجيل بضاعة';
+  String get goodsTitle => 'فاتورة مشتريات';
 
   @override
   String get goodsStepItems => 'البضاعة';
@@ -3035,7 +3035,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'جرّب معنا: سجّل بضاعة، وبعدها بيع أول فاتورة.';
 
   @override
-  String get coachProductsTitle => 'اضغط «البضاعة»';
+  String get coachProductsTitle => 'اضغط «المخزن»';
 
   @override
   String get coachProductsBody => 'هون بتسجل اللي جبته من المورد.';
@@ -3099,7 +3099,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get goodsInvoiceTitle => 'فاتورة البضاعة';
+  String get goodsInvoiceTitle => 'فاتورة مشتريات';
 
   @override
   String get goodsBarcode => 'الباركود';
@@ -3117,7 +3117,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get supplierProducts => 'الأصناف';
 
   @override
-  String get supplierInvoices => 'الفواتير';
+  String get supplierInvoices => 'فواتير المورد';
 
   @override
   String get supplierPayments => 'الدفعات';
@@ -3152,5 +3152,264 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String supplierInvoiceNumber(String number) {
     return 'فاتورة رقم $number';
+  }
+
+  @override
+  String get printAction => 'طباعة';
+
+  @override
+  String get printPrinter => 'الطابعة';
+
+  @override
+  String get printPaper => 'عرض الورق';
+
+  @override
+  String get printPaper58 => '58 ملم';
+
+  @override
+  String get printPaper80 => '80 ملم';
+
+  @override
+  String get printNeedsPermission =>
+      'اسمح للتطبيق باستخدام البلوتوث عشان يوصل للطابعة.';
+
+  @override
+  String get printBluetoothOff =>
+      'البلوتوث مطفي. شغّله من إعدادات الجوال، وبعدها اضغط «إعادة المحاولة».';
+
+  @override
+  String get printNoPrinters =>
+      'ما في طابعة مقترنة. شغّل الطابعة واقرنها من إعدادات البلوتوث في الجوال، وبعدها اضغط «إعادة المحاولة».';
+
+  @override
+  String get printRetry => 'إعادة المحاولة';
+
+  @override
+  String get printNow => 'اطبع';
+
+  @override
+  String get printing => 'جارٍ الطباعة…';
+
+  @override
+  String get printDone => 'انبعتت للطابعة.';
+
+  @override
+  String get printFailed =>
+      'ما قدرنا نطبع. تأكد إن الطابعة شغالة وقريبة من الجوال، وجرّب مرة ثانية.';
+
+  @override
+  String get printOther => 'طابعة ثانية أو ملف PDF';
+
+  @override
+  String get docSale => 'فاتورة مبيعات';
+
+  @override
+  String get docSaleReturn => 'مرتجع مبيعات';
+
+  @override
+  String get docPurchase => 'فاتورة مشتريات';
+
+  @override
+  String get docPurchaseReturn => 'مرتجع مشتريات';
+
+  @override
+  String get docThanks => 'شكراً لتعاملكم معنا';
+
+  @override
+  String get docSupplier => 'المورد';
+
+  @override
+  String get docForInvoice => 'عن الفاتورة';
+
+  @override
+  String get docReturned => 'المرتجعات';
+
+  @override
+  String get docToDebt => 'يُخصم من الدين';
+
+  @override
+  String get docToBalance => 'يُخصم من حساب المورد';
+
+  @override
+  String get docRefunded => 'يُعاد للزبون نقداً';
+
+  @override
+  String get docRefundFromSupplier => 'يردّه المورد نقداً';
+
+  @override
+  String get docDamaged => 'تالفة';
+
+  @override
+  String get docOffShelf => 'خارج المخزن';
+
+  @override
+  String get retHelp => 'اكتب الكمية المرتجعة من كل صنف.';
+
+  @override
+  String get retQuantity => 'الكمية المرتجعة';
+
+  @override
+  String get retDamaged => 'تالفة، ما بترجع للمخزن';
+
+  @override
+  String get retOffShelf => 'مش موجودة بالمخزن، رجعت تالفة من زبون';
+
+  @override
+  String get retReason => 'سبب الإرجاع';
+
+  @override
+  String get retReasonDamaged => 'بضاعة تالفة';
+
+  @override
+  String get retReasonExpired => 'منتهية الصلاحية';
+
+  @override
+  String get retReasonWrong => 'صنف غلط';
+
+  @override
+  String get retReasonDispute => 'خلاف على البضاعة';
+
+  @override
+  String get retReasonRequired => 'اكتب سبب الإرجاع.';
+
+  @override
+  String get retChooseLine => 'اكتب كمية لصنف واحد على الأقل.';
+
+  @override
+  String get retValue => 'قيمة المرتجع';
+
+  @override
+  String get retConfirm => 'سجّل المرتجع';
+
+  @override
+  String get retDoneTitle => 'تم تسجيل المرتجع';
+
+  @override
+  String get retClose => 'تم';
+
+  @override
+  String get retAction => 'مرتجع';
+
+  @override
+  String get retToSupplier => 'إرجاع للمورد';
+
+  @override
+  String get returnsTitle => 'المرتجعات';
+
+  @override
+  String get returnsSub => 'من الزبائن وللموردين';
+
+  @override
+  String get returnsSales => 'من الزبائن';
+
+  @override
+  String get returnsPurchases => 'للموردين';
+
+  @override
+  String get returnsEmpty => 'لا مرتجعات في هذه الفترة.';
+
+  @override
+  String get purchasesTitle => 'المشتريات';
+
+  @override
+  String get purchasesSub => 'فواتير الموردين';
+
+  @override
+  String get purchasesEmpty => 'لا مشتريات في هذه الفترة.';
+
+  @override
+  String get purchasesAdd => '+ فاتورة';
+
+  @override
+  String get homePurchasesToday => 'مشتريات اليوم';
+
+  @override
+  String get homeReturnsToday => 'مرتجعات اليوم';
+
+  @override
+  String get collectionsAtSale => 'عند البيع';
+
+  @override
+  String get collectionsRepayments => 'سداد ديون';
+
+  @override
+  String get collectionsRefunded => 'مرتجع نقداً للزبائن';
+
+  @override
+  String get collectionsNet => 'الصافي في الصندوق';
+
+  @override
+  String get collectionsEmpty => 'ما في سداد ديون اليوم.';
+
+  @override
+  String get debtorsEmpty => 'ما في ديون مفتوحة.';
+
+  @override
+  String get movePurchase => 'مشتريات';
+
+  @override
+  String get movePurchaseReturn => 'مرتجع مشتريات';
+
+  @override
+  String get moreSectionPurchases => 'المشتريات والموردين';
+
+  @override
+  String printTitle(String title, String number) {
+    return 'طباعة $title $number';
+  }
+
+  @override
+  String docReason(String reason) {
+    return 'السبب: $reason';
+  }
+
+  @override
+  String retTitleSale(String id) {
+    return 'مرتجع من الفاتورة #$id';
+  }
+
+  @override
+  String retTitlePurchase(String id) {
+    return 'إرجاع من الفاتورة #$id';
+  }
+
+  @override
+  String retAvailable(String quantity) {
+    return 'المتاح للإرجاع: $quantity';
+  }
+
+  @override
+  String retTooMuch(String max) {
+    return 'الحد الأقصى $max';
+  }
+
+  @override
+  String purchaseReturned(String amount) {
+    return 'مرتجع $amount';
+  }
+
+  @override
+  String purchasePieces(String quantity) {
+    return '$quantity قطعة';
+  }
+
+  @override
+  String purchaseLineReturned(String quantity) {
+    return 'أُرجع منها $quantity';
+  }
+
+  @override
+  String homeOwedSuppliers(String amount) {
+    return 'للموردين $amount';
+  }
+
+  @override
+  String homeReturnsCount(int count) {
+    return '$count مرتجع';
+  }
+
+  @override
+  String debtorsOpen(int count) {
+    return 'ديون مفتوحة: $count';
   }
 }

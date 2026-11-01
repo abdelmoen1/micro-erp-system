@@ -32,7 +32,7 @@
   "guideSale3": "اضغط «إتمام البيع»، اختر نقداً أو ديناً على زبون، ثم احفظ الفاتورة.",
   "guideSaleAction": "افتح شاشة البيع",
   "guideDoneTitle": "جاهز للعمل!",
-  "guideDoneBody": "الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «البضاعة». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.",
+  "guideDoneBody": "الفواتير في «المبيعات»، والديون في «الزبائن»، والمخزون في «المخزن». الإعدادات والدعم الفني في «المزيد»، ومنها تفتح هذا الدليل متى شئت.",
   "guideFinish": "ابدأ العمل",
   "guideNext": "التالي",
   "guideSkip": "تخطَّ هذه الخطوة",
@@ -82,7 +82,7 @@
   "phPayAmount": "المبلغ الذي دفعه الزبون بالشيكل",
   "phVoidReason": "لماذا تُلغى هذه الفاتورة",
   "splashTagline": "دفتر متجرك، في جيبك",
-  "splashSubline": "المبيعات والديون والبضاعة في مكان واحد",
+  "splashSubline": "المبيعات والديون والمخزن في مكان واحد",
   "splashChecking": "جارٍ التحقق من الجلسة",
   "loginTitle": "تسجيل الدخول",
   "loginHelper": "أدخل بيانات حسابك في المتجر",
@@ -122,7 +122,7 @@
   "tabHome": "الرئيسية",
   "tabPos": "بيع",
   "tabCustomers": "الزبائن",
-  "tabProducts": "البضاعة",
+  "tabProducts": "المخزن",
   "tabMore": "المزيد",
   "sellA11y": "بيع",
   "sellCurrentA11y": "بيع — أنت في شاشة البيع",
@@ -131,7 +131,7 @@
   "offlineBanner": "لا يوجد اتصال — البيع يحتاج إلى الإنترنت",
   "placeholderHome": "لوحة اليوم — شاشة هبوط المالك والمدير",
   "placeholderCustomers": "قائمة الزبائن",
-  "placeholderProducts": "البضاعة والأصناف اللي قرّبت تخلص",
+  "placeholderProducts": "المخزن والأصناف اللي قرّبت تخلص",
   "placeholderPos": "سلة البيع — شاشة هبوط الموظف",
   "placeholderBody": "محتوى هذه الشاشة يُصمَّم في S4 (US-1508). هنا يظهر فقط إطار التطبيق: الرأس، حالة الاتصال، وشريط التنقل.",
   "placeholderPosBody": "المسح والسلة والدفع تُبنى في مرحلة لاحقة (S5). هنا يظهر فقط إطار التطبيق.",
@@ -855,7 +855,7 @@
     }
   },
   "savedScanNext": "امسح صنف ثاني",
-  "savedBack": "الرجوع للبضاعة",
+  "savedBack": "الرجوع للمخزن",
   "homeAttention": "يحتاج انتباهك",
   "homeOverdueAlert": "ديون متأخرة: {count}",
   "@homeOverdueAlert": {
@@ -964,7 +964,7 @@
       }
     }
   },
-  "subscriptionDataSafe": "بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والبضاعة. يعود كل شيء فور تفعيل الاشتراك.",
+  "subscriptionDataSafe": "بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والمخزن. يعود كل شيء فور تفعيل الاشتراك.",
   "subscriptionContactWhatsapp": "تواصل معنا عبر واتساب",
   "subscriptionContactNoNumber": "تواصل مع إدارة حسبة لتفعيل الاشتراك.",
   "subscriptionWhatsappMessage": "مرحباً، أريد تفعيل اشتراك متجر «{store}» على حسبة.\nالجوال: {phone}",
@@ -1006,7 +1006,7 @@
   "invTitle": "إضافة بضاعة بالمسح",
   "invInstruction": "امسح باركود الصنف لإضافته إلى متجرك. لا يدخل سلة البيع.",
   "invWaiting": "أكمل النموذج أو أغلقه لمسح الصنف التالي",
-  "invCloseA11y": "إغلاق الكاميرا والرجوع للبضاعة",
+  "invCloseA11y": "إغلاق الكاميرا والرجوع للمخزن",
   "invBackToScanning": "إغلاق والعودة إلى المسح",
   "invStockNow": "الكمية الآن {stock}",
   "@invStockNow": {
@@ -1160,13 +1160,13 @@
   "moreStaffSub": "دعوة موظف، تغيير الدور، الإيقاف",
   "moreStoreInfo": "بيانات المحل",
   "moreStoreInfoSub": "الاسم والهاتف والعنوان على الإيصال",
-  "moreSectionStock": "البضاعة والكميات",
+  "moreSectionStock": "المخزن والكميات",
   "moreLowStock": "بضاعة قرّبت تخلص",
   "moreLowStockSub": "عند الحد الأدنى أو أقل",
   "moreNegative": "مخزون سالب للمراجعة",
   "moreNegativeSub": "بيعت بأكثر من الكمية المسجّلة",
   "moreSectionSales": "المبيعات",
-  "moreSalesHistory": "سجل المبيعات",
+  "moreSalesHistory": "المبيعات",
   "moreSalesHistorySub": "كل الفواتير، وفتح أي فاتورة كاملة",
   "moreSectionSettings": "الإعدادات",
   "morePassword": "تغيير كلمة المرور",
@@ -1295,7 +1295,7 @@
   "pwCurrentRequired": "اكتب كلمة المرور الحالية.",
   "pwShort": "كلمة المرور 8 أحرف على الأقل.",
   "pwMismatch": "تأكيد كلمة المرور لا يطابقها.",
-  "salesTitle": "سجل المبيعات",
+  "salesTitle": "المبيعات",
   "salesToday": "اليوم",
   "sales7": "آخر 7 أيام",
   "sales30": "آخر 30 يوماً",
@@ -1358,7 +1358,7 @@
       }
     }
   },
-  "prodDeactivateBody": "لن يظهر في البيع ولا في قائمة البضاعة. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».",
+  "prodDeactivateBody": "لن يظهر في البيع ولا في قائمة المخزن. حركاته وفواتيره السابقة تبقى في السجل، وتستطيع إعادته متى شئت من «موقوفة».",
   "prodDeactivated": "أُوقف «{name}».",
   "@prodDeactivated": {
     "placeholders": {
@@ -1738,7 +1738,7 @@
   "phoneNewLabel": "رقم الجوال",
   "phoneSave": "حفظ الرقم",
   "phoneDone": "تم حفظ الرقم. سجّل الدخول به من الآن.",
-  "goodsTitle": "تسجيل بضاعة",
+  "goodsTitle": "فاتورة مشتريات",
   "goodsStepItems": "البضاعة",
   "goodsStepSupplier": "المورد",
   "goodsScan": "امسح باركود",
@@ -1782,7 +1782,7 @@
   "supplierPayTooMuch": "أكبر من المبلغ اللي عليك",
   "coachSkip": "تخطي",
   "coachWelcomeBody": "جرّب معنا: سجّل بضاعة، وبعدها بيع أول فاتورة.",
-  "coachProductsTitle": "اضغط «البضاعة»",
+  "coachProductsTitle": "اضغط «المخزن»",
   "coachProductsBody": "هون بتسجل اللي جبته من المورد.",
   "coachAddTitle": "اضغط «+ بضاعة»",
   "coachAddBody": "من هون بتبدأ تسجيل البضاعة.",
@@ -1838,13 +1838,13 @@
       }
     }
   },
-  "goodsInvoiceTitle": "فاتورة البضاعة",
+  "goodsInvoiceTitle": "فاتورة مشتريات",
   "goodsBarcode": "الباركود",
   "goodsBarcodeRequired": "اكتب رقم الباركود",
   "goodsSellCarton": "سعر بيع الكرتونة",
   "goodsCartonPriceLow": "أعلى من سعر القطعة",
   "supplierProducts": "الأصناف",
-  "supplierInvoices": "الفواتير",
+  "supplierInvoices": "فواتير المورد",
   "supplierPayments": "الدفعات",
   "supplierNoPayments": "لسا ما في دفعات",
   "supplierTime": "الوقت",
@@ -1860,6 +1860,170 @@
     "placeholders": {
       "number": {
         "type": "String"
+      }
+    }
+  },
+  "printAction": "طباعة",
+  "printPrinter": "الطابعة",
+  "printPaper": "عرض الورق",
+  "printPaper58": "58 ملم",
+  "printPaper80": "80 ملم",
+  "printNeedsPermission": "اسمح للتطبيق باستخدام البلوتوث عشان يوصل للطابعة.",
+  "printBluetoothOff": "البلوتوث مطفي. شغّله من إعدادات الجوال، وبعدها اضغط «إعادة المحاولة».",
+  "printNoPrinters": "ما في طابعة مقترنة. شغّل الطابعة واقرنها من إعدادات البلوتوث في الجوال، وبعدها اضغط «إعادة المحاولة».",
+  "printRetry": "إعادة المحاولة",
+  "printNow": "اطبع",
+  "printing": "جارٍ الطباعة…",
+  "printDone": "انبعتت للطابعة.",
+  "printFailed": "ما قدرنا نطبع. تأكد إن الطابعة شغالة وقريبة من الجوال، وجرّب مرة ثانية.",
+  "printOther": "طابعة ثانية أو ملف PDF",
+  "docSale": "فاتورة مبيعات",
+  "docSaleReturn": "مرتجع مبيعات",
+  "docPurchase": "فاتورة مشتريات",
+  "docPurchaseReturn": "مرتجع مشتريات",
+  "docThanks": "شكراً لتعاملكم معنا",
+  "docSupplier": "المورد",
+  "docForInvoice": "عن الفاتورة",
+  "docReturned": "المرتجعات",
+  "docToDebt": "يُخصم من الدين",
+  "docToBalance": "يُخصم من حساب المورد",
+  "docRefunded": "يُعاد للزبون نقداً",
+  "docRefundFromSupplier": "يردّه المورد نقداً",
+  "docDamaged": "تالفة",
+  "docOffShelf": "خارج المخزن",
+  "retHelp": "اكتب الكمية المرتجعة من كل صنف.",
+  "retQuantity": "الكمية المرتجعة",
+  "retDamaged": "تالفة، ما بترجع للمخزن",
+  "retOffShelf": "مش موجودة بالمخزن، رجعت تالفة من زبون",
+  "retReason": "سبب الإرجاع",
+  "retReasonDamaged": "بضاعة تالفة",
+  "retReasonExpired": "منتهية الصلاحية",
+  "retReasonWrong": "صنف غلط",
+  "retReasonDispute": "خلاف على البضاعة",
+  "retReasonRequired": "اكتب سبب الإرجاع.",
+  "retChooseLine": "اكتب كمية لصنف واحد على الأقل.",
+  "retValue": "قيمة المرتجع",
+  "retConfirm": "سجّل المرتجع",
+  "retDoneTitle": "تم تسجيل المرتجع",
+  "retClose": "تم",
+  "retAction": "مرتجع",
+  "retToSupplier": "إرجاع للمورد",
+  "returnsTitle": "المرتجعات",
+  "returnsSub": "من الزبائن وللموردين",
+  "returnsSales": "من الزبائن",
+  "returnsPurchases": "للموردين",
+  "returnsEmpty": "لا مرتجعات في هذه الفترة.",
+  "purchasesTitle": "المشتريات",
+  "purchasesSub": "فواتير الموردين",
+  "purchasesEmpty": "لا مشتريات في هذه الفترة.",
+  "purchasesAdd": "+ فاتورة",
+  "homePurchasesToday": "مشتريات اليوم",
+  "homeReturnsToday": "مرتجعات اليوم",
+  "collectionsAtSale": "عند البيع",
+  "collectionsRepayments": "سداد ديون",
+  "collectionsRefunded": "مرتجع نقداً للزبائن",
+  "collectionsNet": "الصافي في الصندوق",
+  "collectionsEmpty": "ما في سداد ديون اليوم.",
+  "debtorsEmpty": "ما في ديون مفتوحة.",
+  "movePurchase": "مشتريات",
+  "movePurchaseReturn": "مرتجع مشتريات",
+  "moreSectionPurchases": "المشتريات والموردين",
+  "printTitle": "طباعة {title} {number}",
+  "@printTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "docReason": "السبب: {reason}",
+  "@docReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "retTitleSale": "مرتجع من الفاتورة #{id}",
+  "@retTitleSale": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "retTitlePurchase": "إرجاع من الفاتورة #{id}",
+  "@retTitlePurchase": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "retAvailable": "المتاح للإرجاع: {quantity}",
+  "@retAvailable": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "retTooMuch": "الحد الأقصى {max}",
+  "@retTooMuch": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseReturned": "مرتجع {amount}",
+  "@purchaseReturned": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "purchasePieces": "{quantity} قطعة",
+  "@purchasePieces": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseLineReturned": "أُرجع منها {quantity}",
+  "@purchaseLineReturned": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "homeOwedSuppliers": "للموردين {amount}",
+  "@homeOwedSuppliers": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "homeReturnsCount": "{count} مرتجع",
+  "@homeReturnsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "debtorsOpen": "ديون مفتوحة: {count}",
+  "@debtorsOpen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   }

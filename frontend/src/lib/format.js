@@ -60,3 +60,16 @@ const D = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", y
 export const dateTime = (iso) => (iso ? DT.format(new Date(iso)).replace(",", "") : "—");
 /** dd/mm/yyyy; a bare Y-m-d is read at local noon so it never shifts a day. */
 export const dateOnly = (iso) => (iso ? D.format(new Date(iso.length === 10 ? `${iso}T12:00:00` : iso)) : "—");
+
+/** Exact integers for previews: thousandths of a quantity, agorot of an amount, and back. */
+export const milliOf = (quantity) => {
+  const [whole, fraction = ""] = String(quantity ?? "0").replace("-", "").split(".");
+  return Number(whole || 0) * 1000 + Number(fraction.padEnd(3, "0").slice(0, 3));
+};
+export const centsOf = (amount) => {
+  const text = String(amount ?? "0");
+  const [whole, fraction = ""] = text.replace("-", "").split(".");
+  const cents = Number(whole || 0) * 100 + Number(fraction.padEnd(2, "0").slice(0, 2));
+  return text.startsWith("-") ? -cents : cents;
+};
+export const moneyOf = (cents) => `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;

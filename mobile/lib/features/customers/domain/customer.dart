@@ -1,5 +1,50 @@
 import '../../../core/money/fixed_point.dart';
 
+/// A debt repayment or one group of them, as the day's collections list it.
+class CollectedPayment {
+  const CollectedPayment({required this.amount, required this.method, this.customerName, this.at, this.reversed = false});
+
+  factory CollectedPayment.fromJson(Map<String, dynamic> json) => CollectedPayment(
+    amount: Money.parse(json['total_amount'] as String? ?? '0'),
+    method: json['method'] as String?,
+    customerName: (json['customer'] as Map<String, dynamic>?)?['name'] as String?,
+    at: DateTime.tryParse(json['paid_at'] as String? ?? '')?.toLocal(),
+    reversed: json['is_reversed'] == true,
+  );
+
+  final Money amount;
+  final String? method;
+  final String? customerName;
+  final DateTime? at;
+  final bool reversed;
+}
+
+/// A customer with open debts, from GET /debts/balances.
+class Debtor {
+  const Debtor({required this.customer, required this.openCount, this.oldestDue});
+
+  factory Debtor.fromJson(Map<String, dynamic> json) {
+    final customer = json['customer'] as Map<String, dynamic>? ?? const {};
+    return Debtor(
+      customer: Customer(
+        id: (customer['id'] as num).toInt(),
+        name: customer['name'] as String? ?? '',
+        phone: customer['phone'] as String? ?? '',
+        balance: Money.parse(json['total_remaining'] as String? ?? '0'),
+        creditLimit: null,
+      ),
+      openCount: (json['open_count'] as num?)?.toInt() ?? 0,
+      oldestDue: json['oldest_due'] as String?,
+    );
+  }
+
+  final Customer customer;
+  final int openCount;
+
+  /// `YYYY-MM-DD`; null when no debt has a due date.
+  final String? oldestDue;
+}
+
 /// A customer as the picker (M-05) and checkout (M-04) need it: who, how to reach them, what they
 /// owe now and their credit limit (null = no limit, US-0305).
 class Customer {

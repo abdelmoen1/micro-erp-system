@@ -599,6 +599,15 @@ class PlatformAdminTest extends TestCase
         $this->actingAs($owner, 'sanctum')
             ->postJson("/api/v1/sales/{$sale->id}/returns", ['items' => [['invoice_item_id' => $sale->items[0]->id, 'quantity' => 1]], 'reason' => 'Damaged'], $this->idem())
             ->assertCreated();
+        // A delivery with goods sent back: returns hold the invoice and its lines by restrict keys.
+        $this->actingAs($owner, 'sanctum')->postJson('/api/v1/purchases', [
+            'supplier_name' => 'شركة الأمل',
+            'lines' => [['product_id' => $oil->id, 'cartons' => 2, 'pack_size' => 1, 'buy_price' => '10.00']],
+        ], $this->idem())->assertCreated();
+        $delivery = \App\Models\PurchaseInvoice::with('items')->sole();
+        $this->actingAs($owner, 'sanctum')
+            ->postJson("/api/v1/purchases/{$delivery->id}/returns", ['items' => [['purchase_item_id' => $delivery->items[0]->id, 'quantity' => 1]], 'reason' => 'تالف'], $this->idem())
+            ->assertCreated();
         $this->app['auth']->forgetGuards();
         StoreInvitation::create(['store_id' => $store->id, 'invited_by' => $owner->id, 'role' => 'employee', 'token_hash' => hash('sha256', 'x'), 'expires_at' => now()->addDay()]);
         $this->actingAs($admin, 'sanctum')->postJson("/api/v1/admin/stores/{$store->id}/status", ['status' => 'suspended'])->assertOk();
@@ -624,11 +633,12 @@ class PlatformAdminTest extends TestCase
 
         $this->assertNull(Store::find($store->id));
         $this->assertSame(0, User::whereIn('id', [$owner->id, $employee->id])->count());
-        foreach (['customers', 'products', 'invoices', 'debts', 'payments', 'stock_movements', 'sale_returns', 'idempotency_keys', 'audit_logs', 'store_invitations'] as $table) {
+        foreach (['customers', 'products', 'invoices', 'debts', 'payments', 'stock_movements', 'sale_returns', 'purchase_returns', 'purchase_invoices', 'suppliers', 'idempotency_keys', 'audit_logs', 'store_invitations'] as $table) {
             $this->assertSame(0, DB::table($table)->where('store_id', $store->id)->count(), $table);
         }
         $this->assertSame(0, DB::table('invoice_items')->where('invoice_id', $sale->id)->count());
         $this->assertSame(0, DB::table('sale_return_items')->count());
+        $this->assertSame(0, DB::table('purchase_return_items')->count());
         $this->assertSame(0, DB::table('personal_access_tokens')->whereIn('tokenable_id', [$owner->id, $employee->id])->count());
 
         // The shared catalog item stays for the other stores; it just loses its creator.

@@ -22,6 +22,14 @@ class TodayDashboard {
     this.dueTodayCount = 0,
     this.lowStockCount = 0,
     this.negativeStockCount = 0,
+    this.collectedTotal = '0.00',
+    this.refunded = '0.00',
+    this.collectedNet = '0.00',
+    this.returnsCount = 0,
+    this.returnsTotal = '0.00',
+    this.purchasesCount = 0,
+    this.purchasesTotal,
+    this.owedToSuppliers = '0.00',
   });
 
   factory TodayDashboard.fromJson(Map<String, dynamic> json) {
@@ -33,6 +41,8 @@ class TodayDashboard {
     final recent = json['recent_invoices'] as List<dynamic>? ?? const [];
     final collections = json['collections'] as Map<String, dynamic>? ?? const {};
     final insights = json['insights'] as Map<String, dynamic>? ?? const {};
+    final returns = json['returns'] as Map<String, dynamic>? ?? const {};
+    final purchases = json['purchases'] as Map<String, dynamic>?;
     Map<String, dynamic> card(String key) => insights[key] as Map<String, dynamic>? ?? const {};
     int count(String key) => (card(key)['count'] as num?)?.toInt() ?? 0;
 
@@ -52,6 +62,14 @@ class TodayDashboard {
       dueTodayCount: count('due_today'),
       lowStockCount: count('low_stock'),
       negativeStockCount: count('negative_stock'),
+      collectedTotal: '${collections['total'] ?? payments['today'] ?? '0.00'}',
+      refunded: '${collections['refunded'] ?? '0.00'}',
+      collectedNet: '${collections['net'] ?? collections['total'] ?? '0.00'}',
+      returnsCount: (returns['count'] as num?)?.toInt() ?? 0,
+      returnsTotal: '${returns['total'] ?? '0.00'}',
+      purchasesCount: (purchases?['count'] as num?)?.toInt() ?? 0,
+      purchasesTotal: purchases?['total'] as String?,
+      owedToSuppliers: '${purchases?['owed_to_suppliers'] ?? '0.00'}',
     );
   }
 
@@ -76,6 +94,19 @@ class TodayDashboard {
   final int dueTodayCount;
   final int lowStockCount;
   final int negativeStockCount;
+
+  /// Money in today at the till and on debts, then less the cash refunded to customers.
+  final String collectedTotal;
+  final String refunded;
+  final String collectedNet;
+
+  final int returnsCount;
+  final String returnsTotal;
+
+  /// Null for an employee: costs stay with the owner and managers.
+  final String? purchasesTotal;
+  final int purchasesCount;
+  final String owedToSuppliers;
 
   bool get needsAttention => overdueCount + dueTodayCount + lowStockCount + negativeStockCount > 0;
 }

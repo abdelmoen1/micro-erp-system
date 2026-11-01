@@ -50,6 +50,10 @@ class StoreDeletionService
                 ->delete();
             DB::table('debts')->whereIn('id', $debtIds)->delete();
             DB::table('supplier_payments')->where('store_id', $locked->id)->delete();
+            DB::table('purchase_return_items')
+                ->whereIn('purchase_return_id', DB::table('purchase_returns')->where('store_id', $locked->id)->select('id'))
+                ->delete();
+            DB::table('purchase_returns')->where('store_id', $locked->id)->delete();
             DB::table('purchase_items')
                 ->whereIn('purchase_invoice_id', DB::table('purchase_invoices')->where('store_id', $locked->id)->select('id'))
                 ->delete();

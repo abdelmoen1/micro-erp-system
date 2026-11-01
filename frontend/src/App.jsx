@@ -16,6 +16,11 @@ const NegativeStock = lazy(() => import("./pages/Products").then((m) => ({ defau
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Sales = lazy(() => import("./pages/Sales"));
 const SaleDetail = lazy(() => import("./pages/SaleDetail"));
+const Purchases = lazy(() => import("./pages/Purchases").then((m) => ({ default: m.Purchases })));
+const PurchaseDetail = lazy(() => import("./pages/Purchases").then((m) => ({ default: m.PurchaseDetail })));
+const Suppliers = lazy(() => import("./pages/Suppliers").then((m) => ({ default: m.Suppliers })));
+const SupplierDetail = lazy(() => import("./pages/Suppliers").then((m) => ({ default: m.SupplierDetail })));
+const Returns = lazy(() => import("./pages/Returns"));
 const Debts = lazy(() => import("./pages/Collections").then((m) => ({ default: m.Debts })));
 const Payments = lazy(() => import("./pages/Collections").then((m) => ({ default: m.Payments })));
 const Staff = lazy(() => import("./pages/Staff"));
@@ -57,6 +62,11 @@ export default function App() {
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/sales" element={<Sales />} />
               <Route path="/sales/:id" element={<SaleDetail />} />
+              <Route path="/purchases" element={<Purchases />} />
+              <Route path="/purchases/:id" element={<PurchaseDetail />} />
+              <Route path="/suppliers" element={<Suppliers />} />
+              <Route path="/suppliers/:id" element={<SupplierDetail />} />
+              <Route path="/returns" element={<Returns />} />
               <Route path="/debts" element={<Debts />} />
               <Route path="/payments" element={<Payments />} />
               <Route path="/staff" element={<Staff />} />

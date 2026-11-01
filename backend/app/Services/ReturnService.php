@@ -19,7 +19,8 @@ use Illuminate\Validation\ValidationException;
 /**
  * US-0601 (D-05, CR-05): return lines of a sale. The return value first reduces the sale's open
  * debt (as `return_credit`), and only what exceeds the debt is refunded in cash. Stock goes back
- * with a `sale_return` movement; nothing is ever deleted.
+ * with a `sale_return` movement, except a line marked damaged, which never returns to the shelf;
+ * nothing is ever deleted.
  *
  * Lock order matches the sale path: invoice, debt, then products by id.
  */
@@ -32,7 +33,7 @@ class ReturnService
     ) {}
 
     /**
-     * @param list<array{invoice_item_id: int, quantity: int|float|string}> $lines
+     * @param list<array{invoice_item_id: int, quantity: int|float|string, damaged?: bool}> $lines
      */
     public function create(User $actor, Invoice $invoice, array $lines, string $reason): SaleReturn
     {
@@ -92,10 +93,11 @@ class ReturnService
                     'quantity' => $line['quantity'],
                     'unit_price' => Money::of($item->unit_price),
                     'total' => $line['total'],
+                    'damaged' => $line['damaged'],
                 ]);
                 $item->update(['returned_quantity' => Quantity::add($item->returned_quantity ?? '0', $line['quantity'])]);
 
-                if ($item->product_id && $products->has($item->product_id)) {
+                if (!$line['damaged'] && $item->product_id && $products->has($item->product_id)) {
                     // A carton line is returned in whole cartons (its own unit) and puts back the
                     // pieces of its snapshot size, even if the product's carton changed since.
                     $this->stock->move(
@@ -125,6 +127,7 @@ class ReturnService
                 'lines' => array_map(fn($line) => [
                     'invoice_item_id' => $line['item']->id,
                     'quantity' => Quantity::format($line['quantity'], $line['item']->unit ?? Quantity::UNIT_PIECE),
+                    'damaged' => $line['damaged'],
                 ], $priced),
             ], $actor);
 
@@ -136,7 +139,7 @@ class ReturnService
      * Each line: an item of this invoice, a positive quantity that fits its unit and does not
      * exceed sold − already returned (AC4: otherwise 422 and nothing is written).
      *
-     * @return list<array{item: InvoiceItem, quantity: string, total: string}>
+     * @return list<array{item: InvoiceItem, quantity: string, total: string, damaged: bool}>
      */
     private function priceLines($items, array $lines): array
     {
@@ -170,6 +173,7 @@ class ReturnService
                     'item' => $item,
                     'quantity' => $quantity,
                     'total' => Money::times($item->unit_price, $quantity),
+                    'damaged' => (bool) ($line['damaged'] ?? false),
                 ];
             }
         }
