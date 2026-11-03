@@ -6,13 +6,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshop/app.dart';
+import 'package:smartshop/core/money/fixed_point.dart';
 import 'package:smartshop/core/providers.dart';
 import 'package:smartshop/core/storage/key_value_store.dart';
 import 'package:smartshop/features/auth/data/auth_repository.dart';
 import 'package:smartshop/features/print/application/document_painter.dart';
 import 'package:smartshop/features/print/application/escpos.dart';
 import 'package:smartshop/features/print/application/printer_service.dart';
+import 'package:smartshop/features/print/application/print_documents.dart';
 import 'package:smartshop/features/print/domain/print_document.dart';
+import 'package:smartshop/features/sale/data/sale_repository.dart';
+import 'package:smartshop/l10n/app_localizations.dart';
 
 import '../support/fake_api.dart';
 
@@ -426,6 +430,59 @@ void main() {
         if (preview != null) {
           final png = await roll.single.toByteData(format: ui.ImageByteFormat.png);
           File('$preview/receipt-58mm.png').writeAsBytesSync(png!.buffer.asUint8List());
+        }
+      });
+    });
+
+    testWidgets('the sales invoice is a table with its discount, on both rolls', (tester) async {
+      await tester.runAsync(() async {
+        final loader = FontLoader('IBMPlexSansArabic')
+          ..addFont(rootBundle.load('assets/fonts/IBMPlexSansArabic-Regular.ttf').then((d) => d))
+          ..addFont(rootBundle.load('assets/fonts/IBMPlexSansArabic-Bold.ttf').then((d) => d));
+        await loader.load();
+
+        final t = await AppLocalizations.delegate.load(const Locale('ar'));
+        final sale = SaleReceipt.fromJson({
+          'data': {
+            'id': 101,
+            'status': 'active',
+            'total_amount': '100.00',
+            'discount_amount': '1.00',
+            'paid_amount': '100.00',
+            'debt_amount': '0.00',
+            'payment_method': 'cash',
+            'items': [
+              {'item_name': 'أرز بسمتي 5 كغ', 'unit': 'piece', 'quantity': '2', 'unit_price': '35.00', 'line_total': '70.00'},
+              {'item_name': 'جبنة بيضاء', 'unit': 'kg', 'quantity': '0.500', 'unit_price': '36.00', 'line_total': '18.00'},
+              {'item_name': 'ماء 600 مل', 'unit': 'piece', 'pack_size': 12, 'quantity': '1', 'unit_price': '13.00', 'line_total': '13.00'},
+            ],
+            'customer': {'id': 4, 'name': 'أبو أحمد', 'phone': '0599123456'},
+            'seller': {'id': 1, 'name': 'رائد'},
+            'created_at': '2026-11-03T09:30:00Z',
+          },
+        });
+        expect(sale.subtotal, Money.parse('101.00'));
+        expect(sale.charged(Money.parse('70.00')), Money.parse('69.31'), reason: '70 less 70/101 of the 1.00 discount');
+
+        final document = saleDocument(t, sale, null);
+        expect(document.columns, ('الصنف', 'الكمية', 'السعر', 'المبلغ'));
+        expect(document.rows.first.quantity, '2');
+        expect(document.rows[1].quantity, '0.500 كغ');
+        expect(document.rows.last.quantity, '1 كرتونة');
+        expect(document.rows.first.price, '35.00');
+        expect(document.rows.last.detail, '= 12 قطعة');
+        expect([for (final total in document.totals) total.label], ['المجموع', 'الخصم', 'الإجمالي', 'المدفوع · نقداً']);
+        expect(document.totals[1].value, '₪ 1.00');
+        expect(document.totals.singleWhere((total) => total.strong).value, '₪ 100.00');
+
+        for (final (name, width, scale) in [('58mm', 384, 1.0), ('80mm', 576, 1.4)]) {
+          final roll = await paintDocument(document, width: width, scale: scale);
+          expect(roll.single.width, width);
+          final preview = Platform.environment['PRINT_PREVIEW_DIR'];
+          if (preview != null) {
+            final png = await roll.single.toByteData(format: ui.ImageByteFormat.png);
+            File('$preview/invoice-$name.png').writeAsBytesSync(png!.buffer.asUint8List());
+          }
         }
       });
     });

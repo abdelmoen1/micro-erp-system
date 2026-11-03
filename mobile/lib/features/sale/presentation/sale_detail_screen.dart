@@ -44,7 +44,7 @@ class SaleDetailScreen extends ConsumerWidget {
                 name: line.name,
                 unit: line.unit,
                 max: line.returnable,
-                value: (quantity) => lineTotal(line.unitPrice, quantity),
+                value: (quantity) => sale.charged(lineTotal(line.unitPrice, quantity)),
               ),
         ],
         owed: sale.openDebt,

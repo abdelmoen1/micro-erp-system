@@ -48,6 +48,7 @@ abstract final class HisbahColors {
   static const segmentTrack = Color(0xFFE9E3D7);
   static const voidStamp = Color(0xFF50565C);
   static const receiptRule = Color(0xFFCFC7B8);
+  static const receiptShade = Color(0xFFF4F0E8); // every other row of the invoice table
   static const skeleton = Color(0xFFECE6DA);
   static const stockNote = Color(0xFFFFF6EE);
   static const unitChipLine = Color(0xFFD6CEBF);

@@ -37,6 +37,8 @@ class StoreSaleRequest extends FormRequest
             'items.*.quantity' => ['required', ...Quantity::inputRules(null)],
             // Absent: the product's own unit (piece / kg). `pack`: whole cartons at the carton price.
             'items.*.sale_unit' => ['nullable', Rule::in([Pack::SALE_UNIT])],
+            // Taken off the lines' sum at the till; the customer owes and pays the rest.
+            'discount_amount' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:' . Money::MAX],
             'paid_amount' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:' . Money::MAX],
             'payment_method' => ['nullable', 'string', Rule::in(PaymentMethods::ALL)],
             'due_date' => ['nullable', 'date_format:Y-m-d'],
@@ -63,6 +65,9 @@ class StoreSaleRequest extends FormRequest
             'paid_amount.required' => 'يجب إدخال المبلغ المدفوع (0 للبيع بالدين).',
             'paid_amount.decimal' => 'المبلغ يقبل خانتين عشريتين كحد أقصى.',
             'paid_amount.min' => 'المبلغ المدفوع لا يمكن أن يكون سالبًا.',
+            'discount_amount.numeric' => 'الخصم يجب أن يكون رقمًا.',
+            'discount_amount.decimal' => 'الخصم يقبل خانتين عشريتين كحد أقصى.',
+            'discount_amount.min' => 'الخصم لا يكون بالسالب.',
             'payment_method.in' => 'طريقة الدفع غير صالحة.',
             'due_date.date_format' => 'صيغة تاريخ الاستحقاق يجب أن تكون YYYY-MM-DD.',
             'items.*.sale_unit.in' => 'وحدة البيع غير صالحة.',

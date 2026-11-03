@@ -60,7 +60,7 @@ class ReturnService
             $items = InvoiceItem::query()->where('invoice_id', $locked->id)->lockForUpdate()->get()->keyBy('id');
             $priced = $this->priceLines($items, $lines);
 
-            $value = Money::sum(array_column($priced, 'total'));
+            $value = $this->afterDiscount($locked, Money::sum(array_column($priced, 'total')));
             $debtOpen = $debt && $debt->status !== Debt::STATUS_CANCELLED ? Money::of($debt->remaining_amount) : '0.00';
             $toDebt = Money::compare($value, $debtOpen) <= 0 ? $value : $debtOpen;
             $refund = Money::sub($value, $toDebt);
@@ -133,6 +133,25 @@ class ReturnService
 
             return $return->load(['items', 'creator']);
         });
+    }
+
+    /**
+     * A discounted sale gives back what was charged: the lines' value less the same share of the
+     * discount, and never more than the sale has left after its earlier returns.
+     */
+    private function afterDiscount(Invoice $invoice, string $value): string
+    {
+        $discount = Money::of($invoice->discount_amount);
+        if (!Money::isPositive($discount)) {
+            return $value;
+        }
+
+        $subtotal = Money::add($invoice->total_amount, $discount);
+        $share = Money::of(bcdiv(bcmul($discount, $value, 4), $subtotal, 6));
+        $left = Money::sub($invoice->total_amount, Money::sum(SaleReturn::query()->where('invoice_id', $invoice->id)->pluck('total_amount')));
+        $charged = Money::sub($value, $share);
+
+        return Money::compare($charged, $left) > 0 ? Money::maxZero($left) : $charged;
     }
 
     /**

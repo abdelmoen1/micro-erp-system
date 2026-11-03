@@ -62,6 +62,7 @@ class PurchaseService
                     'quantity' => $line['quantity'],
                     'cartons' => $line['cartons'],
                     'pack_size' => $line['pack_size'],
+                    'loose_pieces' => $line['loose_pieces'],
                     'buy_price' => $line['buy_price'],
                     'line_total' => $line['line_total'],
                 ]);
@@ -145,6 +146,7 @@ class PurchaseService
                 'quantity' => $quantity,
                 'cartons' => null,
                 'pack_size' => null,
+                'loose_pieces' => 0,
                 'line_total' => Money::times($buyPrice, $quantity),
                 'unit_cost' => $buyPrice,
             ]);
@@ -152,14 +154,18 @@ class PurchaseService
 
         $packSize = (int) ($line['pack_size'] ?? $existing?->pack_size ?? 1);
         $cartons = (int) $line['cartons'];
+        // Pieces of an opened carton cost their share of the carton price.
+        $loose = (int) ($line['loose_pieces'] ?? 0);
+        $pieces = $cartons * $packSize + $loose;
 
         return array_merge($line, [
             'existing' => $existing,
             'unit' => $unit,
-            'quantity' => Pack::baseQuantity((string) $cartons, $packSize),
+            'quantity' => Quantity::of((string) $pieces),
             'cartons' => $cartons,
             'pack_size' => $packSize,
-            'line_total' => Money::times($buyPrice, $cartons),
+            'loose_pieces' => $loose,
+            'line_total' => Money::of(bcdiv(bcmul($buyPrice, (string) $pieces, 2), (string) $packSize, 6)),
             'unit_cost' => Money::of(bcdiv($buyPrice, (string) $packSize, 4)),
         ]);
     }

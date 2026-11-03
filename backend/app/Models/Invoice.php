@@ -22,6 +22,7 @@ class Invoice extends Model
         'store_id',
         'customer_id',
         'total_amount',
+        'discount_amount',
         'paid_amount',
         'status',
         'has_debt',
@@ -40,6 +41,7 @@ class Invoice extends Model
     {
         return [
             'total_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'paid_amount' => 'decimal:2',
             'has_debt' => 'boolean',
             'source' => InvoiceSource::class,

@@ -37,6 +37,7 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
   late final _barcode = TextEditingController(text: _scanned ?? widget.line?.barcode);
   late final _cartons = TextEditingController(text: _lineCartons);
   late final _packSize = TextEditingController(text: _startingPackSize);
+  late final _loose = TextEditingController(text: (widget.line?.loosePieces ?? 0) > 0 ? '${widget.line!.loosePieces}' : '');
   late final _kilos = TextEditingController(text: _lineKilos);
   late final _sell = TextEditingController(text: widget.line?.sellingPrice ?? widget.seed.product?.sellingPrice);
   late GoodsKind _kind = widget.line?.kind ?? _productKind;
@@ -65,7 +66,7 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
 
   @override
   void dispose() {
-    for (final c in [_name, _barcode, _cartons, _packSize, _kilos, _sell]) {
+    for (final c in [_name, _barcode, _cartons, _packSize, _loose, _kilos, _sell]) {
       c.dispose();
     }
     super.dispose();
@@ -79,6 +80,14 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
   int? _whole(TextEditingController c) {
     final value = int.tryParse(c.text.trim());
     return value == null || value < 1 ? null : value;
+  }
+
+  /// Empty is 0: most deliveries have no opened carton, and a delivery may be only loose pieces.
+  int? _count(TextEditingController c) {
+    final text = c.text.trim();
+    if (text.isEmpty) return 0;
+    final value = int.tryParse(text);
+    return value == null || value < 0 ? null : value;
   }
 
   Quantity? _kg() {
@@ -102,11 +111,16 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
   void _save(AppLocalizations t) {
     final weighed = _kind == GoodsKind.weight;
     final barcode = _barcode.text.trim();
+    final cartons = _count(_cartons);
+    final loose = _count(_loose);
+    final size = _whole(_packSize);
     final errors = <String, String>{
       if (_name.text.trim().isEmpty) 'name': t.formNameRequired,
       if (!weighed && barcode.isEmpty) 'barcode': t.goodsBarcodeRequired,
-      if (!weighed && _whole(_cartons) == null) 'cartons': t.goodsNumberRequired,
-      if (!weighed && _whole(_packSize) == null) 'pack': t.goodsNumberRequired,
+      if (!weighed && (cartons == null || (cartons == 0 && (loose ?? 0) == 0))) 'cartons': t.goodsNumberRequired,
+      if (!weighed && size == null) 'pack': t.goodsNumberRequired,
+      if (!weighed && loose == null) 'loose': t.goodsNumberRequired,
+      if (!weighed && loose != null && size != null && size > 1 && loose >= size) 'loose': t.goodsLooseTooMany,
       if (weighed && _kg() == null) 'kilos': t.goodsNumberRequired,
       if (_price() == null) 'sell': t.formPriceInvalid,
     };
@@ -118,8 +132,9 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
         name: _name.text.trim(),
         barcode: weighed ? null : barcode,
         kind: _kind,
-        cartons: weighed ? 0 : _whole(_cartons)!,
-        packSize: weighed ? 1 : _whole(_packSize)!,
+        cartons: weighed ? 0 : cartons!,
+        packSize: weighed ? 1 : size!,
+        loosePieces: weighed ? 0 : loose!,
         kilos: weighed ? _kg()! : Quantity.zero,
         sellingPrice: _price()!.toApi(),
         buyPrice: widget.line?.buyPrice,
@@ -150,8 +165,10 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final weighed = _kind == GoodsKind.weight;
-    final cartons = _whole(_cartons);
+    final cartons = _count(_cartons);
     final size = _whole(_packSize);
+    final loose = _count(_loose) ?? 0;
+    final pieces = cartons == null || size == null ? 0 : cartons * size + loose;
     final scanned = _scanned;
 
     return Scaffold(
@@ -215,7 +232,9 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
                         Expanded(child: _field('pack', t.goodsPackSize, _packSize, number: true)),
                       ],
                     ),
-                    if (cartons != null && size != null) ...[
+                    const SizedBox(height: 14),
+                    _field('loose', t.goodsLoose, _loose, number: true),
+                    if (pieces > 0) ...[
                       const SizedBox(height: 10),
                       Container(
                         key: const Key('goodsItem.pieces'),
@@ -229,7 +248,7 @@ class _GoodsItemScreenState extends State<GoodsItemScreen> {
                           children: [
                             Text(t.goodsQuantity, style: const TextStyle(color: HisbahColors.primary)),
                             Text(
-                              t.goodsPieces('${cartons * size}'),
+                              t.goodsPieces('$pieces'),
                               style: const TextStyle(color: HisbahColors.primary, fontWeight: FontWeight.w700),
                             ),
                           ],

@@ -261,7 +261,11 @@ class _LineRow extends StatelessWidget {
               children: [
                 Text(line.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 Text(
-                  cartons == null ? '$amount × ${shekel(line.buyPrice)}' : '$cartons ${t.packWord} × ${shekel(line.buyPrice)} · $amount',
+                  cartons == null
+                      ? '$amount × ${shekel(line.buyPrice)}'
+                      : line.loosePieces > 0
+                      ? '${t.purchaseCartonsLoose('$cartons', '${line.loosePieces}')} · ${shekel(line.buyPrice)} / ${t.packWord} · $amount'
+                      : '$cartons ${t.packWord} × ${shekel(line.buyPrice)} · $amount',
                   style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
                 ),
                 if (line.returned.isPositive)

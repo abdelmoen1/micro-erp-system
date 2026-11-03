@@ -19,6 +19,7 @@ class GoodsLine {
     this.barcode,
     this.cartons = 0,
     this.packSize = 1,
+    this.loosePieces = 0,
     this.kilos = Quantity.zero,
     this.buyPrice,
     this.cartonPrice,
@@ -30,6 +31,9 @@ class GoodsLine {
   final GoodsKind kind;
   final int cartons;
   final int packSize;
+
+  /// Pieces of an opened carton, next to the whole [cartons].
+  final int loosePieces;
   final Quantity kilos;
   final String sellingPrice;
 
@@ -41,7 +45,7 @@ class GoodsLine {
 
   bool get isWeighed => kind == GoodsKind.weight;
 
-  int get pieces => cartons * packSize;
+  int get pieces => cartons * packSize + loosePieces;
 
   /// A "carton" of one piece has no wholesale price.
   bool get sellsByCarton => !isWeighed && packSize > 1;
@@ -49,7 +53,8 @@ class GoodsLine {
   /// Half-up like the server, which recomputes it (the total is never sent).
   Money get total {
     final price = buyPrice ?? Money.zero;
-    if (!isWeighed) return Money.cents(price.cents * cartons);
+    // Loose pieces cost their share of the carton price.
+    if (!isWeighed) return Money.cents((price.cents * pieces * 2 + packSize) ~/ (packSize * 2));
     return Money.cents((price.cents * kilos.milli + 500) ~/ 1000);
   }
 
@@ -75,6 +80,7 @@ class GoodsLine {
     barcode: barcode,
     cartons: cartons,
     packSize: packSize,
+    loosePieces: loosePieces,
     kilos: kilos,
     buyPrice: buy,
     cartonPrice: carton,
@@ -85,7 +91,9 @@ class GoodsLine {
     'name': name,
     'barcode': ?barcode,
     'unit': kind.unit.apiValue,
-    if (isWeighed) 'quantity': kilos.toString() else ...{'cartons': cartons, 'pack_size': packSize},
+    if (isWeighed)
+      'quantity': kilos.toString()
+    else ...{'cartons': cartons, 'pack_size': packSize, if (loosePieces > 0) 'loose_pieces': loosePieces},
     'buy_price': buyPrice?.toApi(),
     'selling_price': sellingPrice,
     if (sellsByCarton) 'carton_price': cartonPrice?.toApi(),
@@ -178,6 +186,7 @@ class ProductInvoice {
     required this.total,
     this.cartons,
     this.packSize,
+    this.loosePieces = 0,
     this.by,
   });
 
@@ -189,6 +198,7 @@ class ProductInvoice {
     total: Money.parse(json['total'] as String? ?? '0'),
     cartons: (json['cartons'] as num?)?.toInt(),
     packSize: (json['pack_size'] as num?)?.toInt(),
+    loosePieces: (json['loose_pieces'] as num?)?.toInt() ?? 0,
     by: json['by'] as String?,
   );
 
@@ -203,6 +213,7 @@ class ProductInvoice {
   final Money total;
   final int? cartons;
   final int? packSize;
+  final int loosePieces;
   final String? by;
 }
 
@@ -270,6 +281,7 @@ class PurchaseLine {
     required this.buyPrice,
     required this.total,
     this.cartons,
+    this.loosePieces = 0,
   });
 
   factory PurchaseLine.fromJson(Map<String, dynamic> json) => PurchaseLine(
@@ -281,6 +293,7 @@ class PurchaseLine {
     buyPrice: Money.parse(json['buy_price'] as String? ?? '0'),
     total: Money.parse(json['line_total'] as String? ?? '0'),
     cartons: (json['cartons'] as num?)?.toInt(),
+    loosePieces: (json['loose_pieces'] as num?)?.toInt() ?? 0,
   );
 
   final int id;
@@ -293,6 +306,9 @@ class PurchaseLine {
   final Money buyPrice;
   final Money total;
   final int? cartons;
+
+  /// Pieces of an opened carton that came with the whole ones.
+  final int loosePieces;
 
   Quantity get returnable => quantity - returned;
 

@@ -167,7 +167,28 @@ test("printing puts the invoice alone on the paper", async ({ page }) => {
   await expect(paper).toContainText("فاتورة مبيعات");
   await expect(paper).toContainText("زيت زيتون");
   await expect(paper).toContainText("₪ 30.00");
+  await expect(paper.locator("thead th")).toHaveText(["الصنف", "الكمية", "السعر", "المبلغ"]);
+  await expect(paper.locator("tbody tr").first().locator("td")).toHaveText(["زيت زيتون", "2", "15.00", "30.00"]);
   await expect(page.locator("#root")).toBeHidden();
+});
+
+test("a discount at the till shows on the sale and on its paper", async ({ page }) => {
+  await signIn(page);
+  const discounted = { ...sale, total_amount: "29.00", paid_amount: "29.00", discount_amount: "1.00", subtotal_amount: "30.00" };
+  await page.route("**/api/v1/sales/40", (r) => r.fulfill({ json: { data: discounted } }));
+  await page.addInitScript(() => {
+    window.print = () => {};
+  });
+
+  await page.goto("/sales/40");
+  await expect(page.locator("tfoot")).toContainText("الخصم");
+  await expect(page.locator("tfoot")).toContainText("₪ 1.00");
+
+  await page.getByRole("button", { name: "طباعة" }).click();
+  await page.emulateMedia({ media: "print" });
+  const totals = page.locator(".print-totals");
+  await expect(totals.locator("dt")).toHaveText(["المجموع", "الخصم", "الإجمالي", "المدفوع · نقداً"]);
+  await expect(totals.locator(".strong dd")).toHaveText("₪ 29.00");
 });
 
 test("a supplier page: what is owed, a payment with a key, and the way to their invoices", async ({ page }) => {

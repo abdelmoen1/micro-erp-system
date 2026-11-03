@@ -140,6 +140,22 @@ export default function SaleDetail() {
                 ))}
               </tbody>
               <tfoot>
+                {isPositiveAmount(s.discount_amount) ? (
+                  <>
+                    <tr>
+                      <td colSpan={4}>المجموع</td>
+                      <td className="n">
+                        <MoneyText value={s.subtotal_amount} />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colSpan={4}>الخصم</td>
+                      <td className="n">
+                        <MoneyText value={s.discount_amount} />
+                      </td>
+                    </tr>
+                  </>
+                ) : null}
                 <tr>
                   <td colSpan={4} style={{ fontWeight: 700 }}>
                     الإجمالي
@@ -158,6 +174,7 @@ export default function SaleDetail() {
             <h2 style={{ fontSize: 17 }}>الدفع والدين</h2>
             <ConfirmSummary
               rows={[
+                ...(isPositiveAmount(s.discount_amount) ? [["الخصم عند البيع", shekel(s.discount_amount)]] : []),
                 ["إجمالي الفاتورة", shekel(s.total_amount)],
                 ["دُفع عند البيع", shekel(s.paid_amount)],
                 ...(debt && isPositiveAmount(debt.return_credit) ? [["مرتجعات خُصمت من الدين", `−${shekel(debt.return_credit)}`]] : []),
@@ -239,7 +256,11 @@ function ReturnDialog({ sale, onClose }) {
   });
   const chosen = checked.filter((c) => c.m > 0);
   const bad = checked.some((c) => !c.valid || c.over);
-  const value = chosen.reduce((sum, c) => sum + c.value, 0);
+  const lineValue = chosen.reduce((sum, c) => sum + c.value, 0);
+  // A discounted sale gives back what was charged: less the lines' share of the discount, half-up.
+  const discount = cents(sale.discount_amount ?? "0");
+  const subtotal = cents(sale.total_amount) + discount;
+  const value = discount > 0 && subtotal > 0 ? lineValue - Math.floor((discount * lineValue * 2 + subtotal) / (subtotal * 2)) : lineValue;
   const open = sale.debt && sale.debt.status !== "cancelled" ? cents(sale.debt.remaining_amount) : 0;
   const toDebt = Math.min(value, open);
   const refund = value - toDebt;
