@@ -33,6 +33,7 @@ class PurchaseInvoiceResource extends JsonResource
                 'returned_quantity' => Quantity::format($item->returned_quantity, $item->product?->unit),
                 'cartons' => $item->cartons,
                 'pack_size' => $item->pack_size,
+                'loose_pieces' => (int) $item->loose_pieces,
                 'buy_price' => Money::of($item->buy_price),
                 'line_total' => Money::of($item->line_total),
             ])->values()),

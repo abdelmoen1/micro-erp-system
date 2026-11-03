@@ -508,6 +508,8 @@ class _StepDot extends StatelessWidget {
 
 String _amount(AppLocalizations t, GoodsLine line) => line.isWeighed
     ? t.goodsKilosValue(line.kilos.format(ProductUnit.kg))
+    : line.loosePieces > 0
+    ? t.goodsCartonsLooseValue('${line.cartons}', '${line.loosePieces}', '${line.pieces}')
     : t.goodsCartonsValue('${line.cartons}', '${line.pieces}');
 
 class _LineTile extends StatelessWidget {

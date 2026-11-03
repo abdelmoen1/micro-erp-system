@@ -6,6 +6,7 @@ import 'package:flutter/painting.dart';
 import '../domain/print_document.dart';
 
 const _ink = Color(0xFF000000);
+const _paper = Color(0xFFFFFFFF);
 const _font = 'IBMPlexSansArabic';
 
 /// One block of the page: how tall it is and how it draws itself.
@@ -58,11 +59,18 @@ class _Layout {
   double get _inset => 8 * scale;
   double get _inner => width - _inset * 2;
 
-  TextPainter _text(String text, double size, {FontWeight weight = FontWeight.w500, TextAlign align = TextAlign.right, double? box}) =>
+  TextPainter _text(
+    String text,
+    double size, {
+    FontWeight weight = FontWeight.w500,
+    TextAlign align = TextAlign.right,
+    double? box,
+    Color color = _ink,
+  }) =>
       TextPainter(
         text: TextSpan(
           text: text,
-          style: TextStyle(fontFamily: _font, fontSize: size * scale, fontWeight: weight, color: _ink, height: 1.35),
+          style: TextStyle(fontFamily: _font, fontSize: size * scale, fontWeight: weight, color: color, height: 1.35),
         ),
         textDirection: TextDirection.rtl,
         textAlign: align,
@@ -110,6 +118,90 @@ class _Layout {
     });
   }
 
+  /// The document's name and number in a black band, like the title strip of a printed invoice.
+  _Block _titleBand(String title, String number) {
+    final pad = 6 * scale;
+    final name = _text(title, 24, weight: FontWeight.w700, color: _paper);
+    final no = _text(number, 24, weight: FontWeight.w700, color: _paper, box: null);
+    final height = math.max(name.height, no.height) + pad * 2;
+    return _Block(height + 6 * scale, (canvas, top) {
+      canvas.drawRect(Rect.fromLTWH(_inset, top, _inner, height), Paint()..color = _ink);
+      name.paint(canvas, Offset(width - _inset - pad - name.width, top + pad));
+      no.paint(canvas, Offset(_inset + pad, top + pad));
+    });
+  }
+
+  _Block _solid({double thickness = 2}) => _Block(6 * scale, (canvas, top) {
+    canvas.drawRect(Rect.fromLTWH(_inset, top + 2 * scale, _inner, thickness * scale), Paint()..color = _ink);
+  });
+
+  /// Column widths of the table, from the right: item, quantity, price, amount.
+  List<double> get _columns {
+    final quantity = _inner * 0.21;
+    final price = _inner * 0.18;
+    final amount = _inner * 0.22;
+    return [_inner - quantity - price - amount, quantity, price, amount];
+  }
+
+  /// One table row. The item's name wraps in its own column; the figures sit on its first line.
+  _Block _cells(List<String> cells, {String? detail, bool header = false}) {
+    final widths = _columns;
+    final size = header ? 18.0 : 19.0;
+    final pad = 4 * scale;
+    final color = header ? _paper : _ink;
+    final painters = [
+      for (final (i, cell) in cells.indexed)
+        _text(
+          cell,
+          size,
+          weight: header || i == 3 ? FontWeight.w700 : (i == 0 ? FontWeight.w600 : FontWeight.w500),
+          align: i == 0 ? TextAlign.right : (i == 1 ? TextAlign.center : TextAlign.left),
+          box: widths[i] - pad * 2,
+          color: color,
+        ),
+    ];
+    final under = detail == null ? null : _text(detail, 16, box: widths[0] - pad * 2);
+    final nameHeight = painters[0].height + (under?.height ?? 0);
+    final height = math.max(nameHeight, painters.skip(1).map((p) => p.height).reduce(math.max)) + pad * 2;
+    return _Block(height, (canvas, top) {
+      if (header) canvas.drawRect(Rect.fromLTWH(_inset, top, _inner, height), Paint()..color = _ink);
+      var right = width - _inset;
+      for (final (i, painter) in painters.indexed) {
+        painter.paint(canvas, Offset(right - widths[i] + pad, top + pad));
+        if (i == 0) under?.paint(canvas, Offset(right - widths[i] + pad, top + pad + painter.height));
+        right -= widths[i];
+      }
+      if (!header) {
+        final paint = Paint()
+          ..color = _ink
+          ..strokeWidth = 1 * scale;
+        for (var x = _inset; x < width - _inset; x += 8 * scale) {
+          canvas.drawLine(Offset(x, top + height - 0.5 * scale), Offset(x + 3 * scale, top + height - 0.5 * scale), paint);
+        }
+      }
+    });
+  }
+
+  /// The figure the reader looks for, boxed.
+  _Block _strongTotal(String label, String value) {
+    final pad = 8 * scale;
+    final name = _text(label, 26, weight: FontWeight.w700);
+    final figure = _text(value, 28, weight: FontWeight.w700, box: null);
+    final box = math.max(name.height, figure.height) + pad;
+    return _Block(box + 10 * scale, (canvas, top) {
+      final y = top + 4 * scale;
+      canvas.drawRect(
+        Rect.fromLTWH(_inset, y, _inner, box),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..color = _ink
+          ..strokeWidth = 3 * scale,
+      );
+      name.paint(canvas, Offset(width - _inset - pad - name.width, y + (box - name.height) / 2));
+      figure.paint(canvas, Offset(_inset + pad, y + (box - figure.height) / 2));
+    });
+  }
+
   _Block _stamp(String text) {
     final painter = _text(text, 30, weight: FontWeight.w700, align: TextAlign.center, box: _inner);
     final pad = 6 * scale;
@@ -130,23 +222,33 @@ class _Layout {
     return _Block(painter.height + 4 * scale, (canvas, top) => painter.paint(canvas, Offset(width - _inset - painter.width, top)));
   }
 
-  List<_Block> blocks(PrintDocument d) => [
-    _centered(d.storeName, 30, weight: FontWeight.w700),
-    if ((d.storePhone ?? '').isNotEmpty) _centered(d.storePhone!, 20),
-    if ((d.storeAddress ?? '').isNotEmpty) _centered(d.storeAddress!, 20),
-    _gap(6),
-    _centered('${d.title} ${d.number}', 25, weight: FontWeight.w700),
-    if (d.stamp != null) ...[_gap(6), _stamp(d.stamp!)],
-    _rule(),
-    for (final (label, value) in d.facts) _pair(label, value),
-    _rule(),
-    for (final row in d.rows) _item(row),
-    _rule(),
-    for (final total in d.totals)
-      total.strong
-          ? _pair(total.label, total.value, size: 28, weight: FontWeight.w700)
-          : _pair(total.label, total.value),
-    if (d.note != null) ...[_gap(6), _note(d.note!)],
-    if (d.footer != null) ...[_gap(10), _centered(d.footer!, 20)],
-  ];
+  /// Store, a title band, the facts, the items as a table, the totals with the one that matters
+  /// boxed, then the footer: the layout of an ordinary shop invoice.
+  List<_Block> blocks(PrintDocument d) {
+    final columns = d.columns;
+    return [
+      _centered(d.storeName, 30, weight: FontWeight.w700),
+      if ((d.storeAddress ?? '').isNotEmpty) _centered(d.storeAddress!, 20),
+      if ((d.storePhone ?? '').isNotEmpty) _centered(d.storePhone!, 20),
+      _gap(8),
+      _titleBand(d.title, d.number),
+      if (d.stamp != null) ...[_gap(2), _stamp(d.stamp!)],
+      for (final (label, value) in d.facts) _pair(label, value),
+      _gap(6),
+      if (columns != null) ...[
+        _cells([columns.$1, columns.$2, columns.$3, columns.$4], header: true),
+        for (final row in d.rows) _cells([row.name, row.quantity ?? '', row.price ?? '', row.amount], detail: row.detail),
+        _solid(),
+      ] else ...[
+        _rule(),
+        for (final row in d.rows) _item(row),
+        _rule(),
+      ],
+      _gap(4),
+      for (final total in d.totals)
+        total.strong ? _strongTotal(total.label, total.value) : _pair(total.label, total.value),
+      if (d.note != null) ...[_gap(6), _note(d.note!)],
+      if (d.footer != null) ...[_gap(4), _rule(), _centered(d.footer!, 20, weight: FontWeight.w600)],
+    ];
+  }
 }

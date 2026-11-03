@@ -14,6 +14,7 @@ class PurchaseItem extends Model
         'returned_quantity',
         'cartons',
         'pack_size',
+        'loose_pieces',
         'buy_price',
         'line_total',
     ];
@@ -25,6 +26,7 @@ class PurchaseItem extends Model
             'returned_quantity' => 'decimal:3',
             'cartons' => 'integer',
             'pack_size' => 'integer',
+            'loose_pieces' => 'integer',
             'buy_price' => 'decimal:2',
             'line_total' => 'decimal:2',
         ];

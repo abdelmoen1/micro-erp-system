@@ -62,7 +62,15 @@ class SaleService
             $products = $this->lockProducts($actor, $data['items'], $offline !== null, $warnings);
 
             $lines = $this->priceLines($data['items'], $products, $offline, $warnings);
-            $total = Money::sum(array_column($lines, 'total'));
+            $subtotal = Money::sum(array_column($lines, 'total'));
+            $discount = Money::of($data['discount_amount'] ?? 0);
+
+            // The discount rounds a total down; it never takes the whole sale.
+            if (Money::isPositive($discount) && Money::compare($discount, $subtotal) >= 0) {
+                throw ValidationException::withMessages(['discount_amount' => ["الخصم يجب أن يكون أقل من مجموع الفاتورة ({$subtotal})."]]);
+            }
+
+            $total = Money::sub($subtotal, $discount);
             $paid = Money::of($data['paid_amount']);
             $debtAmount = Money::sub($total, $paid);
 
@@ -76,6 +84,7 @@ class SaleService
                 'store_id' => $actor->store_id,
                 'customer_id' => $customer?->id,
                 'total_amount' => $total,
+                'discount_amount' => $discount,
                 'paid_amount' => $paid,
                 'status' => Invoice::STATUS_ACTIVE,
                 'has_debt' => Money::isPositive($debtAmount),
@@ -147,6 +156,7 @@ class SaleService
             $this->audit->record('sale.created', $invoice, [
                 'customer_id' => $customer?->id,
                 'total_amount' => $total,
+                'discount_amount' => $discount,
                 'paid_amount' => $paid,
                 'debt_id' => $debt?->id,
                 'debt_amount' => $debt ? $debtAmount : '0.00',

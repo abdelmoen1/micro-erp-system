@@ -50,8 +50,10 @@ class StorePurchaseRequest extends FormRequest
             'lines.*.name' => ['nullable', 'string', 'max:255'],
             'lines.*.barcode' => ['nullable', 'string', 'max:64'],
             'lines.*.unit' => ['nullable', Rule::in([Quantity::UNIT_PIECE, Quantity::UNIT_KG])],
-            'lines.*.cartons' => ['nullable', 'integer', 'min:1', 'max:1000000'],
+            // 0 cartons is allowed when the delivery is only the loose pieces of an opened carton.
+            'lines.*.cartons' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'lines.*.pack_size' => ['nullable', 'integer', 'min:1', 'max:' . Pack::MAX_SIZE],
+            'lines.*.loose_pieces' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'lines.*.quantity' => ['nullable', 'numeric', 'decimal:0,3', 'gt:0', 'max:999999'],
             'lines.*.buy_price' => ['required', ...Money::inputRules()],
             'lines.*.selling_price' => ['nullable', ...Money::inputRules()],
@@ -101,6 +103,8 @@ class StorePurchaseRequest extends FormRequest
         }
         if (blank($line['cartons'] ?? null)) {
             $validator->errors()->add("lines.$index.cartons", 'اكتب عدد الكراتين.');
+        } elseif ((int) $line['cartons'] === 0 && (int) ($line['loose_pieces'] ?? 0) === 0) {
+            $validator->errors()->add("lines.$index.cartons", 'اكتب عدد الكراتين أو القطع الزيادة.');
         }
         if (blank($line['pack_size'] ?? null) && blank($product?->pack_size)) {
             $validator->errors()->add("lines.$index.pack_size", 'اكتب عدد القطع بالكرتونة.');

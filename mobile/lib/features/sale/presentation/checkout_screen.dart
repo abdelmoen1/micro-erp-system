@@ -52,11 +52,25 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _paid = TextEditingController();
+  final _discount = TextEditingController();
 
   @override
   void dispose() {
     _paid.dispose();
+    _discount.dispose();
     super.dispose();
+  }
+
+  void _toggleDiscount() {
+    _discount.clear();
+    _controller.toggleDiscount();
+  }
+
+  /// A suggested round total: the discount is what separates it from the lines' sum.
+  void _discountTo(Money target, Money subtotal) {
+    final amount = (subtotal - target).toApi();
+    _discount.text = amount;
+    _controller.setDiscount(amount);
   }
 
   CheckoutController get _controller => ref.read(checkoutControllerProvider.notifier);
@@ -133,7 +147,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   children: [
-                    _OrderSummary(cart: cart, open: state.itemsOpen, locked: locked, onToggle: _controller.toggleItems),
+                    _OrderSummary(summary: s, open: state.itemsOpen, locked: locked, onToggle: _controller.toggleItems),
+                    const SizedBox(height: 10),
+                    _DiscountSection(
+                      controller: _discount,
+                      summary: s,
+                      locked: locked,
+                      onToggle: _toggleDiscount,
+                      onChanged: _controller.setDiscount,
+                      onRound: (target) => _discountTo(target, s.subtotal),
+                    ),
                     const SizedBox(height: 14),
                     GroupLabel(t.saleModeLabel),
                     const SizedBox(height: 8),
@@ -445,9 +468,9 @@ class _TopBar extends StatelessWidget {
 }
 
 class _OrderSummary extends StatelessWidget {
-  const _OrderSummary({required this.cart, required this.open, required this.locked, required this.onToggle});
+  const _OrderSummary({required this.summary, required this.open, required this.locked, required this.onToggle});
 
-  final Cart cart;
+  final CheckoutSummary summary;
   final bool open;
   final bool locked;
   final VoidCallback onToggle;
@@ -455,6 +478,7 @@ class _OrderSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final cart = summary.cart;
     return LineCard(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
@@ -469,7 +493,21 @@ class _OrderSummary extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(t.totalWord, style: const TextStyle(fontSize: 14, color: HisbahColors.inkMuted)),
-                      Num(shekel(cart.total), key: const Key('checkout.total'), size: 32, weight: FontWeight.w700),
+                      Num(shekel(summary.total), key: const Key('checkout.total'), size: 32, weight: FontWeight.w700),
+                      if (summary.discount.isPositive)
+                        Text.rich(
+                          key: const Key('checkout.totalBeforeDiscount'),
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: shekel(summary.subtotal),
+                                style: const TextStyle(decoration: TextDecoration.lineThrough),
+                              ),
+                              TextSpan(text: '  ·  ${t.discountWord} ${shekel(summary.discount)}'),
+                            ],
+                          ),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: StatusTone.paid.fg),
+                        ),
                     ],
                   ),
                 ),
@@ -545,10 +583,161 @@ class _PaidField extends StatelessWidget {
       children: [
         Text(t.paidNowLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        TextField(
-          key: const Key('checkout.paid'),
+        _AmountInput(
+          fieldKey: const Key('checkout.paid'),
           controller: controller,
           enabled: !state.locked,
+          hint: t.phPaidNow,
+          error: error,
+          note: t.paidHint(shekel(total)),
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+/// «خصم على الفاتورة»: closed by default. Open, it takes the amount off the total and offers the
+/// round totals just below it (101 → 100), so the cashier rarely has to type.
+class _DiscountSection extends StatelessWidget {
+  const _DiscountSection({
+    required this.controller,
+    required this.summary,
+    required this.locked,
+    required this.onToggle,
+    required this.onChanged,
+    required this.onRound,
+  });
+
+  final TextEditingController controller;
+  final CheckoutSummary summary;
+  final bool locked;
+  final VoidCallback onToggle;
+  final ValueChanged<String> onChanged;
+  final ValueChanged<Money> onRound;
+
+  /// Whole shekels, then fives and tens below the sum, when they take off at most a tenth of it.
+  static List<Money> roundTotals(Money subtotal) {
+    final targets = <Money>[];
+    for (final step in [100, 500, 1000]) {
+      final target = Money.cents(subtotal.cents ~/ step * step);
+      final off = subtotal.cents - target.cents;
+      if (off <= 0 || off * 10 > subtotal.cents || !target.isPositive) continue;
+      if (targets.any((t) => t.cents == target.cents)) continue;
+      targets.add(target);
+    }
+    return targets;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final state = summary.state;
+    if (!state.discountOpen) {
+      return Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: TextButton.icon(
+          key: const Key('checkout.addDiscount'),
+          onPressed: locked ? null : onToggle,
+          icon: const Icon(Icons.sell_outlined, size: 18),
+          label: Text(t.addDiscount),
+          style: TextButton.styleFrom(minimumSize: const Size(0, 44), textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        ),
+      );
+    }
+
+    final error = switch (state.discountError) {
+      DiscountError.invalid => t.discountErrorInvalid,
+      DiscountError.notBelowSubtotal => t.discountErrorTooBig,
+      null => null,
+    };
+    final chosen = summary.discount;
+    return LineCard(
+      radius: 16,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 6, 6, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.sell_outlined, size: 18, color: HisbahColors.primary),
+                const SizedBox(width: 8),
+                Expanded(child: Text(t.discountLabel, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700))),
+                TextButton(
+                  key: const Key('checkout.removeDiscount'),
+                  onPressed: locked ? null : onToggle,
+                  style: TextButton.styleFrom(minimumSize: const Size(0, 44), textStyle: const TextStyle(fontWeight: FontWeight.w700)),
+                  child: Text(t.removeDiscount),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 8),
+              child: _AmountInput(
+                fieldKey: const Key('checkout.discount'),
+                controller: controller,
+                enabled: !locked,
+                hint: t.phDiscount,
+                error: error,
+                note: t.discountHint(shekel(summary.subtotal), shekel(summary.total)),
+                onChanged: onChanged,
+              ),
+            ),
+            if (roundTotals(summary.subtotal) case final targets when targets.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final target in targets)
+                    ChoiceChip(
+                      key: Key('checkout.roundTo.${target.toApi()}'),
+                      label: Text(t.discountMakeIt(shekel(target))),
+                      selected: chosen.isPositive && summary.total.cents == target.cents,
+                      onSelected: locked ? null : (_) => onRound(target),
+                      labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A money field with ₪ beside it, and either its error or a note under it.
+class _AmountInput extends StatelessWidget {
+  const _AmountInput({
+    required this.fieldKey,
+    required this.controller,
+    required this.enabled,
+    required this.hint,
+    required this.error,
+    required this.note,
+    required this.onChanged,
+  });
+
+  final Key fieldKey;
+  final TextEditingController controller;
+  final bool enabled;
+  final String hint;
+  final String? error;
+  final String note;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final error = this.error;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          key: fieldKey,
+          controller: controller,
+          enabled: enabled,
           onChanged: onChanged,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           textDirection: TextDirection.ltr,
@@ -556,7 +745,7 @@ class _PaidField extends StatelessWidget {
           inputFormatters: [const LatinDigitsFormatter(), FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, fontFeatures: [FontFeature.tabularFigures()]),
           decoration: InputDecoration(
-            hintText: t.phPaidNow,
+            hintText: hint,
             hintTextDirection: Directionality.of(context),
             hintStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: HisbahColors.inkMuted),
             filled: true,
@@ -590,7 +779,7 @@ class _PaidField extends StatelessWidget {
             ],
           )
         else
-          Text(t.paidHint(shekel(total)), style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
+          Text(note, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
       ],
     );
   }
@@ -822,6 +1011,12 @@ class _ConfirmSummary extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         child: Column(
           children: [
+            if (s.discount.isPositive) ...[
+              _SummaryRow(label: t.subtotalWord, value: shekel(s.subtotal)),
+              const Divider(height: 1, color: HisbahColors.border),
+              _SummaryRow(key: const Key('checkout.discountRow'), label: t.discountWord, value: shekel(s.discount)),
+              const Divider(height: 1, color: HisbahColors.border),
+            ],
             _SummaryRow(label: t.totalWord, value: shekel(s.total)),
             const Divider(height: 1, color: HisbahColors.border),
             _SummaryRow(
@@ -874,7 +1069,7 @@ class _ConfirmSummary extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
+  const _SummaryRow({super.key, required this.label, required this.value});
 
   final String label;
   final String value;

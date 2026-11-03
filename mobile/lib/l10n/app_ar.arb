@@ -2026,5 +2026,73 @@
         "type": "int"
       }
     }
-  }
+  },
+  "subtotalWord": "المجموع",
+  "discountWord": "الخصم",
+  "addDiscount": "خصم على الفاتورة",
+  "removeDiscount": "بدون خصم",
+  "discountLabel": "مبلغ الخصم",
+  "phDiscount": "مثلاً 1",
+  "discountMakeIt": "اجعلها {amount}",
+  "@discountMakeIt": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "discountHint": "المجموع {subtotal} · بعد الخصم {total}",
+  "@discountHint": {
+    "placeholders": {
+      "subtotal": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "discountErrorInvalid": "اكتب مبلغ الخصم بالأرقام، مثل 1 أو 0.50.",
+  "discountErrorTooBig": "الخصم لازم يكون أقل من مجموع الفاتورة.",
+  "invItem": "الصنف",
+  "invQty": "الكمية",
+  "invPrice": "السعر",
+  "invAmount": "المبلغ",
+  "invPayment": "طريقة الدفع",
+  "invItemsCount": "عدد الأصناف: {count}",
+  "@invItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goodsLoose": "قطع زيادة (كرتونة مفتوحة)",
+  "goodsLooseTooMany": "هذا العدد كرتونة أو أكثر؛ زِد عدد الكراتين بدلاً منه.",
+  "goodsCartonsLooseValue": "{cartons} كرتونة + {loose} قطعة، {pieces} قطعة",
+  "@goodsCartonsLooseValue": {
+    "placeholders": {
+      "cartons": {
+        "type": "String"
+      },
+      "loose": {
+        "type": "String"
+      },
+      "pieces": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseCartonsLoose": "{cartons} كرتونة + {loose} قطعة",
+  "@purchaseCartonsLoose": {
+    "placeholders": {
+      "cartons": {
+        "type": "String"
+      },
+      "loose": {
+        "type": "String"
+      }
+    }
+  },
+  "goodsLooseFact": "قطع زيادة"
 }

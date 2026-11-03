@@ -472,7 +472,9 @@ void main() {
 
       expect(find.byType(ReceiptScreen), findsOneWidget);
       expect(find.byKey(const Key('receipt.localRef')), findsOneWidget);
-      expect(find.text('محفوظ على الهاتف بانتظار الإرسال. يُرسل تلقائيًا عند عودة الإنترنت.'), findsOneWidget);
+      const pendingNote = 'محفوظ على الهاتف بانتظار الإرسال. يُرسل تلقائيًا عند عودة الإنترنت.';
+      await tester.scrollUntilVisible(find.text(pendingNote), 200, scrollable: find.byType(Scrollable).first);
+      expect(find.text(pendingNote), findsOneWidget);
       expect(find.byKey(const Key('receipt.void')), findsNothing);
       expect(api.requestsTo('POST /sales'), isEmpty, reason: 'offline: committed locally, not sent');
       expect(container.read(syncEngineProvider).pending, 1);

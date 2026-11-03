@@ -13,6 +13,7 @@ class SaleDraft {
   const SaleDraft({
     required this.cart,
     required this.paidAmount,
+    this.discount = Money.zero,
     this.customerId,
     this.paymentMethod,
     this.dueDate,
@@ -22,6 +23,12 @@ class SaleDraft {
 
   final Cart cart;
   final Money paidAmount;
+
+  /// Taken off the lines' sum at the till; sent only when there is one.
+  final Money discount;
+
+  /// What the customer owes: the lines' sum less [discount].
+  Money get total => cart.total - discount;
 
   /// Required by the server when [paidAmount] is below the total (D-07).
   final int? customerId;
@@ -36,11 +43,12 @@ class SaleDraft {
   /// Owner / Manager only, after they confirmed the credit-limit warning (D-26).
   final bool confirmOverLimit;
 
-  Money get debtPreview => cart.total > paidAmount ? cart.total - paidAmount : Money.zero;
+  Money get debtPreview => total > paidAmount ? total - paidAmount : Money.zero;
 
   Map<String, Object?> toJson() => {
     'customer_id': ?customerId,
     'items': cart.toSaleItems(),
+    if (discount.isPositive) 'discount_amount': discount.toApi(),
     'paid_amount': paidAmount.toApi(),
     'payment_method': ?paymentMethod,
     'due_date': ?dueDate,
@@ -118,6 +126,7 @@ class SaleReceipt {
     required this.debt,
     required this.flags,
     required this.warnings,
+    this.discount = Money.zero,
     this.status = 'active',
     this.lines = const [],
     this.paymentMethod,
@@ -144,6 +153,8 @@ class SaleReceipt {
       id: (data['id'] as num).toInt(),
       status: data['status'] as String? ?? 'active',
       total: Money.parse(data['total_amount'] as String),
+      // Older servers send no discount: the total is then the lines' sum.
+      discount: Money.parse(data['discount_amount'] as String? ?? '0.00'),
       paid: Money.parse(data['paid_amount'] as String),
       debt: Money.parse(data['debt_amount'] as String? ?? '0.00'),
       paymentMethod: data['payment_method'] as String?,
@@ -178,7 +189,12 @@ class SaleReceipt {
 
   final int id;
   final String status;
+
+  /// What the customer owes, after [discount].
   final Money total;
+
+  /// Taken off the lines' sum at the till.
+  final Money discount;
   final Money paid;
   final Money debt;
   final List<String> flags;
@@ -210,6 +226,17 @@ class SaleReceipt {
 
   bool get isPending => localRef != null;
 
+  /// The lines' sum before the discount.
+  Money get subtotal => total + discount;
+
+  /// What [lines] worth of this sale were charged: less their share of the discount, half-up like
+  /// the server, which computes the return's final figure.
+  Money charged(Money lines) {
+    if (!discount.isPositive || !subtotal.isPositive) return lines;
+    final share = (discount.cents * lines.cents * 2 + subtotal.cents) ~/ (subtotal.cents * 2);
+    return Money.cents(lines.cents - share);
+  }
+
   bool get isVoided => status == 'voided';
 
   /// Keeps the server's warnings from the sale itself when a void response (which has none) replaces it.
@@ -217,6 +244,7 @@ class SaleReceipt {
     id: id,
     status: status,
     total: total,
+    discount: discount,
     paid: paid,
     debt: debt,
     flags: sale.flags,
@@ -349,7 +377,8 @@ class SaleRepository {
           {'product_id': line.product.id, 'sale_unit': line.pack ? 'pack' : null, 'unit_price': line.unitPrice.toApi()},
       ],
       summary: {
-        'total': cart.total.toApi(),
+        'total': draft.total.toApi(),
+        if (draft.discount.isPositive) 'discount': draft.discount.toApi(),
         'paid': draft.paidAmount.toApi(),
         'debt': debt.toApi(),
         'method': draft.paymentMethod,
@@ -366,7 +395,8 @@ class SaleRepository {
     return SaleReceipt(
       id: 0,
       localRef: item.localRef,
-      total: cart.total,
+      total: draft.total,
+      discount: draft.discount,
       paid: draft.paidAmount,
       debt: debt,
       flags: const [],

@@ -7,6 +7,9 @@ import '../../../core/widgets/ltr_value.dart';
 /// `₪ 1,245.50` for exact [Money] (design-system §1).
 String shekel(Money amount) => formatShekel(amount.toApi());
 
+/// `1,245.50`: an invoice table cell, under a header that already says it is money.
+String amountOnly(Money amount) => shekel(amount).replaceFirst('₪ ', '');
+
 /// `dd/MM/yyyy` (Western digits, UI-D1).
 String dayMonthYear(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';

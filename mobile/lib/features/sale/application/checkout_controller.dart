@@ -55,10 +55,16 @@ enum SubmitState {
 /// Field-level problems found before sending (UI-AC-03).
 enum PaidError { invalid, notBelowTotal }
 
+/// The discount must be a money amount below the lines' sum (the server checks the same).
+enum DiscountError { invalid, notBelowSubtotal }
+
 class CheckoutState {
   const CheckoutState({
     this.mode = SaleMode.cash,
     this.paidText = '',
+    this.discountText = '',
+    this.discountOpen = false,
+    this.discountError,
     this.method = 'palpay',
     this.customer,
     this.due = DueChoice.none,
@@ -74,6 +80,13 @@ class CheckoutState {
 
   final SaleMode mode;
   final String paidText;
+
+  /// What the cashier takes off the total at the till, e.g. 101 → 100 is `"1"`.
+  final String discountText;
+
+  /// The discount field is shown (it starts closed; most sales have none).
+  final bool discountOpen;
+  final DiscountError? discountError;
 
   /// `cash`, `jawwal_pay`, `palpay`, `bank_of_palestine` (05 §3.1).
   final String method;
@@ -102,6 +115,10 @@ class CheckoutState {
   CheckoutState copyWith({
     SaleMode? mode,
     String? paidText,
+    String? discountText,
+    bool? discountOpen,
+    DiscountError? discountError,
+    bool clearDiscountError = false,
     String? method,
     Customer? customer,
     bool clearCustomer = false,
@@ -119,6 +136,9 @@ class CheckoutState {
   }) => CheckoutState(
     mode: mode ?? this.mode,
     paidText: paidText ?? this.paidText,
+    discountText: discountText ?? this.discountText,
+    discountOpen: discountOpen ?? this.discountOpen,
+    discountError: clearDiscountError ? null : (discountError ?? this.discountError),
     method: method ?? this.method,
     customer: clearCustomer ? null : (customer ?? this.customer),
     due: due ?? this.due,
@@ -135,19 +155,40 @@ class CheckoutState {
 
 /// The numbers behind M-04, derived from the cart and the form. Money is exact (agorot).
 class CheckoutSummary {
-  CheckoutSummary(this.cart, this.state, this.user)
-    : total = cart.total,
-      paid = switch (state.mode) {
-        SaleMode.cash => cart.total,
-        SaleMode.credit => Money.zero,
-        SaleMode.partial => _paidOrZero(state.paidText, cart.total),
-      };
+  factory CheckoutSummary(Cart cart, CheckoutState state, AppUser? user) {
+    final discount = discountOf(state, cart.total);
+    final total = cart.total - discount;
+    final paid = switch (state.mode) {
+      SaleMode.cash => total,
+      SaleMode.credit => Money.zero,
+      SaleMode.partial => _paidOrZero(state.paidText, total),
+    };
+    return CheckoutSummary._(cart, state, user, discount, total, paid);
+  }
+
+  CheckoutSummary._(this.cart, this.state, this.user, this.discount, this.total, this.paid);
 
   final Cart cart;
   final CheckoutState state;
   final AppUser? user;
+
+  /// Taken off the lines' sum; zero while the field is closed, empty or not valid.
+  final Money discount;
+
+  /// What the customer owes: the lines' sum less [discount].
   final Money total;
   final Money paid;
+
+  /// The lines' sum before the discount.
+  Money get subtotal => cart.total;
+
+  /// A typed discount counts only while it is open, a valid amount and below [subtotal].
+  static Money discountOf(CheckoutState state, Money subtotal) {
+    if (!state.discountOpen) return Money.zero;
+    final value = parsePaid(state.discountText);
+    if (value == null || !(value < subtotal)) return Money.zero;
+    return value;
+  }
 
   Money get debt => total > paid ? total - paid : Money.zero;
 
@@ -228,6 +269,19 @@ class CheckoutController extends Notifier<CheckoutState> {
     state = _edited(state.copyWith(paidText: text, clearPaidError: true));
   }
 
+  void setDiscount(String text) {
+    if (state.locked) return;
+    state = _edited(state.copyWith(discountText: text, clearDiscountError: true, clearPaidError: true));
+  }
+
+  /// Opens the field, or closes it and drops the discount.
+  void toggleDiscount() {
+    if (state.locked) return;
+    state = _edited(state.discountOpen
+        ? state.copyWith(discountOpen: false, discountText: '', clearDiscountError: true, clearPaidError: true)
+        : state.copyWith(discountOpen: true));
+  }
+
   void setMethod(String method) {
     if (state.locked) return;
     state = _edited(state.copyWith(method: method));
@@ -249,18 +303,34 @@ class CheckoutController extends Notifier<CheckoutState> {
 
   /// Local checks before sending (UI-AC-03). True when the request may go.
   bool validate(Cart cart) {
+    DiscountError? discountError;
+    if (state.discountOpen && state.discountText.trim().isNotEmpty) {
+      final discount = CheckoutSummary.parsePaid(state.discountText);
+      if (discount == null) {
+        discountError = DiscountError.invalid;
+      } else if (!(discount < cart.total)) {
+        discountError = DiscountError.notBelowSubtotal;
+      }
+    }
+    final total = cart.total - CheckoutSummary.discountOf(state, cart.total);
     PaidError? paidError;
     if (state.mode == SaleMode.partial) {
       final paid = CheckoutSummary.parsePaid(state.paidText);
       if (paid == null || !paid.isPositive) {
         paidError = PaidError.invalid;
-      } else if (!(paid < cart.total)) {
+      } else if (!(paid < total)) {
         paidError = PaidError.notBelowTotal;
       }
     }
     final customerMissing = state.mode != SaleMode.cash && state.customer == null;
-    state = state.copyWith(customerMissing: customerMissing, paidError: paidError, clearPaidError: paidError == null);
-    return paidError == null && !customerMissing;
+    state = state.copyWith(
+      customerMissing: customerMissing,
+      paidError: paidError,
+      clearPaidError: paidError == null,
+      discountError: discountError,
+      clearDiscountError: discountError == null,
+    );
+    return paidError == null && discountError == null && !customerMissing;
   }
 
   Future<CheckoutOutcome> confirm(Cart cart, AppUser? user) async {
@@ -294,6 +364,7 @@ class CheckoutController extends Notifier<CheckoutState> {
     final dueDate = summary.debt.isPositive ? state.due.dateFrom(DateTime.now()) : null;
     final draft = SaleDraft(
       cart: cart,
+      discount: summary.discount,
       paidAmount: summary.paid,
       customerId: state.customer?.id,
       paymentMethod: summary.paid.isPositive ? state.method : null,

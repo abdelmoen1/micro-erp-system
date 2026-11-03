@@ -3412,4 +3412,78 @@ class AppLocalizationsAr extends AppLocalizations {
   String debtorsOpen(int count) {
     return 'ديون مفتوحة: $count';
   }
+
+  @override
+  String get subtotalWord => 'المجموع';
+
+  @override
+  String get discountWord => 'الخصم';
+
+  @override
+  String get addDiscount => 'خصم على الفاتورة';
+
+  @override
+  String get removeDiscount => 'بدون خصم';
+
+  @override
+  String get discountLabel => 'مبلغ الخصم';
+
+  @override
+  String get phDiscount => 'مثلاً 1';
+
+  @override
+  String discountMakeIt(String amount) {
+    return 'اجعلها $amount';
+  }
+
+  @override
+  String discountHint(String subtotal, String total) {
+    return 'المجموع $subtotal · بعد الخصم $total';
+  }
+
+  @override
+  String get discountErrorInvalid => 'اكتب مبلغ الخصم بالأرقام، مثل 1 أو 0.50.';
+
+  @override
+  String get discountErrorTooBig => 'الخصم لازم يكون أقل من مجموع الفاتورة.';
+
+  @override
+  String get invItem => 'الصنف';
+
+  @override
+  String get invQty => 'الكمية';
+
+  @override
+  String get invPrice => 'السعر';
+
+  @override
+  String get invAmount => 'المبلغ';
+
+  @override
+  String get invPayment => 'طريقة الدفع';
+
+  @override
+  String invItemsCount(int count) {
+    return 'عدد الأصناف: $count';
+  }
+
+  @override
+  String get goodsLoose => 'قطع زيادة (كرتونة مفتوحة)';
+
+  @override
+  String get goodsLooseTooMany =>
+      'هذا العدد كرتونة أو أكثر؛ زِد عدد الكراتين بدلاً منه.';
+
+  @override
+  String goodsCartonsLooseValue(String cartons, String loose, String pieces) {
+    return '$cartons كرتونة + $loose قطعة، $pieces قطعة';
+  }
+
+  @override
+  String purchaseCartonsLoose(String cartons, String loose) {
+    return '$cartons كرتونة + $loose قطعة';
+  }
+
+  @override
+  String get goodsLooseFact => 'قطع زيادة';
 }

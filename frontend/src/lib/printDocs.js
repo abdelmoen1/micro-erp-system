@@ -1,11 +1,15 @@
 import { dateTime, isPositiveAmount, shekel } from "./format";
 import { methodLabel } from "./domain";
 
-// What each document prints, for components/PrintSheet.jsx. The same documents as the mobile app.
+// What each document prints, for components/PrintSheet.jsx. The same documents as the mobile app:
+// a table of item, quantity, price and amount, then the totals with the one that matters boxed.
 
 const qty = (quantity, unit) => (unit === "kg" ? `${quantity} كغ` : String(quantity));
 
-const flagged = (line, flag, label) => (line[flag] ? ` · ${label}` : "");
+/** A table cell under a header that already says it is money: `1,245.50`. */
+const amount = (value) => shekel(value).replace("₪ ", "");
+
+const cartons = (i) => (i.loose_pieces ? `${i.cartons} كرتونة + ${i.loose_pieces} قطعة` : `${i.cartons} كرتونة`);
 
 export function saleDoc(s) {
   return {
@@ -19,16 +23,24 @@ export function saleDoc(s) {
     ],
     rows: (s.items ?? []).map((i) => ({
       name: i.item_name,
-      detail: `${qty(i.quantity, i.unit)}${i.pack_size ? " كرتونة" : ""} × ${shekel(i.unit_price)}`,
-      amount: shekel(i.line_total),
+      detail: i.pack_size ? `= ${Number(i.quantity) * i.pack_size} قطعة` : null,
+      quantity: i.pack_size ? `${i.quantity} كرتونة` : qty(i.quantity, i.unit),
+      price: amount(i.unit_price),
+      amount: amount(i.line_total),
     })),
     totals: [
+      ...(isPositiveAmount(s.discount_amount)
+        ? [
+            ["المجموع", shekel(s.subtotal_amount)],
+            ["الخصم", shekel(s.discount_amount)],
+          ]
+        : []),
       ["الإجمالي", shekel(s.total_amount), true],
       ...(isPositiveAmount(s.paid_amount) ? [[`المدفوع · ${methodLabel(s.payment_method)}`, shekel(s.paid_amount)]] : []),
       ...(isPositiveAmount(s.debt_amount) ? [["المتبقي دين", shekel(s.debt_amount)]] : []),
       ...(isPositiveAmount(s.returned_amount) ? [["المرتجعات", shekel(s.returned_amount)]] : []),
     ],
-    footer: "شكراً لتعاملكم معنا",
+    footer: `عدد الأصناف: ${(s.items ?? []).length} · شكراً لتعاملكم معنا`,
   };
 }
 
@@ -44,8 +56,9 @@ export function saleReturnDoc(r, invoiceId = r.invoice_id, customerName = r.cust
     ],
     rows: (r.items ?? []).map((i) => ({
       name: i.item_name,
-      detail: `${qty(i.quantity, i.unit)}${flagged(i, "damaged", "تالفة")}`,
-      amount: shekel(i.total),
+      detail: i.damaged ? "تالفة" : null,
+      quantity: qty(i.quantity, i.unit),
+      amount: amount(i.total),
     })),
     totals: [
       ["الإجمالي", shekel(r.total_amount), true],
@@ -63,8 +76,9 @@ export function purchaseDoc(p) {
     facts: [["المورد", p.supplier.name], ["التاريخ", dateTime(p.at)], ...(p.by ? [["بواسطة", p.by]] : [])],
     rows: (p.items ?? []).map((i) => ({
       name: i.item_name,
-      detail: i.cartons ? `${i.cartons} كرتونة × ${shekel(i.buy_price)}` : `${qty(i.quantity, i.unit)} × ${shekel(i.buy_price)}`,
-      amount: shekel(i.line_total),
+      quantity: i.cartons != null ? cartons(i) : qty(i.quantity, i.unit),
+      price: amount(i.buy_price),
+      amount: amount(i.line_total),
     })),
     totals: [
       ["الإجمالي", shekel(p.total), true],
@@ -85,8 +99,9 @@ export function purchaseReturnDoc(r, supplierName = r.supplier?.name) {
     ],
     rows: (r.items ?? []).map((i) => ({
       name: i.item_name,
-      detail: `${qty(i.quantity, i.unit)}${i.from_stock ? "" : " · خارج المخزن"}`,
-      amount: shekel(i.total),
+      detail: i.from_stock ? null : "خارج المخزن",
+      quantity: qty(i.quantity, i.unit),
+      amount: amount(i.total),
     })),
     totals: [
       ["الإجمالي", shekel(r.total_amount), true],
