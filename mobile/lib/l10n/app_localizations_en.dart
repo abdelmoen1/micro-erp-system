@@ -3437,4 +3437,80 @@ class AppLocalizationsEn extends AppLocalizations {
   String debtorsOpen(int count) {
     return 'Open debts: $count';
   }
+
+  @override
+  String get subtotalWord => 'Subtotal';
+
+  @override
+  String get discountWord => 'Discount';
+
+  @override
+  String get addDiscount => 'Discount on the invoice';
+
+  @override
+  String get removeDiscount => 'No discount';
+
+  @override
+  String get discountLabel => 'Discount amount';
+
+  @override
+  String get phDiscount => 'e.g. 1';
+
+  @override
+  String discountMakeIt(String amount) {
+    return 'Make it $amount';
+  }
+
+  @override
+  String discountHint(String subtotal, String total) {
+    return 'Subtotal $subtotal · after discount $total';
+  }
+
+  @override
+  String get discountErrorInvalid =>
+      'Type the discount in digits, like 1 or 0.50.';
+
+  @override
+  String get discountErrorTooBig =>
+      'The discount must be less than the invoice subtotal.';
+
+  @override
+  String get invItem => 'Item';
+
+  @override
+  String get invQty => 'Qty';
+
+  @override
+  String get invPrice => 'Price';
+
+  @override
+  String get invAmount => 'Amount';
+
+  @override
+  String get invPayment => 'Payment';
+
+  @override
+  String invItemsCount(int count) {
+    return 'Items: $count';
+  }
+
+  @override
+  String get goodsLoose => 'Extra pieces (opened carton)';
+
+  @override
+  String get goodsLooseTooMany =>
+      'That is a carton or more; add a carton instead.';
+
+  @override
+  String goodsCartonsLooseValue(String cartons, String loose, String pieces) {
+    return '$cartons cartons + $loose pieces, $pieces pieces';
+  }
+
+  @override
+  String purchaseCartonsLoose(String cartons, String loose) {
+    return '$cartons cartons + $loose pieces';
+  }
+
+  @override
+  String get goodsLooseFact => 'Extra pieces';
 }

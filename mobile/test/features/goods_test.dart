@@ -76,6 +76,49 @@ void main() {
     expect(kilos.withPrices(buy: Money.parse('28.50')).total, Money.parse('9.49'));
   });
 
+  test('loose pieces of an opened carton cost their share of the carton, half up', () {
+    const line = GoodsLine(name: 'كولا', kind: GoodsKind.carton, sellingPrice: '3.50', cartons: 2, packSize: 24, loosePieces: 5);
+    final priced = line.withPrices(buy: Money.parse('60.00'), carton: Money.parse('72.00'));
+    expect(priced.pieces, 53);
+    expect(priced.total, Money.parse('132.50'));
+    expect(priced.toApi(), containsPair('loose_pieces', 5));
+    expect(priced.toApi(), containsPair('cartons', 2));
+    const whole = GoodsLine(name: 'كولا', kind: GoodsKind.carton, sellingPrice: '3.50', cartons: 2, packSize: 24);
+    expect(whole.toApi().containsKey('loose_pieces'), isFalse, reason: 'sent only when there are some');
+  });
+
+  testWidgets('extra pieces from an opened carton: counted with the cartons, or alone; a full carton is refused', (tester) async {
+    await pumpApp(tester);
+    await tap(tester, find.byKey(const Key('nav.products')));
+    await tap(tester, find.byKey(const Key('products.add')));
+
+    await tap(tester, find.byKey(const Key('goods.manual')));
+    await type(tester, 'goodsItem.name', 'كولا علبة');
+    await type(tester, 'goodsItem.barcode', '6251234567890');
+    await type(tester, 'goodsItem.cartons', '2');
+    await type(tester, 'goodsItem.pack', '24');
+    await type(tester, 'goodsItem.loose', '24');
+    await type(tester, 'goodsItem.sell', '3.50');
+    await tap(tester, find.byKey(const Key('goodsItem.save')));
+    expect(find.text('هذا العدد كرتونة أو أكثر؛ زِد عدد الكراتين بدلاً منه.'), findsOneWidget);
+
+    await type(tester, 'goodsItem.loose', '5');
+    expect(find.text('53 قطعة'), findsOneWidget);
+    await tap(tester, find.byKey(const Key('goodsItem.save')));
+    expect(find.text('2 كرتونة + 5 قطعة، 53 قطعة'), findsOneWidget);
+
+    await tap(tester, find.byKey(const Key('goods.manual')));
+    await type(tester, 'goodsItem.name', 'عصير');
+    await type(tester, 'goodsItem.barcode', '6251234567807');
+    await type(tester, 'goodsItem.pack', '12');
+    await type(tester, 'goodsItem.sell', '2.00');
+    await tap(tester, find.byKey(const Key('goodsItem.save')));
+    expect(find.text('اكتب رقم صحيح'), findsOneWidget, reason: 'no cartons and no pieces is nothing');
+    await type(tester, 'goodsItem.loose', '7');
+    await tap(tester, find.byKey(const Key('goodsItem.save')));
+    expect(find.text('0 كرتونة + 7 قطعة، 7 قطعة'), findsOneWidget);
+  });
+
   testWidgets('two steps, then the invoice: prices on the supplier step, nothing paid at saving', (tester) async {
     api.on('POST /purchases', const FakeResponse(201, {
       'data': {

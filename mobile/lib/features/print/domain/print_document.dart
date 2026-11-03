@@ -1,11 +1,17 @@
-/// One printed line: the item, how much of it at what price, and its amount.
+/// One printed line: the item, how much of it at what price, and its amount. With a [quantity] it
+/// fills the columns of the invoice table; [detail] is a small line under the item's name.
 class PrintRow {
-  const PrintRow({required this.name, required this.amount, this.detail});
+  const PrintRow({required this.name, required this.amount, this.detail, this.quantity, this.price});
 
   final String name;
   final String? detail;
+  final String? quantity;
+  final String? price;
   final String amount;
 }
+
+/// The headers of the invoice table, in reading order: item, quantity, price, amount.
+typedef PrintColumns = (String item, String quantity, String price, String amount);
 
 /// A figure under the lines. [strong] is the one the reader looks for first.
 class PrintTotal {
@@ -28,10 +34,14 @@ class PrintDocument {
     required this.totals,
     this.storePhone,
     this.storeAddress,
+    this.columns,
     this.stamp,
     this.note,
     this.footer,
   });
+
+  /// Rows are printed as a table under these headers; without them, one item under another.
+  final PrintColumns? columns;
 
   final String title;
 

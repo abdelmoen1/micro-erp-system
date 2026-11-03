@@ -203,30 +203,39 @@ class ReceiptPaper extends StatelessWidget {
     const muted = TextStyle(fontSize: 13, color: HisbahColors.inkMuted);
     final created = r.createdAt;
 
+    final money = TextStyle(fontSize: 14, decoration: strike, fontFeatures: const [FontFeature.tabularFigures()]);
+
     return Stack(
       children: [
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+          padding: const EdgeInsets.fromLTRB(12, 16, 12, 14),
           decoration: BoxDecoration(
             color: HisbahColors.raised,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: HisbahColors.border),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: HisbahColors.borderStrong),
             boxShadow: const [BoxShadow(color: Color(0x0F14262E), blurRadius: 6, offset: Offset(0, 2))],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(user?.storeName ?? '', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-              if ((user?.storePhone ?? '').isNotEmpty) Center(child: Num(user!.storePhone!, size: 13, weight: FontWeight.w400, color: HisbahColors.inkMuted)),
+              Text(user?.storeName ?? '', textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
               if ((user?.storeAddress ?? '').isNotEmpty) Text(user!.storeAddress!, textAlign: TextAlign.center, style: muted),
-              const _Rule(),
-              if (r.isPending)
-                _Fact(
-                  label: t.receiptLocalRef,
-                  value: Num(r.localRef!, key: const Key('receipt.localRef'), size: 13, weight: FontWeight.w700),
-                )
-              else
-                _Fact(label: t.receiptNumber, value: Num('#${r.id}', size: 13, weight: FontWeight.w700)),
+              if ((user?.storePhone ?? '').isNotEmpty) Center(child: Num(user!.storePhone!, size: 13, weight: FontWeight.w400, color: HisbahColors.inkMuted)),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(border: Border.all(color: HisbahColors.ink, width: 1.5)),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(t.docSale, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700))),
+                    if (r.isPending)
+                      Num(r.localRef!, key: const Key('receipt.localRef'), size: 14, weight: FontWeight.w700)
+                    else
+                      Num('#${r.id}', key: const Key('receipt.number'), size: 16, weight: FontWeight.w700),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
               if (created != null) _Fact(label: t.receiptDate, value: Num('${dayMonthYear(created)} · ${_time(created)}', size: 13, weight: FontWeight.w400)),
               _Fact(label: t.receiptSeller, value: Text(r.sellerName ?? user?.name ?? '', style: const TextStyle(fontSize: 13))),
               if (r.customerName != null)
@@ -237,63 +246,59 @@ class ReceiptPaper extends StatelessWidget {
                     style: const TextStyle(fontSize: 13),
                   ),
                 ),
-              const _Rule(),
-              for (final line in r.lines)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(line.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                            Text(
-                              '${line.quantity.format(line.unit)} ${_unitWord(t, line)} × ${shekel(line.unitPrice)}',
-                              style: muted,
-                            ),
-                            if (line.isPack)
-                              Text(t.packEquals(line.baseQuantity.format(ProductUnit.piece)), style: muted),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        shekel(line.lineTotal),
-                        textDirection: TextDirection.ltr,
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, decoration: strike),
-                      ),
-                    ],
-                  ),
+              const SizedBox(height: 10),
+              _TableRow(
+                header: true,
+                cells: [Text(t.invItem), Text(t.invQty), Text(t.invPrice), Text(t.invAmount)],
+              ),
+              for (final (i, line) in r.lines.indexed)
+                _TableRow(
+                  shaded: i.isOdd,
+                  cells: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(line.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        if (line.isPack) Text(t.packEquals(line.baseQuantity.format(ProductUnit.piece)), style: muted),
+                      ],
+                    ),
+                    Text('${line.quantity.format(line.unit)} ${_unitWord(t, line)}', style: const TextStyle(fontSize: 13)),
+                    Text(amountOnly(line.unitPrice), textDirection: TextDirection.ltr, style: money),
+                    Text(amountOnly(line.lineTotal), textDirection: TextDirection.ltr, style: money.copyWith(fontWeight: FontWeight.w600)),
+                  ],
                 ),
-              const _Rule(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Expanded(child: Text(t.totalWord, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700))),
-                  Text(
-                    shekel(r.total),
-                    key: const Key('receipt.total'),
-                    textDirection: TextDirection.ltr,
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, decoration: strike),
-                  ),
-                ],
+              const Divider(height: 1, thickness: 1.5, color: HisbahColors.ink),
+              const SizedBox(height: 10),
+              if (r.discount.isPositive) ...[
+                _TotalRow(label: t.subtotalWord, value: shekel(r.subtotal), strike: strike),
+                _TotalRow(key: const Key('receipt.discount'), label: t.discountWord, value: shekel(r.discount), strike: strike),
+              ],
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(color: HisbahColors.primaryTint, border: Border.all(color: HisbahColors.ink, width: 1.5)),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Expanded(child: Text(t.totalWord, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700))),
+                    Text(
+                      shekel(r.total),
+                      key: const Key('receipt.total'),
+                      textDirection: TextDirection.ltr,
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, decoration: strike),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(child: Text('${t.paidWord} · ${paymentMethodLabel(t, r.paid.isPositive ? r.paymentMethod : null)}', style: const TextStyle(fontSize: 14))),
-                  Text(shekel(r.paid), textDirection: TextDirection.ltr, style: TextStyle(fontSize: 14, decoration: strike)),
-                ],
-              ),
+              _TotalRow(label: '${t.paidWord} · ${paymentMethodLabel(t, r.paid.isPositive ? r.paymentMethod : null)}', value: shekel(r.paid), strike: strike),
               if (r.debt.isPositive) ...[
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     color: voided ? StatusTone.voided.bg : StatusTone.debt.bg,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                   child: Row(
                     children: [
@@ -327,6 +332,9 @@ class ReceiptPaper extends StatelessWidget {
                   ],
                 ),
               ],
+              const _Rule(),
+              Text(t.invItemsCount(r.lines.length), textAlign: TextAlign.center, style: muted),
+              Text(t.docThanks, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -364,6 +372,61 @@ class ReceiptPaper extends StatelessWidget {
       : line.unit == ProductUnit.kg
       ? t.kgShort
       : (line.quantity == Quantity.one ? t.pieceWord : t.piecesWord);
+}
+
+/// One row of the items table: the item takes what is left, the figures keep fixed columns so they
+/// line up down the page like a printed invoice. The header row is dark with light text.
+class _TableRow extends StatelessWidget {
+  const _TableRow({required this.cells, this.header = false, this.shaded = false});
+
+  /// Item, quantity, unit price, amount.
+  final List<Widget> cells;
+  final bool header;
+  final bool shaded;
+
+  static const _widths = [null, 58.0, 62.0, 70.0];
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: EdgeInsets.symmetric(horizontal: 6, vertical: header ? 7 : 6),
+    color: header ? HisbahColors.ink : (shaded ? HisbahColors.receiptShade : null),
+    child: DefaultTextStyle.merge(
+      style: header ? const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white) : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (i, cell) in cells.indexed)
+            if (_widths[i] == null)
+              Expanded(child: cell)
+            else
+              SizedBox(
+                width: _widths[i],
+                child: Align(alignment: i == 1 ? AlignmentDirectional.center : AlignmentDirectional.centerEnd, child: cell),
+              ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// A figure under the table: label on the start side, amount on the end.
+class _TotalRow extends StatelessWidget {
+  const _TotalRow({super.key, required this.label, required this.value, required this.strike});
+
+  final String label;
+  final String value;
+  final TextDecoration strike;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+    child: Row(
+      children: [
+        Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
+        Text(value, textDirection: TextDirection.ltr, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, decoration: strike)),
+      ],
+    ),
+  );
 }
 
 class _Rule extends StatelessWidget {

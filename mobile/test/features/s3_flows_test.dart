@@ -196,9 +196,13 @@ void main() {
       expect(api.requestsTo('GET /sales/12'), hasLength(1));
       expect(find.byKey(const Key('saleDetail.paper')), findsOneWidget);
       expect(find.text('زيت زيتون 1 لتر'), findsOneWidget);
-      expect(find.textContaining('3 قطع × ₪ 45.00'), findsOneWidget);
-      expect(find.textContaining('1.250 كغ × ₪ 36.00'), findsOneWidget);
-      expect(find.textContaining('1 كرتونة × ₪ 34.50'), findsOneWidget);
+      // A table: quantity and price in their own columns, the amount beside them.
+      expect(find.text('3 قطع'), findsOneWidget);
+      expect(find.text('135.00'), findsOneWidget);
+      expect(find.text('1.250 كغ'), findsOneWidget);
+      expect(find.text('36.00'), findsOneWidget);
+      expect(find.text('1 كرتونة'), findsOneWidget);
+      expect(find.text('34.50'), findsNWidgets(2), reason: 'its price and its amount');
       expect(find.text('= 24 قطعة'), findsOneWidget);
       expect(find.byKey(const Key('receipt.total')), findsOneWidget);
       expect(find.text('₪ 130.50'), findsWidgets, reason: 'what stayed as debt');

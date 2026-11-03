@@ -348,6 +348,7 @@ class _InvoiceCard extends StatelessWidget {
               _Fact(t.goodsBuyCarton, shekel(invoice.buyPrice)),
               if (cartons != null) _Fact(t.goodsCartons, '$cartons'),
               if (invoice.packSize != null) _Fact(t.goodsPackSize, '${invoice.packSize}'),
+              if (invoice.loosePieces > 0) _Fact(t.goodsLooseFact, '${invoice.loosePieces}'),
               _Fact(t.supplierPieces, invoice.quantity),
             ],
             if (invoice.by != null) _Fact(t.supplierBy, invoice.by!),
