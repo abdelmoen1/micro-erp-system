@@ -527,19 +527,24 @@ tbody tr:hover { background: #f7f9f9; }
   .print-doc { display: block; max-width: 180mm; margin: 0 auto; color: #000; font-size: 12pt; line-height: 1.5; }
   .print-head { text-align: center; }
   .print-head h1 { font-size: 18pt; }
-  .print-head h2 { font-size: 14pt; margin-top: 6pt; }
   .print-head p { margin: 0; }
+  /* The title strip: document name on one side, its number on the other, in a black band. */
+  .print-head h2 { display: flex; justify-content: space-between; font-size: 14pt; margin-top: 8pt; padding: 4pt 8pt; background: #000; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .print-stamp { border: 2px solid #000; font-size: 16pt; font-weight: 700; margin-top: 6pt !important; }
-  .print-facts, .print-totals { margin: 8pt 0; padding: 6pt 0; border-top: 1px dashed #000; }
+  .print-facts, .print-totals { margin: 8pt 0; padding: 4pt 0; }
   .print-facts div, .print-totals div { display: flex; justify-content: space-between; gap: 12pt; }
   .print-facts dd, .print-totals dd { margin: 0; font-weight: 600; }
-  .print-totals .strong { font-size: 15pt; font-weight: 700; }
+  .print-totals { border-top: 2px solid #000; }
+  .print-totals .strong { font-size: 15pt; font-weight: 700; border: 2px solid #000; padding: 4pt 8pt; margin: 4pt 0; }
   .print-lines { width: 100%; border-collapse: collapse; }
   .print-lines tr { break-inside: avoid; }
-  .print-lines td { padding: 3pt 0; vertical-align: top; }
-  .print-lines td:last-child { text-align: left; white-space: nowrap; font-weight: 700; }
+  .print-lines th { background: #000; color: #fff; font-weight: 700; padding: 3pt 6pt; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-lines th:first-child { text-align: right; }
+  .print-lines td { padding: 3pt 6pt; vertical-align: top; border-bottom: 1px dashed #000; text-align: center; white-space: nowrap; }
+  .print-lines td:first-child { text-align: right; white-space: normal; width: 100%; }
+  .print-lines td:last-child { text-align: left; font-weight: 700; }
   .print-lines b, .print-lines small { display: block; }
   .print-lines small { font-size: 10pt; }
   .print-note { margin: 0; }
-  .print-foot { text-align: center; margin-top: 8pt; }
+  .print-foot { text-align: center; margin-top: 8pt; padding-top: 6pt; border-top: 1px dashed #000; }
 }

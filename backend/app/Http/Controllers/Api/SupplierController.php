@@ -93,6 +93,7 @@ class SupplierController extends Controller
                 'quantity' => Quantity::format($item->quantity, $product->unit),
                 'cartons' => $item->cartons,
                 'pack_size' => $item->pack_size,
+                'loose_pieces' => (int) $item->loose_pieces,
                 'buy_price' => Money::of($item->buy_price),
                 'total' => Money::of($item->line_total),
             ]);

@@ -6091,6 +6091,132 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'ديون مفتوحة: {count}'**
   String debtorsOpen(int count);
+
+  /// No description provided for @subtotalWord.
+  ///
+  /// In ar, this message translates to:
+  /// **'المجموع'**
+  String get subtotalWord;
+
+  /// No description provided for @discountWord.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخصم'**
+  String get discountWord;
+
+  /// No description provided for @addDiscount.
+  ///
+  /// In ar, this message translates to:
+  /// **'خصم على الفاتورة'**
+  String get addDiscount;
+
+  /// No description provided for @removeDiscount.
+  ///
+  /// In ar, this message translates to:
+  /// **'بدون خصم'**
+  String get removeDiscount;
+
+  /// No description provided for @discountLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'مبلغ الخصم'**
+  String get discountLabel;
+
+  /// No description provided for @phDiscount.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثلاً 1'**
+  String get phDiscount;
+
+  /// No description provided for @discountMakeIt.
+  ///
+  /// In ar, this message translates to:
+  /// **'اجعلها {amount}'**
+  String discountMakeIt(String amount);
+
+  /// No description provided for @discountHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'المجموع {subtotal} · بعد الخصم {total}'**
+  String discountHint(String subtotal, String total);
+
+  /// No description provided for @discountErrorInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب مبلغ الخصم بالأرقام، مثل 1 أو 0.50.'**
+  String get discountErrorInvalid;
+
+  /// No description provided for @discountErrorTooBig.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخصم لازم يكون أقل من مجموع الفاتورة.'**
+  String get discountErrorTooBig;
+
+  /// No description provided for @invItem.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصنف'**
+  String get invItem;
+
+  /// No description provided for @invQty.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكمية'**
+  String get invQty;
+
+  /// No description provided for @invPrice.
+  ///
+  /// In ar, this message translates to:
+  /// **'السعر'**
+  String get invPrice;
+
+  /// No description provided for @invAmount.
+  ///
+  /// In ar, this message translates to:
+  /// **'المبلغ'**
+  String get invAmount;
+
+  /// No description provided for @invPayment.
+  ///
+  /// In ar, this message translates to:
+  /// **'طريقة الدفع'**
+  String get invPayment;
+
+  /// No description provided for @invItemsCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'عدد الأصناف: {count}'**
+  String invItemsCount(int count);
+
+  /// No description provided for @goodsLoose.
+  ///
+  /// In ar, this message translates to:
+  /// **'قطع زيادة (كرتونة مفتوحة)'**
+  String get goodsLoose;
+
+  /// No description provided for @goodsLooseTooMany.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا العدد كرتونة أو أكثر؛ زِد عدد الكراتين بدلاً منه.'**
+  String get goodsLooseTooMany;
+
+  /// No description provided for @goodsCartonsLooseValue.
+  ///
+  /// In ar, this message translates to:
+  /// **'{cartons} كرتونة + {loose} قطعة، {pieces} قطعة'**
+  String goodsCartonsLooseValue(String cartons, String loose, String pieces);
+
+  /// No description provided for @purchaseCartonsLoose.
+  ///
+  /// In ar, this message translates to:
+  /// **'{cartons} كرتونة + {loose} قطعة'**
+  String purchaseCartonsLoose(String cartons, String loose);
+
+  /// No description provided for @goodsLooseFact.
+  ///
+  /// In ar, this message translates to:
+  /// **'قطع زيادة'**
+  String get goodsLooseFact;
 }
 
 class _AppLocalizationsDelegate

@@ -8,10 +8,10 @@ export default function PrintSheet({ doc }) {
     <section className="print-doc" dir="rtl" aria-hidden="true">
       <header className="print-head">
         <h1>{store.name}</h1>
-        {store.phone ? <p className="m">{store.phone}</p> : null}
         {store.address ? <p>{store.address}</p> : null}
+        {store.phone ? <p className="m">{store.phone}</p> : null}
         <h2>
-          {doc.title} <span className="m">{doc.number}</span>
+          <span>{doc.title}</span> <span className="m">{doc.number}</span>
         </h2>
         {doc.stamp ? <p className="print-stamp">{doc.stamp}</p> : null}
       </header>
@@ -24,6 +24,14 @@ export default function PrintSheet({ doc }) {
         ))}
       </dl>
       <table className="print-lines">
+        <thead>
+          <tr>
+            <th>الصنف</th>
+            <th>الكمية</th>
+            <th>السعر</th>
+            <th>المبلغ</th>
+          </tr>
+        </thead>
         <tbody>
           {doc.rows.map((row, i) => (
             <tr key={`${row.name}-${i}`}>
@@ -31,6 +39,8 @@ export default function PrintSheet({ doc }) {
                 <b>{row.name}</b>
                 {row.detail ? <small>{row.detail}</small> : null}
               </td>
+              <td className="m">{row.quantity}</td>
+              <td className="m">{row.price ?? ""}</td>
               <td className="m">{row.amount}</td>
             </tr>
           ))}

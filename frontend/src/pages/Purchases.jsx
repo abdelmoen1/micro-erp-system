@@ -114,7 +114,11 @@ export function PurchaseDetail() {
                   <td className="n m">
                     {i.quantity}
                     {i.unit === "kg" ? " كغ" : " قطعة"}
-                    {i.cartons ? <span className="cell-sub">{i.cartons} كرتونة</span> : null}
+                    {i.cartons || i.loose_pieces ? (
+                      <span className="cell-sub">
+                        {i.cartons} كرتونة{i.loose_pieces ? ` + ${i.loose_pieces} قطعة` : ""}
+                      </span>
+                    ) : null}
                   </td>
                   <td className="n m" style={{ color: "var(--warning-fg)", fontWeight: 600 }}>
                     {milliOf(i.returned_quantity) > 0 ? i.returned_quantity : "—"}

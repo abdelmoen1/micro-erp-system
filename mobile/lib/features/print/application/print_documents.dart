@@ -5,13 +5,14 @@ import '../../goods/domain/goods.dart';
 import '../../returns/domain/returns.dart';
 import '../../sale/data/sale_repository.dart';
 import '../../sale/presentation/checkout_screen.dart' show paymentMethodLabel;
-import '../../sale/presentation/sale_widgets.dart' show dayMonthYear, shekel;
+import '../../sale/presentation/sale_widgets.dart' show amountOnly, dayMonthYear, shekel;
 import '../domain/print_document.dart';
 
 String _stamp(DateTime at) =>
     '${dayMonthYear(at)}  ${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}';
 
 PrintDocument _document({
+  required AppLocalizations t,
   required AppUser? user,
   required String title,
   required String number,
@@ -28,6 +29,7 @@ PrintDocument _document({
   storePhone: user?.storePhone,
   storeAddress: user?.storeAddress,
   facts: facts,
+  columns: (t.invItem, t.invQty, t.invPrice, t.invAmount),
   rows: rows,
   totals: totals,
   stamp: stamp,
@@ -38,14 +40,17 @@ PrintDocument _document({
 String _quantity(AppLocalizations t, Quantity quantity, ProductUnit unit) =>
     unit == ProductUnit.kg ? '${quantity.format(unit)} ${t.kgShort}' : quantity.format(unit);
 
+/// The sales invoice: one table row per line, then subtotal, discount, the boxed total, what was
+/// paid and what is left on credit.
 PrintDocument saleDocument(AppLocalizations t, SaleReceipt r, AppUser? user) {
-  String detail(SaleLine line) {
-    final unit = line.isPack ? t.packWord : (line.unit == ProductUnit.kg ? t.kgShort : t.pieceWord);
-    return '${line.quantity.format(line.unit)} $unit × ${shekel(line.unitPrice)}';
-  }
+  // Pieces are the plain count, as on any shop invoice; kilos and cartons say their unit.
+  String quantity(SaleLine line) => line.isPack
+      ? '${line.quantity.format(line.unit)} ${t.packWord}'
+      : _quantity(t, line.quantity, line.unit);
 
   final returned = r.returned;
   return _document(
+    t: t,
     user: user,
     title: t.docSale,
     number: r.isPending ? r.localRef! : '#${r.id}',
@@ -55,18 +60,32 @@ PrintDocument saleDocument(AppLocalizations t, SaleReceipt r, AppUser? user) {
       if ((r.sellerName ?? user?.name) != null) (t.receiptSeller, r.sellerName ?? user!.name),
       if (r.customerName != null) (t.customerLabel, r.customerName!),
     ],
-    rows: [for (final line in r.lines) PrintRow(name: line.name, detail: detail(line), amount: shekel(line.lineTotal))],
+    rows: [
+      for (final line in r.lines)
+        PrintRow(
+          name: line.name,
+          detail: line.isPack ? t.packEquals(line.baseQuantity.format(ProductUnit.piece)) : null,
+          quantity: quantity(line),
+          price: amountOnly(line.unitPrice),
+          amount: amountOnly(line.lineTotal),
+        ),
+    ],
     totals: [
+      if (r.discount.isPositive) ...[
+        PrintTotal(t.subtotalWord, shekel(r.subtotal)),
+        PrintTotal(t.discountWord, shekel(r.discount)),
+      ],
       PrintTotal(t.totalWord, shekel(r.total), strong: true),
       if (r.paid.isPositive) PrintTotal('${t.paidWord} · ${paymentMethodLabel(t, r.paymentMethod)}', shekel(r.paid)),
       if (r.debt.isPositive) PrintTotal(t.remainingAsDebt, shekel(r.debt)),
       if (returned != null && returned.isPositive) PrintTotal(t.docReturned, shekel(returned)),
     ],
-    footer: t.docThanks,
+    footer: '${t.invItemsCount(r.lines.length)} · ${t.docThanks}',
   );
 }
 
 PrintDocument saleReturnDocument(AppLocalizations t, SaleReturnRecord r, AppUser? user) => _document(
+  t: t,
   user: user,
   title: t.docSaleReturn,
   number: '#${r.id}',
@@ -80,8 +99,9 @@ PrintDocument saleReturnDocument(AppLocalizations t, SaleReturnRecord r, AppUser
     for (final line in r.lines)
       PrintRow(
         name: line.name,
-        detail: [_quantity(t, line.quantity, line.unit), if (line.flagged) t.docDamaged].join(' · '),
-        amount: shekel(line.total),
+        detail: line.flagged ? t.docDamaged : null,
+        quantity: _quantity(t, line.quantity, line.unit),
+        amount: amountOnly(line.total),
       ),
   ],
   totals: [
@@ -93,6 +113,7 @@ PrintDocument saleReturnDocument(AppLocalizations t, SaleReturnRecord r, AppUser
 );
 
 PrintDocument purchaseDocument(AppLocalizations t, PurchaseDetail p, AppUser? user) => _document(
+  t: t,
   user: user,
   title: t.docPurchase,
   number: '#${p.row.id}',
@@ -105,10 +126,13 @@ PrintDocument purchaseDocument(AppLocalizations t, PurchaseDetail p, AppUser? us
     for (final line in p.lines)
       PrintRow(
         name: line.name,
-        detail: line.cartons == null
-            ? '${_quantity(t, line.quantity, line.unit)} × ${shekel(line.buyPrice)}'
-            : '${line.cartons} ${t.packWord} × ${shekel(line.buyPrice)}',
-        amount: shekel(line.total),
+        quantity: line.cartons == null
+            ? _quantity(t, line.quantity, line.unit)
+            : line.loosePieces > 0
+            ? t.purchaseCartonsLoose('${line.cartons}', '${line.loosePieces}')
+            : '${line.cartons} ${t.packWord}',
+        price: amountOnly(line.buyPrice),
+        amount: amountOnly(line.total),
       ),
   ],
   totals: [
@@ -118,6 +142,7 @@ PrintDocument purchaseDocument(AppLocalizations t, PurchaseDetail p, AppUser? us
 );
 
 PrintDocument purchaseReturnDocument(AppLocalizations t, PurchaseReturnRecord r, AppUser? user) => _document(
+  t: t,
   user: user,
   title: t.docPurchaseReturn,
   number: '#${r.id}',
@@ -131,8 +156,9 @@ PrintDocument purchaseReturnDocument(AppLocalizations t, PurchaseReturnRecord r,
     for (final line in r.lines)
       PrintRow(
         name: line.name,
-        detail: [_quantity(t, line.quantity, line.unit), if (line.flagged) t.docOffShelf].join(' · '),
-        amount: shekel(line.total),
+        detail: line.flagged ? t.docOffShelf : null,
+        quantity: _quantity(t, line.quantity, line.unit),
+        amount: amountOnly(line.total),
       ),
   ],
   totals: [

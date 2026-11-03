@@ -44,6 +44,7 @@ FakeResponse saleCreated({
   String total = '19.50',
   String paid = '19.50',
   String debt = '0.00',
+  String discount = '0.00',
   Map<String, dynamic>? customer,
   String status = 'active',
   List<String> flags = const [],
@@ -53,6 +54,7 @@ FakeResponse saleCreated({
     'id': 9001,
     'status': status,
     'total_amount': total,
+    'discount_amount': discount,
     'paid_amount': paid,
     'debt_amount': debt,
     'payment_method': paid == '0.00' ? null : 'cash',
@@ -129,6 +131,12 @@ void main() {
 
   String textOf(WidgetTester tester, String key) =>
       tester.widget<Text>(find.descendant(of: find.byKey(Key(key)), matching: find.byType(Text))).data!;
+
+  /// The checkout total sits at the top of the list; scroll back to it before reading.
+  Future<String> checkoutTotal(WidgetTester tester) async {
+    await tester.scrollUntilVisible(find.byKey(const Key('checkout.total')), -200, scrollable: find.byType(Scrollable).first);
+    return textOf(tester, 'checkout.total');
+  }
 
   Map<String, dynamic> lastSaleBody() => api.requestsTo('POST /sales').last.data as Map<String, dynamic>;
 
@@ -229,6 +237,59 @@ void main() {
 
       await tap(tester, 'receipt.newSale');
       expect(find.text('امسح أول صنف لتبدأ'), findsOneWidget);
+    });
+
+    testWidgets('a discount at the till: 19.50 becomes 19.00, it is sent and printed on the invoice', (tester) async {
+      await toCheckout(tester);
+      expect(find.byKey(const Key('checkout.discount')), findsNothing, reason: 'closed until the cashier asks');
+      await tap(tester, 'checkout.addDiscount');
+      // Only the round total a tenth or less below the sum is offered: 19.00, not 15.00 or 10.00.
+      expect(find.byKey(const Key('checkout.roundTo.15.00')), findsNothing);
+      await tap(tester, 'checkout.roundTo.19.00');
+
+      expect(await checkoutTotal(tester), '₪ 19.00');
+      expect(find.byKey(const Key('checkout.totalBeforeDiscount')), findsOneWidget);
+      await tester.scrollUntilVisible(find.byKey(const Key('checkout.discountRow')), 200, scrollable: find.byType(Scrollable).first);
+      expect(find.byKey(const Key('checkout.discountRow')), findsOneWidget);
+      expect(find.text('مدفوع بالكامل — لا دين'), findsOneWidget);
+
+      api.on('POST /sales', saleCreated(total: '19.00', paid: '19.00', discount: '0.50'));
+      await tap(tester, 'checkout.confirm');
+      expect(lastSaleBody(), {
+        'items': [
+          {'product_id': 7, 'quantity': '3'},
+        ],
+        'discount_amount': '0.50',
+        'paid_amount': '19.00',
+        'payment_method': 'palpay',
+      });
+
+      expect(find.byType(ReceiptScreen), findsOneWidget);
+      expect(find.byKey(const Key('receipt.discount')), findsOneWidget);
+      expect(find.descendant(of: find.byKey(const Key('receipt.discount')), matching: find.text('₪ 0.50')), findsOneWidget);
+      expect(find.text('₪ 19.50'), findsOneWidget, reason: 'the subtotal before the discount');
+      expect(tester.widget<Text>(find.byKey(const Key('receipt.total'))).data, '₪ 19.00');
+    });
+
+    testWidgets('a discount as large as the sale is stopped locally; closing the field drops it', (tester) async {
+      await toCheckout(tester);
+      await tap(tester, 'checkout.addDiscount');
+      await tester.enterText(find.byKey(const Key('checkout.discount')), '19.50');
+      await tester.pumpAndSettle();
+      expect(await checkoutTotal(tester), '₪ 19.50', reason: 'an impossible discount takes nothing off');
+      await tap(tester, 'checkout.confirm');
+      expect(find.text('الخصم لازم يكون أقل من مجموع الفاتورة.'), findsOneWidget);
+      expect(api.requestsTo('POST /sales'), isEmpty);
+
+      await tester.enterText(find.byKey(const Key('checkout.discount')), '2');
+      await tester.pumpAndSettle();
+      expect(await checkoutTotal(tester), '₪ 17.50');
+      await tap(tester, 'checkout.removeDiscount');
+      expect(await checkoutTotal(tester), '₪ 19.50');
+
+      api.on('POST /sales', saleCreated());
+      await tap(tester, 'checkout.confirm');
+      expect(lastSaleBody().containsKey('discount_amount'), isFalse);
     });
 
     testWidgets('partial without a customer is stopped locally (UI-AC-03)', (tester) async {
@@ -413,7 +474,9 @@ void main() {
         {'product_id': 12, 'quantity': '2', 'sale_unit': 'pack'},
       ]);
       expect(find.byType(ReceiptScreen), findsOneWidget);
-      expect(find.textContaining('2 كرتونة × ₪ 54.00'), findsOneWidget);
+      expect(find.text('2 كرتونة'), findsOneWidget);
+      expect(find.text('54.00'), findsOneWidget);
+      expect(find.text('108.00'), findsOneWidget);
       expect(find.text('= 48 قطعة'), findsOneWidget);
     });
 
@@ -461,6 +524,7 @@ void main() {
       api.on('POST /sales/9001/void', saleCreated(status: 'voided'));
       await tap(tester, 'void.confirm');
       expect(jsonDecode(jsonEncode(api.requestsTo('POST /sales/9001/void').last.data)), {'reason': 'خطأ في الإدخال'});
+      await tester.scrollUntilVisible(find.text('أُلغيت الفاتورة'), -200, scrollable: find.byType(Scrollable).first);
       expect(find.text('أُلغيت الفاتورة'), findsOneWidget);
       expect(find.text('ملغاة'), findsOneWidget);
       expect(find.byKey(const Key('receipt.void')), findsNothing);

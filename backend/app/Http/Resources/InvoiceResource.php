@@ -22,7 +22,10 @@ class InvoiceResource extends JsonResource
             'status' => $this->status,
             'has_debt' => (bool) $this->has_debt,
             'payment_method' => $this->payment_method,
+            // What the customer owes: the lines' sum (`subtotal_amount`) less `discount_amount`.
             'total_amount' => Money::of($this->total_amount),
+            'discount_amount' => Money::of($this->discount_amount),
+            'subtotal_amount' => Money::add($this->total_amount, $this->discount_amount),
             'paid_amount' => Money::of($this->paid_amount),
             'debt_amount' => Money::maxZero(Money::sub($this->total_amount, $this->paid_amount)),
             'notes' => $this->notes,
