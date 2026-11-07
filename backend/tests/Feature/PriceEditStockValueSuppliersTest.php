@@ -63,7 +63,8 @@ class PriceEditStockValueSuppliersTest extends TestCase
         $this->assertSame('18.00', (string) $oil->fresh()->selling_price);
         $this->assertSame('42.00', (string) $rice->fresh()->selling_price);
         $audit = AuditLog::where('action', 'sale.created')->firstOrFail();
-        $this->assertSame([
+        // assertEquals: MySQL's JSON column keeps the keys in its own order.
+        $this->assertEquals([
             ['product_id' => $oil->id, 'sale_unit' => null, 'list_price' => '18.00', 'charged' => '17.00'],
             ['product_id' => $rice->id, 'sale_unit' => null, 'list_price' => '42.00', 'charged' => '45.50'],
         ], $audit->metadata['price_edits']);
