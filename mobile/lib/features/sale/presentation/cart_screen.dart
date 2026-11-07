@@ -221,6 +221,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                   onEditWeight: () => _openWeight(line.product),
                                   onRemove: () => _cart.remove(line.product.id, pack: line.pack),
                                   onAddPack: () => _cart.addPack(line.product),
+                                  onPrice: (price) => _cart.setPrice(line.product.id, price, pack: line.pack),
                                 ),
                             ],
                           ),

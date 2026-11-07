@@ -45,7 +45,7 @@ class SaleTest extends TestCase
         $tea = $this->makeProduct($this->store, ['selling_price' => '6.50', 'current_stock' => 10]);
 
         $response = $this->sell($this->owner, [
-            'items' => [['product_id' => $tea->id, 'quantity' => 3, 'unit_price' => '0.01', 'total' => '0.01']],
+            'items' => [['product_id' => $tea->id, 'quantity' => 3, 'total' => '0.01']],
             'paid_amount' => '19.50',
             'payment_method' => 'cash',
         ])->assertCreated();

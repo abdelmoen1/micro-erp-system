@@ -30,6 +30,13 @@ export const useAdminStoreProducts = (id, filters) =>
 export const useAdminProducts = (filters) =>
   useQuery({ queryKey: queryKeys.admin.products(filters), queryFn: page(`/admin/products${qs(filters)}`), placeholderData: (p) => p });
 
+/** Every store's suppliers: products delivered, last delivery, purchases and what is still owed. */
+export const useAdminSuppliers = (filters) =>
+  useQuery({ queryKey: queryKeys.admin.suppliers(filters), queryFn: page(`/admin/suppliers${qs(filters)}`), placeholderData: (p) => p, ...live });
+
+/** One supplier and each product it delivers with its latest wholesale price. */
+export const useAdminSupplier = (id) => useQuery({ queryKey: queryKeys.admin.supplier(id), queryFn: data(`/admin/suppliers/${id}`), ...live });
+
 export const useCatalogItem = (id) => useQuery({ queryKey: queryKeys.admin.catalog(id), queryFn: data(`/admin/catalog-products/${id}`) });
 
 /** The shared catalog: one row per barcode with its store count and price range. */

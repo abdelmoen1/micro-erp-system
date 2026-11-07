@@ -54,6 +54,12 @@ class ProductRepository {
     }, (local) => local.searchProducts(q));
   }
 
+  /// «قيمة البضاعة في المخزن»: the goods on the shelf at cost and at selling prices. Owner / Manager.
+  Future<StockValue> stockValue() async {
+    final body = await _api.get('/products/stock-value');
+    return StockValue.fromJson(body['data'] as Map<String, dynamic>? ?? const {});
+  }
+
   /// Active products at or below their threshold, lowest stock first (US-0403). First page.
   Future<List<Product>> lowStock() async {
     final body = await _api.get('/products/low-stock');
@@ -201,6 +207,24 @@ class StockMove {
   final String? reason;
   final int? invoiceId;
   final DateTime? createdAt;
+}
+
+/// What the goods in stock are worth: stock above zero × cost price, and × selling price. Products
+/// without a cost price are left out of [costValue] and counted in [missingCostCount].
+class StockValue {
+  const StockValue({required this.costValue, required this.sellingValue, required this.productsCount, required this.missingCostCount});
+
+  factory StockValue.fromJson(Map<String, dynamic> json) => StockValue(
+    costValue: Money.parse(json['cost_value'] as String? ?? '0'),
+    sellingValue: Money.parse(json['selling_value'] as String? ?? '0'),
+    productsCount: (json['products_count'] as num?)?.toInt() ?? 0,
+    missingCostCount: (json['missing_cost_count'] as num?)?.toInt() ?? 0,
+  );
+
+  final Money costValue;
+  final Money sellingValue;
+  final int productsCount;
+  final int missingCostCount;
 }
 
 /// A product sold below zero and its latest sales (who sold how much, the balance after).

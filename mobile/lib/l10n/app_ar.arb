@@ -2094,5 +2094,102 @@
       }
     }
   },
-  "goodsLooseFact": "قطع زيادة"
+  "goodsLooseFact": "قطع زيادة",
+  "priceOfPiece": "سعر القطعة",
+  "priceOfPack": "سعر الكرتونة",
+  "priceOfKg": "سعر الكيلو",
+  "priceDecrease": "رخّص سعر {name}",
+  "@priceDecrease": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "priceIncrease": "غلّي سعر {name}",
+  "@priceIncrease": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "priceType": "اكتب سعر {name}",
+  "@priceType": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "priceEditedNote": "سعر معدّل · الأصلي {price}",
+  "@priceEditedNote": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "priceRestore": "رجّع الأصلي",
+  "priceBelowCost": "أقل من سعر الشراء ({cost})",
+  "@priceBelowCost": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "priceSheetTitle": "سعر {name}",
+  "@priceSheetTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "priceSheetOriginal": "السعر الأصلي {price}",
+  "@priceSheetOriginal": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "priceSheetCost": "الشراء {cost}",
+  "@priceSheetCost": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "priceSheetField": "السعر لهذه البيعة",
+  "priceSheetNote": "التعديل لهذه البيعة فقط. سعر المنتج في المخزن يبقى {price}، والسعر الجديد يظهر على الفاتورة.",
+  "@priceSheetNote": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "priceSheetConfirm": "اعتمد {price}",
+  "@priceSheetConfirm": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "priceErrorZero": "السعر يجب أن يكون أكبر من صفر.",
+  "stockValueTitle": "قيمة البضاعة في المخزن",
+  "stockValueAtCost": "بسعر الشراء",
+  "stockValueAtSelling": "لو بيعت كلها بسعر البيع",
+  "stockValueMissingCost": "أصناف بلا سعر شراء: {count} — غير محسوبة",
+  "@stockValueMissingCost": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  }
 }

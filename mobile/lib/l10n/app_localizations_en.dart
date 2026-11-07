@@ -3513,4 +3513,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get goodsLooseFact => 'Extra pieces';
+
+  @override
+  String get priceOfPiece => 'Price per piece';
+
+  @override
+  String get priceOfPack => 'Price per carton';
+
+  @override
+  String get priceOfKg => 'Price per kg';
+
+  @override
+  String priceDecrease(String name) {
+    return 'Lower the price of $name';
+  }
+
+  @override
+  String priceIncrease(String name) {
+    return 'Raise the price of $name';
+  }
+
+  @override
+  String priceType(String name) {
+    return 'Type the price of $name';
+  }
+
+  @override
+  String priceEditedNote(String price) {
+    return 'Changed price · was $price';
+  }
+
+  @override
+  String get priceRestore => 'Back to the usual price';
+
+  @override
+  String priceBelowCost(String cost) {
+    return 'Below the cost price ($cost)';
+  }
+
+  @override
+  String priceSheetTitle(String name) {
+    return 'Price of $name';
+  }
+
+  @override
+  String priceSheetOriginal(String price) {
+    return 'Usual price $price';
+  }
+
+  @override
+  String priceSheetCost(String cost) {
+    return 'cost $cost';
+  }
+
+  @override
+  String get priceSheetField => 'Price for this sale';
+
+  @override
+  String priceSheetNote(String price) {
+    return 'This sale only. The product keeps its price of $price in the store room; the new price shows on the invoice.';
+  }
+
+  @override
+  String priceSheetConfirm(String price) {
+    return 'Use $price';
+  }
+
+  @override
+  String get priceErrorZero => 'The price must be above zero.';
+
+  @override
+  String get stockValueTitle => 'Value of the goods in stock';
+
+  @override
+  String get stockValueAtCost => 'at cost';
+
+  @override
+  String get stockValueAtSelling => 'If all sold at selling prices';
+
+  @override
+  String stockValueMissingCost(String count) {
+    return 'Products without a cost price: $count, not counted';
+  }
 }

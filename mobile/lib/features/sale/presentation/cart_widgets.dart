@@ -4,6 +4,7 @@ import '../../../core/money/fixed_point.dart';
 import '../../../core/theme/hisbah_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/cart.dart';
+import 'price_editing.dart';
 import 'product_search_sheet.dart';
 import 'sale_widgets.dart';
 
@@ -136,9 +137,13 @@ class CartLineRow extends StatelessWidget {
     required this.onRemove,
     this.overStock = false,
     this.onAddPack,
+    this.onPrice,
   });
 
   final CartLine line;
+
+  /// The line's price for this sale (+/− or typed); without it the price is shown as text only.
+  final ValueChanged<Money?>? onPrice;
 
   /// The product's lines together (cartons with all their pieces) go above the recorded stock.
   final bool overStock;
@@ -215,71 +220,62 @@ class CartLineRow extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(text: shekel(line.unitPrice)),
-                            TextSpan(text: ' / $unitText'),
-                          ],
-                        ),
-                        style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
-                      ),
-                      if (pack)
-                        Text(
-                          t.packEquals(line.baseQuantity.format(ProductUnit.piece)),
-                          key: Key('cart.base.$id'),
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HisbahColors.ink),
-                        ),
-                      if (product.barcode != null)
-                        Num(product.barcode!, size: 12, weight: FontWeight.w400, color: HisbahColors.inkSubtle),
-                    ],
-                  ),
+            if (onPrice != null) ...[
+              // Price and quantity side by side; on a narrow phone the quantity drops below.
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.end,
+                spacing: 10,
+                runSpacing: 8,
+                children: [
+                  _Labelled(label: priceLabelOf(t, line), child: PriceStepper(line: line, onChanged: (price) => onPrice!(price))),
+                  _Labelled(label: t.goodsQuantity, child: _quantityControl(t, id, qty)),
+                ],
+              ),
+              if (pack || product.barcode != null) const SizedBox(height: 4),
+              if (pack)
+                Text(
+                  t.packEquals(line.baseQuantity.format(ProductUnit.piece)),
+                  key: Key('cart.base.$id'),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HisbahColors.ink),
                 ),
-                if (kg)
-                  Row(
-                    children: [
-                      _BoxButton(
-                        key: Key('cart.edit.${product.id}'),
-                        label: t.editWeightOf(product.name),
-                        onTap: onEditWeight,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Num(qty, size: 17, weight: FontWeight.w700),
-                            const SizedBox(width: 4),
-                            Text(t.kgShort, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                            const SizedBox(width: 6),
-                            const Icon(Icons.edit_outlined, size: 16, color: HisbahColors.primary),
-                          ],
+              if (product.barcode != null)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Num(product.barcode!, size: 12, weight: FontWeight.w400, color: HisbahColors.inkSubtle),
+                ),
+              const SizedBox(height: 4),
+              PriceNotes(line: line, onRestore: () => onPrice!(null)),
+            ] else
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(text: shekel(line.unitPrice)),
+                              TextSpan(text: ' / $unitText'),
+                            ],
+                          ),
+                          style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      _BoxButton(
-                        label: t.removeItem(product.name),
-                        onTap: onRemove,
-                        width: 48,
-                        child: const Icon(Icons.delete_outline_rounded, size: 18, color: HisbahColors.dangerSolid),
-                      ),
-                    ],
-                  )
-                else
-                  _Stepper(
-                    keyId: id,
-                    quantity: qty,
-                    isLast: line.quantity <= Quantity.one,
-                    decLabel: line.quantity <= Quantity.one ? t.removeItem(product.name) : t.decreaseItem(product.name),
-                    incLabel: t.increaseItem(product.name),
-                    onDecrement: onDecrement,
-                    onIncrement: onIncrement,
+                        if (pack)
+                          Text(
+                            t.packEquals(line.baseQuantity.format(ProductUnit.piece)),
+                            key: Key('cart.base.$id'),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HisbahColors.ink),
+                          ),
+                        if (product.barcode != null)
+                          Num(product.barcode!, size: 12, weight: FontWeight.w400, color: HisbahColors.inkSubtle),
+                      ],
+                    ),
                   ),
-              ],
-            ),
+                  _quantityControl(t, id, qty),
+                ],
+              ),
             if (onAddPack != null && !pack && product.hasPack) ...[
               const SizedBox(height: 6),
               Align(
@@ -329,6 +325,68 @@ class CartLineRow extends StatelessWidget {
       ),
     );
   }
+
+  /// The weight button (kg) or the quantity stepper (pieces, cartons).
+  Widget _quantityControl(AppLocalizations t, String id, String qty) {
+    final product = line.product;
+    if (product.isWeighed) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _BoxButton(
+            key: Key('cart.edit.${product.id}'),
+            label: t.editWeightOf(product.name),
+            onTap: onEditWeight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Num(qty, size: 17, weight: FontWeight.w700),
+                const SizedBox(width: 4),
+                Text(t.kgShort, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(width: 6),
+                const Icon(Icons.edit_outlined, size: 16, color: HisbahColors.primary),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          _BoxButton(
+            label: t.removeItem(product.name),
+            onTap: onRemove,
+            width: 48,
+            child: const Icon(Icons.delete_outline_rounded, size: 18, color: HisbahColors.dangerSolid),
+          ),
+        ],
+      );
+    }
+    return _Stepper(
+      keyId: id,
+      quantity: qty,
+      isLast: line.quantity <= Quantity.one,
+      decLabel: line.quantity <= Quantity.one ? t.removeItem(product.name) : t.decreaseItem(product.name),
+      incLabel: t.increaseItem(product.name),
+      onDecrement: onDecrement,
+      onIncrement: onIncrement,
+    );
+  }
+}
+
+/// A small label over a control: «سعر القطعة» over the price, «الكمية» over the stepper.
+class _Labelled extends StatelessWidget {
+  const _Labelled({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: HisbahColors.inkMuted)),
+      const SizedBox(height: 4),
+      child,
+    ],
+  );
 }
 
 class _Stepper extends StatelessWidget {

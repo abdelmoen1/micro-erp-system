@@ -11,10 +11,12 @@ import '../../../core/widgets/latin_digits.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/domain/app_user.dart';
+import '../../products/application/stock_value.dart';
 import '../application/cart_controller.dart';
 import '../application/checkout_controller.dart';
 import '../domain/cart.dart';
 import 'customer_picker_sheet.dart';
+import 'price_editing.dart';
 import 'receipt_screen.dart';
 import 'sale_widgets.dart';
 
@@ -113,6 +115,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   void _finish(CheckoutDone done) {
     unawaited(HapticFeedback.mediumImpact());
     ref.read(cartControllerProvider.notifier).clear();
+    // Goods left the shelf: the store-room value card fetches its figure again.
+    ref.invalidate(stockValueProvider);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => ReceiptScreen(receipt: done.receipt, afterUncertain: done.afterUncertain, overridden: done.overridden),
@@ -147,7 +151,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   children: [
-                    _OrderSummary(summary: s, open: state.itemsOpen, locked: locked, onToggle: _controller.toggleItems),
+                    _OrderSummary(
+                      summary: s,
+                      open: state.itemsOpen,
+                      locked: locked,
+                      onToggle: _controller.toggleItems,
+                      onPrice: (line, price) =>
+                          ref.read(cartControllerProvider.notifier).setPrice(line.product.id, price, pack: line.pack),
+                    ),
                     const SizedBox(height: 10),
                     _DiscountSection(
                       controller: _discount,
@@ -468,12 +479,21 @@ class _TopBar extends StatelessWidget {
 }
 
 class _OrderSummary extends StatelessWidget {
-  const _OrderSummary({required this.summary, required this.open, required this.locked, required this.onToggle});
+  const _OrderSummary({
+    required this.summary,
+    required this.open,
+    required this.locked,
+    required this.onToggle,
+    required this.onPrice,
+  });
 
   final CheckoutSummary summary;
   final bool open;
   final bool locked;
   final VoidCallback onToggle;
+
+  /// A line's price for this sale, changed on the invoice before the sale is confirmed.
+  final void Function(CartLine line, Money? price) onPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -522,27 +542,48 @@ class _OrderSummary extends StatelessWidget {
             if (open) ...[
               for (final line in cart.lines)
                 Container(
+                  key: Key('checkout.line.${line.product.id}${line.pack ? '.pack' : ''}'),
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   decoration: const BoxDecoration(border: Border(top: BorderSide(color: HisbahColors.border))),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        child: Text.rich(
-                          TextSpan(
-                            text: line.product.name,
-                            children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text.rich(
                               TextSpan(
-                                text: line.pack
-                                    ? ' · ${line.quantity.format(ProductUnit.piece)} ${t.packWord} (${t.packEquals(line.baseQuantity.format(ProductUnit.piece))})'
-                                    : ' · ${line.quantity.format(line.product.unit)} ${line.product.isWeighed ? t.kgShort : t.pieceWord}',
-                                style: const TextStyle(color: HisbahColors.inkMuted),
+                                text: line.product.name,
+                                children: [
+                                  TextSpan(
+                                    text: line.pack
+                                        ? ' · ${line.quantity.format(ProductUnit.piece)} ${t.packWord} (${t.packEquals(line.baseQuantity.format(ProductUnit.piece))})'
+                                        : ' · ${line.quantity.format(line.product.unit)} ${line.product.isWeighed ? t.kgShort : t.pieceWord}',
+                                    style: const TextStyle(color: HisbahColors.inkMuted),
+                                  ),
+                                ],
                               ),
-                            ],
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           ),
-                          style: const TextStyle(fontSize: 14),
-                        ),
+                          Num(shekel(line.total)),
+                        ],
                       ),
-                      Num(shekel(line.total)),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          PriceStepper(
+                            line: line,
+                            compact: true,
+                            enabled: !locked,
+                            onChanged: (price) => onPrice(line, price),
+                          ),
+                          PriceNotes(line: line, enabled: !locked, onRestore: () => onPrice(line, null)),
+                        ],
+                      ),
                     ],
                   ),
                 ),

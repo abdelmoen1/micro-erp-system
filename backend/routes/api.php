@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\Admin\OverviewController as AdminOverviewController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\StoreController as AdminStoreController;
+use App\Http\Controllers\Api\Admin\SupplierController as AdminSupplierController;
 use App\Http\Controllers\Api\Admin\SupportTicketController as AdminSupportTicketController;
 
 // All routes are served under /api/v1 (bootstrap/app.php, D-22).
@@ -52,6 +53,8 @@ Route::middleware(['auth:sanctum', 'active', 'platform.admin'])->prefix('admin')
     Route::get('products', [AdminProductController::class, 'index']);
     Route::get('catalog-products', [AdminProductController::class, 'catalogIndex']);
     Route::get('catalog-products/{catalogProduct}', [AdminProductController::class, 'catalog']);
+    Route::get('suppliers', [AdminSupplierController::class, 'index']);
+    Route::get('suppliers/{supplier}', [AdminSupplierController::class, 'show'])->whereNumber('supplier');
     Route::get('support-tickets', [AdminSupportTicketController::class, 'index']);
     Route::patch('support-tickets/{ticket}', [AdminSupportTicketController::class, 'update']);
     Route::post('otp-codes', AdminOtpCodeController::class)->middleware('throttle:20,1');
@@ -100,6 +103,7 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     Route::get('products/catalog-lookup', [ProductController::class, 'catalogLookup']);
     Route::get('products/low-stock', [ProductController::class, 'lowStock']);
     Route::get('products/negative-stock', [ProductController::class, 'negativeStock']);
+    Route::get('products/stock-value', [ProductController::class, 'stockValue']);
     Route::post('products/import', [ProductController::class, 'import']);
     Route::get('products', [ProductController::class, 'index']);
     Route::post('products', [ProductController::class, 'store']);
