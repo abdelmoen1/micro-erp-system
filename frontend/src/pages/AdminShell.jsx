@@ -12,6 +12,7 @@ import "../styles/platform.css";
 const NAV = [
   { label: "المتاجر", icon: "shop", to: "/admin", end: true },
   { label: "المنتجات في المتاجر", icon: "products", to: "/admin/products" },
+  { label: "الموردون", icon: "truck", to: "/admin/suppliers" },
   { label: "الكتالوج المشترك", icon: "barcode", to: "/admin/catalog" },
   { label: "الدعم الفني", icon: "mail", to: "/admin/support", count: true },
 ];

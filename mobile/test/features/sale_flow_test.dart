@@ -357,6 +357,76 @@ void main() {
       expect(keys, [firstKey, firstKey]);
       expect(find.byType(ReceiptScreen), findsOneWidget);
     });
+
+    testWidgets('the price under the camera: + and − by a shekel, then sent as this sale\'s unit_price', (tester) async {
+      api.on('GET /products/lookup', lookup(milk));
+      await pumpApp(tester);
+      await scan(tester, milkCode);
+      expect(textOf(tester, 'price.value.7'), '₪ 6.50');
+      expect(find.byKey(const Key('price.edited.7')), findsNothing);
+
+      await tap(tester, 'price.inc.7');
+      await tap(tester, 'price.inc.7');
+      await tap(tester, 'price.dec.7');
+      expect(textOf(tester, 'price.value.7'), '₪ 7.50');
+      expect(find.byKey(const Key('price.edited.7')), findsOneWidget);
+      await tap(tester, 'cart.inc.7');
+      await tap(tester, 'cart.inc.7');
+      expect(textOf(tester, 'price.value.7'), '₪ 7.50', reason: 'the set price stays when the quantity changes');
+
+      await tap(tester, 'cart.checkout');
+      expect(await checkoutTotal(tester), '₪ 22.50');
+      api.on('POST /sales', saleCreated(total: '22.50', paid: '22.50'));
+      await tap(tester, 'checkout.confirm');
+      expect(lastSaleBody(), {
+        'items': [
+          {'product_id': 7, 'quantity': '3', 'unit_price': '7.50'},
+        ],
+        'paid_amount': '22.50',
+        'payment_method': 'palpay',
+      });
+    });
+
+    testWidgets('on the invoice before confirming: a typed price, back to the usual one, then the discount still applies', (tester) async {
+      await toCheckout(tester);
+      await tester.tap(find.text('عرض الأصناف'));
+      await tester.pumpAndSettle();
+
+      await tap(tester, 'price.type.7');
+      for (var i = 0; i < 4; i++) {
+        await tap(tester, 'key.back');
+      }
+      await tap(tester, 'key.6');
+      expect(textOf(tester, 'price.sheet.value'), '6');
+      await tap(tester, 'price.sheet.confirm');
+      expect(await checkoutTotal(tester), '₪ 18.00');
+      expect(textOf(tester, 'price.value.7'), '₪ 6.00');
+
+      await tap(tester, 'price.restore.7');
+      expect(await checkoutTotal(tester), '₪ 19.50');
+      expect(find.byKey(const Key('price.restore.7')), findsNothing);
+
+      await tap(tester, 'price.type.7');
+      await tap(tester, 'price.nudge.-50');
+      await tap(tester, 'price.sheet.confirm');
+      expect(await checkoutTotal(tester), '₪ 18.00', reason: '3 × 6.00');
+
+      await tap(tester, 'checkout.addDiscount');
+      await tester.enterText(find.byKey(const Key('checkout.discount')), '1');
+      await tester.pumpAndSettle();
+      expect(await checkoutTotal(tester), '₪ 17.00');
+
+      api.on('POST /sales', saleCreated(total: '17.00', paid: '17.00', discount: '1.00'));
+      await tap(tester, 'checkout.confirm');
+      expect(lastSaleBody(), {
+        'items': [
+          {'product_id': 7, 'quantity': '3', 'unit_price': '6.00'},
+        ],
+        'discount_amount': '1.00',
+        'paid_amount': '17.00',
+        'payment_method': 'palpay',
+      });
+    });
   });
 
   group('sale scanner (camera stays on, cart over it)', () {
@@ -449,7 +519,9 @@ void main() {
       expect(find.byKey(const Key('cart.line.12.pack')), findsOneWidget);
       expect(textOf(tester, 'cart.qty.12.pack'), '2');
       expect(find.text('= 48 قطعة'), findsOneWidget);
-      expect(find.textContaining('/ كرتونة (24 قطعة)'), findsOneWidget);
+      // The carton line's price is the carton's, under «سعر الكرتونة».
+      expect(textOf(tester, 'price.value.12.pack'), '₪ 54.00');
+      expect(find.text('سعر الكرتونة'), findsOneWidget);
       // 1 × 2.50 + 2 × 54.00
       expect(textOf(tester, 'cart.total'), '₪ 110.50');
 

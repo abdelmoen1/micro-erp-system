@@ -407,3 +407,52 @@ test("support: the admin sees new complaints from every store, replies and close
   await dialog.getByRole("button", { name: "حفظ" }).click();
   await expect.poll(() => answered).toEqual({ status: "closed", reply: "حدّث التطبيق ثم أعد المحاولة." });
 });
+
+test("the suppliers page lists every store's suppliers and opens one with its wholesale prices", async ({ page }) => {
+  await signIn(page, admin);
+  const supplier = {
+    id: 3,
+    name: "شركة الأمل",
+    phone: "0599777888",
+    store: { id: 5, name: "بقالة الأمانة", area: "الرمال" },
+    products_count: 2,
+    last_purchase_at: "2026-11-05T09:00:00Z",
+    purchased: "2340.00",
+    balance: "540.00",
+  };
+  let listUrl = null;
+  await page.route(/\/api\/v1\/admin\/suppliers(\?.*)?$/, (r) => {
+    listUrl = r.request().url();
+    return r.fulfill({ json: { data: [supplier], meta } });
+  });
+  await page.route("**/api/v1/admin/suppliers/3", (r) =>
+    r.fulfill({
+      json: {
+        data: {
+          ...supplier,
+          products: [
+            { id: 11, name: "زيت ذرة 1.5 لتر", barcode: "6251234567890", unit: "piece", status: "active", buy_price: "93.00", pack_size: 6, piece_price: "15.50", previous_buy_price: "90.00", selling_price: "18.00", quantity: "48", deliveries: 2, last_at: "2026-11-05T09:00:00Z" },
+            { id: 12, name: "سكر أبيض", barcode: null, unit: "kg", status: "active", buy_price: "4.80", pack_size: null, piece_price: null, previous_buy_price: "5.10", selling_price: "6.00", quantity: "50.000", deliveries: 2, last_at: "2026-10-29T09:00:00Z" },
+          ],
+        },
+      },
+    }),
+  );
+
+  await page.goto("/admin");
+  await page.getByRole("link", { name: "الموردون" }).click();
+  await expect(page.getByRole("heading", { name: "الموردون" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "بقالة الأمانة" })).toBeVisible();
+
+  await page.getByPlaceholder("اسم المورد أو رقمه أو منتج يورّده").fill("زيت");
+  await expect.poll(() => listUrl).toContain("search=");
+
+  await page.getByRole("link", { name: "شركة الأمل" }).click();
+  await expect(page).toHaveURL(/\/admin\/suppliers\/3$/);
+  await expect(page.getByRole("heading", { name: "شركة الأمل" })).toBeVisible();
+  const oil = page.getByRole("row", { name: /زيت ذرة/ });
+  await expect(oil).toContainText("كرتونة 6");
+  await expect(oil).toContainText("15.50");
+  await expect(oil).toContainText("ارتفع");
+  await expect(page.getByRole("row", { name: /سكر أبيض/ })).toContainText("نزل");
+});

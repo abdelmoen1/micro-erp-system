@@ -104,6 +104,10 @@ class CartController extends Notifier<Cart> {
 
   void remove(int productId, {bool pack = false}) => state = state.remove(productId, pack: pack);
 
+  /// The line's price for this sale only (+/− or typed); null goes back to the product's price.
+  void setPrice(int productId, Money? price, {bool pack = false}) =>
+      state = state.setPrice(productId, price, pack: pack);
+
   /// After a completed sale, or when the cashier empties the cart.
   void clear() {
     state = Cart.empty;

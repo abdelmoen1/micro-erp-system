@@ -176,17 +176,34 @@ class OfflineSyncTest extends TestCase
         $this->assertFalse($invoice->has_debt);
     }
 
-    /** Online POST /sales still ignores any price the client sends. */
-    public function test_online_sales_still_ignore_client_prices(): void
+    /** Online POST /sales ignores a top-level `charged` list: only a line's own `unit_price` counts. */
+    public function test_online_sales_ignore_a_charged_list(): void
     {
         $product = $this->makeProduct($this->store, ['selling_price' => '12.00']);
 
         $this->actingAs($this->owner, 'sanctum')->postJson('/api/v1/sales', [
             'paid_amount' => '12.00',
             'payment_method' => 'cash',
-            'items' => [['product_id' => $product->id, 'quantity' => 1, 'unit_price' => '1.00']],
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
             'charged' => [['product_id' => $product->id, 'unit_price' => '1.00']],
         ], ['Idempotency-Key' => (string) Str::uuid()])->assertCreated()->assertJsonPath('data.total_amount', '12.00');
+    }
+
+    /** A price changed at the till offline is charged as set and is not a review flag. */
+    public function test_an_offline_sale_with_a_price_set_by_hand_is_applied_without_a_flag(): void
+    {
+        $product = $this->makeProduct($this->store, ['selling_price' => '12.00']);
+        $item = $this->saleItem(['paid_amount' => '20.00', 'payment_method' => 'cash', 'items' => [['product_id' => $product->id, 'quantity' => 2, 'unit_price' => '10.00']]]);
+        $item['charged'] = [['product_id' => $product->id, 'sale_unit' => null, 'unit_price' => '10.00']];
+
+        $result = $this->batch([$item])->json('results.0');
+
+        $this->assertSame('applied', $result['status']);
+        $invoice = Invoice::with('items')->find($result['server_id']);
+        $this->assertSame('20.00', (string) $invoice->total_amount);
+        $this->assertSame('10.00', (string) $invoice->items->first()->unit_price);
+        $this->assertSame(0, SyncConflict::count());
+        $this->assertSame('12.00', (string) $product->fresh()->selling_price);
     }
 
     /** D-03: a credit limit the phone could not see is recorded and flagged, not refused. */

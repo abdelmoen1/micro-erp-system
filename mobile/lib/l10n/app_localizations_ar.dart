@@ -3486,4 +3486,86 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get goodsLooseFact => 'قطع زيادة';
+
+  @override
+  String get priceOfPiece => 'سعر القطعة';
+
+  @override
+  String get priceOfPack => 'سعر الكرتونة';
+
+  @override
+  String get priceOfKg => 'سعر الكيلو';
+
+  @override
+  String priceDecrease(String name) {
+    return 'رخّص سعر $name';
+  }
+
+  @override
+  String priceIncrease(String name) {
+    return 'غلّي سعر $name';
+  }
+
+  @override
+  String priceType(String name) {
+    return 'اكتب سعر $name';
+  }
+
+  @override
+  String priceEditedNote(String price) {
+    return 'سعر معدّل · الأصلي $price';
+  }
+
+  @override
+  String get priceRestore => 'رجّع الأصلي';
+
+  @override
+  String priceBelowCost(String cost) {
+    return 'أقل من سعر الشراء ($cost)';
+  }
+
+  @override
+  String priceSheetTitle(String name) {
+    return 'سعر $name';
+  }
+
+  @override
+  String priceSheetOriginal(String price) {
+    return 'السعر الأصلي $price';
+  }
+
+  @override
+  String priceSheetCost(String cost) {
+    return 'الشراء $cost';
+  }
+
+  @override
+  String get priceSheetField => 'السعر لهذه البيعة';
+
+  @override
+  String priceSheetNote(String price) {
+    return 'التعديل لهذه البيعة فقط. سعر المنتج في المخزن يبقى $price، والسعر الجديد يظهر على الفاتورة.';
+  }
+
+  @override
+  String priceSheetConfirm(String price) {
+    return 'اعتمد $price';
+  }
+
+  @override
+  String get priceErrorZero => 'السعر يجب أن يكون أكبر من صفر.';
+
+  @override
+  String get stockValueTitle => 'قيمة البضاعة في المخزن';
+
+  @override
+  String get stockValueAtCost => 'بسعر الشراء';
+
+  @override
+  String get stockValueAtSelling => 'لو بيعت كلها بسعر البيع';
+
+  @override
+  String stockValueMissingCost(String count) {
+    return 'أصناف بلا سعر شراء: $count — غير محسوبة';
+  }
 }

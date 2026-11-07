@@ -14,6 +14,7 @@ use App\Models\StockMovement;
 use App\Services\ProductImportService;
 use App\Services\ProductService;
 use App\Support\Barcode;
+use App\Support\Money;
 use App\Support\Quantity;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -146,6 +147,30 @@ class ProductController extends Controller
             'message' => 'تم إيقاف المنتج',
             'product' => new ProductResource($product),
         ]);
+    }
+
+    /**
+     * «قيمة البضاعة في المخزن» (2026-11-07), Owner / Manager: what the goods on the shelf cost, and
+     * what they bring at today's selling prices. Only stock above zero counts; a product without a
+     * cost price is left out of the cost figure and counted in `missing_cost_count`.
+     */
+    public function stockValue(Request $request)
+    {
+        $this->authorize('adjustStock', Product::class);
+
+        $products = Product::query()
+            ->forStore($request->user()->store_id)
+            ->where('current_stock', '>', 0)
+            ->get(['id', 'current_stock', 'cost_price', 'selling_price']);
+
+        $costed = $products->whereNotNull('cost_price');
+
+        return response()->json(['data' => [
+            'cost_value' => Money::sum($costed->map(fn(Product $p) => Money::times($p->cost_price, $p->current_stock))),
+            'selling_value' => Money::sum($products->map(fn(Product $p) => Money::times($p->selling_price, $p->current_stock))),
+            'products_count' => $products->count(),
+            'missing_cost_count' => $products->count() - $costed->count(),
+        ]]);
     }
 
     /** US-0403 (FR-22, BR-11): active products at or below their threshold, lowest stock first. */

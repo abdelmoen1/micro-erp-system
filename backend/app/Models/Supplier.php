@@ -6,6 +6,7 @@ use App\Support\Money;
 use App\Traits\BelongsToStore;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** Who the store buys goods from. What the store owes = Σ invoice totals − Σ payments − Σ returns. */
@@ -14,6 +15,11 @@ class Supplier extends Model
     use BelongsToStore;
 
     protected $fillable = ['store_id', 'name', 'phone'];
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
+    }
 
     public function invoices(): HasMany
     {

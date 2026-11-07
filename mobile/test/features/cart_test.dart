@@ -84,6 +84,56 @@ void main() {
     });
   });
 
+  group('A price set for this sale (2026-11-07)', () {
+    final oil = Product.fromJson({
+      ...productJson(id: 20, name: 'Oil', barcode: '555', price: '18.00', stock: '50'),
+      'cost_price': '15.50',
+      'pack_size': 6,
+      'pack_price': '100.00',
+    });
+
+    test('it is charged, kept when the quantity changes or the product is scanned again, and sent', () {
+      final cart = Cart.empty.addPiece(oil).setPrice(20, Money.parse('17.00')).addPiece(oil);
+      final line = cart.lineFor(20)!;
+
+      expect(line.unitPrice.toApi(), '17.00');
+      expect(line.listPrice.toApi(), '18.00');
+      expect(line.priceEdited, isTrue);
+      expect(cart.total.toApi(), '34.00');
+      expect(cart.toSaleItems(), [
+        {'product_id': 20, 'quantity': '2', 'unit_price': '17.00'},
+      ]);
+      expect(oil.price.toApi(), '18.00', reason: 'the product keeps its own price');
+    });
+
+    test('null or the product\'s own price clears it, and nothing extra is sent', () {
+      final cart = Cart.empty.addPiece(oil).setPrice(20, Money.parse('19.00'));
+
+      expect(cart.setPrice(20, null).lineFor(20)!.priceEdited, isFalse);
+      expect(cart.setPrice(20, Money.parse('18.00')).toSaleItems(), [
+        {'product_id': 20, 'quantity': '1'},
+      ]);
+      expect(cart.setPrice(99, Money.parse('1.00')), same(cart), reason: 'no such line');
+      expect(() => cart.setPrice(20, Money.zero), throwsArgumentError);
+    });
+
+    test('a carton line has its own price, compared with the cost of a carton', () {
+      final cart = Cart.empty.addPiece(oil).addPack(oil).setPrice(20, Money.parse('90.00'), pack: true);
+
+      expect(cart.lineFor(20)!.priceEdited, isFalse, reason: 'the piece line is untouched');
+      final carton = cart.lineFor(20, pack: true)!;
+      expect(carton.unitCost!.toApi(), '93.00');
+      expect(carton.belowCost, isTrue);
+      expect(cart.toSaleItems().last, {'product_id': 20, 'quantity': '1', 'sale_unit': 'pack', 'unit_price': '90.00'});
+    });
+
+    test('below the cost price is a warning only; no cost price, no warning', () {
+      expect(Cart.empty.addPiece(oil).setPrice(20, Money.parse('15.00')).lineFor(20)!.belowCost, isTrue);
+      expect(Cart.empty.addPiece(oil).setPrice(20, Money.parse('15.50')).lineFor(20)!.belowCost, isFalse);
+      expect(Cart.empty.addPiece(cola).setPrice(7, Money.parse('0.50')).lineFor(7)!.belowCost, isFalse);
+    });
+  });
+
   group('Cartons', () {
     // 2.50 a bottle, 54.00 a carton of 24; 30 bottles on the shelf.
     final water = Product.fromJson({

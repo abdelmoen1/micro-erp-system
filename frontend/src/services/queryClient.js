@@ -93,5 +93,7 @@ export const queryKeys = {
     catalog: (id) => ["admin", "catalog", id],
     catalogList: (filters) => ["admin", "catalog-list", filters],
     tickets: (filters) => ["admin", "tickets", filters],
+    suppliers: (filters) => ["admin", "suppliers", filters],
+    supplier: (id) => ["admin", "supplier", id],
   },
 };

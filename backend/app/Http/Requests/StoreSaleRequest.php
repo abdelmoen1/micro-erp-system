@@ -11,8 +11,9 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 /**
- * POST /sales (US-0501, US-0502; 05 §3.1). The client sends products and quantities, never prices:
- * any price field is ignored. Rules that need the products or the total (unit, walk-in, due date,
+ * POST /sales (US-0501, US-0502; 05 §3.1). The client sends products and quantities. A line's price
+ * comes from the product unless the cashier changed it for this sale (`unit_price`, 2026-11-07): the
+ * product's own price stays as it is, and the change is kept in the sale's audit row. Rules that need the products or the total (unit, walk-in, due date,
  * credit limit) are checked by SaleService under the row locks.
  */
 class StoreSaleRequest extends FormRequest
@@ -37,6 +38,8 @@ class StoreSaleRequest extends FormRequest
             'items.*.quantity' => ['required', ...Quantity::inputRules(null)],
             // Absent: the product's own unit (piece / kg). `pack`: whole cartons at the carton price.
             'items.*.sale_unit' => ['nullable', Rule::in([Pack::SALE_UNIT])],
+            // The price charged for this sale only, per the unit sold (piece / kg / carton).
+            'items.*.unit_price' => ['nullable', 'numeric', 'decimal:0,2', 'gt:0', 'max:' . Money::MAX],
             // Taken off the lines' sum at the till; the customer owes and pays the rest.
             'discount_amount' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:' . Money::MAX],
             'paid_amount' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:' . Money::MAX],
@@ -71,6 +74,10 @@ class StoreSaleRequest extends FormRequest
             'payment_method.in' => 'طريقة الدفع غير صالحة.',
             'due_date.date_format' => 'صيغة تاريخ الاستحقاق يجب أن تكون YYYY-MM-DD.',
             'items.*.sale_unit.in' => 'وحدة البيع غير صالحة.',
+            'items.*.unit_price.numeric' => 'السعر يجب أن يكون رقمًا.',
+            'items.*.unit_price.decimal' => 'السعر يقبل خانتين عشريتين كحد أقصى.',
+            'items.*.unit_price.gt' => 'السعر يجب أن يكون أكبر من صفر.',
+            'items.*.unit_price.max' => 'السعر أكبر من الحد المسموح.',
         ];
     }
 
