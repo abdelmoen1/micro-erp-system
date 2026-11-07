@@ -557,6 +557,9 @@ class _CartPanel extends ConsumerWidget {
                                     onEditWeight: () => onEditWeight(line),
                                     onRemove: () => onRemove(line),
                                     onAddPack: () => ref.read(cartControllerProvider.notifier).addPack(line.product),
+                                    onPrice: (price) => ref
+                                        .read(cartControllerProvider.notifier)
+                                        .setPrice(line.product.id, price, pack: line.pack),
                                   ),
                               ],
                             ),

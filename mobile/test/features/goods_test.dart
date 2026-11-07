@@ -263,4 +263,48 @@ void main() {
     final body = api.requestsTo('POST /suppliers/7/payments').single.data as Map<String, dynamic>;
     expect(body, {'amount': '100.00', 'method': 'jawwal_pay'});
   });
+
+  FakeResponse stockValue(String cost, String selling, {int missing = 0}) => FakeResponse(200, {
+    'data': {'cost_value': cost, 'selling_value': selling, 'products_count': 12, 'missing_cost_count': missing},
+  });
+
+  testWidgets('the store room shows what the goods are worth, and the figure drops after a refresh', (tester) async {
+    api.on('GET /products/stock-value', stockValue('12480.50', '15930.00', missing: 3));
+    await pumpApp(tester);
+    await tap(tester, find.byKey(const Key('nav.products')));
+
+    expect(find.text('قيمة البضاعة في المخزن'), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const Key('products.stockValue.cost')), matching: find.text('₪ 12,480.50')), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const Key('products.stockValue.selling')), matching: find.text('₪ 15,930.00')), findsOneWidget);
+    expect(find.byKey(const Key('products.stockValue.missing')), findsOneWidget);
+
+    api.on('GET /products/stock-value', stockValue('12400.00', '15830.00'));
+    await tester.fling(find.byType(ListView).first, const Offset(0, 400), 1000);
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: find.byKey(const Key('products.stockValue.cost')), matching: find.text('₪ 12,400.00')), findsOneWidget);
+    expect(find.byKey(const Key('products.stockValue.missing')), findsNothing);
+  });
+
+  testWidgets('staff never see the stock value', (tester) async {
+    api.on('GET /products/stock-value', stockValue('100.00', '150.00'));
+    api.on('GET /me', meOk(role: 'employee'));
+    tester.view.physicalSize = const Size(1080, 2280);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: (_, _) => null,
+        overrides: [
+          keyValueStoreProvider.overrideWithValue(MemoryKeyValueStore({AuthRepository.tokenKey: '1|tok'})),
+          httpAdapterProvider.overrideWithValue(api),
+        ],
+        child: const SmartShopApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tap(tester, find.byKey(const Key('nav.products')));
+
+    expect(find.byKey(const Key('products.stockValue')), findsNothing);
+    expect(api.requestsTo('GET /products/stock-value'), isEmpty);
+  });
 }

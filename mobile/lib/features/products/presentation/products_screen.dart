@@ -15,8 +15,10 @@ import '../../goods/presentation/goods_flow.dart';
 import '../../guide/coach_tour.dart';
 import '../../sale/presentation/sale_widgets.dart';
 import '../../shell/tab_screens.dart';
+import '../application/stock_value.dart';
 import '../domain/product.dart';
 import 'product_detail_screen.dart';
+import 'stock_value_card.dart';
 
 /// SCR-M-11 · products tab: search, stock badge, low / negative filter (US-0406). Owners and
 /// managers add products here, by scanning the product's code or by hand (S3 · QR add).
@@ -76,7 +78,13 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
 
   Future<void> _add() async {
     final added = await openGoodsFlow(context);
-    if (added && mounted) unawaited(_load());
+    if (added && mounted) unawaited(_refresh());
+  }
+
+  /// Pull-to-refresh and after new goods: the list and the stock value card.
+  Future<void> _refresh() {
+    ref.invalidate(stockValueProvider);
+    return _load();
   }
 
   @override
@@ -90,12 +98,14 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          onRefresh: _load,
+          onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(16, 10, 16, 20 + MediaQuery.paddingOf(context).bottom),
             children: [
               TabHeader(title: t.tabProducts, storeName: user?.storeName ?? ''),
+              // Costs and what the stock is worth stay off staff phones (Owner / Manager).
+              if (canAdd) const StockValueCard(),
               const SizedBox(height: 12),
               Row(
                 children: [

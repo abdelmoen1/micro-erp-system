@@ -34,6 +34,8 @@ const AdminShell = lazy(() => import("./pages/AdminShell"));
 const AdminStores = lazy(() => import("./pages/AdminStores"));
 const AdminStore = lazy(() => import("./pages/AdminStore"));
 const AdminProducts = lazy(() => import("./pages/AdminProducts"));
+const AdminSuppliers = lazy(() => import("./pages/AdminSuppliers"));
+const AdminSupplier = lazy(() => import("./pages/AdminSuppliers").then((m) => ({ default: m.AdminSupplier })));
 const AdminCatalogItem = lazy(() => import("./pages/AdminProducts").then((m) => ({ default: m.AdminCatalogItem })));
 const AdminSupport = lazy(() => import("./pages/AdminSupport"));
 const AdminCatalog = lazy(() => import("./pages/AdminProducts").then((m) => ({ default: m.AdminCatalog })));
@@ -80,6 +82,8 @@ export default function App() {
             <Route path="/admin" element={<AdminStores />} />
             <Route path="/admin/stores/:id" element={<AdminStore />} />
             <Route path="/admin/products" element={<AdminProducts />} />
+            <Route path="/admin/suppliers" element={<AdminSuppliers />} />
+            <Route path="/admin/suppliers/:id" element={<AdminSupplier />} />
             <Route path="/admin/catalog" element={<AdminCatalog />} />
             <Route path="/admin/catalog/:id" element={<AdminCatalogItem />} />
             <Route path="/admin/support" element={<AdminSupport />} />

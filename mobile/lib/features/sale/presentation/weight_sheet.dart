@@ -230,7 +230,7 @@ class _WeightSheetState extends State<WeightSheet> {
               childAspectRatio: 2.4,
               children: [
                 for (final key in keys)
-                  _Key(
+                  SheetKey(
                     keyLabel: key,
                     semantic: key == 'back' ? t.keyBackspace : (key == '.' ? t.keyDecimal : key),
                     disabled: key == '.' && (_unit == _Unit.g || _text.contains('.')),
@@ -288,8 +288,9 @@ class _Segment extends StatelessWidget {
   );
 }
 
-class _Key extends StatelessWidget {
-  const _Key({required this.keyLabel, required this.semantic, required this.disabled, required this.onTap});
+/// One key of the in-app keypad (weight and price sheets).
+class SheetKey extends StatelessWidget {
+  const SheetKey({super.key, required this.keyLabel, required this.semantic, required this.disabled, required this.onTap});
 
   final String keyLabel;
   final String semantic;

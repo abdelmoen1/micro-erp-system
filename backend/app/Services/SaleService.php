@@ -49,7 +49,8 @@ class SaleService
     /**
      * @param array{customer_id?: ?int, items: list<array{product_id: int, quantity: int|float|string}>,
      *     paid_amount: int|float|string, payment_method?: ?string, due_date?: ?string, notes?: ?string,
-     *     confirm_over_limit?: bool} $data validated input; client prices are never read
+     *     confirm_over_limit?: bool} $data validated input; a line's `unit_price` is the price the
+     *     cashier set for this sale, otherwise the product's price is used
      * @return array{invoice: Invoice, warnings: list<array<string, mixed>>}
      */
     public function create(User $actor, array $data, ?OfflineSale $offline = null): array
@@ -61,7 +62,8 @@ class SaleService
             $customer = $this->lockCustomer($actor, $data['customer_id'] ?? null, $offline !== null, $warnings);
             $products = $this->lockProducts($actor, $data['items'], $offline !== null, $warnings);
 
-            $lines = $this->priceLines($data['items'], $products, $offline, $warnings);
+            $priceEdits = [];
+            $lines = $this->priceLines($data['items'], $products, $offline, $warnings, $priceEdits);
             $subtotal = Money::sum(array_column($lines, 'total'));
             $discount = Money::of($data['discount_amount'] ?? 0);
 
@@ -165,7 +167,7 @@ class SaleService
                     array_filter($warnings, fn(array $w) => $w['code'] === self::FLAG_NEGATIVE_STOCK),
                     'product_id',
                 ),
-            ] + ($offline ? [
+            ] + ($priceEdits !== [] ? ['price_edits' => $priceEdits] : []) + ($offline ? [
                 'offline' => true,
                 'device_id' => $offline->deviceId,
                 'occurred_at' => $offline->occurredAt->toIso8601String(),
@@ -309,10 +311,13 @@ class SaleService
     }
 
     /**
-     * Prices come from products.selling_price (US-0501 AC1); line total is rounded half-up. An
-     * offline sale keeps the price the cashier charged (doc 16 decision A) and flags a difference.
+     * Prices come from products.selling_price (US-0501 AC1) unless the cashier set a line's price for
+     * this sale (`unit_price`); line total is rounded half-up. An offline sale without a set price
+     * keeps the price the cashier charged (doc 16 decision A) and flags a difference.
+     *
+     * @param list<array<string, mixed>> $priceEdits filled with each line whose price was set by hand
      */
-    private function priceLines(array $items, Collection $products, ?OfflineSale $offline, array &$warnings): array
+    private function priceLines(array $items, Collection $products, ?OfflineSale $offline, array &$warnings, array &$priceEdits): array
     {
         $lines = [];
         $errors = [];
@@ -338,9 +343,21 @@ class SaleService
             // The price of the unit actually sold: per carton for a carton line, never per piece.
             $unitPrice = Money::of($byPack ? $product->pack_price : $product->selling_price);
             $packSize = $byPack ? (int) $product->pack_size : null;
-            $charged = $offline?->chargedPrice($product->id, $item['sale_unit'] ?? null);
+            $setPrice = isset($item['unit_price']) ? Money::of((string) $item['unit_price']) : null;
+            $charged = $setPrice === null ? $offline?->chargedPrice($product->id, $item['sale_unit'] ?? null) : null;
 
-            if ($charged !== null && Money::compare($charged, $unitPrice) !== 0) {
+            if ($setPrice !== null) {
+                // Changed at the till on purpose: charged as set, never a review flag.
+                if (Money::compare($setPrice, $unitPrice) !== 0) {
+                    $priceEdits[] = [
+                        'product_id' => $product->id,
+                        'sale_unit' => $byPack ? Pack::SALE_UNIT : null,
+                        'list_price' => $unitPrice,
+                        'charged' => $setPrice,
+                    ];
+                }
+                $unitPrice = $setPrice;
+            } elseif ($charged !== null && Money::compare($charged, $unitPrice) !== 0) {
                 $warnings[] = [
                     'code' => self::FLAG_PRICE_CHANGED,
                     'product_id' => $product->id,

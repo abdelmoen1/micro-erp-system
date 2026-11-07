@@ -6217,6 +6217,126 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'قطع زيادة'**
   String get goodsLooseFact;
+
+  /// No description provided for @priceOfPiece.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر القطعة'**
+  String get priceOfPiece;
+
+  /// No description provided for @priceOfPack.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر الكرتونة'**
+  String get priceOfPack;
+
+  /// No description provided for @priceOfKg.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر الكيلو'**
+  String get priceOfKg;
+
+  /// No description provided for @priceDecrease.
+  ///
+  /// In ar, this message translates to:
+  /// **'رخّص سعر {name}'**
+  String priceDecrease(String name);
+
+  /// No description provided for @priceIncrease.
+  ///
+  /// In ar, this message translates to:
+  /// **'غلّي سعر {name}'**
+  String priceIncrease(String name);
+
+  /// No description provided for @priceType.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب سعر {name}'**
+  String priceType(String name);
+
+  /// No description provided for @priceEditedNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر معدّل · الأصلي {price}'**
+  String priceEditedNote(String price);
+
+  /// No description provided for @priceRestore.
+  ///
+  /// In ar, this message translates to:
+  /// **'رجّع الأصلي'**
+  String get priceRestore;
+
+  /// No description provided for @priceBelowCost.
+  ///
+  /// In ar, this message translates to:
+  /// **'أقل من سعر الشراء ({cost})'**
+  String priceBelowCost(String cost);
+
+  /// No description provided for @priceSheetTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر {name}'**
+  String priceSheetTitle(String name);
+
+  /// No description provided for @priceSheetOriginal.
+  ///
+  /// In ar, this message translates to:
+  /// **'السعر الأصلي {price}'**
+  String priceSheetOriginal(String price);
+
+  /// No description provided for @priceSheetCost.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشراء {cost}'**
+  String priceSheetCost(String cost);
+
+  /// No description provided for @priceSheetField.
+  ///
+  /// In ar, this message translates to:
+  /// **'السعر لهذه البيعة'**
+  String get priceSheetField;
+
+  /// No description provided for @priceSheetNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'التعديل لهذه البيعة فقط. سعر المنتج في المخزن يبقى {price}، والسعر الجديد يظهر على الفاتورة.'**
+  String priceSheetNote(String price);
+
+  /// No description provided for @priceSheetConfirm.
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتمد {price}'**
+  String priceSheetConfirm(String price);
+
+  /// No description provided for @priceErrorZero.
+  ///
+  /// In ar, this message translates to:
+  /// **'السعر يجب أن يكون أكبر من صفر.'**
+  String get priceErrorZero;
+
+  /// No description provided for @stockValueTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيمة البضاعة في المخزن'**
+  String get stockValueTitle;
+
+  /// No description provided for @stockValueAtCost.
+  ///
+  /// In ar, this message translates to:
+  /// **'بسعر الشراء'**
+  String get stockValueAtCost;
+
+  /// No description provided for @stockValueAtSelling.
+  ///
+  /// In ar, this message translates to:
+  /// **'لو بيعت كلها بسعر البيع'**
+  String get stockValueAtSelling;
+
+  /// No description provided for @stockValueMissingCost.
+  ///
+  /// In ar, this message translates to:
+  /// **'أصناف بلا سعر شراء: {count} — غير محسوبة'**
+  String stockValueMissingCost(String count);
 }
 
 class _AppLocalizationsDelegate
