@@ -84,6 +84,34 @@ jobs:
           working-directory: mobile
           args: --artifact apk --public-key-path shorebird-patch-public.pem -- --no-tree-shake-icons --dart-define-from-file=env/production.json
 
+      # The patch workflow compares every push with this commit (mobile/tool/ci/check_patchable.sh).
+      # A draft GitHub release does not create its tag, so it is pushed here, right after Shorebird
+      # registered the release.
+      - name: Tag the release commit
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
+        run: |
+          tag="android-${RELEASE_VERSION//+/_}"
+          git tag "$tag" "$GITHUB_SHA"
+          git push origin "refs/tags/$tag"
+
+      # The Play upload file. Uploading it to Google Play is a separate, manual step.
+      - name: Keep the AAB (Google Play upload)
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/aab-out"
+          aab="$RUNNER_TEMP/aab-out/hisbah-${RELEASE_VERSION//+/_}.aab"
+          cp build/app/outputs/bundle/release/app-release.aab "$aab"
+          (cd "$RUNNER_TEMP/aab-out" && sha256sum "$(basename "$aab")" > "$(basename "$aab").sha256")
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hisbah-android-aab-${{ steps.release.outputs.release-version }}
+          path: ${{ runner.temp }}/aab-out/
+          retention-days: 30
+          if-no-files-found: error
+
       - name: Inspect APK (application ID, version, signing certificate)
         id: apk
         run: bash tool/ci/inspect_apk.sh build/app/outputs/flutter-apk/app-release.apk
@@ -138,6 +166,8 @@ jobs:
             echo "| Signing cert SHA-256 | \`$CERT_SHA256\` |"
             echo "| API base URL | \`$API_BASE_URL\` |"
             echo "| Patch signing | on (shorebird-patch-public.pem) |"
+            echo "| Release commit tag | \`android-${RELEASE_VERSION//+/_}\` (patch baseline) |"
+            echo "| AAB (Google Play) | workflow artifact \`hisbah-android-aab-$RELEASE_VERSION\`, kept 30 days; not uploaded to Play |"
             if [ "$APK_DISTRIBUTION" = draft-release ]; then
               echo "| APK download | private draft release \`android-${RELEASE_VERSION//+/_}\` (Releases page, signed in) |"
             else

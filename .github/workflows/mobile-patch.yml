@@ -4,7 +4,9 @@
 # main (workflow_dispatch) always works: that is how the device acceptance test is published.
 # Patches target exactly the release in MOBILE_OTA_RELEASE_VERSION (it must equal `version:` in
 # mobile/pubspec.yaml) and are signed.
-# Changes that need a full APK stop this workflow: run "Mobile release (Shorebird, Android)".
+# The gate job compares the push with the commit of that release (tag android-<version>). If
+# native/asset files changed since then, nothing is built or published: a push ends with a warning
+# and a "Full release required" summary, a manual run fails. Run "Mobile release (Shorebird, Android)".
 # Runbook: docs/mobile/ota-updates.md
 name: Mobile patch (Shorebird, Android)
 
@@ -34,9 +36,32 @@ env:
   FLUTTER_VERSION: '3.47.7'
 
 jobs:
+  gate:
+    name: Patchable since the installed release
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.MOBILE_OTA_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    outputs:
+      patchable: ${{ steps.diff.outputs.patchable }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # history and tags: the release commit is tag android-<version>
+
+      - name: Changes since the release on the phones
+        id: diff
+        env:
+          OTA_RELEASE_VERSION: ${{ vars.MOBILE_OTA_RELEASE_VERSION }}
+          FAIL_WHEN_BLOCKED: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+        run: bash tool/ci/check_patchable.sh "$OTA_RELEASE_VERSION" "$GITHUB_SHA"
+
   checks:
     name: Analyze and test
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.MOBILE_OTA_ENABLED == 'true')
+    needs: gate
+    if: needs.gate.outputs.patchable == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -54,7 +79,8 @@ jobs:
 
   patch:
     name: Shorebird patch
-    needs: checks
+    needs: [gate, checks]
+    if: needs.gate.outputs.patchable == 'true'
     runs-on: ubuntu-latest
     environment: mobile-production
     defaults:
@@ -72,13 +98,6 @@ jobs:
       PATCH_PRIVATE_KEY: ${{ secrets.SHOREBIRD_PATCH_PRIVATE_KEY }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Changes that need a full release
-        env:
-          BEFORE: ${{ github.event.before }}
-        run: bash tool/ci/check_patchable.sh "$BEFORE" "$GITHUB_SHA"
 
       - name: Preflight
         run: bash tool/ci/preflight.sh patch
