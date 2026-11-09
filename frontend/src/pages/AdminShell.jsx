@@ -15,6 +15,8 @@ const NAV = [
   { label: "الموردون", icon: "truck", to: "/admin/suppliers" },
   { label: "الكتالوج المشترك", icon: "barcode", to: "/admin/catalog" },
   { label: "الدعم الفني", icon: "mail", to: "/admin/support", count: true },
+  { label: "الاشتراكات والدفع", icon: "payments", to: "/admin/subscriptions" },
+  { label: "طلبات حذف الحسابات", icon: "trash", to: "/admin/deletions" },
 ];
 
 /**

@@ -69,6 +69,9 @@ class StoreIsolationSweepTest extends TestCase
         ]);
 
         return [
+            // Public, not store data: an unknown deletion reference and a provider that is not enabled are 404 too.
+            'reference' => (string) Str::uuid(),
+            'provider' => 'palpay',
             'customer' => $customer->id,
             'invoice' => $invoice->id,
             'debt' => $invoice->debt->id,

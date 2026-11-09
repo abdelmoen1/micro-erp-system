@@ -42,10 +42,28 @@ class AppServiceProvider extends ServiceProvider
     {
         ProductionSafety::enforce($this->app);
 
-        // Account creation endpoints: 5 per minute per IP (US-0104).
-        RateLimiter::for('register', fn(Request $request) => Limit::perMinute(5)->by($request->ip()));
+        // Signed-in API calls: a ceiling per account, far above what the till or the web uses, that
+        // stops a leaked token or a runaway client from hammering the API. Keyed by user, not IP:
+        // behind the hosting proxies many shops can share one address.
+        RateLimiter::for('api', fn(Request $request) => $request->user()
+            ? Limit::perMinute(300)->by('user:' . $request->user()->getAuthIdentifier())
+            : Limit::perMinute(60)->by('ip:' . $request->ip()));
+        // Behind Render (and the Vercel /api rewrite) many shops may reach Laravel from ONE address,
+        // so an IP-only limit would let one abusive client block sign-up for everyone. Each limiter
+        // is keyed by IP + the mobile number in the request (tight), with a looser IP-wide ceiling.
+        $number = fn(Request $request) => (string) \App\Support\PhoneNumber::normalize(
+            (string) ($request->input('owner_phone') ?? $request->input('phone') ?? ''),
+        );
+        // Account creation, invitations, password reset, public deletion (US-0104).
+        RateLimiter::for('register', fn(Request $request) => [
+            Limit::perMinute(5)->by('reg:' . $request->ip() . '|' . $number($request)),
+            Limit::perMinute(30)->by('reg-ip:' . $request->ip()),
+        ]);
         // SMS codes cost real messages: a burst limit on top of OtpService's per-number limits.
-        RateLimiter::for('otp', fn(Request $request) => Limit::perMinute(3)->by($request->ip()));
+        RateLimiter::for('otp', fn(Request $request) => [
+            Limit::perMinute(3)->by('otp:' . $request->ip() . '|' . $number($request)),
+            Limit::perMinute(20)->by('otp-ip:' . $request->ip()),
+        ]);
 
         // /up (hosting health check) fails when the database is unreachable, so a deploy
         // without a working database is never reported healthy.

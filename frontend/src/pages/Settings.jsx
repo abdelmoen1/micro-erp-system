@@ -10,7 +10,9 @@ import { TICKET_STATUS, TICKET_TYPES, ticketTypeLabel } from "../lib/support";
 import { changePhone, sendOtp } from "../services/api";
 import { ApiError, session } from "../services/apiClient";
 import { useChangePassword, useMyStore, useSaveStore, useSendTicket, useSupportTickets } from "../services/backoffice";
-import { useSubscription } from "../services/dashboard";
+import { logout, useSubscription } from "../services/dashboard";
+import PlanPicker from "../components/PlanPicker";
+import { useCancelDeletion, useMyDeletion, useRequestDeletion } from "../services/subscriptions";
 import { useAuthOptions } from "../services/useAuth";
 
 /** Server field messages as { field: first message }; empty when the error is not about fields. */
@@ -34,6 +36,7 @@ export default function Settings() {
           <SubscriptionSection user={me} />
           <PhoneSection user={me} />
           <PasswordSection />
+          <DeleteAccountSection />
           {owner ? (
             <Link className="card panel settings-link" to="/staff">
               <Icon name="staff" size={22} strokeWidth={1.8} />
@@ -250,7 +253,9 @@ function StoreForm({ store }) {
 
 function SubscriptionSection({ user }) {
   const sub = useSubscription();
+  const [renewing, setRenewing] = useState(false);
   const s = sub.data;
+  const owner = roleOf(user) === "owner";
   const status = !s
     ? null
     : s.state === "trial" && s.trial_ends_at
@@ -258,8 +263,6 @@ function SubscriptionSection({ user }) {
       : s.state === "active" && s.subscription_expires_at
         ? `مفعّل حتى ${dateOnly(s.subscription_expires_at)}`
         : "مفعّل";
-  const number = s?.support_whatsapp;
-  const text = `مرحباً، بخصوص اشتراك متجر «${user.store?.name ?? ""}» على حسبة.`;
 
   return (
     <section className="card panel">
@@ -271,14 +274,116 @@ function SubscriptionSection({ user }) {
       ) : sub.isError ? (
         <ErrorBanner error={sub.error} />
       ) : (
-        <p style={{ margin: 0, fontWeight: 600 }}>{status}</p>
+        <>
+          <p style={{ margin: 0, fontWeight: 600 }}>{status}</p>
+          {s?.lifecycle === "expiring" ? (
+            <p className="field-hint">ينتهي خلال {s.days_left} يوم. جدّد الآن ليُضاف التجديد بعد تاريخ الانتهاء.</p>
+          ) : null}
+          {s?.entitlements?.plan ? <p className="field-hint">الباقة: {s.entitlements.plan.name}</p> : null}
+        </>
       )}
-      {number ? (
-        <div>
-          <a className="btn btn-s btn-sm" href={`https://wa.me/${number}?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">
-            تواصل مع إدارة حسبة عبر واتساب
-          </a>
-        </div>
+      {owner ? (
+        renewing ? (
+          <PlanPicker />
+        ) : (
+          <div>
+            <button type="button" className="btn btn-s btn-sm" onClick={() => setRenewing(true)}>
+              تجديد أو شراء باقة
+            </button>
+          </div>
+        )
+      ) : (
+        <p className="field-hint">يجدّد صاحب المتجر الاشتراك لكل حسابات المتجر.</p>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Deleting this account (Google Play: deletion must be reachable in the product). Staff: the account
+ * is anonymised at once and the shop's records stay. Owner: the store is closed and deleted after a
+ * grace period, which the owner can cancel.
+ */
+function DeleteAccountSection() {
+  const info = useMyDeletion();
+  const request = useRequestDeletion();
+  const cancel = useCancelDeletion();
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [storeName, setStoreName] = useState("");
+  const d = info.data;
+  const store = d?.type === "store";
+  const scheduled = d?.request?.status === "scheduled";
+
+  const submit = (event) => {
+    event.preventDefault();
+    request.mutate(
+      { password, confirm_store_name: store ? storeName : undefined },
+      {
+        onSuccess: async (result) => {
+          if (result.status === "completed") {
+            await logout();
+            window.location.assign("/delete-account?done=" + encodeURIComponent(result.reference));
+          }
+        },
+      },
+    );
+  };
+
+  return (
+    <section className="card panel" aria-labelledby="delete-account">
+      <div className="panel-head">
+        <h2 id="delete-account">حذف الحساب</h2>
+      </div>
+      {info.isPending ? <div className="sk" style={{ height: 22, borderRadius: 6 }} /> : null}
+      {info.isError ? <ErrorBanner error={info.error} /> : null}
+      {scheduled ? (
+        <>
+          <p style={{ margin: 0 }}>
+            طلبت حذف المتجر. سيُحذف المتجر وكل بياناته في <b>{dateOnly(d.request.scheduled_for)}</b>.
+          </p>
+          {cancel.isError ? <ErrorBanner error={cancel.error} /> : null}
+          <div>
+            <button type="button" className="btn btn-s btn-sm" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
+              إلغاء الحذف والإبقاء على المتجر
+            </button>
+          </div>
+        </>
+      ) : d ? (
+        <>
+          <p className="field-hint" style={{ margin: 0 }}>
+            {store
+              ? `حسابك هو حساب صاحب المتجر: حذفه يغلق متجر «${d.store_name}». يُسجَّل خروج كل الموظفين فوراً، ثم يُحذف المتجر وكل بياناته (الأصناف، الزبائن، المبيعات، الديون، الموردون) بعد ${d.grace_days} يوماً، ويمكنك الإلغاء قبل ذلك.`
+              : "يُحذف اسمك ورقم جوالك وكلمة مرورك ويُسجَّل خروجك من كل الأجهزة. تبقى عمليات المتجر التي سجّلتها (مبيعات، دفعات) لأنها من سجلات المتجر، باسم «حساب محذوف»."}
+          </p>
+          {open ? (
+            <form className="form-stack" onSubmit={submit}>
+              <Field id="del-pass" label="كلمة المرور الحالية" error={request.error?.fieldError?.("password")}>
+                <input id="del-pass" type="password" className="fld" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </Field>
+              {store ? (
+                <Field id="del-store" label={`اكتب اسم المتجر «${d.store_name}» للتأكيد`} error={request.error?.fieldError?.("confirm_store_name")}>
+                  <input id="del-store" className="fld" value={storeName} onChange={(e) => setStoreName(e.target.value)} />
+                </Field>
+              ) : null}
+              {request.isError && !request.error?.fieldError?.("password") && !request.error?.fieldError?.("confirm_store_name") ? <ErrorBanner error={request.error} /> : null}
+              <div className="head-actions">
+                <button type="submit" className="btn btn-dd btn-sm" disabled={request.isPending || !password || (store && !storeName)}>
+                  {store ? "إغلاق المتجر وحذفه" : "حذف حسابي نهائياً"}
+                </button>
+                <button type="button" className="btn btn-g btn-sm" onClick={() => setOpen(false)}>
+                  تراجع
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div>
+              <button type="button" className="btn btn-dl btn-sm" onClick={() => setOpen(true)}>
+                {store ? "حذف الحساب وإغلاق المتجر" : "حذف حسابي"}
+              </button>
+            </div>
+          )}
+        </>
       ) : null}
     </section>
   );

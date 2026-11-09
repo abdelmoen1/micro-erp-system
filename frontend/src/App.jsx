@@ -38,6 +38,10 @@ const AdminSuppliers = lazy(() => import("./pages/AdminSuppliers"));
 const AdminSupplier = lazy(() => import("./pages/AdminSuppliers").then((m) => ({ default: m.AdminSupplier })));
 const AdminCatalogItem = lazy(() => import("./pages/AdminProducts").then((m) => ({ default: m.AdminCatalogItem })));
 const AdminSupport = lazy(() => import("./pages/AdminSupport"));
+const AdminSubscriptions = lazy(() => import("./pages/AdminSubscriptions"));
+const AdminDeletions = lazy(() => import("./pages/AdminDeletions"));
+// Public: account deletion without the app (Google Play account-deletion requirement).
+const DeleteAccount = lazy(() => import("./pages/DeleteAccount"));
 const AdminCatalog = lazy(() => import("./pages/AdminProducts").then((m) => ({ default: m.AdminCatalog })));
 
 export default function App() {
@@ -50,6 +54,7 @@ export default function App() {
           <Route path="/join" element={<Join />} />
           <Route path="/forgot" element={<Forgot />} />
           <Route path="/invite" element={<AcceptInvite />} />
+          <Route path="/delete-account" element={<DeleteAccount />} />
           {/* Old links (and the mobile app) still point at /register. */}
           <Route path="/register" element={<Navigate to="/join" replace />} />
           <Route element={<ProtectedRoute />}>
@@ -87,6 +92,8 @@ export default function App() {
             <Route path="/admin/catalog" element={<AdminCatalog />} />
             <Route path="/admin/catalog/:id" element={<AdminCatalogItem />} />
             <Route path="/admin/support" element={<AdminSupport />} />
+            <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+            <Route path="/admin/deletions" element={<AdminDeletions />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1829,8 +1829,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subscriptionChecking => 'Checking…';
 
   @override
-  String get subscriptionStillInactive =>
-      'The subscription is not active yet. Once Hisbah confirms the payment, tap «Check again».';
+  String get subscriptionStillInactive => 'The subscription is not active yet.';
 
   @override
   String get saleScanTitle => 'Scan products to sell';
@@ -2006,7 +2005,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subscriptionHowTo =>
-      'Once you pay, the Hisbah team activates your subscription; then tap Check again to return to your store.';
+      'The store owner manages the store subscription. Once it is active, tap «Check again» to return to your store.';
 
   @override
   String get subscriptionDetails =>
@@ -3595,4 +3594,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String stockValueMissingCost(String count) {
     return 'Products without a cost price: $count, not counted';
   }
+
+  @override
+  String get deleteAccountTitle => 'Delete account';
+
+  @override
+  String get moreDeleteAccountSub =>
+      'Delete your account or close the store for good';
+
+  @override
+  String get morePrivacy => 'Privacy policy';
+
+  @override
+  String get morePrivacySub => 'How your data is collected and kept';
+
+  @override
+  String get deleteAccountStaffBody =>
+      'Your name, mobile number and password are removed and you are signed out everywhere. The store\'s records you made (sales, payments) stay, under «Deleted account». This cannot be undone.';
+
+  @override
+  String deleteAccountOwnerBody(String store, int days) {
+    return 'You own the store «$store». Deleting your account closes the store: every member is signed out now, and the store with all its data (products, customers, sales, debts, suppliers) is deleted after $days days. You can cancel before then on the Hisbah website.';
+  }
+
+  @override
+  String deleteAccountStoreLabel(String store) {
+    return 'Type the store name «$store» to confirm';
+  }
+
+  @override
+  String get deleteAccountPasswordRequired => 'Enter your password to confirm.';
+
+  @override
+  String get deleteAccountStoreRequired => 'Type the store name to confirm.';
+
+  @override
+  String get deleteAccountPending =>
+      'This phone has sales or payments not sent yet. Send them from «Sync» first, then delete the account.';
+
+  @override
+  String get deleteAccountStaffConfirm => 'Delete my account';
+
+  @override
+  String get deleteAccountOwnerConfirm => 'Close and delete the store';
+
+  @override
+  String get deleteAccountDoneTitle => 'Deletion request received';
+
+  @override
+  String get deleteAccountDone =>
+      'Your account was deleted and you are signed out.';
+
+  @override
+  String deleteAccountScheduled(String date) {
+    return 'The store and all its data will be deleted on $date. Everyone was signed out; you can cancel before then on the Hisbah website.';
+  }
+
+  @override
+  String get deleteAccountAlreadyScheduled =>
+      'You already asked to delete this store. You can cancel on the Hisbah website before the date.';
+
+  @override
+  String get deleteAccountOk => 'OK';
 }

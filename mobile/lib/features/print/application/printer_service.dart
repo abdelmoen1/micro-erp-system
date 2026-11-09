@@ -49,8 +49,15 @@ abstract interface class PrinterPort {
 }
 
 class DevicePrinterPort implements PrinterPort {
+  /// print_bluetooth_thermal refuses every call on Android 12+ unless both «Nearby devices»
+  /// permissions are granted (it then reports Bluetooth as off), so both are asked in one prompt.
+  /// The scan permission is declared `neverForLocation` in the manifest. Older Android reports both
+  /// as granted.
   @override
-  Future<bool> requestBluetooth() async => (await Permission.bluetoothConnect.request()).isGranted;
+  Future<bool> requestBluetooth() async {
+    final statuses = await [Permission.bluetoothConnect, Permission.bluetoothScan].request();
+    return statuses.values.every((status) => status.isGranted);
+  }
 
   @override
   Future<bool> bluetoothOn() => PrintBluetoothThermal.bluetoothEnabled;

@@ -3,3 +3,12 @@
 /vendor/
 /composer.json
 /composer.lock
+
+# Database dumps and backups must never be committed here (SECURITY_AUDIT.md #16).
+*.sql.gz
+*.dump
+/backups/
+backup-*.sql
+backup-before-*.sql
+*-backup.sql
+prod-*.sql

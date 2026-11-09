@@ -10,19 +10,24 @@ import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/hisbah_logo.dart';
 import '../../../core/widgets/message_banner.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../more/presentation/delete_account_screen.dart';
+import '../../more/presentation/more_widgets.dart';
 import '../application/session_controller.dart';
 import '../domain/app_user.dart';
 
-/// Opens a link outside the app (WhatsApp). Overridden in tests.
+/// Opens a link outside the app (WhatsApp invitations, the web back office). Overridden in tests.
 final externalLinkLauncherProvider = Provider<Future<bool> Function(Uri)>(
   (ref) => (uri) => launchUrl(uri, mode: LaunchMode.externalApplication),
 );
 
 final _date = DateFormat('dd/MM/yyyy', 'en');
 
-/// The renewal screen: the store's trial or paid subscription has ended. The session is kept and
-/// the data untouched; the server refuses every business call (403 SUBSCRIPTION_EXPIRED) until the
-/// platform admin activates the subscription. «تحقق من جديد» returns to the app once it is.
+/// The store's trial or paid subscription has ended. The session is kept and the data untouched;
+/// the server refuses every business call (403 SUBSCRIPTION_EXPIRED) until the subscription is
+/// active again. «تحقق من جديد» returns to the app once it is.
+///
+/// Google Play consumption-only build: this screen never offers a way to buy or pay, never links to
+/// a payment method and never sends the user to WhatsApp to pay. It states the status only.
 class SubscriptionExpiredScreen extends ConsumerStatefulWidget {
   const SubscriptionExpiredScreen({super.key});
 
@@ -34,16 +39,12 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
   SubscriptionSummary? _summary;
   bool _checking = false;
   bool _stillInactive = false;
-  bool _whatsappFailed = false;
-
-  /// The first GET /subscription has answered (or failed), so a missing support number is real.
-  bool _answered = false;
   ApiFailure? _failure;
 
   @override
   void initState() {
     super.initState();
-    // The dates and the support number come from GET /subscription; also notices a renewal at once.
+    // The dates come from GET /subscription; also notices a renewal at once.
     Future.microtask(() => _check(userAsked: false));
   }
 
@@ -64,25 +65,8 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
     } on ApiFailure catch (failure) {
       if (mounted) setState(() => _failure = failure);
     } finally {
-      if (mounted) {
-        setState(() {
-          _checking = false;
-          _answered = true;
-        });
-      }
+      if (mounted) setState(() => _checking = false);
     }
-  }
-
-  Future<void> _openWhatsapp(String number, AppUser user, AppLocalizations t) async {
-    final text = t.subscriptionWhatsappMessage(user.storeName, user.phone ?? '');
-    final uri = Uri.parse('https://wa.me/$number?text=${Uri.encodeComponent(text)}');
-    var opened = false;
-    try {
-      opened = await ref.read(externalLinkLauncherProvider)(uri);
-    } on Object {
-      opened = false;
-    }
-    if (mounted) setState(() => _whatsappFailed = !opened);
   }
 
   @override
@@ -93,7 +77,6 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
     final lapsed = session is SubscriptionLapsed ? session : null;
     final user = lapsed?.user;
     final summary = _summary;
-    final number = summary?.supportWhatsapp ?? lapsed?.supportWhatsapp;
     final paid = summary?.paidExpired ?? user?.subscriptionState == 'expired';
     final endedOn = paid ? summary?.subscriptionExpiresAt : (summary?.trialEndsAt ?? user?.trialEndsAt);
 
@@ -151,37 +134,7 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
                               const SizedBox(height: 12),
                             ],
                             MessageBanner(icon: Icons.verified_user_outlined, tone: StatusTone.paid, text: t.subscriptionDataSafe),
-                            const SizedBox(height: 20),
-                            if (number != null && user != null) ...[
-                              FilledButton.icon(
-                                key: const Key('subscription.whatsapp'),
-                                onPressed: () => _openWhatsapp(number, user, t),
-                                icon: const Icon(Icons.chat_outlined),
-                                label: Text(t.subscriptionContactWhatsapp),
-                              ),
-                              if (_whatsappFailed)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: SelectableText(
-                                    t.subscriptionWhatsappFailed(number),
-                                    style: TextStyle(color: StatusTone.error.fg, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                            ] else if (_answered) ...[
-                              // Only once the summary has answered: a support number may be on its way.
-                              Text(
-                                t.subscriptionContactNoNumber,
-                                key: const Key('subscription.noNumber'),
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                              ),
-                              // Without a support number the owner still needs to say which store
-                              // to activate: the details, ready to copy into any message.
-                              if (user != null) ...[
-                                const SizedBox(height: 10),
-                                _ContactDetails(user: user),
-                              ],
-                            ],
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 16),
                             Text(
                               t.subscriptionHowTo,
                               key: const Key('subscription.howTo'),
@@ -199,6 +152,13 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
                               onPressed: _checking ? null : () => ref.read(sessionProvider.notifier).logout(),
                               child: Text(t.logout),
                             ),
+                            // Account deletion stays reachable without a subscription (Google Play).
+                            TextButton(
+                              key: const Key('subscription.deleteAccount'),
+                              style: TextButton.styleFrom(foregroundColor: HisbahColors.danger),
+                              onPressed: _checking ? null : () => pushScreen<void>(context, const DeleteAccountScreen()),
+                              child: Text(t.deleteAccountTitle),
+                            ),
                           ],
                         ),
                       ),
@@ -209,51 +169,6 @@ class _SubscriptionExpiredScreenState extends ConsumerState<SubscriptionExpiredS
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// The store and the account's mobile number, selectable, with one button that copies both.
-class _ContactDetails extends StatelessWidget {
-  const _ContactDetails({required this.user});
-
-  final AppUser user;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final lines = [t.subscriptionStoreLine(user.storeName), t.subscriptionPhoneLine(user.phone ?? '')];
-    return Container(
-      key: const Key('subscription.details'),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
-      decoration: BoxDecoration(
-        color: HisbahColors.raised,
-        borderRadius: BorderRadius.circular(HisbahRadius.field),
-        border: Border.all(color: HisbahColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(t.subscriptionDetails, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
-          const SizedBox(height: 4),
-          SelectableText(lines.join('\n'), style: const TextStyle(fontSize: 15, height: 1.6, fontWeight: FontWeight.w600)),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TextButton.icon(
-              key: const Key('subscription.copy'),
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: lines.join('\n')));
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(SnackBar(content: Text(t.subscriptionCopied)));
-              },
-              icon: const Icon(Icons.copy_rounded, size: 18),
-              label: Text(t.subscriptionCopy),
-            ),
-          ),
-        ],
       ),
     );
   }

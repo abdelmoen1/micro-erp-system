@@ -19,6 +19,11 @@ use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\Admin\OtpCodeController as AdminOtpCodeController;
 use App\Http\Controllers\Api\SupportTicketController;
+use App\Http\Controllers\Api\AccountDeletionController;
+use App\Http\Controllers\Api\PaymentWebhookController;
+use App\Http\Controllers\Api\Admin\DeletionRequestController as AdminDeletionRequestController;
+use App\Http\Controllers\Api\Admin\SubscriptionOrderController as AdminSubscriptionOrderController;
+use App\Http\Controllers\Api\Admin\SubscriptionPlanController as AdminSubscriptionPlanController;
 use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\Admin\OverviewController as AdminOverviewController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
@@ -37,12 +42,19 @@ Route::post('/auth/password/reset', [AuthController::class, 'resetPassword'])->m
 Route::middleware('throttle:register')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/register/invitation', [AuthController::class, 'acceptInvitation']);
+    // Public account deletion (the website's /delete-account page): no app and no session needed.
+    Route::post('/account-deletion', [AccountDeletionController::class, 'publicRequest']);
 });
+Route::get('/account-deletion/{reference}', [AccountDeletionController::class, 'status'])->whereUuid('reference')->middleware('throttle:30,1');
+
+// Online payment notifications. Unauthenticated: the provider adapter verifies the signature.
+// No provider is enabled yet, so this answers 404 (config/payments.php).
+Route::post('/payments/webhooks/{provider}', PaymentWebhookController::class)->where('provider', '[a-z_]{2,30}')->middleware('throttle:120,1');
 
 
 // Platform owner (users.is_platform_admin, granted only by `php artisan hisbah:platform-admin`).
 // Not under `store`: the admin works across stores. Account access and subscription are separate writes.
-Route::middleware(['auth:sanctum', 'active', 'platform.admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', 'active', 'platform.admin', 'throttle:api'])->prefix('admin')->group(function () {
     Route::get('overview', AdminOverviewController::class);
     Route::get('stores', [AdminStoreController::class, 'index']);
     Route::get('stores/{store}', [AdminStoreController::class, 'show']);
@@ -58,10 +70,20 @@ Route::middleware(['auth:sanctum', 'active', 'platform.admin'])->prefix('admin')
     Route::get('support-tickets', [AdminSupportTicketController::class, 'index']);
     Route::patch('support-tickets/{ticket}', [AdminSupportTicketController::class, 'update']);
     Route::post('otp-codes', AdminOtpCodeController::class)->middleware('throttle:20,1');
+    // Plans and subscription requests (manual WhatsApp payments are confirmed here, by hand).
+    Route::get('subscription-plans', [AdminSubscriptionPlanController::class, 'index']);
+    Route::patch('subscription-plans/{plan}', [AdminSubscriptionPlanController::class, 'update']);
+    Route::get('subscription-orders', [AdminSubscriptionOrderController::class, 'index']);
+    Route::get('subscription-orders/{order}', [AdminSubscriptionOrderController::class, 'show']);
+    Route::post('subscription-orders/{order}/status', [AdminSubscriptionOrderController::class, 'transition']);
+    Route::post('subscription-orders/{order}/notes', [AdminSubscriptionOrderController::class, 'note']);
+    Route::post('subscription-orders/{order}/confirm-payment', [AdminSubscriptionOrderController::class, 'confirmPayment'])->middleware('throttle:20,1');
+    Route::get('deletion-requests', [AdminDeletionRequestController::class, 'index']);
+    Route::patch('deletion-requests/{deletionRequest}', [AdminDeletionRequestController::class, 'update']);
 });
 
-// Protected API
-Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
+// Protected API (`throttle:api`: 300 calls a minute per account, AppServiceProvider)
+Route::middleware(['auth:sanctum', 'active', 'store', 'throttle:api'])->group(function () {
 
 
     // Session routes: open to a store whose trial or subscription has ended, so it can still sign in,
@@ -71,6 +93,15 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     Route::patch('/me/password', [AuthController::class, 'changePassword'])->middleware('throttle:6,1');
     Route::patch('/me/phone', [AuthController::class, 'changePhone'])->middleware('throttle:6,1');
     Route::get('/subscription', [SubscriptionController::class, 'show']);
+    // Buying a plan (the WEBSITE; the Android app never calls these): open after expiry, to renew.
+    Route::get('/subscription/plans', [SubscriptionController::class, 'plans']);
+    Route::get('/subscription/orders', [SubscriptionController::class, 'orders']);
+    Route::post('/subscription/orders', [SubscriptionController::class, 'store'])->middleware('throttle:10,1');
+    // Account deletion: open after expiry too (Play: deletion must stay reachable).
+    Route::get('/me/deletion', [AccountDeletionController::class, 'show']);
+    Route::post('/me/deletion', [AccountDeletionController::class, 'store'])->middleware('throttle:6,1');
+    Route::delete('/me/deletion', [AccountDeletionController::class, 'cancel']);
+    Route::post('/my-store/transfer-ownership', [AccountDeletionController::class, 'transferOwnership'])->middleware('throttle:6,1');
     // Technical support: reachable after the subscription ends, when the store needs it most.
     Route::get('/support-tickets', [SupportTicketController::class, 'index']);
     Route::post('/support-tickets', [SupportTicketController::class, 'store'])->middleware('throttle:10,1');
@@ -78,7 +109,7 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     // Business routes: need a running trial or a valid paid subscription (403 SUBSCRIPTION_EXPIRED).
     Route::middleware('subscribed')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
-    Route::post('/invitations', [InvitationController::class, 'store']);
+    Route::post('/invitations', [InvitationController::class, 'store'])->middleware('entitled:staff');
     Route::get('/users', [UserController::class, 'index']);
 
     Route::patch('/users/{user}/role', [
@@ -104,7 +135,7 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     Route::get('products/low-stock', [ProductController::class, 'lowStock']);
     Route::get('products/negative-stock', [ProductController::class, 'negativeStock']);
     Route::get('products/stock-value', [ProductController::class, 'stockValue']);
-    Route::post('products/import', [ProductController::class, 'import']);
+    Route::post('products/import', [ProductController::class, 'import'])->middleware('entitled:csv_import');
     Route::get('products', [ProductController::class, 'index']);
     Route::post('products', [ProductController::class, 'store']);
     Route::get('products/{product}', [ProductController::class, 'show']);
@@ -116,17 +147,18 @@ Route::middleware(['auth:sanctum', 'active', 'store'])->group(function () {
     Route::post('stock-adjustments', [StockAdjustmentController::class, 'store'])->middleware('idempotent');
 
     // Goods from suppliers: invoice, stock and payment together; later payments on the account.
-    Route::post('purchases', [SupplierController::class, 'purchase'])->middleware('idempotent');
+    // Plan feature `suppliers` gates new supplier writes; history stays readable.
+    Route::post('purchases', [SupplierController::class, 'purchase'])->middleware(['idempotent', 'entitled:suppliers']);
     Route::get('purchases', [PurchaseController::class, 'index']);
     Route::get('purchases/{purchaseInvoice}', [PurchaseController::class, 'show']);
     // Goods back to the supplier: the balance first, then a refund (the mirror of US-0601).
-    Route::post('purchases/{purchaseInvoice}/returns', [PurchaseController::class, 'storeReturn'])->middleware('idempotent');
+    Route::post('purchases/{purchaseInvoice}/returns', [PurchaseController::class, 'storeReturn'])->middleware(['idempotent', 'entitled:suppliers']);
     Route::get('returns/purchases', [PurchaseController::class, 'purchaseReturns']);
     Route::get('returns/sales', [PurchaseController::class, 'saleReturns']);
     Route::get('suppliers', [SupplierController::class, 'index']);
     Route::get('suppliers/{supplier}', [SupplierController::class, 'show']);
     Route::get('suppliers/{supplier}/products/{product}', [SupplierController::class, 'product']);
-    Route::post('suppliers/{supplier}/payments', [SupplierController::class, 'pay'])->middleware('idempotent');
+    Route::post('suppliers/{supplier}/payments', [SupplierController::class, 'pay'])->middleware(['idempotent', 'entitled:suppliers']);
 
     // Customers
     Route::apiResource('customers', CustomerController::class);

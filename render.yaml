@@ -58,5 +58,9 @@ services:
       # is shown on the "subscription expired" screens; leave it unset to hide the WhatsApp button.
       - key: SUPPORT_WHATSAPP
         sync: false
+      # One 14-day trial per owner number (owner decision 2026-11-09). Existing stores keep their dates.
       - key: HISBAH_TRIAL_DAYS
-        value: "7"
+        value: "14"
+      # WhatsApp Business number for manual subscription requests on the website (owner to set).
+      - key: WHATSAPP_BUSINESS_NUMBER
+        sync: false

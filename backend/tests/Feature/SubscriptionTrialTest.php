@@ -154,9 +154,14 @@ class SubscriptionTrialTest extends TestCase
             ->sort()->values()->all();
 
         // The account itself stays usable without a subscription: sign out, see why, change the password,
-        // and reach technical support.
-        $this->assertSame(['GET api/v1/me', 'GET api/v1/subscription', 'GET api/v1/support-tickets', 'PATCH api/v1/me/password', 'PATCH api/v1/me/phone', 'POST api/v1/logout', 'POST api/v1/support-tickets'], $open);
-        $this->assertGreaterThan(40, $storeRoutes->count() - 7);
+        // and reach technical support; renew on the website (plans, orders) and delete the account.
+        $this->assertSame([
+            'DELETE api/v1/me/deletion', 'GET api/v1/me', 'GET api/v1/me/deletion', 'GET api/v1/subscription',
+            'GET api/v1/subscription/orders', 'GET api/v1/subscription/plans', 'GET api/v1/support-tickets',
+            'PATCH api/v1/me/password', 'PATCH api/v1/me/phone', 'POST api/v1/logout', 'POST api/v1/me/deletion',
+            'POST api/v1/my-store/transfer-ownership', 'POST api/v1/subscription/orders', 'POST api/v1/support-tickets',
+        ], $open);
+        $this->assertGreaterThan(40, $storeRoutes->count() - 14);
 
         // A sample of reads and writes, including idempotent financial writes.
         foreach ([['GET', '/dashboard'], ['GET', '/customers'], ['POST', '/customers'], ['GET', '/sales'], ['POST', '/sales'],

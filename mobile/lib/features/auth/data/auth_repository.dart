@@ -95,6 +95,20 @@ class AuthRepository {
     return SubscriptionSummary.fromJson(body['data'] as Map<String, dynamic>? ?? const {});
   }
 
+  /// `GET /me/deletion`: what deleting this account means (staff or the whole store) and any request.
+  Future<Map<String, dynamic>> deletionInfo() async {
+    final body = await _api.get('/me/deletion');
+    return body['data'] as Map<String, dynamic>? ?? const {};
+  }
+
+  /// `POST /me/deletion`: staff are anonymised at once; an owner's store is scheduled for deletion.
+  /// Returns the request (`status`: completed | scheduled, `scheduled_for`). Clears this phone's session.
+  Future<Map<String, dynamic>> requestDeletion({required String password, String? storeName}) async {
+    final body = await _api.post('/me/deletion', body: {'password': password, 'confirm_store_name': ?storeName});
+    await clearLocalSession();
+    return body['data'] as Map<String, dynamic>? ?? const {};
+  }
+
   Future<AppUser> _startSession(Map<String, dynamic> body, String endpoint) async {
     final token = body['token'] as String?;
     if (token == null) {

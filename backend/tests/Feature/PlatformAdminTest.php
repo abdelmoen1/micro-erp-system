@@ -662,7 +662,9 @@ class PlatformAdminTest extends TestCase
         $this->assertSame($admin->id, $log->user_id);
         $this->assertSame((string) $store->id, $log->entity_id);
         $this->assertSame('Shop', $log->metadata['name']);
-        $this->assertSame($owner->phone, $log->metadata['owner']['phone']);
+        // Data minimisation (release readiness): the owner's number is kept masked, the name not at all.
+        $this->assertSame(\App\Support\PhoneNumber::masked($owner->phone), $log->metadata['owner']['phone']);
+        $this->assertArrayNotHasKey('name', $log->metadata['owner']);
         $this->assertSame(2, $log->metadata['removed']['users']);
     }
 
