@@ -25,7 +25,8 @@ class AuditService
     {
         $actor ??= Auth::user();
 
-        if (!$actor) {
+        // A system event (a verified payment notification, a scheduled job) names the store instead.
+        if (!$actor && $storeId === null) {
             throw new LogicException("Audit action [{$action}] requires an authenticated actor.");
         }
 
@@ -35,7 +36,7 @@ class AuditService
 
         return AuditLog::create([
             'store_id' => $storeId ?? $actor->store_id,
-            'user_id' => $actor->id,
+            'user_id' => $actor?->id,
             'action' => $action,
             'entity_type' => $type,
             'entity_id' => $id,

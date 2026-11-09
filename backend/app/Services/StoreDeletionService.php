@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\ApiException;
 use App\Models\Store;
 use App\Models\User;
+use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -18,7 +19,7 @@ class StoreDeletionService
     public function __construct(private readonly AuditService $audit) {}
 
     /** @return array<string, int> rows removed per kind, as recorded in the audit entry */
-    public function delete(Store $store, User $admin): array
+    public function delete(Store $store, ?User $admin): array
     {
         return DB::transaction(function () use ($store, $admin) {
             $locked = Store::query()->lockForUpdate()->findOrFail($store->id);
@@ -30,7 +31,8 @@ class StoreDeletionService
 
             $owner = $locked->owner;
             $userIds = $locked->users()->pluck('id');
-            $emails = $locked->users()->pluck('email');
+            $emails = $locked->users()->pluck('email')->filter()->values();
+            $phones = $locked->users()->pluck('phone')->filter()->values();
             $invoiceIds = DB::table('invoices')->where('store_id', $locked->id)->pluck('id');
             $debtIds = DB::table('debts')->where('store_id', $locked->id)->pluck('id');
             $returnIds = DB::table('sale_returns')->where('store_id', $locked->id)->pluck('id');
@@ -74,14 +76,19 @@ class StoreDeletionService
                 ->delete();
             DB::table('sessions')->whereIn('user_id', $userIds)->delete();
             DB::table('password_reset_tokens')->whereIn('email', $emails)->delete();
+            // Pending SMS codes are keyed by number, not by account: they go with the members.
+            DB::table('phone_otps')->whereIn('phone', $phones)->delete();
+            DB::table('sync_conflicts')->where('store_id', $locked->id)->delete();
             DB::table('users')->whereIn('id', $userIds)->delete();
             $locked->delete();
 
-            $this->audit->record(
+            // A scheduled owner-requested closure has no admin: its AccountDeletionRequest row is the record.
+            if ($admin) $this->audit->record(
                 'platform.store_deleted',
                 'Store',
-                ['entity_id' => (string) $locked->id, 'name' => $locked->name, 'phone' => $locked->phone]
-                    + ($owner ? ['owner' => $owner->only(['id', 'name', 'phone'])] : [])
+                // Minimal record: store name (whose deletion it was), masked numbers, no owner name.
+                ['entity_id' => (string) $locked->id, 'name' => $locked->name, 'phone' => $locked->phone ? PhoneNumber::masked($locked->phone) : null]
+                    + ($owner ? ['owner' => ['id' => $owner->id, 'phone' => $owner->phone ? PhoneNumber::masked($owner->phone) : null]] : [])
                     + ['removed' => $removed],
                 $admin,
             );

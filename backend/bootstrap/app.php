@@ -31,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // `Accept: application/json` header, instead of a failed redirect (500).
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : '/');
 
+        // Outermost, so error responses (401/403/404/429/500) carry the headers too.
+        $middleware->prepend(\App\Http\Middleware\AddSecurityHeaders::class);
         $middleware->prepend(\App\Http\Middleware\AssignCorrelationId::class);
 
         $middleware->api(append: [
@@ -43,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'idempotent' => \App\Http\Middleware\EnsureIdempotency::class,
             'platform.admin' => \App\Http\Middleware\EnsurePlatformAdmin::class,
             'subscribed' => \App\Http\Middleware\EnsureStoreSubscription::class,
+            'entitled' => \App\Http\Middleware\EnsureStoreEntitlement::class,
         ]);
 
         // Admin routes refuse non-admins before {store} is resolved: no 404/403 difference to probe ids with.

@@ -1814,8 +1814,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get subscriptionChecking => 'جارٍ التحقق…';
 
   @override
-  String get subscriptionStillInactive =>
-      'لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد».';
+  String get subscriptionStillInactive => 'لم يُفعَّل الاشتراك بعد.';
 
   @override
   String get saleScanTitle => 'مسح أصناف البيع';
@@ -1988,7 +1987,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get subscriptionHowTo =>
-      'بعد الدفع تفعّل إدارة حسبة اشتراكك، ثم اضغط «تحقق من جديد» لتعود إلى متجرك.';
+      'يدير صاحب المتجر اشتراك المتجر. عند تفعيل الاشتراك اضغط «تحقق من جديد» لتعود إلى متجرك.';
 
   @override
   String get subscriptionDetails => 'اذكر هذه البيانات عند التواصل:';
@@ -3568,4 +3567,64 @@ class AppLocalizationsAr extends AppLocalizations {
   String stockValueMissingCost(String count) {
     return 'أصناف بلا سعر شراء: $count — غير محسوبة';
   }
+
+  @override
+  String get deleteAccountTitle => 'حذف الحساب';
+
+  @override
+  String get moreDeleteAccountSub => 'حذف حسابك أو إغلاق المتجر نهائياً';
+
+  @override
+  String get morePrivacy => 'سياسة الخصوصية';
+
+  @override
+  String get morePrivacySub => 'كيف تُجمع بياناتك وتُحفظ';
+
+  @override
+  String get deleteAccountStaffBody =>
+      'يُحذف اسمك ورقم جوالك وكلمة مرورك ويُسجَّل خروجك من كل الأجهزة. تبقى عمليات المتجر التي سجّلتها (مبيعات، دفعات) لأنها من سجلات المتجر، باسم «حساب محذوف». لا يمكن التراجع.';
+
+  @override
+  String deleteAccountOwnerBody(String store, int days) {
+    return 'حسابك هو حساب صاحب متجر «$store». حذفه يغلق المتجر: يُسجَّل خروج كل الموظفين فوراً، ثم يُحذف المتجر وكل بياناته (الأصناف، الزبائن، المبيعات، الديون، الموردون) بعد $days يوماً. يمكنك الإلغاء قبل ذلك من موقع حسبة.';
+  }
+
+  @override
+  String deleteAccountStoreLabel(String store) {
+    return 'اكتب اسم المتجر «$store» للتأكيد';
+  }
+
+  @override
+  String get deleteAccountPasswordRequired => 'اكتب كلمة المرور لتأكيد الحذف.';
+
+  @override
+  String get deleteAccountStoreRequired => 'اكتب اسم المتجر لتأكيد الحذف.';
+
+  @override
+  String get deleteAccountPending =>
+      'في الجوال مبيعات أو دفعات لم تُرسل بعد. أرسلها من «المزامنة» أولاً، ثم احذف الحساب.';
+
+  @override
+  String get deleteAccountStaffConfirm => 'حذف حسابي نهائياً';
+
+  @override
+  String get deleteAccountOwnerConfirm => 'إغلاق المتجر وحذفه';
+
+  @override
+  String get deleteAccountDoneTitle => 'تم استلام طلب الحذف';
+
+  @override
+  String get deleteAccountDone => 'حُذف حسابك وسُجّل خروجك.';
+
+  @override
+  String deleteAccountScheduled(String date) {
+    return 'سيُحذف المتجر وكل بياناته في $date. سُجّل خروج الجميع، ويمكنك الإلغاء قبل ذلك من موقع حسبة.';
+  }
+
+  @override
+  String get deleteAccountAlreadyScheduled =>
+      'طلبت حذف هذا المتجر من قبل. يمكنك الإلغاء من موقع حسبة قبل الموعد.';
+
+  @override
+  String get deleteAccountOk => 'حسناً';
 }

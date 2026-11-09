@@ -3299,7 +3299,7 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionStillInactive.
   ///
   /// In ar, this message translates to:
-  /// **'لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد».'**
+  /// **'لم يُفعَّل الاشتراك بعد.'**
   String get subscriptionStillInactive;
 
   /// No description provided for @saleScanTitle.
@@ -3587,7 +3587,7 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionHowTo.
   ///
   /// In ar, this message translates to:
-  /// **'بعد الدفع تفعّل إدارة حسبة اشتراكك، ثم اضغط «تحقق من جديد» لتعود إلى متجرك.'**
+  /// **'يدير صاحب المتجر اشتراك المتجر. عند تفعيل الاشتراك اضغط «تحقق من جديد» لتعود إلى متجرك.'**
   String get subscriptionHowTo;
 
   /// No description provided for @subscriptionDetails.
@@ -6337,6 +6337,108 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'أصناف بلا سعر شراء: {count} — غير محسوبة'**
   String stockValueMissingCost(String count);
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف الحساب'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @moreDeleteAccountSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف حسابك أو إغلاق المتجر نهائياً'**
+  String get moreDeleteAccountSub;
+
+  /// No description provided for @morePrivacy.
+  ///
+  /// In ar, this message translates to:
+  /// **'سياسة الخصوصية'**
+  String get morePrivacy;
+
+  /// No description provided for @morePrivacySub.
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف تُجمع بياناتك وتُحفظ'**
+  String get morePrivacySub;
+
+  /// No description provided for @deleteAccountStaffBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُحذف اسمك ورقم جوالك وكلمة مرورك ويُسجَّل خروجك من كل الأجهزة. تبقى عمليات المتجر التي سجّلتها (مبيعات، دفعات) لأنها من سجلات المتجر، باسم «حساب محذوف». لا يمكن التراجع.'**
+  String get deleteAccountStaffBody;
+
+  /// No description provided for @deleteAccountOwnerBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسابك هو حساب صاحب متجر «{store}». حذفه يغلق المتجر: يُسجَّل خروج كل الموظفين فوراً، ثم يُحذف المتجر وكل بياناته (الأصناف، الزبائن، المبيعات، الديون، الموردون) بعد {days} يوماً. يمكنك الإلغاء قبل ذلك من موقع حسبة.'**
+  String deleteAccountOwnerBody(String store, int days);
+
+  /// No description provided for @deleteAccountStoreLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب اسم المتجر «{store}» للتأكيد'**
+  String deleteAccountStoreLabel(String store);
+
+  /// No description provided for @deleteAccountPasswordRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب كلمة المرور لتأكيد الحذف.'**
+  String get deleteAccountPasswordRequired;
+
+  /// No description provided for @deleteAccountStoreRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب اسم المتجر لتأكيد الحذف.'**
+  String get deleteAccountStoreRequired;
+
+  /// No description provided for @deleteAccountPending.
+  ///
+  /// In ar, this message translates to:
+  /// **'في الجوال مبيعات أو دفعات لم تُرسل بعد. أرسلها من «المزامنة» أولاً، ثم احذف الحساب.'**
+  String get deleteAccountPending;
+
+  /// No description provided for @deleteAccountStaffConfirm.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف حسابي نهائياً'**
+  String get deleteAccountStaffConfirm;
+
+  /// No description provided for @deleteAccountOwnerConfirm.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق المتجر وحذفه'**
+  String get deleteAccountOwnerConfirm;
+
+  /// No description provided for @deleteAccountDoneTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم استلام طلب الحذف'**
+  String get deleteAccountDoneTitle;
+
+  /// No description provided for @deleteAccountDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُذف حسابك وسُجّل خروجك.'**
+  String get deleteAccountDone;
+
+  /// No description provided for @deleteAccountScheduled.
+  ///
+  /// In ar, this message translates to:
+  /// **'سيُحذف المتجر وكل بياناته في {date}. سُجّل خروج الجميع، ويمكنك الإلغاء قبل ذلك من موقع حسبة.'**
+  String deleteAccountScheduled(String date);
+
+  /// No description provided for @deleteAccountAlreadyScheduled.
+  ///
+  /// In ar, this message translates to:
+  /// **'طلبت حذف هذا المتجر من قبل. يمكنك الإلغاء من موقع حسبة قبل الموعد.'**
+  String get deleteAccountAlreadyScheduled;
+
+  /// No description provided for @deleteAccountOk.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسناً'**
+  String get deleteAccountOk;
 }
 
 class _AppLocalizationsDelegate

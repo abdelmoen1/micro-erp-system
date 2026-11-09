@@ -21,6 +21,34 @@ Artisan::command('idempotency:prune {--days=30}', function (IdempotencyService $
 
 Schedule::command('idempotency:prune')->daily();
 
+// Trial / subscription expiry notices: once per access period, when it enters the `expiring` window.
+// The notice reaches the store as `lifecycle: expiring` + `days_left` in GET /subscription (app banner,
+// website) and as an audit row; SMS/WhatsApp delivery needs a configured gateway (not wired).
+Artisan::command('hisbah:subscription-reminders', function (\App\Services\AuditService $audit) {
+    $sent = 0;
+    \App\Models\Store::query()->whereNull('deletion_scheduled_for')->where('status', \App\Models\Store::STATUS_ACTIVE)
+        ->chunkById(200, function ($stores) use ($audit, &$sent) {
+            foreach ($stores as $store) {
+                $ends = $store->accessEndsAt();
+                if ($store->lifecycle() !== \App\Models\Store::LIFECYCLE_EXPIRING || !$ends || $store->expiry_notice_for?->equalTo($ends)) {
+                    continue;
+                }
+                $store->forceFill(['expiry_notice_for' => $ends])->save();
+                $audit->record('subscription.expiring_notice', $store, ['state' => $store->subscriptionState(), 'ends_at' => $ends->toIso8601String()], null, $store->id);
+                $sent++;
+            }
+        });
+    $this->info("Expiry notices recorded: {$sent}.");
+})->purpose('Record one expiry notice per store entering the expiring window');
+
+// Owner-requested store closures whose grace period has ended (ACCOUNT_DELETION_PLAN.md).
+Artisan::command('hisbah:process-deletions', function (\App\Services\AccountDeletionService $deletion) {
+    $this->info('Stores deleted: ' . $deletion->processDue() . '.');
+})->purpose('Delete stores whose owner-requested closure date has passed');
+
+Schedule::command('hisbah:subscription-reminders')->hourly();
+Schedule::command('hisbah:process-deletions')->hourly();
+
 // US-0402 T-0402-4 (04 §stock invariant): read-only drift report; exit code 1 when any product drifts.
 Artisan::command('hisbah:verify-stock {--store= : Only check this store id}', function (StockService $stock) {
     $drift = $stock->drift($this->option('store') ? (int) $this->option('store') : null);

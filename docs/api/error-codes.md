@@ -133,6 +133,31 @@ A `201` from `POST /sales` carries `flags` (a list of codes) and `warnings` (one
 | 409 | `SYNC_CONFLICT_RESOLVED` | `POST /sync/conflicts/{id}/resolve` on an item already resolved | Refresh the list |
 | 422 | `SYNC_RESOLUTION_NOT_ALLOWED` | The resolution does not fit the item's kind (flagged → acknowledged; held payment → applied, refunded, voided; rejected → voided) | Offer the allowed actions only |
 
+### Subscriptions, plans and payments
+
+| HTTP | `code` | Meaning | Client behaviour |
+|---|---|---|---|
+| 403 | `FEATURE_NOT_IN_PLAN` | The store's plan does not include this feature; `details.feature` names it | Say the plan does not include it (website: link to plans; app: no purchase link) |
+| 403 | `PLAN_LIMIT_REACHED` | A plan limit is reached; `details.limit`, `details.max` | Show the limit |
+| 409 | `PLAN_UNAVAILABLE` | The plan is inactive or has no price | Reload the plans |
+| 409 | `TOO_MANY_OPEN_ORDERS` | The store already has 3 open subscription requests | Show the open requests |
+| 409 | `INVALID_ORDER_TRANSITION` | Admin: the order cannot move to that status | Reload the order |
+| 409 | `ORDER_NOT_OPEN` | The order is closed (rejected, cancelled, failed) | Reload the order |
+| 409 | `ORDER_ALREADY_ACTIVATED` | The order was already paid and activated (duplicate confirmation) | Reload; nothing to do |
+| 409 | `ORDER_STORE_DELETED` | The store of the order no longer exists | Do not activate |
+| 409 | `ORDER_PROVIDER_MISMATCH` | A provider notification for another provider's order | Ignored |
+| 409 | `PAYMENT_AMOUNT_MISMATCH` | Confirmed amount or currency differs from the order | Check the payment; nothing is activated |
+| 503 | `PAYMENT_PROVIDER_UNAVAILABLE` | No online payment provider is enabled | Offer the WhatsApp request |
+
+### Account deletion
+
+| HTTP | `code` | Meaning | Client behaviour |
+|---|---|---|---|
+| 403 | `STORE_CLOSING` | The owner asked to delete the store; only the owner may sign in, to cancel. `details.deletion_scheduled_for` | Sign out; owner: offer to cancel |
+| 409 | `PLATFORM_ADMIN_ACCOUNT` | The platform admin's own account cannot be deleted here | Show `message` |
+| 409 | `NO_SCHEDULED_DELETION` | Nothing to cancel | Reload |
+| 409 | `REQUEST_NOT_PENDING` | Admin: the deletion request was already handled | Reload |
+
 ### Optional `details`
 
 A few codes add a `details` object to the envelope with machine-readable facts (today only the two credit-limit codes). Clients that do not need it can ignore it.

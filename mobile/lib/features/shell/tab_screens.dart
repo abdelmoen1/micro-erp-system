@@ -15,6 +15,7 @@ import '../home/dashboard.dart';
 import '../home/home_dashboard.dart';
 import '../auth/presentation/subscription_expired_screen.dart' show externalLinkLauncherProvider;
 import '../more/presentation/change_password_screen.dart';
+import '../more/presentation/delete_account_screen.dart';
 import '../more/presentation/change_phone_screen.dart';
 import '../more/presentation/more_widgets.dart';
 import '../more/presentation/staff_screen.dart';
@@ -415,6 +416,22 @@ class _MoreTab extends ConsumerWidget {
               subtitle: t.moreSupportSub,
               onTap: () => pushScreen<void>(context, const SupportScreen()),
             ),
+            if (Env.privacyPolicyUrl.isNotEmpty)
+              MoreTile(
+                key: const Key('more.privacy'),
+                icon: Icons.privacy_tip_outlined,
+                title: t.morePrivacy,
+                subtitle: t.morePrivacySub,
+                onTap: () => ref.read(externalLinkLauncherProvider)(Uri.parse(Env.privacyPolicyUrl)),
+              ),
+            // Google Play: account deletion inside the app (Settings → Account → Delete account).
+            MoreTile(
+              key: const Key('more.deleteAccount'),
+              icon: Icons.person_remove_outlined,
+              title: t.deleteAccountTitle,
+              subtitle: t.moreDeleteAccountSub,
+              onTap: () => pushScreen<void>(context, const DeleteAccountScreen()),
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -551,8 +568,8 @@ final _subscriptionProvider = FutureProvider.autoDispose<SubscriptionSummary>(
 
 final _day = DateFormat('dd/MM/yyyy', 'en');
 
-/// Where the store's subscription stands (trial or paid, until when), and a WhatsApp line to the
-/// Hisbah team when the platform has a support number.
+/// Where the store's subscription stands (trial or paid, until when). Status only: the Google Play
+/// build never offers a purchase, a payment link or a WhatsApp line to pay (consumption-only).
 class _SubscriptionTile extends ConsumerWidget {
   const _SubscriptionTile();
 
@@ -560,8 +577,6 @@ class _SubscriptionTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final summary = ref.watch(_subscriptionProvider).value;
-    final session = ref.watch(sessionProvider);
-    final storeName = session is SignedIn ? session.user.storeName : '';
     final status = switch (summary) {
       null => null,
       SubscriptionSummary(state: 'trial', :final trialEndsAt?) => t.moreSubTrialUntil(
@@ -572,17 +587,11 @@ class _SubscriptionTile extends ConsumerWidget {
       ),
       _ => t.moreSubActive,
     };
-    final number = summary?.supportWhatsapp;
     return MoreTile(
       key: const Key('more.subscription'),
       icon: Icons.workspace_premium_outlined,
       title: t.moreSubscription,
-      subtitle: [?status, if (number != null) t.moreSubContact].join('\n'),
-      onTap: number == null
-          ? null
-          : () => ref.read(externalLinkLauncherProvider)(
-              Uri.parse('https://wa.me/$number?text=${Uri.encodeComponent(t.moreSubWhatsappText(storeName))}'),
-            ),
+      subtitle: status ?? '',
     );
   }
 }

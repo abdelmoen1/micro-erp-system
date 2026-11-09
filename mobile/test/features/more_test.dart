@@ -58,15 +58,16 @@ void main() {
   testWidgets('the owner sees every section; an employee sees no staff, store details or negative stock', (tester) async {
     await pumpApp(tester);
     await openMore(tester);
-    for (final key in ['more.staff', 'more.store', 'more.lowStock', 'more.negative', 'more.sales', 'more.password', 'more.subscription', 'more.support']) {
+    for (final key in ['more.staff', 'more.store', 'more.lowStock', 'more.negative', 'more.sales', 'more.password', 'more.subscription', 'more.support', 'more.deleteAccount']) {
       expect(find.byKey(Key(key)), findsOneWidget, reason: key);
     }
     expect(find.textContaining('تجربة مجانية حتى 20/10/2026'), findsOneWidget);
 
-    // The support number opens WhatsApp with the store named.
+    // Google Play consumption-only: the subscription row is status only, even with a support number
+    // on the server — no WhatsApp, no payment link.
     await tap(tester, find.byKey(const Key('more.subscription')));
-    expect(opened.single.toString(), startsWith('https://wa.me/970599000000?text='));
-    expect(Uri.decodeComponent(opened.single.query), contains('Demo Shop'));
+    expect(opened, isEmpty);
+    expect(find.textContaining('واتساب'), findsNothing);
   });
 
   testWidgets('an employee: sales, low stock and the account, nothing of the owner', (tester) async {

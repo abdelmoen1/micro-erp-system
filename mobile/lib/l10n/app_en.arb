@@ -543,7 +543,7 @@
   "subscriptionWhatsappFailed": "Could not open WhatsApp. Support number: {number}",
   "subscriptionCheckAgain": "Check again",
   "subscriptionChecking": "Checking…",
-  "subscriptionStillInactive": "The subscription is not active yet. Once Hisbah confirms the payment, tap «Check again».",
+  "subscriptionStillInactive": "The subscription is not active yet.",
   "saleScanTitle": "Scan products to sell",
   "saleScanKeepGoing": "Camera on: scan the next product",
   "saleScanCloseA11y": "Close the camera and go back to the cart",
@@ -591,7 +591,7 @@
   "formMinHelp": "At this number or less it shows as low",
   "formRequiredA11y": "required",
   "formFixErrors": "Check the fields marked in red.",
-  "subscriptionHowTo": "Once you pay, the Hisbah team activates your subscription; then tap Check again to return to your store.",
+  "subscriptionHowTo": "The store owner manages the store subscription. Once it is active, tap «Check again» to return to your store.",
   "subscriptionDetails": "Mention these details when you get in touch:",
   "subscriptionStoreLine": "Store: {store}",
   "subscriptionPhoneLine": "Mobile: {phone}",
@@ -1201,5 +1201,46 @@
   "stockValueTitle": "Value of the goods in stock",
   "stockValueAtCost": "at cost",
   "stockValueAtSelling": "If all sold at selling prices",
-  "stockValueMissingCost": "Products without a cost price: {count}, not counted"
+  "stockValueMissingCost": "Products without a cost price: {count}, not counted",
+  "deleteAccountTitle": "Delete account",
+  "moreDeleteAccountSub": "Delete your account or close the store for good",
+  "morePrivacy": "Privacy policy",
+  "morePrivacySub": "How your data is collected and kept",
+  "deleteAccountStaffBody": "Your name, mobile number and password are removed and you are signed out everywhere. The store's records you made (sales, payments) stay, under «Deleted account». This cannot be undone.",
+  "deleteAccountOwnerBody": "You own the store «{store}». Deleting your account closes the store: every member is signed out now, and the store with all its data (products, customers, sales, debts, suppliers) is deleted after {days} days. You can cancel before then on the Hisbah website.",
+  "@deleteAccountOwnerBody": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteAccountStoreLabel": "Type the store name «{store}» to confirm",
+  "@deleteAccountStoreLabel": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountPasswordRequired": "Enter your password to confirm.",
+  "deleteAccountStoreRequired": "Type the store name to confirm.",
+  "deleteAccountPending": "This phone has sales or payments not sent yet. Send them from «Sync» first, then delete the account.",
+  "deleteAccountStaffConfirm": "Delete my account",
+  "deleteAccountOwnerConfirm": "Close and delete the store",
+  "deleteAccountDoneTitle": "Deletion request received",
+  "deleteAccountDone": "Your account was deleted and you are signed out.",
+  "deleteAccountScheduled": "The store and all its data will be deleted on {date}. Everyone was signed out; you can cancel before then on the Hisbah website.",
+  "@deleteAccountScheduled": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountAlreadyScheduled": "You already asked to delete this store. You can cancel on the Hisbah website before the date.",
+  "deleteAccountOk": "OK"
 }

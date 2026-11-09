@@ -988,7 +988,7 @@
   },
   "subscriptionCheckAgain": "تحقق من جديد",
   "subscriptionChecking": "جارٍ التحقق…",
-  "subscriptionStillInactive": "لم يُفعَّل الاشتراك بعد. بعد تأكيد الدفع من إدارة حسبة اضغط «تحقق من جديد».",
+  "subscriptionStillInactive": "لم يُفعَّل الاشتراك بعد.",
   "saleScanTitle": "مسح أصناف البيع",
   "saleScanKeepGoing": "الكاميرا شغّالة: امسح الصنف اللي بعده",
   "saleScanCloseA11y": "إغلاق الكاميرا والعودة إلى السلة",
@@ -1122,7 +1122,7 @@
   "formMinHelp": "عند هذا العدد أو أقل يظهر في «منخفض»",
   "formRequiredA11y": "مطلوب",
   "formFixErrors": "راجع الحقول المعلَّمة باللون الأحمر.",
-  "subscriptionHowTo": "بعد الدفع تفعّل إدارة حسبة اشتراكك، ثم اضغط «تحقق من جديد» لتعود إلى متجرك.",
+  "subscriptionHowTo": "يدير صاحب المتجر اشتراك المتجر. عند تفعيل الاشتراك اضغط «تحقق من جديد» لتعود إلى متجرك.",
   "subscriptionDetails": "اذكر هذه البيانات عند التواصل:",
   "subscriptionStoreLine": "المتجر: {store}",
   "@subscriptionStoreLine": {
@@ -2191,5 +2191,46 @@
         "type": "String"
       }
     }
-  }
+  },
+  "deleteAccountTitle": "حذف الحساب",
+  "moreDeleteAccountSub": "حذف حسابك أو إغلاق المتجر نهائياً",
+  "morePrivacy": "سياسة الخصوصية",
+  "morePrivacySub": "كيف تُجمع بياناتك وتُحفظ",
+  "deleteAccountStaffBody": "يُحذف اسمك ورقم جوالك وكلمة مرورك ويُسجَّل خروجك من كل الأجهزة. تبقى عمليات المتجر التي سجّلتها (مبيعات، دفعات) لأنها من سجلات المتجر، باسم «حساب محذوف». لا يمكن التراجع.",
+  "deleteAccountOwnerBody": "حسابك هو حساب صاحب متجر «{store}». حذفه يغلق المتجر: يُسجَّل خروج كل الموظفين فوراً، ثم يُحذف المتجر وكل بياناته (الأصناف، الزبائن، المبيعات، الديون، الموردون) بعد {days} يوماً. يمكنك الإلغاء قبل ذلك من موقع حسبة.",
+  "@deleteAccountOwnerBody": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteAccountStoreLabel": "اكتب اسم المتجر «{store}» للتأكيد",
+  "@deleteAccountStoreLabel": {
+    "placeholders": {
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountPasswordRequired": "اكتب كلمة المرور لتأكيد الحذف.",
+  "deleteAccountStoreRequired": "اكتب اسم المتجر لتأكيد الحذف.",
+  "deleteAccountPending": "في الجوال مبيعات أو دفعات لم تُرسل بعد. أرسلها من «المزامنة» أولاً، ثم احذف الحساب.",
+  "deleteAccountStaffConfirm": "حذف حسابي نهائياً",
+  "deleteAccountOwnerConfirm": "إغلاق المتجر وحذفه",
+  "deleteAccountDoneTitle": "تم استلام طلب الحذف",
+  "deleteAccountDone": "حُذف حسابك وسُجّل خروجك.",
+  "deleteAccountScheduled": "سيُحذف المتجر وكل بياناته في {date}. سُجّل خروج الجميع، ويمكنك الإلغاء قبل ذلك من موقع حسبة.",
+  "@deleteAccountScheduled": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountAlreadyScheduled": "طلبت حذف هذا المتجر من قبل. يمكنك الإلغاء من موقع حسبة قبل الموعد.",
+  "deleteAccountOk": "حسناً"
 }

@@ -15,3 +15,6 @@ key.properties
 
 # Gradle output when Android is built directly (flutter builds to mobile/build/).
 /build/
+
+# Kotlin compiler caches (AGP 9 / Kotlin 2.x).
+/.kotlin/

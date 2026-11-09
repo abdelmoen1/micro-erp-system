@@ -378,9 +378,16 @@ test("settings: the owner saves the store details and changes the password", asy
     return r.fulfill({ json: { message: "ok" } });
   });
 
+  await page.route("**/api/v1/me/deletion", (r) =>
+    r.fulfill({ json: { data: { type: "store", store_name: store.name, grace_days: 14, request: null } } }),
+  );
+
   await page.goto("/settings");
   await expect(page.getByText(/تجربة مجانية حتى/)).toBeVisible();
-  await expect(page.getByRole("link", { name: "تواصل مع إدارة حسبة عبر واتساب" })).toHaveAttribute("href", /wa\.me\/970599000000/);
+  // The owner renews from here (plans load on demand); account deletion is in the same page.
+  await expect(page.getByRole("button", { name: "تجديد أو شراء باقة" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "حذف الحساب" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "حذف الحساب وإغلاق المتجر" })).toBeVisible();
 
   await page.getByLabel(/اسم المحل/).fill("بقالة الأمانة الجديدة");
   await page.getByLabel(/هاتف المحل/).fill("٠٥٩٩١٢٣٤٥٦");

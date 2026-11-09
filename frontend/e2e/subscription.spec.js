@@ -27,6 +27,24 @@ test("an expired store signs in, lands on the renewal screen, and returns once t
   await page.route("**/api/v1/login", (r) => r.fulfill({ json: { message: "ok", user: expiredUser, token: "5|tok" } }));
   await page.route("**/api/v1/subscription", (r) => r.fulfill({ json: { data: summary(active ? { state: "active", has_access: true } : {}) } }));
   await page.route("**/api/v1/dashboard**", (r) => r.fulfill({ status: 200, json: { data: null } }));
+  await page.route("**/api/v1/subscription/plans", (r) =>
+    r.fulfill({
+      json: {
+        data: [{ id: 1, code: "monthly", name: "شهري", description: null, duration_months: 1, price: "50.00", currency: "ILS", features: [], limits: {} }],
+        meta: { online_providers: {}, whatsapp_available: true, features: {} },
+      },
+    }),
+  );
+  let ordered = null;
+  await page.route("**/api/v1/subscription/orders", (r) => {
+    if (r.request().method() === "GET") return r.fulfill({ json: { data: [] } });
+    ordered = r.request().postDataJSON();
+    const text = encodeURIComponent("المتجر: بقالة الأمل\nرقم الطلب: HSB-ABCDEFGH23");
+    return r.fulfill({
+      status: 201,
+      json: { data: { id: 7, reference: "HSB-ABCDEFGH23", status: "pending_contact", amount: "50.00", currency: "ILS", whatsapp_url: `https://wa.me/970599000000?text=${text}` } },
+    });
+  });
 
   await page.goto("/login");
   await page.getByLabel("رقم الجوال").fill("0599123456");
@@ -38,11 +56,20 @@ test("an expired store signs in, lands on the renewal screen, and returns once t
   await expect(page.getByText("بقالة الأمل")).toBeVisible();
   await expect(page.getByText("بياناتك محفوظة كما هي")).toBeVisible();
 
-  const whatsapp = page.getByRole("link", { name: "تواصل معنا عبر واتساب" });
-  const href = await whatsapp.getAttribute("href");
-  expect(href).toMatch(/^https:\/\/wa\.me\/970599000000\?text=/);
-  expect(decodeURIComponent(href)).toContain("بقالة الأمل");
-  expect(await whatsapp.getAttribute("target")).toBe("_blank");
+  // The owner buys on the website: server plans, then a WhatsApp request with a reference.
+  // Nothing is activated by the request itself.
+  await expect(page.getByText("50.00")).toBeVisible();
+  await expect(page.getByRole("button", { name: /ادفع إلكترونياً/ })).toHaveCount(0);
+  await page.evaluate(() => {
+    window.__opened = [];
+    window.open = (u) => window.__opened.push(u);
+  });
+  await page.getByRole("button", { name: /لا تملك بطاقة دفع؟ تواصل معنا عبر واتساب/ }).click();
+  await expect(page.getByText("HSB-ABCDEFGH23")).toBeVisible();
+  expect(ordered).toEqual({ plan_id: 1, channel: "manual_whatsapp" });
+  const opened = await page.evaluate(() => window.__opened[0]);
+  expect(opened).toMatch(/^https:\/\/wa\.me\/970599000000\?text=/);
+  expect(decodeURIComponent(opened)).toContain("HSB-ABCDEFGH23");
 
   // Not yet activated: says so and stays.
   await page.getByRole("button", { name: "تحقق من جديد" }).click();
@@ -56,10 +83,11 @@ test("an expired store signs in, lands on the renewal screen, and returns once t
   await expect(page).toHaveURL(/\/dashboard$/);
 });
 
-test("a 403 SUBSCRIPTION_EXPIRED on any store page goes to the renewal screen; no WhatsApp button without a number", async ({ page }) => {
+test("a 403 SUBSCRIPTION_EXPIRED on any store page goes to the renewal screen; staff get no WhatsApp button without a number", async ({ page }) => {
+  // A manager (not the owner, who buys): the support path without a number.
   await page.addInitScript((u) => {
     localStorage.setItem("token", "5|tok");
-    localStorage.setItem("user", JSON.stringify({ ...u, store: { ...u.store, has_access: true } }));
+    localStorage.setItem("user", JSON.stringify({ ...u, role: "manager", store: { ...u.store, has_access: true } }));
   }, expiredUser);
   await page.route("**/api/v1/customers**", (r) =>
     r.fulfill({ status: 403, json: { message: "انتهت الفترة التجريبية لمتجرك.", code: "SUBSCRIPTION_EXPIRED", errors: {}, details: summary({ support_whatsapp: null }) } }),

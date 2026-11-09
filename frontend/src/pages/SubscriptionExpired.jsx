@@ -7,6 +7,7 @@ import Icon from "../components/Icon";
 import { dateOnly } from "../lib/format";
 import { session } from "../services/apiClient";
 import { logout, useSubscription } from "../services/dashboard";
+import PlanPicker from "../components/PlanPicker";
 
 /** wa.me link with a prefilled request naming the store and the account. */
 function whatsappLink(number, user) {
@@ -117,7 +118,10 @@ export default function SubscriptionExpired() {
               <span>بياناتك محفوظة كما هي: الزبائن والديون والمبيعات والبضاعة. يعود كل شيء فور تفعيل الاشتراك.</span>
             </div>
 
-            {number ? (
+            {user?.role === "owner" ? (
+              // The owner buys or renews here (website only): a plan, then online payment or a WhatsApp request.
+              <PlanPicker />
+            ) : number ? (
               <a className="btn btn-p" href={whatsappLink(number, user)} target="_blank" rel="noopener noreferrer">
                 تواصل معنا عبر واتساب
               </a>
@@ -128,7 +132,7 @@ export default function SubscriptionExpired() {
                 {user ? <ContactDetails user={user} /> : null}
               </>
             )}
-            <p className="field-hint">بعد الدفع تفعّل إدارة حسبة اشتراكك، ثم اضغط «تحقق من جديد» لتعود إلى متجرك.</p>
+            <p className="field-hint">بعد تأكيد الدفع تفعّل إدارة حسبة اشتراكك، ثم اضغط «تحقق من جديد» لتعود إلى متجرك.</p>
 
             <button type="button" className="btn btn-ghost" onClick={checkAgain} disabled={sub.isFetching} aria-busy={sub.isFetching}>
               {sub.isFetching ? <Spinner /> : null}
@@ -138,6 +142,9 @@ export default function SubscriptionExpired() {
 
           <footer className="signin-foot">
             <span className="m">© 2026 حسبة</span>
+            <Link to="/delete-account" className="quiet-link">
+              حذف الحساب
+            </Link>
             <Link to="/" className="quiet-link">
               الصفحة الرئيسية
             </Link>

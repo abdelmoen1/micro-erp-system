@@ -71,23 +71,103 @@ class Store extends Model
             'subscription_expires_at' => 'datetime',
             'subscription_changed_at' => 'datetime',
             'trial_ends_at' => 'datetime',
+            'trial_started_at' => 'datetime',
+            'expiry_notice_for' => 'datetime',
+            'deletion_scheduled_for' => 'datetime',
             'latitude' => 'float',
             'longitude' => 'float',
         ];
     }
+
+    /** Lifecycle as the clients show it (SUBSCRIPTION_ARCHITECTURE.md). */
+    public const LIFECYCLE_TRIAL = 'trial';
+    public const LIFECYCLE_ACTIVE = 'active';
+    public const LIFECYCLE_EXPIRING = 'expiring';
+    public const LIFECYCLE_EXPIRED = 'expired';
+    public const LIFECYCLE_SUSPENDED = 'suspended';
 
     protected static function booted(): void
     {
         // The trial runs from the registration time itself, for every way a store is created.
         static::creating(function (Store $store) {
             $store->created_at ??= $store->freshTimestamp();
+            $store->trial_started_at ??= $store->created_at;
             $store->trial_ends_at ??= $store->created_at->copy()->addDays(self::trialDays());
         });
     }
 
     public static function trialDays(): int
     {
-        return max(0, (int) config('hisbah.trial_days', 7));
+        return max(0, (int) config('hisbah.trial_days', 14));
+    }
+
+    /** The owner asked to close the store; its data is deleted on deletion_scheduled_for. */
+    public function isClosing(): bool
+    {
+        return $this->deletion_scheduled_for !== null;
+    }
+
+    /** When the current access (paid period or trial) ends; null without access or with an open-ended subscription. */
+    public function accessEndsAt(): ?\Illuminate\Support\Carbon
+    {
+        return match ($this->subscriptionState()) {
+            self::SUBSCRIPTION_ACTIVE => $this->subscription_expires_at,
+            self::SUBSCRIPTION_TRIAL => $this->trial_ends_at,
+            default => null,
+        };
+    }
+
+    /** trial | active | expiring | expired | suspended. */
+    public function lifecycle(): string
+    {
+        if ($this->isSuspended()) {
+            return self::LIFECYCLE_SUSPENDED;
+        }
+        if (!$this->hasAccess()) {
+            return self::LIFECYCLE_EXPIRED;
+        }
+        $ends = $this->accessEndsAt();
+        if ($ends && $ends->lte(now()->addDays(max(0, (int) config('hisbah.expiring_days', 3))))) {
+            return self::LIFECYCLE_EXPIRING;
+        }
+
+        return $this->subscriptionState() === self::SUBSCRIPTION_TRIAL ? self::LIFECYCLE_TRIAL : self::LIFECYCLE_ACTIVE;
+    }
+
+    /**
+     * What the store may use now, decided here only (never by the clients): feature codes and limits.
+     * No access: nothing. Trial, or a paid subscription without a plan (activated before plans
+     * existed or by the admin by hand): every feature, no limits. Otherwise: the plan's.
+     */
+    public function entitlements(): array
+    {
+        if (!$this->hasAccess()) {
+            return ['features' => [], 'limits' => [], 'plan' => null];
+        }
+        $plan = $this->subscriptionState() === self::SUBSCRIPTION_ACTIVE ? $this->plan : null;
+
+        return [
+            'features' => $plan ? $plan->featureCodes() : array_keys(config('hisbah.features', [])),
+            'limits' => array_filter($plan?->limits ?? [], fn($v) => $v !== null),
+            'plan' => $plan ? ['id' => $plan->id, 'code' => $plan->code, 'name' => $plan->name] : null,
+        ];
+    }
+
+    public function hasFeature(string $feature): bool
+    {
+        return in_array($feature, $this->entitlements()['features'], true);
+    }
+
+    public function limit(string $name): ?int
+    {
+        $value = $this->entitlements()['limits'][$name] ?? null;
+
+        return $value === null ? null : (int) $value;
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
     }
 
     public function businessTimezone(): string

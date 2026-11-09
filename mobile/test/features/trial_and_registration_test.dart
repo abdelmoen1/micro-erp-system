@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshop/app.dart';
@@ -238,7 +237,7 @@ void main() {
 
   group('screens', () {
     late List<Uri> launched;
-    var launchResult = true;
+    const launchResult = true;
 
     Future<void> pumpApp(WidgetTester tester) async {
       launched = [];
@@ -354,9 +353,10 @@ void main() {
       expect(focused(tester, 'register.phone'), isTrue);
     });
 
-    testWidgets('an expired store lands on the Arabic renewal screen; WhatsApp opens with the store named', (tester) async {
+    testWidgets('an expired store lands on the Arabic renewal screen: status only, no way to pay (Play consumption-only)', (tester) async {
       disk.values[AuthRepository.tokenKey] = 'tok';
       api.on('GET /me', meOk(hasAccess: false));
+      // Even when the server knows a support number, the app never shows a payment route.
       api.on('GET /subscription', subscriptionOk());
       await pumpApp(tester);
 
@@ -365,38 +365,30 @@ void main() {
       expect(find.textContaining('بياناتك محفوظة'), findsOneWidget);
       expect(Directionality.of(tester.element(find.byType(SubscriptionExpiredScreen))), TextDirection.rtl);
 
-      await tapKey(tester, 'subscription.whatsapp');
-      final uri = launched.single;
-      expect('${uri.scheme}://${uri.host}${uri.path}', 'https://wa.me/970599000000');
-      expect(uri.queryParameters['text'], contains('Demo Shop'));
+      expect(find.byKey(const Key('subscription.whatsapp')), findsNothing);
+      expect(find.textContaining('واتساب'), findsNothing);
+      expect(find.textContaining('الدفع'), findsNothing);
+      expect(find.textContaining('970599000000'), findsNothing);
+      expect(find.byKey(const Key('subscription.howTo')), findsOneWidget);
+      expect(launched, isEmpty);
 
-      // Business screens are unreachable while lapsed.
+      // Business screens are unreachable while lapsed; account deletion is not.
       expect(find.byKey(const Key('subscription.checkAgain')), findsOneWidget);
+      expect(find.byKey(const Key('subscription.deleteAccount')), findsOneWidget);
     });
 
-    testWidgets('no support number: the screen says how to renew without a WhatsApp button', (tester) async {
+    testWidgets('account deletion opens from the renewal screen and needs the password', (tester) async {
       disk.values[AuthRepository.tokenKey] = 'tok';
       api.on('GET /me', meOk(hasAccess: false));
-      api.on('GET /subscription', subscriptionOk(supportWhatsapp: null));
+      api.on('GET /subscription', subscriptionOk());
+      api.on('GET /me/deletion', const FakeResponse(200, {'data': {'type': 'staff', 'store_name': 'Demo Shop', 'grace_days': 14, 'request': null}}));
       await pumpApp(tester);
 
-      expect(find.byKey(const Key('subscription.whatsapp')), findsNothing);
-      expect(find.byKey(const Key('subscription.noNumber')), findsOneWidget);
-      expect(find.byKey(const Key('subscription.howTo')), findsOneWidget);
-
-      // Never a dead end: the store and the number to quote, copied with one tap.
-      String? copied;
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
-        if (call.method == 'Clipboard.setData') copied = (call.arguments as Map)['text'] as String;
-        return null;
-      });
-      addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
-      expect(find.text('المتجر: Demo Shop\nالجوال: 0599000001'), findsOneWidget);
-      await tester.ensureVisible(find.byKey(const Key('subscription.copy')));
-      await tester.tap(find.byKey(const Key('subscription.copy')));
-      await tester.pump();
-      expect(copied, 'المتجر: Demo Shop\nالجوال: 0599000001');
-      expect(find.text('نُسخت البيانات.'), findsOneWidget);
+      await tapKey(tester, 'subscription.deleteAccount');
+      expect(find.byKey(const Key('delete.explain')), findsOneWidget);
+      expect(find.textContaining('حساب محذوف'), findsOneWidget);
+      await tapKey(tester, 'delete.confirm');
+      expect(find.text('اكتب كلمة المرور لتأكيد الحذف.'), findsOneWidget);
     });
 
     testWidgets('check again after the admin activates the subscription returns to the app', (tester) async {
@@ -413,16 +405,5 @@ void main() {
       expect(find.byType(SubscriptionExpiredScreen), findsNothing);
     });
 
-    testWidgets('a WhatsApp app that cannot open shows the number to copy', (tester) async {
-      launchResult = false;
-      addTearDown(() => launchResult = true);
-      disk.values[AuthRepository.tokenKey] = 'tok';
-      api.on('GET /me', meOk(hasAccess: false));
-      api.on('GET /subscription', subscriptionOk());
-      await pumpApp(tester);
-
-      await tapKey(tester, 'subscription.whatsapp');
-      expect(find.textContaining('970599000000'), findsOneWidget);
-    });
   });
 }

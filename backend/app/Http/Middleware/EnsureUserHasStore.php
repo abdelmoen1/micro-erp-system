@@ -24,6 +24,15 @@ class EnsureUserHasStore
             throw AuthService::storeSuspended();
         }
 
+        // The owner asked to delete the store: until the date, only the owner may sign in, see the
+        // request and cancel it. Everything else is closed.
+        if ($user->store?->isClosing()) {
+            $allowed = $request->is('api/v1/logout', 'api/v1/me', 'api/v1/me/deletion', 'api/v1/subscription');
+            if (!$allowed || !$user->hasRole(\App\Enums\UserRole::OWNER)) {
+                throw AuthService::storeClosing($user->store);
+            }
+        }
+
         return $next($request);
     }
 }

@@ -17,6 +17,15 @@ class ProductService
 {
     public const DUPLICATE_BARCODE = 'الباركود مستخدم لمنتج آخر في متجرك';
 
+    /** Plan limit `max_products`: active products the store may have (create, import). */
+    public static function ensureProductRoom(\App\Models\Store $store, int $adding = 1): void
+    {
+        $max = $store->limit('max_products');
+        if ($max !== null && $store->products()->where('status', Product::STATUS_ACTIVE)->count() + $adding > $max) {
+            throw \App\Support\SubscriptionAccess::limitReached('max_products', $max);
+        }
+    }
+
     /**
      * US-0401 AC1: the product and its `opening` stock movement are created together, so
      * current_stock = Σ movements holds from the first row. A global barcode links the product to
@@ -24,6 +33,8 @@ class ProductService
      */
     public function create(User $user, array $data): Product
     {
+        self::ensureProductRoom($user->store);
+
         return $this->guardDuplicate(fn() => DB::transaction(function () use ($user, $data) {
             $openingStock = Quantity::of($data['current_stock'] ?? 0);
             $catalog = $this->catalogFor($data['barcode'] ?? null, $data, $user);

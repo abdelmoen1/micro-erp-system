@@ -15,4 +15,8 @@ abstract final class Env {
 
   /// The web back office: staff invitations open its /invite page to create the account.
   static const webBaseUrl = String.fromEnvironment('WEB_BASE_URL', defaultValue: 'https://hisbah-web.vercel.app');
+
+  /// Public privacy-policy page (HTTPS). Empty until the owner publishes the final policy: the
+  /// «سياسة الخصوصية» row in More stays hidden rather than pointing at a missing page.
+  static const privacyPolicyUrl = String.fromEnvironment('PRIVACY_POLICY_URL');
 }
