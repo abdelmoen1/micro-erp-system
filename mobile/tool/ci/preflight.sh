@@ -25,6 +25,13 @@ check_secret KEY_PASSWORD ANDROID_KEY_PASSWORD
 
 case $mode in
   release)
+    # Each Shorebird release version can be published once, and Android needs a higher versionCode.
+    pubspec_version=$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | tr -d '[:space:]')
+    if [[ ! $pubspec_version =~ ^[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+$ ]]; then
+      err "pubspec.yaml version '$pubspec_version' must look like 1.5.0+8 (name+build number)."
+    elif git ls-remote --exit-code --tags origin "refs/tags/android-${pubspec_version//+/_}" >/dev/null 2>&1; then
+      err "Version $pubspec_version was already released (tag android-${pubspec_version//+/_}). Bump version: in mobile/pubspec.yaml (the +build number must go up)."
+    fi
     case ${APK_DISTRIBUTION:-} in
       encrypted)
         if ! grep -q 'BEGIN PUBLIC KEY' tool/release/apk-delivery-public.pem 2>/dev/null; then

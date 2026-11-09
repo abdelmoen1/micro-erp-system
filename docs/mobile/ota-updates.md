@@ -137,8 +137,12 @@ owner account created by `backend/tool/deploy/register_owner.ps1`.
 | Flutter version, `version:` in pubspec | **Full APK** |
 | A Material icon (`Icons.*`) the release does not already use | **Full APK** for 1.0.0+1 only (see Icons below) |
 
-The patch workflow stops with "Full release required" for pushes touching `android/`, `assets/`, `shorebird.yaml`
-or the patch public key (`tool/ci/check_patchable.sh`), and when `version:` differs from
+The patch workflow's first job (`gate`, `tool/ci/check_patchable.sh`) compares the push with the commit of the
+installed release, the tag `android-<MOBILE_OTA_RELEASE_VERSION>` (e.g. `android-1.4.0_7`), not with the previous
+push. If `android/`, `assets/`, `shorebird.yaml` or the patch public key changed since that release, nothing is
+built or published: a push ends green with a warning and a "Full release required" summary (a manual run fails),
+and every later push stays blocked the same way until the new release is installed and
+`MOBILE_OTA_RELEASE_VERSION` points at it. The patch also stops when `version:` differs from
 `MOBILE_OTA_RELEASE_VERSION`. Shorebird's own native/asset checks then cover the rest. The workflows never
 pass `--allow-native-diffs` or `--allow-asset-diffs`.
 
@@ -173,8 +177,10 @@ With the baseline installed and `MOBILE_OTA_RELEASE_VERSION` set to its version:
 ### 3.4 Full release
 
 1. Bump `version:` in `mobile/pubspec.yaml` (e.g. `1.0.0+1` → `1.0.1+2`; the `+build` number must go up).
-   Each Shorebird release version can be published once.
-2. Merge to `main`, run **Mobile release**, install over the existing app (same key: data kept). A standard
+   Each Shorebird release version can be published once; the preflight refuses a version whose tag exists.
+2. Merge to `main`, run **Mobile release**, install over the existing app (same key: data kept). The workflow
+   pushes the tag `android-<version>` (the patch baseline) and keeps the signed AAB as a workflow artifact for
+   Google Play (uploading it to Play is a separate, manual step). A standard
    Android phone always asks the user to confirm an APK install; nothing installs silently.
 3. Set `MOBILE_OTA_RELEASE_VERSION` to the new version once it is on the phone. Until then patches fail fast.
 
