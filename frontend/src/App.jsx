@@ -42,6 +42,9 @@ const AdminSubscriptions = lazy(() => import("./pages/AdminSubscriptions"));
 const AdminDeletions = lazy(() => import("./pages/AdminDeletions"));
 // Public: account deletion without the app (Google Play account-deletion requirement).
 const DeleteAccount = lazy(() => import("./pages/DeleteAccount"));
+// Public legal pages (Google Play: privacy policy linked in the app and the store listing).
+const PrivacyPage = lazy(() => import("./pages/Legal").then((m) => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import("./pages/Legal").then((m) => ({ default: m.TermsPage })));
 const AdminCatalog = lazy(() => import("./pages/AdminProducts").then((m) => ({ default: m.AdminCatalog })));
 
 export default function App() {
@@ -55,6 +58,8 @@ export default function App() {
           <Route path="/forgot" element={<Forgot />} />
           <Route path="/invite" element={<AcceptInvite />} />
           <Route path="/delete-account" element={<DeleteAccount />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           {/* Old links (and the mobile app) still point at /register. */}
           <Route path="/register" element={<Navigate to="/join" replace />} />
           <Route element={<ProtectedRoute />}>

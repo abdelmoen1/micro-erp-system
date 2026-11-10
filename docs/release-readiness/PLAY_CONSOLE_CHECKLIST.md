@@ -38,13 +38,13 @@ Legend: ☐ to do · ⚠ blocked until a decision or a code change
 | Category | Business |
 | Contact e-mail (public) | ☐ [[owner to provide]] |
 | Website (optional) | ☐ [[public URL]] |
-| Privacy policy URL | ⚠ public HTTPS page — not published yet (`PRIVACY_POLICY_DRAFT.md`) |
+| Privacy policy URL | `https://hisbah-web.vercel.app/privacy` — page built (2026-11-10); ☐ fill `frontend/src/content/legal.js`, deploy the website, then enter the URL |
 
 ## 2. App content declarations
 
 | Declaration | Suggested answer | Notes |
 |---|---|---|
-| Privacy policy | URL of the published policy | ⚠ also link it **inside the app** (More tab + sign-up screen) — not built yet |
+| Privacy policy | `https://hisbah-web.vercel.app/privacy` | in-app link built: «المزيد» → «سياسة الخصوصية» (default URL from 1.5.0+8 on) |
 | App access | "All or some functionality is restricted" → give reviewer credentials | ☐ create a **dedicated demo store** on production: owner phone + password, a few products/customers, **active subscription well past review** (a lapsed trial shows only the renewal screen). SMS codes are off, so no OTP step. Write the steps: open app → «تسجيل الدخول» → phone + password. Keep it usable for every future review |
 | Ads | **No ads** (no ad SDK in `pubspec.yaml` / merged manifest) | |
 | Content rating (IARC) | Category *Utility, Productivity, Communication or Other*; no violence, sex, drugs, gambling; **no user-to-user interaction** (support tickets go to Hisbah only); **does not share the user's location**; digital purchases: depends on §7 | Expected: Everyone / PEGI 3 — the questionnaire decides |
@@ -84,7 +84,7 @@ behalf and are **not** "sharing" under Play's definition — keep that true by c
 
 ## 4. Store listing
 
-- ☐ Short description (≤ 80 chars) and full description (≤ 4000) — accurate; no claims the app does
+- ☐ Short description (≤ 80 chars) and full description (≤ 4000) — drafts in **STORE_LISTING_DRAFT.md** (ar + en); accurate; no claims the app does
   not deliver (no "free forever" while a paid subscription follows the trial; disclose the
   **14-day trial and that a store subscription is required afterwards**). Do **not** put prices,
   payment instructions, WhatsApp-to-pay or links to the purchase page in the Play listing
@@ -96,7 +96,7 @@ behalf and are **not** "sharing" under Play's definition — keep that true by c
 
 ## 5. Release
 
-- ☐ Upload the **AAB** built by `mobile-release.yml` (Shorebird) — never the local check build from
+- ☐ Upload the **AAB** from the `mobile-release.yml` run (workflow artifact `hisbah-android-aab-<version>`, kept 30 days; download it soon and keep it with its `.sha256`) — never the local check build from
   this audit (it was signed with a throwaway key).
 - ☐ Version: `pubspec.yaml` `version: X.Y.Z+N`; `N` (versionCode) must be higher than every APK
   already installed from the website (latest known: 1.4.0+7 → versionCode 7).

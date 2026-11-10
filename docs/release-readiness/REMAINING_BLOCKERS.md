@@ -15,8 +15,8 @@ uploaded or submitted.
 
 | ID | Blocker | Owner of the next step |
 |---|---|---|
-| P-1 | **Privacy policy not published** and not linked in the app (draft ready; in-app link appears only when built with `PRIVACY_POLICY_URL`) | owner: LEGAL_INFORMATION_REQUIRED.md, legal review, publish |
-| P-2 | **Terms not published** (draft ready) | owner |
+| P-1 | Privacy policy: `/privacy` page and in-app link **built** (2026-11-10); owner details still missing (`frontend/src/content/legal.js`) | owner: LEGAL_INFORMATION_REQUIRED.md, legal review, deploy website |
+| P-2 | Terms: `/terms` page **built**; same owner details missing | owner |
 | P-3 | Changes not deployed: production lacks the new tables, `/delete-account` page and admin pages; the Play AAB must come from a full Shorebird release built after merge | owner: OWNER_ACTIONS.md §B |
 | P-4 | **Scheduler** not running on Render free plan → scheduled store closures never execute | owner: add a cron |
 | P-5 | Play Console: account type/closed test (12 × 14 days if personal), app signing choice, demo account, Data safety, IARC, target audience, store listing | owner |
