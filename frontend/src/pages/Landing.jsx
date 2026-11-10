@@ -530,6 +530,9 @@ export default function Landing() {
                   <Link to="/join">إنشاء متجر</Link>
                 </>
               )}
+              <Link to="/privacy">سياسة الخصوصية</Link>
+              <Link to="/terms">شروط الاستخدام</Link>
+              <Link to="/delete-account">حذف الحساب</Link>
             </nav>
           </div>
           <div className="lp-foot-bottom">

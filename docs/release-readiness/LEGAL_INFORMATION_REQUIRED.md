@@ -2,13 +2,17 @@
 
 Nothing below was invented. Each item blocks publishing the Privacy Policy and/or the Terms.
 
+**Where to put it (2026-11-10):** the public pages `/privacy` and `/terms` are built and read every owner
+value from one file, `frontend/src/content/legal.js` (`null` shows «[بانتظار صاحب الخدمة]» on the page).
+Fill it, have the text reviewed, then deploy the website. Items 1–4, 6, 7, 11, 12 and 14 map to its keys.
+
 | # | Needed | Used in |
 |---|---|---|
 | 1 | Legal name of the operator (person or company) and registration number if any | Privacy §header, Terms §header, Play developer name consistency |
 | 2 | Postal address | Privacy, Terms, Play (required for paid/merchant accounts) |
 | 3 | Privacy contact e-mail (monitored) | Privacy §header/§7/§9, Play Console |
 | 4 | Support contact: e-mail and/or WhatsApp Business number, hours | Terms §13, Play store listing, `WHATSAPP_BUSINESS_NUMBER` |
-| 5 | Public HTTPS URLs: privacy policy, terms, account deletion (`<site>/delete-account`), website | app build (`PRIVACY_POLICY_URL`), Play Console |
+| 5 | Public HTTPS URLs — built: `https://hisbah-web.vercel.app/privacy`, `/terms`, `/delete-account`. Only needed if you move to your own domain | the app links to `/privacy` by default (`WEB_BASE_URL`), Play Console |
 | 6 | Minimum age / target audience (proposed 18+, business users) | Privacy §1, Play target audience |
 | 7 | Retention periods + legal basis: Hisbah payment records, trial hash, deletion records, admin access logs, backups, data of stores that never renew | Privacy §5, ACCOUNT_DELETION_PLAN, Terms §6 |
 | 8 | Controller/processor roles for shops' customer and supplier data | Privacy §1 |

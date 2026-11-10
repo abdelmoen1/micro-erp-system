@@ -548,3 +548,11 @@ tbody tr:hover { background: #f7f9f9; }
   .print-note { margin: 0; }
   .print-foot { text-align: center; margin-top: 8pt; padding-top: 6pt; border-top: 1px dashed #000; }
 }
+
+/* Public legal pages (/privacy, /terms) */
+.legal-card { max-width: 860px; }
+.legal-nav { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.legal-body { gap: 10px; line-height: 1.85; }
+.legal-body h2 { font-size: 17px; margin: 18px 0 2px; color: var(--deep); }
+.legal-body ul { padding-inline-start: 20px; display: grid; gap: 6px; }
+.legal-missing { background: var(--warn-bg, #fff4d6); color: var(--warn-fg, #7a4b00); padding: 0 4px; border-radius: 4px; }
