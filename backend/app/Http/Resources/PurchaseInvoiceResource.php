@@ -31,6 +31,10 @@ class PurchaseInvoiceResource extends JsonResource
                 'unit' => $item->product?->unit ?? Quantity::UNIT_PIECE,
                 'quantity' => Quantity::format($item->quantity, $item->product?->unit),
                 'returned_quantity' => Quantity::format($item->returned_quantity, $item->product?->unit),
+                'remaining_quantity' => Quantity::format(
+                    Quantity::sub($item->quantity, $item->returned_quantity),
+                    $item->product?->unit,
+                ),
                 'cartons' => $item->cartons,
                 'pack_size' => $item->pack_size,
                 'loose_pieces' => (int) $item->loose_pieces,

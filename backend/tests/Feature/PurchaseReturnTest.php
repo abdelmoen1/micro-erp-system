@@ -204,4 +204,79 @@ class PurchaseReturnTest extends TestCase
         $this->assertDatabaseCount('purchase_returns', 1);
         $this->assertSame('72.000', Product::where('name', 'كولا علبة')->sole()->current_stock);
     }
+
+    public function test_a_full_return_reports_no_remaining_quantity(): void
+    {
+        $invoice = $this->delivery();
+        $item = $invoice->items[0];
+
+        $this->sendBack($invoice, [['purchase_item_id' => $item->id, 'quantity' => 96]])
+            ->assertCreated()
+            ->assertJsonPath('data.items.0.quantity', '96');
+
+        $this->actingAs($this->owner, 'sanctum')
+            ->getJson("/api/v1/purchases/{$invoice->id}")
+            ->assertOk()
+            ->assertJsonPath('data.items.0.returned_quantity', '96')
+            ->assertJsonPath('data.items.0.remaining_quantity', '0');
+
+        $this->assertSame('0.000', Product::where('name', 'كولا علبة')->sole()->current_stock);
+    }
+
+    public function test_a_mixed_full_and_partial_return_tracks_each_line_and_its_remaining_quantity(): void
+    {
+        $invoice = $this->delivery();
+        [$cola, $almonds] = $invoice->items;
+
+        $this->sendBack($invoice, [
+            ['purchase_item_id' => $cola->id, 'quantity' => 96],
+            ['purchase_item_id' => $almonds->id, 'quantity' => '2.5'],
+        ], 'إرجاع مجموعة أصناف')->assertCreated();
+
+        $this->actingAs($this->owner, 'sanctum')
+            ->getJson("/api/v1/purchases/{$invoice->id}")
+            ->assertOk()
+            ->assertJsonPath('data.items.0.remaining_quantity', '0')
+            ->assertJsonPath('data.items.1.returned_quantity', '2.500')
+            ->assertJsonPath('data.items.1.remaining_quantity', '7.500');
+
+        $this->assertSame('0.000', Product::where('name', 'كولا علبة')->sole()->current_stock);
+        $this->assertSame('7.500', Product::where('name', 'لوز نيء')->sole()->current_stock);
+    }
+
+    public function test_an_item_from_another_purchase_invoice_is_rejected_without_stock_or_return_changes(): void
+    {
+        $first = $this->delivery();
+        $second = $this->delivery();
+        $otherItem = $second->items[0];
+
+        $this->sendBack($first, [['purchase_item_id' => $otherItem->id, 'quantity' => 24]])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('items.0.purchase_item_id');
+
+        $this->assertDatabaseCount('purchase_returns', 0);
+        $this->assertDatabaseMissing('stock_movements', ['type' => 'purchase_return']);
+        $this->assertSame('192.000', Product::where('name', 'كولا علبة')->sole()->current_stock);
+    }
+
+    public function test_an_insufficient_stock_failure_rolls_back_the_whole_return(): void
+    {
+        $invoice = $this->delivery();
+        $cola = $invoice->items[0];
+        $almonds = $invoice->items[1];
+
+        Product::find($almonds->product_id)->update(['current_stock' => '1.000']);
+
+        $this->sendBack($invoice, [
+            ['purchase_item_id' => $cola->id, 'quantity' => 24],
+            ['purchase_item_id' => $almonds->id, 'quantity' => '2'],
+        ])->assertStatus(422)->assertJsonPath('code', 'INSUFFICIENT_STOCK');
+
+        $this->assertDatabaseCount('purchase_returns', 0);
+        $this->assertDatabaseCount('purchase_return_items', 0);
+        $this->assertDatabaseMissing('stock_movements', ['type' => 'purchase_return']);
+        $this->assertSame('96.000', Product::find($cola->product_id)->current_stock);
+        $this->assertSame('1.000', Product::find($almonds->product_id)->current_stock);
+        $this->assertSame('0.000', $cola->fresh()->returned_quantity);
+    }
 }

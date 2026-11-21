@@ -278,6 +278,7 @@ class PurchaseLine {
     required this.unit,
     required this.quantity,
     required this.returned,
+    this.remaining,
     required this.buyPrice,
     required this.total,
     this.cartons,
@@ -290,6 +291,7 @@ class PurchaseLine {
     unit: ProductUnit.fromApi(json['unit']),
     quantity: Quantity.parse(json['quantity'] ?? '0'),
     returned: Quantity.parse(json['returned_quantity'] ?? '0'),
+    remaining: json['remaining_quantity'] == null ? null : Quantity.parse(json['remaining_quantity']),
     buyPrice: Money.parse(json['buy_price'] as String? ?? '0'),
     total: Money.parse(json['line_total'] as String? ?? '0'),
     cartons: (json['cartons'] as num?)?.toInt(),
@@ -301,6 +303,7 @@ class PurchaseLine {
   final ProductUnit unit;
   final Quantity quantity;
   final Quantity returned;
+  final Quantity? remaining;
 
   /// Per carton, or per kilo for a weighed product.
   final Money buyPrice;
@@ -310,7 +313,7 @@ class PurchaseLine {
   /// Pieces of an opened carton that came with the whole ones.
   final int loosePieces;
 
-  Quantity get returnable => quantity - returned;
+  Quantity get returnable => remaining ?? quantity - returned;
 
   /// This line's share for the preview, half-up; the server's figure is the final one.
   Money valueOf(Quantity part) => Money.cents((total.cents * part.milli * 2 + quantity.milli) ~/ (quantity.milli * 2));
