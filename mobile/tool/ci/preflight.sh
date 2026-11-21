@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Usage: preflight.sh release|patch   (run from mobile/)
 # CI preflight for Shorebird. Fails early, naming what is missing; never prints secret values.
+set +x
 set -euo pipefail
 
 mode=${1:?usage: preflight.sh release|patch}

@@ -75,6 +75,7 @@ jobs:
     env:
       SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
       API_BASE_URL: ${{ vars.MOBILE_API_BASE_URL }}
+      APK_DISTRIBUTION: ${{ vars.MOBILE_APK_DISTRIBUTION }}
       KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -90,6 +91,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Verify production signing identity
+        run: bash tool/ci/verify_signing_key.sh
 
       - uses: shorebirdtech/setup-shorebird@v1
         with:

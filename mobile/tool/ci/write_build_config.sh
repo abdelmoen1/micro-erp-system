@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Writes the release signing config and env/production.json on the CI runner (run from mobile/).
 # All outputs are git-ignored or outside the checkout, and removed at the end of the job.
+set +x
 set -euo pipefail
 
 umask 077

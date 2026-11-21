@@ -81,11 +81,19 @@ Automatic update checks stay on (no `auto_update: false`).
 | `SHOREBIRD_PATCH_PRIVATE_KEY` | secret | `setup_signing.ps1` |
 | `SHOREBIRD_TOKEN` | secret | `set_shorebird_token.ps1` (2.2) |
 | `MOBILE_API_BASE_URL` | variable | `https://hisbah-api-alur.onrender.com/api/v1` |
+| `MOBILE_APK_DISTRIBUTION` | variable | `artifact` for the signed APK attached to the public stable release |
 | `MOBILE_OTA_ENABLED` | variable | `false` until the device acceptance test passes (3.3) |
 | `MOBILE_OTA_RELEASE_VERSION` | variable | the release version installed and verified on the phone |
 
 Both workflows run in the `mobile-production` environment. Recommended: Settings → Environments →
 `mobile-production` → deployment branches: `main` only.
+
+The release job reads `MOBILE_APK_DISTRIBUTION` from GitHub Actions **Variables** (`vars`), not Secrets;
+set it to `artifact` for the public APK release. Before Shorebird starts, the job opens the configured
+Android keystore with its alias and both passwords, then requires certificate SHA-256
+`C91F2920A374ABF73902A327125FE346BA50916390C0837DB080FB2059A6308B`. A missing, invalid, or mismatching key
+fails the job before either Android artifact is built. Secret values and temporary signing files are never
+printed; the temporary files are removed by the verification script.
 
 ### 2.4 How the APK leaves CI
 
@@ -100,8 +108,8 @@ No delivery mode puts signing keys or credentials anywhere downloadable; the APK
 
 1. Merge the setup into `main` (patches stay off: `MOBILE_OTA_ENABLED` is not `true`).
 2. Actions → **Mobile release (Shorebird, Android)** → Run workflow on `main`. The summary records the release
-   version, application ID, certificate fingerprint and API URL; the build fails if the APK has the wrong
-   application ID or a debug signature.
+   version, application ID, certificate fingerprint and API URL. Signing identity is verified before the
+   build; the APK is also checked for the expected application ID and against a debug signature.
 3. Get the APK onto the phone as in 2.4. Allow the browser / My Files / Drive to install unknown apps when
    Android asks. Play Protect may warn about an unknown developer.
 
