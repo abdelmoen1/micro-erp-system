@@ -40,7 +40,6 @@ Everything lives in `%USERPROFILE%\hisbah-release\`, which only the current Wind
 | `hisbah-upload.jks` | Android release key (alias `upload`, PKCS12, cert `CN=Hisbah Smart Shop`). Every full APK must carry it to install over the previous one | CI keeps working from the GitHub secrets; only if those are lost too: new key, one uninstall/reinstall per phone |
 | `keystore-password.dpapi` | Its random password, encrypted with Windows DPAPI | Same as above |
 | `shorebird-patch-private.pem` | Patch signing: phones only run patches signed with it (public half: `mobile/shorebird-patch-public.pem`) | No more patches for releases carrying the public key; a new full release is needed |
-| `apk-delivery-private.pem` | Opens encrypted APK artifacts (2.4) | Harmless: make a new pair, commit the new public key |
 | `shorebird-api-key.dpapi` | Shorebird Console API key, DPAPI-encrypted, for local `shorebird` commands | Create a new key in the console |
 
 `setup_signing.ps1` creates the key without any input: a random 32-byte password that nobody types or sees, the
@@ -82,7 +81,6 @@ Automatic update checks stay on (no `auto_update: false`).
 | `SHOREBIRD_PATCH_PRIVATE_KEY` | secret | `setup_signing.ps1` |
 | `SHOREBIRD_TOKEN` | secret | `set_shorebird_token.ps1` (2.2) |
 | `MOBILE_API_BASE_URL` | variable | `https://hisbah-api-alur.onrender.com/api/v1` |
-| `MOBILE_APK_DISTRIBUTION` | variable | `draft-release` (2.4) |
 | `MOBILE_OTA_ENABLED` | variable | `false` until the device acceptance test passes (3.3) |
 | `MOBILE_OTA_RELEASE_VERSION` | variable | the release version installed and verified on the phone |
 
@@ -91,20 +89,12 @@ Both workflows run in the `mobile-production` environment. Recommended: Settings
 
 ### 2.4 How the APK leaves CI
 
-The repository is **public**: workflow artifacts can be downloaded by any signed-in GitHub user. The release
-workflow refuses to run until `MOBILE_APK_DISTRIBUTION` is set:
+The repository is **public**. On every merge/push to `main` that changes `mobile/pubspec.yaml`, the
+`Mobile release` workflow builds and publishes a public production GitHub release for the merged commit.
+The release includes the versioned APK, checksum, and fixed `hisbah.apk` asset used by the website.
+Manual workflow dispatch remains available for a new release that is explicitly verified on `main`.
 
-| Mode | APK goes to | Who can use it |
-|---|---|---|
-| `draft-release` (configured) | a **draft** GitHub release `android-<version>` with the APK + checksum | Only accounts with write access (drafts answer 404 to everyone else, checked on this repository). On the phone: github.com → sign in → repository → Releases → the draft → tap the `.apk` |
-| `encrypted` | `hisbah-<version>.apk.enc` (AES-256, random one-time key) + `hisbah-<version>.key.enc` (that key, RSA-OAEP-encrypted to `mobile/tool/release/apk-delivery-public.pem`) + checksum | Only the holder of `%USERPROFILE%\hisbah-release\apk-delivery-private.pem` (never leaves the release PC; no secret in GitHub, no passphrase) |
-| `artifact` | the plain APK + checksum | Any signed-in GitHub user |
-
-No mode puts signing keys or credentials anywhere downloadable; the APK holds only the public API URL.
-Opening an encrypted artifact on the PC (Git Bash, in the unzipped artifact folder):
-`bash mobile/tool/release/decrypt_apk.sh hisbah-<version>.apk.enc` (checks the SHA-256). Then move the APK to
-the phone privately, e.g. Google Drive or an email to yourself, opened on the phone.
-Losing the delivery private key is harmless: generate a new pair and commit the new public key.
+No delivery mode puts signing keys or credentials anywhere downloadable; the APK holds only the public API URL.
 
 ### 2.5 Baseline release and install
 

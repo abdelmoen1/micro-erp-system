@@ -178,7 +178,7 @@ export function PurchaseDetail() {
 
 /** Quantities in pieces or kg, capped at what can still go back; the server's split is final. */
 function ReturnDialog({ purchase, onClose }) {
-  const lines = purchase.items.filter((i) => milliOf(i.quantity) > milliOf(i.returned_quantity));
+  const lines = purchase.items.filter((i) => milliOf(i.remaining_quantity ?? (milliOf(i.quantity) - milliOf(i.returned_quantity))) > 0);
   const [qty, setQty] = useState({});
   const [offShelf, setOffShelf] = useState({});
   const [reason, setReason] = useState("");
@@ -189,7 +189,7 @@ function ReturnDialog({ purchase, onClose }) {
 
   const checked = lines.map((i) => {
     const text = String(qty[i.id] ?? "").trim();
-    const max = milliOf(i.quantity) - milliOf(i.returned_quantity);
+    const max = milliOf(i.remaining_quantity ?? (milliOf(i.quantity) - milliOf(i.returned_quantity)));
     const pattern = i.unit === "kg" ? /^\d{1,7}(\.\d{1,3})?$/ : /^\d{1,7}$/;
     const valid = text === "" || pattern.test(text);
     const m = valid && text ? milliOf(text) : 0;

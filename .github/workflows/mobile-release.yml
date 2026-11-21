@@ -1,10 +1,12 @@
 # Full Android release of the Flutter app through Shorebird (the baseline for OTA patches).
-# Manual only, from main. Needed for the first install and whenever a change cannot ship as a
-# patch (native/Gradle changes, native plugins, packaged assets, Flutter version, signing keys).
+# Automatic on a main push that changes the mobile version, and manually from main.
+# Needed for the first install and whenever a change cannot ship as a patch.
 # Runbook: docs/mobile/ota-updates.md
 name: Mobile release (Shorebird, Android)
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,9 +21,30 @@ env:
   FLUTTER_VERSION: '3.47.7'
 
 jobs:
+  gate:
+    name: Release version changed
+    runs-on: ubuntu-latest
+    outputs:
+      release_needed: ${{ steps.version.outputs.release_needed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Detect a new release version
+        id: version
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "release_needed=true" >> "$GITHUB_OUTPUT"
+          elif git diff HEAD^ HEAD -- mobile/pubspec.yaml | grep -q '^[-+]version:'; then
+            echo "release_needed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_needed=false" >> "$GITHUB_OUTPUT"
+          fi
+
   checks:
     name: Analyze and test
-    if: github.ref == 'refs/heads/main'
+    needs: gate
+    if: github.ref == 'refs/heads/main' && needs.gate.outputs.release_needed == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -39,11 +62,12 @@ jobs:
 
   release:
     name: Shorebird release (AAB + APK)
-    needs: checks
+    needs: [gate, checks]
+    if: always() && github.ref == 'refs/heads/main' && needs.gate.outputs.release_needed == 'true' && needs.checks.result == 'success'
     runs-on: ubuntu-latest
     environment: mobile-production
     permissions:
-      contents: write # draft GitHub release for the APK (MOBILE_APK_DISTRIBUTION=draft-release)
+      contents: write
     defaults:
       run:
         shell: bash
@@ -51,7 +75,6 @@ jobs:
     env:
       SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
       API_BASE_URL: ${{ vars.MOBILE_API_BASE_URL }}
-      APK_DISTRIBUTION: ${{ vars.MOBILE_APK_DISTRIBUTION }}
       KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -85,8 +108,7 @@ jobs:
           args: --artifact apk --public-key-path shorebird-patch-public.pem -- --no-tree-shake-icons --dart-define-from-file=env/production.json
 
       # The patch workflow compares every push with this commit (mobile/tool/ci/check_patchable.sh).
-      # A draft GitHub release does not create its tag, so it is pushed here, right after Shorebird
-      # registered the release.
+      # Push the tag here, immediately after Shorebird registers the release.
       - name: Tag the release commit
         env:
           RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
@@ -125,29 +147,18 @@ jobs:
           bash tool/ci/package_apk.sh build/app/outputs/flutter-apk/app-release.apk "$RUNNER_TEMP/apk-out" "$name"
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
-      # Drafts are visible only to users with write access to the repository.
-      - name: Attach APK to a private draft release
-        if: vars.MOBILE_APK_DISTRIBUTION == 'draft-release'
+      # Main publishes the stable production APK. Feature branches never trigger this workflow.
+      - name: Publish production APK to GitHub Releases
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
           NAME: ${{ steps.package.outputs.name }}
-        # hisbah.apk: the same file under a fixed name, so releases/latest/download/hisbah.apk (the
-        # web download link) always serves the newest published release.
         run: |
           cp "$RUNNER_TEMP/apk-out/$NAME.apk" "$RUNNER_TEMP/apk-out/hisbah.apk"
-          gh release create "android-${RELEASE_VERSION//+/_}" --draft --target "$GITHUB_SHA" \
-            --title "Hisbah Android $RELEASE_VERSION (draft: not public)" \
-            --notes "Shorebird release $RELEASE_VERSION. Install on the phone from this page while signed in to GitHub. Keep it a draft: publishing makes the APK public." \
+          gh release create "android-${RELEASE_VERSION//+/_}" --target "$GITHUB_SHA" --latest \
+            --title "Hisbah Android $RELEASE_VERSION" \
+            --notes "Production Shorebird Android release $RELEASE_VERSION, built from commit $GITHUB_SHA." \
             "$RUNNER_TEMP/apk-out/$NAME.apk" "$RUNNER_TEMP/apk-out/$NAME.apk.sha256" "$RUNNER_TEMP/apk-out/hisbah.apk"
-
-      - uses: actions/upload-artifact@v4
-        if: vars.MOBILE_APK_DISTRIBUTION != 'draft-release'
-        with:
-          name: hisbah-android-${{ steps.release.outputs.release-version }}
-          path: ${{ runner.temp }}/apk-out/
-          retention-days: 7
-          if-no-files-found: error
 
       - name: Summary
         env:
@@ -168,11 +179,7 @@ jobs:
             echo "| Patch signing | on (shorebird-patch-public.pem) |"
             echo "| Release commit tag | \`android-${RELEASE_VERSION//+/_}\` (patch baseline) |"
             echo "| AAB (Google Play) | workflow artifact \`hisbah-android-aab-$RELEASE_VERSION\`, kept 30 days; not uploaded to Play |"
-            if [ "$APK_DISTRIBUTION" = draft-release ]; then
-              echo "| APK download | private draft release \`android-${RELEASE_VERSION//+/_}\` (Releases page, signed in) |"
-            else
-              echo "| APK download | workflow artifact ($APK_DISTRIBUTION), kept 7 days |"
-            fi
+            echo "| APK download | public GitHub release \`android-${RELEASE_VERSION//+/_}\` with fixed asset \`hisbah.apk\` |"
             echo
             echo "After installing and checking this build on the phone: set MOBILE_OTA_RELEASE_VERSION=$RELEASE_VERSION, then MOBILE_OTA_ENABLED=true."
           } >> "$GITHUB_STEP_SUMMARY"
