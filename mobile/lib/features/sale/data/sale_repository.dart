@@ -350,6 +350,36 @@ class SaleRepository {
     }
   }
 
+  /// POST /suspended-invoices: reserve server-side stock and persist the transfer destination.
+  Future<Map<String, dynamic>> suspend({
+    required SaleDraft draft,
+    required int receivingAccountId,
+    required String operationId,
+  }) async {
+    final key = await _keys.keyFor(operationId);
+    final body = <String, Object?>{
+      'customer_id': draft.customerId,
+      'items': draft.cart.toSaleItems(),
+      if (draft.discount.isPositive) 'discount_amount': draft.discount.toApi(),
+      'payment_method': draft.paymentMethod,
+      'receiving_account_id': receivingAccountId,
+      'notes': draft.notes,
+    };
+    try {
+      final answer = await _api.post('/suspended-invoices', body: body, idempotencyKey: key);
+      await _keys.complete(operationId);
+      return answer['data'] as Map<String, dynamic>;
+    } on ApiFailure catch (failure) {
+      if (isFinalAnswer(failure)) await _keys.complete(operationId);
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> receivingAccounts(String provider) async {
+    final body = await _api.get('/receiving-accounts', query: {'provider': provider});
+    return [for (final row in body['data'] as List<dynamic>? ?? const []) Map<String, dynamic>.from(row as Map)];
+  }
+
   /// US-1103 offline sale: committed on the phone in one transaction (the queued request and the
   /// stock and balance it moves), with this checkout's Idempotency-Key as its
   /// `client_transaction_id`. The payload is exactly the online body, so a checkout whose online

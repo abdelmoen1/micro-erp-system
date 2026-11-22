@@ -32,6 +32,8 @@ import '../sale/presentation/sale_widgets.dart' show GroupLabel, LineCard;
 import '../sale/presentation/sales_history_screen.dart';
 import '../products/presentation/products_screen.dart';
 import '../sale/presentation/cart_screen.dart';
+import '../more/presentation/receiving_accounts_screen.dart';
+import '../sale/presentation/suspended_invoices_screen.dart';
 import 'app_shell.dart';
 
 /// Root screen of each tab: header (title, store, connection) and the tab content.
@@ -316,6 +318,19 @@ class _MoreTab extends ConsumerWidget {
               ),
             ],
           ),
+        if (user.role == UserRole.owner || user.role == UserRole.manager)
+          _MoreSection(
+            title: 'حسابات التحويل',
+            tiles: [
+              MoreTile(
+                key: const Key('more.receivingAccounts'),
+                icon: Icons.account_balance_wallet_outlined,
+                title: 'حسابات استقبال الحوالات',
+                subtitle: 'إدارة حسابات المزوّدين لهذا المتجر',
+                onTap: () => pushScreen<void>(context, const ReceivingAccountsScreen()),
+              ),
+            ],
+          ),
         _MoreSection(
           title: t.moreSectionStock,
           tiles: [
@@ -339,6 +354,13 @@ class _MoreTab extends ConsumerWidget {
         _MoreSection(
           title: t.moreSectionSales,
           tiles: [
+            MoreTile(
+              key: const Key('more.suspendedInvoices'),
+              icon: Icons.hourglass_top_rounded,
+              title: 'الفواتير المعلقة',
+              subtitle: 'عرض واستكمال الحوالات المعلّقة',
+              onTap: () => pushScreen<void>(context, const SuspendedInvoicesScreen()),
+            ),
             MoreTile(
               key: const Key('more.sales'),
               icon: Icons.receipt_long_outlined,

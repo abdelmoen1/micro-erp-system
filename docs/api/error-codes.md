@@ -112,6 +112,15 @@ A repeated request with the same key and body returns the **original** status an
 
 Field rules on `POST /sales` come back as `VALIDATION_FAILED` with these `errors` keys: `items.N.product_id` (unknown, other store's or inactive product), `items.N.quantity` (a fraction for a `piece` product, more than 3 decimals, or ≤ 0), `paid_amount` (above the total, more than 2 decimals), `payment_method` (missing while `paid_amount > 0`), `customer_id` (missing while something stays unpaid, D-07), `due_date` (in the past in the store timezone, or sent for a fully paid sale).
 
+### Suspended transfer sales
+
+| HTTP | `code` | Meaning | Client behaviour |
+|---|---|---|---|
+| 409 | `SUSPENDED_INVOICE_NOT_PENDING` | Confirmation was attempted after the suspended invoice changed state | Reconcile server status; refresh the invoice |
+| 409 | `RESERVATION_MISSING` | The active stock reservation no longer exists | Refresh inventory and do not retry stock blindly |
+| 409 | `RESERVATION_PRODUCT_MISSING` | A reserved product no longer belongs to the store or is unavailable | Refresh the invoice and inventory |
+| 409 | `SUSPENDED_INVOICE_NOT_OPEN` | Rejection/cancellation was attempted on a completed or already closed invoice | Refresh server status |
+
 #### Warning flags (successful responses)
 
 A `201` from `POST /sales` carries `flags` (a list of codes) and `warnings` (one object per affected line). Flags never block the sale.

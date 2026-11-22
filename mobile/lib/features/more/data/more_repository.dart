@@ -143,4 +143,31 @@ class MoreRepository {
         '/me/password',
         body: {'current_password': current, 'password': password, 'password_confirmation': confirmation},
       );
+
+  Future<List<Map<String, dynamic>>> receivingAccounts({String? provider, bool includeInactive = false}) async {
+    final query = <String>[
+      if (provider != null) 'provider=$provider',
+      if (includeInactive) 'include_inactive=1',
+    ].join('&');
+    final body = await _api.get('/receiving-accounts${query.isEmpty ? '' : '?$query'}');
+    return [for (final row in body['data'] as List<dynamic>? ?? const []) Map<String, dynamic>.from(row as Map)];
+  }
+
+  Future<void> saveReceivingAccount({int? id, required String provider, required String name, required String identifier, required bool active}) {
+    final body = {'provider': provider, 'account_name': name, 'account_identifier': identifier, 'active': active};
+    return id == null ? _api.post('/receiving-accounts', body: body) : _api.patch('/receiving-accounts/$id', body: body);
+  }
+
+  Future<void> archiveReceivingAccount(int id) => _api.patch('/receiving-accounts/$id', body: {'active': false});
+
+  Future<List<Map<String, dynamic>>> suspendedInvoices(String status) async {
+    final body = await _api.get('/suspended-invoices?status=$status');
+    return [for (final row in body['data'] as List<dynamic>? ?? const []) Map<String, dynamic>.from(row as Map)];
+  }
+
+  Future<void> confirmSuspendedInvoice(int id) =>
+      _api.post('/suspended-invoices/$id/confirm', idempotencyKey: '${id}-${DateTime.now().microsecondsSinceEpoch}');
+
+  Future<void> closeSuspendedInvoice(int id, {required String status, String? reason}) =>
+      _api.post('/suspended-invoices/$id/close', body: {'status': status, 'reason': reason}, idempotencyKey: '${id}-${DateTime.now().microsecondsSinceEpoch}');
 }

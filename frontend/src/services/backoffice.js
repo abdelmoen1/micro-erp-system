@@ -278,3 +278,52 @@ export function useSendTicket() {
 
 /** PATCH /me/password: this browser stays signed in, every other device is signed out. */
 export const useChangePassword = () => useMutation({ mutationFn: (body) => apiSend("PATCH", "/me/password", body) });
+
+export const useReceivingAccounts = (provider, includeInactive = false) =>
+  useQuery({
+    queryKey: ["receivingAccounts", provider ?? "all", includeInactive],
+    queryFn: data(`/receiving-accounts?${qs({ provider, include_inactive: includeInactive ? 1 : 0 })}`),
+  });
+
+export function useSaveReceivingAccount() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }) =>
+      id ? apiSend("PATCH", `/receiving-accounts/${id}`, body) : apiSend("POST", "/receiving-accounts", body),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["receivingAccounts"] }),
+  });
+}
+
+export function useArchiveReceivingAccount() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => apiSend("DELETE", `/receiving-accounts/${id}`),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["receivingAccounts"] }),
+  });
+}
+
+export const useSuspendedInvoices = (status = "pending_transfer") =>
+  useQuery({
+    queryKey: ["suspendedInvoices", status],
+    queryFn: data(`/suspended-invoices?${qs({ status })}`),
+  });
+
+export function useCloseSuspendedInvoice() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }) => apiIdempotent("POST", `/suspended-invoices/${id}/close`, body),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["suspendedInvoices"] }),
+  });
+}
+
+export function useConfirmSuspendedInvoice() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => apiIdempotent("POST", `/suspended-invoices/${id}/confirm`, {}),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["suspendedInvoices"] });
+      client.invalidateQueries({ queryKey: queryKeys.sales.all });
+      client.invalidateQueries({ queryKey: queryKeys.products.all });
+    },
+  });
+}
