@@ -92,6 +92,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.1.0 ndk;28.2.13676358'
+
       - name: Verify production signing identity
         run: bash tool/ci/verify_signing_key.sh
 
@@ -111,17 +115,7 @@ jobs:
           working-directory: mobile
           args: --artifact apk --public-key-path shorebird-patch-public.pem -- --no-tree-shake-icons --dart-define-from-file=env/production.json
 
-      # The patch workflow compares every push with this commit (mobile/tool/ci/check_patchable.sh).
-      # Push the tag here, immediately after Shorebird registers the release.
-      - name: Tag the release commit
-        env:
-          RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
-        run: |
-          tag="android-${RELEASE_VERSION//+/_}"
-          git tag "$tag" "$GITHUB_SHA"
-          git push origin "refs/tags/$tag"
-
-      # The Play upload file. Uploading it to Google Play is a separate, manual step.
+      # Future Play upload, signed with the existing upload key. Play App Signing is not enrolled.
       - name: Keep and verify the AAB
         id: aab
         env:
@@ -156,6 +150,15 @@ jobs:
           name="hisbah-${RELEASE_VERSION//+/_}"
           bash tool/ci/package_apk.sh build/app/outputs/flutter-apk/app-release.apk "$RUNNER_TEMP/apk-out" "$name"
           echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      # The patch workflow compares pushes with this commit; create its tag only after both artifacts pass verification.
+      - name: Tag the release commit
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
+        run: |
+          tag="android-${RELEASE_VERSION//+/_}"
+          git tag "$tag" "$GITHUB_SHA"
+          git push origin "refs/tags/$tag"
 
       # Keep the release private until every verified asset has uploaded successfully.
       - name: Publish production Android release
@@ -198,7 +201,7 @@ jobs:
             echo "| API base URL | \`$API_BASE_URL\` |"
             echo "| Patch signing | on (shorebird-patch-public.pem) |"
             echo "| Release commit tag | \`android-${RELEASE_VERSION//+/_}\` (patch baseline) |"
-            echo "| AAB (Google Play) | public release asset and workflow artifact \`hisbah-android-aab-$RELEASE_VERSION\`, kept 30 days; not uploaded to Play |"
+            echo "| AAB (future Google Play upload) | public release asset and workflow artifact \`hisbah-android-aab-$RELEASE_VERSION\`, kept 30 days; signed with the existing D4 upload key; not uploaded to Play (no Play App Signing certificate exists yet) |"
             echo "| APK download | public GitHub release \`android-${RELEASE_VERSION//+/_}\` with fixed asset \`hisbah.apk\` and checksum |"
             echo
             echo "After installing and checking this build on the phone: set MOBILE_OTA_RELEASE_VERSION=$RELEASE_VERSION, then MOBILE_OTA_ENABLED=true."

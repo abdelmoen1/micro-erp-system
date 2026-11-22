@@ -105,3 +105,5 @@ jobs:
       # Unit and widget tests only. The live API scenarios (test/live) are skipped
       # without LIVE_API; the phone run is integration_test/ (US-1306).
       - run: flutter test
+      - name: Test release artifact verifiers
+        run: bash tool/ci/test_inspect_artifact_signatures.sh

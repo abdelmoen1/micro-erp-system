@@ -6,7 +6,7 @@ set -euo pipefail
 
 apk=$1
 expected_package=com.hisbah.smartshop
-expected_cert_sha256=C91F2920A374ABF73902A327125FE346BA50916390C0837DB080FB2059A6308B
+expected_cert_sha256=D4C70C9BDE05937D92C071A4CAF1661009EDFF6A664D745BF72296FA57C52BC6
 tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
 
 badging=$("$tools/aapt2" dump badging "$apk" | head -n1)

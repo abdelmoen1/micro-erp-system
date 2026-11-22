@@ -13,7 +13,7 @@ import java.util.List;
 
 public final class VerifySigningKey {
     private static final String EXPECTED_SHA256 =
-            "C91F2920A374ABF73902A327125FE346BA50916390C0837DB080FB2059A6308B";
+            "D4C70C9BDE05937D92C071A4CAF1661009EDFF6A664D745BF72296FA57C52BC6";
 
     private VerifySigningKey() {}
 

@@ -91,16 +91,25 @@ Both workflows run in the `mobile-production` environment. Recommended: Settings
 The release job reads `MOBILE_APK_DISTRIBUTION` from GitHub Actions **Variables** (`vars`), not Secrets;
 set it to `artifact` for the public APK release. Before Shorebird starts, the job opens the configured
 Android keystore with its alias and both passwords, then requires certificate SHA-256
-`C91F2920A374ABF73902A327125FE346BA50916390C0837DB080FB2059A6308B`. A missing, invalid, or mismatching key
-fails the job before either Android artifact is built. Secret values and temporary signing files are never
-printed; the temporary files are removed by the verification script.
+`D4C70C9BDE05937D92C071A4CAF1661009EDFF6A664D745BF72296FA57C52BC6`. This is the existing certificate
+for direct APK distribution and the certificate used for the AAB upload key. Hisbah has not been
+published to Google Play and has no Google Play App Signing certificate; neither artifact's verification
+depends on one. A missing, invalid, or mismatching key fails the job before either Android artifact is built.
+Secret values and temporary signing files are never printed; the temporary files are removed by the
+verification script.
+
+When Hisbah later enrolls in Play App Signing, the owner must deliberately choose whether to provide the
+existing app-signing key to Google. Doing so preserves signing compatibility between Play installs and APKs
+distributed from the website; allowing Google to generate a different app-signing key would break that
+cross-channel update compatibility.
 
 ### 2.4 How the APK leaves CI
 
 The repository is **public**. On every merge/push to `main` that changes `mobile/pubspec.yaml`, the
 `Mobile release` workflow builds and publishes a public production GitHub release for the merged commit.
 The release includes the versioned APK and checksum, fixed `hisbah.apk` and checksum used by the website,
-and the signed, versioned AAB and checksum. The AAB is also kept as a 30-day Actions artifact for convenience.
+and the AAB, signed with the existing upload key, plus its checksum. The AAB is also kept as a 30-day Actions
+artifact for convenience; it is not uploaded to Google Play.
 Assets are uploaded to a draft first; the release becomes public/latest only after all assets are present.
 Manual workflow dispatch remains available for a new release that is explicitly verified on `main`.
 
@@ -181,7 +190,9 @@ With the baseline installed and `MOBILE_OTA_RELEASE_VERSION` set to its version:
 2. Merge to `main`, run **Mobile release**, install over the existing app (same key: data kept). The workflow
    pushes the tag `android-<version>` (the patch baseline), publishes the signed APK and AAB with checksums
    on the public GitHub Release, and keeps an additional 30-day AAB workflow artifact for convenience.
-   Uploading the AAB to Google Play is a separate, manual step. A standard
+   Hisbah is not yet on Google Play. Uploading the AAB is a separate, future manual step; before enrolling,
+   deliberately choose whether Google receives the existing app-signing key to preserve cross-channel
+   signing compatibility. A standard
    Android phone always asks the user to confirm an APK install; nothing installs silently.
 3. Set `MOBILE_OTA_RELEASE_VERSION` to the new version once it is on the phone. Until then patches fail fast.
 
