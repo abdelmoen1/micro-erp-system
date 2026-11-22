@@ -124,19 +124,20 @@ PrintDocument purchaseDocument(AppLocalizations t, PurchaseDetail p, AppUser? us
   ],
   rows: [
     for (final line in p.lines)
+      if (line.returnable.isPositive)
       PrintRow(
         name: line.name,
         quantity: line.cartons == null
-            ? _quantity(t, line.quantity, line.unit)
+            ? _quantity(t, line.remaining ?? line.returnable, line.unit)
             : line.loosePieces > 0
             ? t.purchaseCartonsLoose('${line.cartons}', '${line.loosePieces}')
             : '${line.cartons} ${t.packWord}',
         price: amountOnly(line.buyPrice),
-        amount: amountOnly(line.total),
+        amount: amountOnly(line.remainingLineValue ?? line.total),
       ),
   ],
   totals: [
-    PrintTotal(t.totalWord, shekel(p.row.total), strong: true),
+    PrintTotal('المبلغ المتبقي', shekel(p.lines.fold(Money.zero, (sum, line) => line.returnable.isPositive ? sum + (line.remainingLineValue ?? line.total) : sum)), strong: true),
     if (p.row.returned.isPositive) PrintTotal(t.docReturned, shekel(p.row.returned)),
   ],
 );

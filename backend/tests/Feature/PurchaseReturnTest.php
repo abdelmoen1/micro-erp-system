@@ -218,7 +218,10 @@ class PurchaseReturnTest extends TestCase
             ->getJson("/api/v1/purchases/{$invoice->id}")
             ->assertOk()
             ->assertJsonPath('data.items.0.returned_quantity', '96')
-            ->assertJsonPath('data.items.0.remaining_quantity', '0');
+            ->assertJsonPath('data.items.0.remaining_quantity', '0')
+            ->assertJsonPath('data.items.0.returned_value', '240.00')
+            ->assertJsonPath('data.items.0.remaining_line_value', '0.00')
+            ->assertJsonPath('data.remaining_amount', '280.00');
 
         $this->assertSame('0.000', Product::where('name', 'كولا علبة')->sole()->current_stock);
     }
@@ -237,8 +240,13 @@ class PurchaseReturnTest extends TestCase
             ->getJson("/api/v1/purchases/{$invoice->id}")
             ->assertOk()
             ->assertJsonPath('data.items.0.remaining_quantity', '0')
+            ->assertJsonPath('data.items.0.returned_value', '240.00')
+            ->assertJsonPath('data.items.0.remaining_line_value', '0.00')
             ->assertJsonPath('data.items.1.returned_quantity', '2.500')
-            ->assertJsonPath('data.items.1.remaining_quantity', '7.500');
+            ->assertJsonPath('data.items.1.remaining_quantity', '7.500')
+            ->assertJsonPath('data.items.1.returned_value', '70.00')
+            ->assertJsonPath('data.items.1.remaining_line_value', '210.00')
+            ->assertJsonPath('data.remaining_amount', '210.00');
 
         $this->assertSame('0.000', Product::where('name', 'كولا علبة')->sole()->current_stock);
         $this->assertSame('7.500', Product::where('name', 'لوز نيء')->sole()->current_stock);

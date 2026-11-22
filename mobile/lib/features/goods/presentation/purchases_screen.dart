@@ -200,12 +200,24 @@ class PurchaseDetailScreen extends ConsumerWidget {
                     Text(p.row.supplierName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                     Num(fullTime(p.row.at), size: 13, weight: FontWeight.w400, color: HisbahColors.inkMuted),
                     const Divider(height: 22),
-                    for (final line in p.lines) _LineRow(line: line),
+                    const Text('الأصناف المتبقية', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 6),
+                    if (!p.lines.any((line) => line.returnable.isPositive))
+                      const Text('تم إرجاع جميع الأصناف من هذه الفاتورة.', style: TextStyle(fontSize: 14, color: HisbahColors.inkMuted))
+                    else
+                      for (final line in p.lines)
+                        if (line.returnable.isPositive) _LineRow(line: line),
                     const Divider(height: 22),
                     Row(
                       children: [
-                        Expanded(child: Text(t.totalWord, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700))),
-                        Num(shekel(p.row.total), size: 20, weight: FontWeight.w700),
+                        Expanded(child: Text(p.lines.any((line) => line.returnable.isPositive) ? 'المبلغ المتبقي' : t.remainingWord, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700))),
+                        Num(
+                          shekel(p.lines.any((line) => line.returnable.isPositive)
+                              ? p.lines.fold(Money.zero, (sum, line) => line.returnable.isPositive ? sum + (line.remainingLineValue ?? line.total) : sum)
+                              : Money.zero),
+                          size: 20,
+                          weight: FontWeight.w700,
+                        ),
                       ],
                     ),
                   ],
@@ -249,7 +261,8 @@ class _LineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final cartons = line.cartons;
-    final amount = line.unit == ProductUnit.kg ? '${line.quantity.format(line.unit)} ${t.kgShort}' : t.purchasePieces(line.quantity.format(line.unit));
+    final remaining = line.remaining ?? line.returnable;
+    final amount = line.unit == ProductUnit.kg ? '${remaining.format(line.unit)} ${t.kgShort}' : t.purchasePieces(remaining.format(line.unit));
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -273,7 +286,7 @@ class _LineRow extends StatelessWidget {
               ],
             ),
           ),
-          Num(shekel(line.total), size: 15, weight: FontWeight.w700),
+          Num(shekel(line.remainingLineValue ?? line.total), size: 15, weight: FontWeight.w700),
         ],
       ),
     );

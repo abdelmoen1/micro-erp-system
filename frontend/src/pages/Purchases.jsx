@@ -69,7 +69,9 @@ export function PurchaseDetail() {
   if (purchase.isPending) return <div className="card sk" style={{ height: 320 }} />;
 
   const p = purchase.data;
-  const returnable = p.items.some((i) => milliOf(i.quantity) > milliOf(i.returned_quantity));
+  const remainingItems = p.items.filter((i) => milliOf(i.remaining_quantity ?? (milliOf(i.quantity) - milliOf(i.returned_quantity))) > 0);
+  const remainingAmount = remainingItems.reduce((sum, i) => sum + centsOf(i.remaining_line_value ?? i.line_total), 0);
+  const returnable = remainingItems.length > 0;
 
   return (
     <>
@@ -95,7 +97,7 @@ export function PurchaseDetail() {
       </header>
 
       <section className="card panel">
-        <h2 style={{ fontSize: 17 }}>الأصناف</h2>
+        <h2 style={{ fontSize: 17 }}>الأصناف المتبقية</h2>
         <div className="table-wrap">
           <table style={{ minWidth: 560 }}>
             <thead>
@@ -108,11 +110,11 @@ export function PurchaseDetail() {
               </tr>
             </thead>
             <tbody>
-              {p.items.map((i) => (
+              {remainingItems.length > 0 ? remainingItems.map((i) => (
                 <tr key={i.id}>
                   <td style={{ fontWeight: 600 }}>{i.item_name}</td>
                   <td className="n m">
-                    {i.quantity}
+                    {i.remaining_quantity ?? i.quantity}
                     {i.unit === "kg" ? " كغ" : " قطعة"}
                     {i.cartons || i.loose_pieces ? (
                       <span className="cell-sub">
@@ -121,24 +123,28 @@ export function PurchaseDetail() {
                     ) : null}
                   </td>
                   <td className="n m" style={{ color: "var(--warning-fg)", fontWeight: 600 }}>
-                    {milliOf(i.returned_quantity) > 0 ? i.returned_quantity : "—"}
+                    {i.returned_quantity && milliOf(i.returned_quantity) > 0 ? i.returned_quantity : "—"}
                   </td>
                   <td className="n">
                     <MoneyText value={i.buy_price} style={{ color: "var(--ink-muted)" }} />
                   </td>
                   <td className="n">
-                    <MoneyText value={i.line_total} style={{ fontWeight: 700 }} />
+                    <MoneyText value={i.remaining_line_value ?? i.line_total} style={{ fontWeight: 700 }} />
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={5} className="empty">تم إرجاع جميع الأصناف من هذه الفاتورة.</td>
+                </tr>
+              )}
             </tbody>
             <tfoot>
               <tr>
                 <td colSpan={4} style={{ fontWeight: 700 }}>
-                  الإجمالي
+                  {remainingItems.length > 0 ? "المبلغ المتبقي" : ""}
                 </td>
                 <td className="n">
-                  <MoneyText value={p.total} style={{ fontWeight: 700, fontSize: 16 }} />
+                  {remainingItems.length > 0 ? <MoneyText value={moneyOf(remainingAmount)} style={{ fontWeight: 700, fontSize: 16 }} /> : null}
                 </td>
               </tr>
             </tfoot>

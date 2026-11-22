@@ -279,6 +279,8 @@ class PurchaseLine {
     required this.quantity,
     required this.returned,
     this.remaining,
+    this.returnedValue,
+    this.remainingLineValue,
     required this.buyPrice,
     required this.total,
     this.cartons,
@@ -292,6 +294,8 @@ class PurchaseLine {
     quantity: Quantity.parse(json['quantity'] ?? '0'),
     returned: Quantity.parse(json['returned_quantity'] ?? '0'),
     remaining: json['remaining_quantity'] == null ? null : Quantity.parse(json['remaining_quantity']),
+    returnedValue: json['returned_value'] == null ? null : Money.parse(json['returned_value'] as String),
+    remainingLineValue: json['remaining_line_value'] == null ? null : Money.parse(json['remaining_line_value'] as String),
     buyPrice: Money.parse(json['buy_price'] as String? ?? '0'),
     total: Money.parse(json['line_total'] as String? ?? '0'),
     cartons: (json['cartons'] as num?)?.toInt(),
@@ -304,6 +308,8 @@ class PurchaseLine {
   final Quantity quantity;
   final Quantity returned;
   final Quantity? remaining;
+  final Money? returnedValue;
+  final Money? remainingLineValue;
 
   /// Per carton, or per kilo for a weighed product.
   final Money buyPrice;
