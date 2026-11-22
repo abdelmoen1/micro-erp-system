@@ -7,8 +7,7 @@
 #   encrypted: workflow artifact, AES-256 with a random one-time key; that key is encrypted (RSA-OAEP) to
 #              tool/release/apk-delivery-public.pem. Only the matching private key, which never
 #              leaves the release PC, can open it (tool/release/decrypt_apk.sh).
-#   artifact:  workflow artifact with the plain APK (on a public repository, any signed-in GitHub user
-#              can download it).
+#   artifact:  plain APK prepared for the public GitHub release (publicly downloadable on this repository).
 # All modes write <base-name>.apk.sha256, the checksum of the plain APK.
 set -euo pipefail
 

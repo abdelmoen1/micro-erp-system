@@ -99,7 +99,9 @@ printed; the temporary files are removed by the verification script.
 
 The repository is **public**. On every merge/push to `main` that changes `mobile/pubspec.yaml`, the
 `Mobile release` workflow builds and publishes a public production GitHub release for the merged commit.
-The release includes the versioned APK, checksum, and fixed `hisbah.apk` asset used by the website.
+The release includes the versioned APK and checksum, fixed `hisbah.apk` and checksum used by the website,
+and the signed, versioned AAB and checksum. The AAB is also kept as a 30-day Actions artifact for convenience.
+Assets are uploaded to a draft first; the release becomes public/latest only after all assets are present.
 Manual workflow dispatch remains available for a new release that is explicitly verified on `main`.
 
 No delivery mode puts signing keys or credentials anywhere downloadable; the APK holds only the public API URL.
@@ -177,8 +179,9 @@ With the baseline installed and `MOBILE_OTA_RELEASE_VERSION` set to its version:
 1. Bump `version:` in `mobile/pubspec.yaml` (e.g. `1.0.0+1` → `1.0.1+2`; the `+build` number must go up).
    Each Shorebird release version can be published once; the preflight refuses a version whose tag exists.
 2. Merge to `main`, run **Mobile release**, install over the existing app (same key: data kept). The workflow
-   pushes the tag `android-<version>` (the patch baseline) and keeps the signed AAB as a workflow artifact for
-   Google Play (uploading it to Play is a separate, manual step). A standard
+   pushes the tag `android-<version>` (the patch baseline), publishes the signed APK and AAB with checksums
+   on the public GitHub Release, and keeps an additional 30-day AAB workflow artifact for convenience.
+   Uploading the AAB to Google Play is a separate, manual step. A standard
    Android phone always asks the user to confirm an APK install; nothing installs silently.
 3. Set `MOBILE_OTA_RELEASE_VERSION` to the new version once it is on the phone. Until then patches fail fast.
 
