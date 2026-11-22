@@ -1,4 +1,4 @@
-import { dateTime, isPositiveAmount, shekel } from "./format";
+import { centsOf, dateTime, isPositiveAmount, milliOf, moneyOf, shekel } from "./format";
 import { methodLabel } from "./domain";
 
 // What each document prints, for components/PrintSheet.jsx. The same documents as the mobile app:
@@ -70,18 +70,20 @@ export function saleReturnDoc(r, invoiceId = r.invoice_id, customerName = r.cust
 }
 
 export function purchaseDoc(p) {
+  const remainingItems = (p.items ?? []).filter((i) => milliOf(i.remaining_quantity ?? (milliOf(i.quantity) - milliOf(i.returned_quantity))) > 0);
+  const remainingAmount = remainingItems.reduce((sum, i) => sum + centsOf(i.remaining_line_value ?? i.line_total), 0);
   return {
     title: "فاتورة مشتريات",
     number: `#${p.id}`,
     facts: [["المورد", p.supplier.name], ["التاريخ", dateTime(p.at)], ...(p.by ? [["بواسطة", p.by]] : [])],
-    rows: (p.items ?? []).map((i) => ({
+    rows: remainingItems.map((i) => ({
       name: i.item_name,
-      quantity: i.cartons != null ? cartons(i) : qty(i.quantity, i.unit),
+      quantity: i.cartons != null ? cartons(i) : qty(i.remaining_quantity ?? i.quantity, i.unit),
       price: amount(i.buy_price),
-      amount: amount(i.line_total),
+      amount: amount(i.remaining_line_value ?? i.line_total),
     })),
     totals: [
-      ["الإجمالي", shekel(p.total), true],
+      ["المبلغ المتبقي", shekel(moneyOf(remainingAmount)), true],
       ...(isPositiveAmount(p.returned_amount) ? [["المرتجعات", shekel(p.returned_amount)]] : []),
     ],
   };
