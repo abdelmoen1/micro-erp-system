@@ -122,13 +122,19 @@ jobs:
           git push origin "refs/tags/$tag"
 
       # The Play upload file. Uploading it to Google Play is a separate, manual step.
-      - name: Keep the AAB (Google Play upload)
+      - name: Keep and verify the AAB
+        id: aab
         env:
           RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
         run: |
           mkdir -p "$RUNNER_TEMP/aab-out"
           aab="$RUNNER_TEMP/aab-out/hisbah-${RELEASE_VERSION//+/_}.aab"
+          test -s build/app/outputs/bundle/release/app-release.aab || {
+            echo "::error::Shorebird did not produce a non-empty production AAB."
+            exit 1
+          }
           cp build/app/outputs/bundle/release/app-release.aab "$aab"
+          bash tool/ci/inspect_aab.sh "$aab"
           (cd "$RUNNER_TEMP/aab-out" && sha256sum "$(basename "$aab")" > "$(basename "$aab").sha256")
 
       - uses: actions/upload-artifact@v4
@@ -151,18 +157,26 @@ jobs:
           bash tool/ci/package_apk.sh build/app/outputs/flutter-apk/app-release.apk "$RUNNER_TEMP/apk-out" "$name"
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
-      # Main publishes the stable production APK. Feature branches never trigger this workflow.
-      - name: Publish production APK to GitHub Releases
+      # Keep the release private until every verified asset has uploaded successfully.
+      - name: Publish production Android release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ steps.release.outputs.release-version }}
           NAME: ${{ steps.package.outputs.name }}
         run: |
+          tag="android-${RELEASE_VERSION//+/_}"
           cp "$RUNNER_TEMP/apk-out/$NAME.apk" "$RUNNER_TEMP/apk-out/hisbah.apk"
-          gh release create "android-${RELEASE_VERSION//+/_}" --target "$GITHUB_SHA" --latest \
+          (cd "$RUNNER_TEMP/apk-out" && sha256sum hisbah.apk > hisbah.apk.sha256)
+          aab="$RUNNER_TEMP/aab-out/hisbah-${RELEASE_VERSION//+/_}.aab"
+          gh release create "$tag" --draft --verify-tag \
             --title "Hisbah Android $RELEASE_VERSION" \
-            --notes "Production Shorebird Android release $RELEASE_VERSION, built from commit $GITHUB_SHA." \
-            "$RUNNER_TEMP/apk-out/$NAME.apk" "$RUNNER_TEMP/apk-out/$NAME.apk.sha256" "$RUNNER_TEMP/apk-out/hisbah.apk"
+            --notes "Production Android release $RELEASE_VERSION. Includes the supplier-return quantity precision fix and latest main fixes. Signed APK and AAB plus SHA-256 checksums. Built from commit $GITHUB_SHA." \
+            "$RUNNER_TEMP/apk-out/$NAME.apk" \
+            "$RUNNER_TEMP/apk-out/$NAME.apk.sha256" \
+            "$RUNNER_TEMP/apk-out/hisbah.apk" \
+            "$RUNNER_TEMP/apk-out/hisbah.apk.sha256" \
+            "$aab" "$aab.sha256"
+          gh release edit "$tag" --draft=false --latest
 
       - name: Summary
         env:
@@ -170,6 +184,7 @@ jobs:
           APP_ID: ${{ steps.apk.outputs.package }}
           VERSION_CODE: ${{ steps.apk.outputs.version_code }}
           CERT_SHA256: ${{ steps.apk.outputs.cert_sha256 }}
+          AAB_CERT_SHA256: ${{ steps.aab.outputs.cert_sha256 }}
         run: |
           {
             echo "### Shorebird release published"
@@ -179,11 +194,12 @@ jobs:
             echo "| Release version | \`$RELEASE_VERSION\` |"
             echo "| Application ID | \`$APP_ID\` (versionCode $VERSION_CODE) |"
             echo "| Signing cert SHA-256 | \`$CERT_SHA256\` |"
+            echo "| AAB signing cert SHA-256 | \`$AAB_CERT_SHA256\` |"
             echo "| API base URL | \`$API_BASE_URL\` |"
             echo "| Patch signing | on (shorebird-patch-public.pem) |"
             echo "| Release commit tag | \`android-${RELEASE_VERSION//+/_}\` (patch baseline) |"
-            echo "| AAB (Google Play) | workflow artifact \`hisbah-android-aab-$RELEASE_VERSION\`, kept 30 days; not uploaded to Play |"
-            echo "| APK download | public GitHub release \`android-${RELEASE_VERSION//+/_}\` with fixed asset \`hisbah.apk\` |"
+            echo "| AAB (Google Play) | public release asset and workflow artifact \`hisbah-android-aab-$RELEASE_VERSION\`, kept 30 days; not uploaded to Play |"
+            echo "| APK download | public GitHub release \`android-${RELEASE_VERSION//+/_}\` with fixed asset \`hisbah.apk\` and checksum |"
             echo
             echo "After installing and checking this build on the phone: set MOBILE_OTA_RELEASE_VERSION=$RELEASE_VERSION, then MOBILE_OTA_ENABLED=true."
           } >> "$GITHUB_STEP_SUMMARY"

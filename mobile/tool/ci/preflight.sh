@@ -40,7 +40,7 @@ case $mode in
         fi
         ;;
       draft-release) ;;
-      artifact) echo "::warning::MOBILE_APK_DISTRIBUTION=artifact: the APK is uploaded unencrypted; on a public repository any signed-in GitHub user can download it." ;;
+      artifact) echo "::warning::MOBILE_APK_DISTRIBUTION=artifact: the APK is unencrypted and will be publicly downloadable from the GitHub release." ;;
       *) err "Repository variable MOBILE_APK_DISTRIBUTION must be 'draft-release', 'encrypted' or 'artifact' (how the APK leaves CI; see docs/mobile/ota-updates.md). Without it the release would be published with no way to install it." ;;
     esac
     ;;
