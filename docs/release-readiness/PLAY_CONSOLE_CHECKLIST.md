@@ -4,6 +4,9 @@ Nothing on this list was submitted. Each item is done by the owner in Play Conso
 the owner). Suggested answers come from the code on `main` @ 5307b9d + this branch; check each one
 against the app you actually upload. Policy sources are listed at the end.
 
+Hisbah has not been published to Google Play. Website APKs use the existing D4 signing certificate;
+no Google Play App Signing certificate exists yet.
+
 Legend: ☐ to do · ⚠ blocked until a decision or a code change
 
 ## 0. Before creating the app
