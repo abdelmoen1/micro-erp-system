@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\ApiException;
+use App\Enums\UserRole;
 use App\Models\Customer;
 use App\Models\InventoryReservation;
 use App\Models\Invoice;
@@ -104,17 +105,32 @@ class SuspendedSaleService
             }
             $total = Money::sub($subtotal, $discount);
 
+            $requestedByProduct = [];
             foreach ($lines as $line) {
-                $reserved = InventoryReservation::query()
+                $productId = $line['product']->id;
+                $requestedByProduct[$productId] = Quantity::add(
+                    $requestedByProduct[$productId] ?? '0.000',
+                    $line['base_quantity'],
+                );
+            }
+
+            foreach ($requestedByProduct as $productId => $requested) {
+                $product = $products->get($productId);
+                $reservations = InventoryReservation::query()
                     ->where('store_id', $actor->store_id)
-                    ->where('product_id', $line['product']->id)
+                    ->where('product_id', $productId)
                     ->where('status', InventoryReservation::STATUS_ACTIVE)
+                    ->orderBy('id')
                     ->lockForUpdate()
-                    ->sum('quantity');
-                $available = Money::sub((string) $line['product']->current_stock, (string) $reserved);
-                if (Quantity::compare($available, $line['base_quantity']) < 0) {
+                    ->get();
+                $reserved = '0.000';
+                foreach ($reservations as $reservation) {
+                    $reserved = Quantity::add($reserved, $reservation->quantity);
+                }
+                $available = Quantity::sub((string) $product->current_stock, $reserved);
+                if (Quantity::compare($available, $requested) < 0) {
                     throw ValidationException::withMessages([
-                        "items" => ["المخزون المتاح غير كافٍ للمنتج {$line['product']->name} بعد الحجوزات الحالية."],
+                        'items' => ["المخزون المتاح غير كافٍ للمنتج {$product->name} بعد الحجوزات الحالية."],
                     ]);
                 }
             }
@@ -139,13 +155,14 @@ class SuspendedSaleService
 
             foreach ($lines as $line) {
                 $product = $line['product'];
-                $invoice->items()->create([
+                $invoiceItem = $invoice->items()->create([
                     'product_id' => $product->id,
                     'item_name' => $product->name,
                     'unit' => $product->unit,
                     'quantity' => $line['quantity'],
                     'sale_unit' => $line['sale_unit'],
                     'pack_size' => $line['pack_size'],
+                    'base_quantity' => $line['base_quantity'],
                     'unit_price' => $line['unit_price'],
                     'total' => $line['total'],
                 ]);
@@ -153,6 +170,7 @@ class SuspendedSaleService
                     'store_id' => $actor->store_id,
                     'product_id' => $product->id,
                     'suspended_invoice_id' => $invoice->id,
+                    'suspended_invoice_item_id' => $invoiceItem->id,
                     'quantity' => $line['base_quantity'],
                     'status' => InventoryReservation::STATUS_ACTIVE,
                 ]);
@@ -174,9 +192,19 @@ class SuspendedSaleService
     public function confirm(User $actor, SuspendedInvoice $invoice): array
     {
         return DB::transaction(function () use ($actor, $invoice) {
+            $customerId = SuspendedInvoice::query()->forStore($actor->store_id)
+                ->whereKey($invoice->id)->value('customer_id');
+            if ($customerId !== null) {
+                Customer::query()->forStore($actor->store_id)
+                    ->whereKey($customerId)->lockForUpdate()->firstOrFail();
+            }
+
             $locked = SuspendedInvoice::query()->forStore($actor->store_id)
                 ->whereKey($invoice->id)->lockForUpdate()->firstOrFail();
 
+            if ($locked->customer_id !== $customerId) {
+                throw ApiException::conflict('SUSPENDED_INVOICE_CHANGED', 'تغيرت بيانات الفاتورة؛ أعد المحاولة.');
+            }
             if ($locked->status === SuspendedInvoice::STATUS_COMPLETED) {
                 $final = Invoice::query()->forStore($actor->store_id)
                     ->whereKey($locked->final_invoice_id)->firstOrFail();
@@ -186,18 +214,24 @@ class SuspendedSaleService
                 throw ApiException::conflict('SUSPENDED_INVOICE_NOT_PENDING', 'لا يمكن تأكيد فاتورة ليست قيد انتظار التحويل.');
             }
 
-            $locked->load('items');
+            $locked->load(['items' => fn($query) => $query->orderBy('id')]);
             $saleItems = [];
-            $ids = $locked->items->pluck('product_id')->sort()->values();
+            $reservedLines = [];
+            $ids = $locked->items->pluck('product_id')->unique()->sort()->values();
             $products = Product::query()->forStore($actor->store_id)->whereIn('id', $ids)
                 ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
 
             foreach ($locked->items as $item) {
                 $reservation = InventoryReservation::query()->where('suspended_invoice_id', $locked->id)
-                    ->where('product_id', $item->product_id)->where('status', InventoryReservation::STATUS_ACTIVE)
+                    ->where('suspended_invoice_item_id', $item->id)
+                    ->where('product_id', $item->product_id)
+                    ->where('status', InventoryReservation::STATUS_ACTIVE)
                     ->lockForUpdate()->first();
                 if (!$reservation) {
                     throw ApiException::conflict('RESERVATION_MISSING', 'حجز المخزون غير متاح ولا يمكن إكمال الفاتورة.');
+                }
+                if (Quantity::compare($item->base_quantity, $reservation->quantity) !== 0) {
+                    throw ApiException::conflict('RESERVATION_MISMATCH', 'كمية حجز المخزون لا تطابق الفاتورة.');
                 }
                 $product = $products->get($item->product_id);
                 if (!$product) {
@@ -209,6 +243,14 @@ class SuspendedSaleService
                     'sale_unit' => $item->sale_unit,
                     'unit_price' => (string) $item->unit_price,
                 ];
+                $reservedLines[] = [
+                    'product_id' => (int) $item->product_id,
+                    'reservation_id' => (int) $reservation->id,
+                    'base_quantity' => (string) $item->base_quantity,
+                    'pack_size' => $item->pack_size === null ? null : (int) $item->pack_size,
+                    'item_name' => $item->item_name,
+                    'unit' => $item->unit,
+                ];
             }
 
             $result = $this->sales->create($actor, [
@@ -218,14 +260,11 @@ class SuspendedSaleService
                 'paid_amount' => (string) $locked->total_amount,
                 'payment_method' => $locked->payment_method,
                 'notes' => $locked->notes,
-            ]);
+            ], reservedLines: $reservedLines);
             $final = $result['invoice'];
 
-            foreach ($locked->reservations()->lockForUpdate()->get() as $reservation) {
-                $reservation->update([
-                    'status' => InventoryReservation::STATUS_DEDUCTED,
-                    'deducted_at' => now(),
-                ]);
+            if ($locked->reservations()->where('status', InventoryReservation::STATUS_ACTIVE)->exists()) {
+                throw ApiException::conflict('RESERVATION_NOT_DEDUCTED', 'لم يتم استهلاك جميع حجوزات الفاتورة.');
             }
             $locked->update([
                 'status' => SuspendedInvoice::STATUS_COMPLETED,
@@ -247,6 +286,14 @@ class SuspendedSaleService
     {
         if (!in_array($status, [SuspendedInvoice::STATUS_REJECTED, SuspendedInvoice::STATUS_CANCELLED], true)) {
             throw ValidationException::withMessages(['status' => ['حالة الإغلاق غير صالحة.']]);
+        }
+        if ($status === SuspendedInvoice::STATUS_CANCELLED) {
+            if (!$actor->hasRole([UserRole::OWNER->value, UserRole::MANAGER->value])) {
+                abort(403, 'إلغاء الفواتير المعلقة متاح للمدير أو المالك فقط.');
+            }
+            if (trim((string) $reason) === '') {
+                throw ValidationException::withMessages(['reason' => ['يجب توضيح سبب إلغاء الفاتورة.']]);
+            }
         }
         return DB::transaction(function () use ($actor, $invoice, $status, $reason) {
             $locked = SuspendedInvoice::query()->forStore($actor->store_id)

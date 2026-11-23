@@ -11,7 +11,7 @@ class InventoryReservation extends Model
     public const STATUS_DEDUCTED = 'deducted';
 
     protected $fillable = [
-        'store_id', 'product_id', 'suspended_invoice_id', 'quantity',
+        'store_id', 'product_id', 'suspended_invoice_id', 'suspended_invoice_item_id', 'quantity',
         'status', 'released_at', 'deducted_at',
     ];
 
@@ -22,5 +22,10 @@ class InventoryReservation extends Model
             'released_at' => 'datetime',
             'deducted_at' => 'datetime',
         ];
+    }
+
+    public function suspendedInvoiceItem()
+    {
+        return $this->belongsTo(SuspendedInvoiceItem::class);
     }
 }

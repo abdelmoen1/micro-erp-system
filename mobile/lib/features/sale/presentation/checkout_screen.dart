@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
@@ -14,6 +15,7 @@ import '../../auth/domain/app_user.dart';
 import '../../products/application/stock_value.dart';
 import '../application/cart_controller.dart';
 import '../application/checkout_controller.dart';
+import '../data/sale_repository.dart';
 import '../domain/cart.dart';
 import 'customer_picker_sheet.dart';
 import 'price_editing.dart';
@@ -24,13 +26,14 @@ import 'sale_widgets.dart';
 // PalPay first and selected by default; cash last.
 const paymentMethods = ['palpay', 'jawwal_pay', 'bank_of_palestine', 'cash'];
 
-String paymentMethodLabel(AppLocalizations t, String? method) => switch (method) {
-  'cash' => t.methodCash,
-  'jawwal_pay' => t.methodJawwalPay,
-  'palpay' => t.methodPalPay,
-  'bank_of_palestine' => t.methodBankOfPalestine,
-  _ => t.methodNone,
-};
+String paymentMethodLabel(AppLocalizations t, String? method) =>
+    switch (method) {
+      'cash' => t.methodCash,
+      'jawwal_pay' => t.methodJawwalPay,
+      'palpay' => t.methodPalPay,
+      'bank_of_palestine' => t.methodBankOfPalestine,
+      _ => t.methodNone,
+    };
 
 /// A plain pictogram per method (cash, a phone wallet, a wallet, a bank) with the name written next
 /// to it. Not the providers' logos: the app has no official assets and no integration with them.
@@ -39,14 +42,19 @@ String paymentMethodLabel(AppLocalizations t, String? method) => switch (method)
   'cash' => (Icons.payments_outlined, const Color(0xFF1F6B3A)),
   'jawwal_pay' => (Icons.phone_iphone_rounded, const Color(0xFF7A3E9D)),
   'palpay' => (Icons.account_balance_wallet_outlined, const Color(0xFF1E5A8A)),
-  'bank_of_palestine' => (Icons.account_balance_outlined, const Color(0xFF14262E)),
+  'bank_of_palestine' => (
+    Icons.account_balance_outlined,
+    const Color(0xFF14262E),
+  ),
   _ => (Icons.help_outline_rounded, HisbahColors.inkMuted),
 };
 
 /// SCR-M-04 · checkout (US-0506): sale mode, paid amount, method, customer, due date, the
 /// warnings that let the sale continue and the restrictions that stop it, then one confirm.
 class CheckoutScreen extends ConsumerStatefulWidget {
-  const CheckoutScreen({super.key});
+  const CheckoutScreen({super.key, this.suspendedInvoice});
+
+  final Map<String, dynamic>? suspendedInvoice;
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -55,6 +63,10 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _paid = TextEditingController();
   final _discount = TextEditingController();
+  Map<String, dynamic>? _selectedReceivingAccount;
+  bool _suspendBusy = false;
+  bool _suspendUncertain = false;
+  String? _suspendError;
 
   @override
   void dispose() {
@@ -75,7 +87,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     _controller.setDiscount(amount);
   }
 
-  CheckoutController get _controller => ref.read(checkoutControllerProvider.notifier);
+  CheckoutController get _controller =>
+      ref.read(checkoutControllerProvider.notifier);
 
   AppUser? get _user {
     final session = ref.read(sessionProvider);
@@ -93,16 +106,119 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     _controller.setCustomer(pick.customer);
   }
 
+  void _setPaymentMethod(String method) {
+    if (_suspendBusy || _suspendUncertain) return;
+    setState(() => _selectedReceivingAccount = null);
+    _controller.setMethod(method);
+  }
+
   Future<void> _confirm(Cart cart) async {
     final outcome = await _controller.confirm(cart, _user);
     if (!mounted) return;
     await _handle(outcome, cart);
   }
 
+  Future<void> _suspend(Cart cart) async {
+    if (_suspendBusy || cart.isEmpty) return;
+    final state = ref.read(checkoutControllerProvider);
+    if (state.mode != SaleMode.cash || state.method == 'cash') return;
+
+    setState(() {
+      _suspendBusy = true;
+      _suspendError = null;
+    });
+    try {
+      var account = _selectedReceivingAccount;
+      if (account == null) {
+        final accounts = await ref
+            .read(saleRepositoryProvider)
+            .receivingAccounts(state.method);
+        if (!mounted) return;
+        if (accounts.isEmpty) {
+          setState(() {
+            _suspendBusy = false;
+            _suspendError = 'لا يوجد حساب نشط لهذا المزود. اطلب من المدير إضافة حساب استقبال.';
+          });
+          return;
+        }
+        account = await showModalBottomSheet<Map<String, dynamic>>(
+          context: context,
+          useSafeArea: true,
+          builder: (context) => SafeArea(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'اختر حساب استقبال الحوالة',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                for (final item in accounts)
+                  ListTile(
+                    title: Text(item['account_name'] as String? ?? ''),
+                    subtitle: Text(
+                      item['account_identifier'] as String? ?? '',
+                      textDirection: TextDirection.ltr,
+                    ),
+                    onTap: () => Navigator.pop(context, item),
+                  ),
+              ],
+            ),
+          ),
+        );
+        if (!mounted) return;
+        if (account == null) {
+          setState(() => _suspendBusy = false);
+          return;
+        }
+        setState(() => _selectedReceivingAccount = account);
+      }
+
+      final current = ref.read(checkoutControllerProvider);
+      final summary = CheckoutSummary(cart, current, _user);
+      final draft = SaleDraft(
+        cart: cart,
+        discount: summary.discount,
+        paidAmount: summary.total,
+        customerId: current.customer?.id,
+        paymentMethod: current.method,
+      );
+      await ref
+          .read(saleRepositoryProvider)
+          .suspend(
+            draft: draft,
+            receivingAccountId: (account['id'] as num).toInt(),
+          );
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      ref.read(cartControllerProvider.notifier).clear();
+      Navigator.of(context).pop();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('تم تعليق الفاتورة وحجز الكميات؛ يمكنك بدء بيع جديد.'),
+        ),
+      );
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      final uncertain = !SaleRepository.isFinalAnswer(failure);
+      setState(() {
+        _suspendBusy = false;
+        _suspendUncertain = uncertain;
+        _suspendError = failure.message ?? 'تعذر تعليق الفاتورة. أعد المحاولة.';
+        if (!uncertain) _selectedReceivingAccount = null;
+      });
+    }
+  }
+
   Future<void> _handle(CheckoutOutcome outcome, Cart cart) async {
     switch (outcome) {
       case CheckoutNeedsOverride():
-        final done = await showSaleSheet<CheckoutDone>(context, builder: (_) => OverrideSheet(cart: cart));
+        final done = await showSaleSheet<CheckoutDone>(
+          context,
+          builder: (_) => OverrideSheet(cart: cart),
+        );
         _controller.dismissOverride();
         if (done != null && mounted) _finish(done);
       case CheckoutDone():
@@ -119,7 +235,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     ref.invalidate(stockValueProvider);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => ReceiptScreen(receipt: done.receipt, afterUncertain: done.afterUncertain, overridden: done.overridden),
+        builder: (_) => ReceiptScreen(
+          receipt: done.receipt,
+          afterUncertain: done.afterUncertain,
+          overridden: done.overridden,
+        ),
       ),
     );
   }
@@ -132,10 +252,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final session = ref.watch(sessionProvider);
     final user = session is SignedIn ? session.user : null;
     final s = CheckoutSummary(cart, state, user);
-    final locked = state.locked;
+    final locked = state.locked || _suspendBusy || _suspendUncertain;
+
+    if (widget.suspendedInvoice case final invoice?) {
+      return _ResumedInvoiceCheckoutScreen(invoice: invoice);
+    }
 
     return PopScope(
-      canPop: !locked,
+      canPop: !state.locked && !_suspendBusy,
       child: Scaffold(
         body: SafeArea(
           child: Column(
@@ -143,7 +267,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             children: [
               _TopBar(
                 title: t.checkoutTitle,
-                subtitle: '${t.linesCount(cart.lines.length)} · ${t.checkoutNotCreatedYet}',
+                subtitle:
+                    '${t.linesCount(cart.lines.length)} · ${t.checkoutNotCreatedYet}',
                 backLabel: t.backToCart,
                 onBack: locked ? null : () => Navigator.of(context).pop(),
               ),
@@ -156,8 +281,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       open: state.itemsOpen,
                       locked: locked,
                       onToggle: _controller.toggleItems,
-                      onPrice: (line, price) =>
-                          ref.read(cartControllerProvider.notifier).setPrice(line.product.id, price, pack: line.pack),
+                      onPrice: (line, price) => ref
+                          .read(cartControllerProvider.notifier)
+                          .setPrice(line.product.id, price, pack: line.pack),
                     ),
                     const SizedBox(height: 10),
                     _DiscountSection(
@@ -174,9 +300,24 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     OptionRow(
                       children: [
                         for (final (mode, label, icon, color) in [
-                          (SaleMode.cash, t.modeCash, Icons.check_circle_outline_rounded, StatusTone.paid.fg),
-                          (SaleMode.partial, t.modePartial, Icons.timelapse_rounded, StatusTone.partial.fg),
-                          (SaleMode.credit, t.modeCredit, Icons.radio_button_unchecked_rounded, StatusTone.debt.fg),
+                          (
+                            SaleMode.cash,
+                            t.modeCash,
+                            Icons.check_circle_outline_rounded,
+                            StatusTone.paid.fg,
+                          ),
+                          (
+                            SaleMode.partial,
+                            t.modePartial,
+                            Icons.timelapse_rounded,
+                            StatusTone.partial.fg,
+                          ),
+                          (
+                            SaleMode.credit,
+                            t.modeCredit,
+                            Icons.radio_button_unchecked_rounded,
+                            StatusTone.debt.fg,
+                          ),
                         ])
                           OptionButton(
                             key: Key('checkout.mode.${mode.name}'),
@@ -186,13 +327,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             solid: true,
                             height: 48,
                             selected: state.mode == mode,
-                            onTap: locked ? null : () => _controller.setMode(mode),
+                            onTap: locked
+                                ? null
+                                : () => _controller.setMode(mode),
                           ),
                       ],
                     ),
                     if (state.mode == SaleMode.partial) ...[
                       const SizedBox(height: 14),
-                      _PaidField(controller: _paid, state: state, total: s.total, onChanged: _controller.setPaid),
+                      _PaidField(
+                        controller: _paid,
+                        state: state,
+                        total: s.total,
+                        onChanged: _controller.setPaid,
+                      ),
                     ],
                     if (s.paid.isPositive) ...[
                       const SizedBox(height: 14),
@@ -202,14 +350,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         if (row > 0) const SizedBox(height: 8),
                         OptionRow(
                           children: [
-                            for (final method in paymentMethods.skip(row * 2).take(2))
-                              _MethodTile(
+                            for (final method
+                                in paymentMethods.skip(row * 2).take(2))
+                                _MethodTile(
                                 key: Key('checkout.method.$method'),
                                 method: method,
                                 label: paymentMethodLabel(t, method),
                                 selected: state.method == method,
-                                onTap: locked ? null : () => _controller.setMethod(method),
-                              ),
+                                onTap: locked
+                                    ? null
+                                    : () => _setPaymentMethod(method),
+                                ),
                           ],
                         ),
                       ],
@@ -217,20 +368,36 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         const SizedBox(height: 8),
                         Container(
                           key: const Key('checkout.methodNote'),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          decoration: BoxDecoration(color: StatusTone.info.bg, borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: StatusTone.info.bg,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
-                                child: Icon(Icons.info_outline_rounded, size: 18, color: StatusTone.info.fg),
+                                child: Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 18,
+                                  color: StatusTone.info.fg,
+                                ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  t.methodRecordOnly(paymentMethodLabel(t, state.method)),
-                                  style: TextStyle(fontSize: 13, height: 1.6, color: StatusTone.info.fg),
+                                  t.methodRecordOnly(
+                                    paymentMethodLabel(t, state.method),
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    height: 1.6,
+                                    color: StatusTone.info.fg,
+                                  ),
                                 ),
                               ),
                             ],
@@ -239,10 +406,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ],
                     ],
                     const SizedBox(height: 14),
-                    _CustomerSection(state: state, summary: s, locked: locked, onPick: () => _pickCustomer(state)),
+                    _CustomerSection(
+                      state: state,
+                      summary: s,
+                      locked: locked,
+                      onPick: () => _pickCustomer(state),
+                    ),
                     if (s.debt.isPositive) ...[
                       const SizedBox(height: 14),
-                      _DueSection(state: state, locked: locked, onPick: _controller.setDue),
+                      _DueSection(
+                        state: state,
+                        locked: locked,
+                        onPick: _controller.setDue,
+                      ),
                     ],
                     ..._warnings(t, s, state),
                     const SizedBox(height: 14),
@@ -250,7 +426,60 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ],
                 ),
               ),
-              ActionBar(child: _ConfirmBar(summary: s, state: state, onConfirm: () => _confirm(cart))),
+              ActionBar(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (state.mode == SaleMode.cash &&
+                        state.method != 'cash') ...[
+                      if (_suspendError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              _suspendError!,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (_selectedReceivingAccount != null &&
+                          !_suspendUncertain)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            'الحساب: ${_selectedReceivingAccount!['account_name']}',
+                          ),
+                        ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed:
+                              cart.isEmpty || _suspendBusy || state.locked
+                              ? null
+                              : () => _suspend(cart),
+                          child: BusyLabel(
+                            busy: _suspendBusy,
+                            label: _suspendUncertain
+                                ? 'إعادة المحاولة بأمان'
+                                : 'تعليق بانتظار التحويل',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    _ConfirmBar(
+                      summary: s,
+                      state: state,
+                      disabled: _suspendBusy || _suspendUncertain,
+                      onConfirm: () => _confirm(cart),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -258,7 +487,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  List<Widget> _warnings(AppLocalizations t, CheckoutSummary s, CheckoutState state) {
+  List<Widget> _warnings(
+    AppLocalizations t,
+    CheckoutSummary s,
+    CheckoutState state,
+  ) {
     final cards = <Widget>[];
     final over = s.cart.overStockLines;
     if (over.isNotEmpty) {
@@ -272,11 +505,25 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           children: [
             for (final line in over)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: HisbahColors.stockNote, borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: HisbahColors.stockNote,
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: Row(
                   children: [
-                    Expanded(child: Text(line.product.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600))),
+                    Expanded(
+                      child: Text(
+                        line.product.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                     Text(
                       t.negativeStockRow(
                         line.product.currentStock.format(line.product.unit),
@@ -308,7 +555,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             else if (customer != null && customer.creditLimit != null)
               _AmountGrid(
                 rows: [
-                  (t.limitBalanceNowOf(customer.name), shekel(customer.balance), false),
+                  (
+                    t.limitBalanceNowOf(customer.name),
+                    shekel(customer.balance),
+                    false,
+                  ),
                   (t.limitThisSaleDebt, shekel(s.debt), false),
                   (t.limitCeiling, shekel(customer.creditLimit!), false),
                   (t.limitOverBy, shekel(s.overBy), true),
@@ -319,7 +570,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ],
         ),
       );
-    } else if (s.limitWarning && customer != null && customer.creditLimit != null) {
+    } else if (s.limitWarning &&
+        customer != null &&
+        customer.creditLimit != null) {
       cards.add(
         ToneCard(
           key: const Key('checkout.limitWarning'),
@@ -328,23 +581,49 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           title: t.limitWarnTitle(customer.name),
           strongBorder: true,
           children: [
-            BodyText(t.limitWarnBody(shekel(s.balanceAfter), shekel(customer.creditLimit!), shekel(s.overBy))),
+            BodyText(
+              t.limitWarnBody(
+                shekel(s.balanceAfter),
+                shekel(customer.creditLimit!),
+                shekel(s.overBy),
+              ),
+            ),
             BodyText(t.limitWarnHelp, size: 13),
           ],
         ),
       );
     }
     final outcome = switch (state.submit) {
-      SubmitState.offline => (StatusTone.error, Icons.wifi_off_rounded, t.submitOfflineTitle, t.submitOfflineBody),
-      SubmitState.uncertain => (StatusTone.info, Icons.schedule_rounded, t.submitUncertainTitle, t.submitUncertainBody),
-      SubmitState.server => (StatusTone.error, Icons.warning_amber_rounded, t.submitServerTitle, t.submitServerBody),
+      SubmitState.offline => (
+        StatusTone.error,
+        Icons.wifi_off_rounded,
+        t.submitOfflineTitle,
+        t.submitOfflineBody,
+      ),
+      SubmitState.uncertain => (
+        StatusTone.info,
+        Icons.schedule_rounded,
+        t.submitUncertainTitle,
+        t.submitUncertainBody,
+      ),
+      SubmitState.server => (
+        StatusTone.error,
+        Icons.warning_amber_rounded,
+        t.submitServerTitle,
+        t.submitServerBody,
+      ),
       SubmitState.rejected => (
         StatusTone.error,
         Icons.warning_amber_rounded,
         t.submitRejectedTitle,
         state.serverMessage ?? t.serverError,
       ),
-      SubmitState.queueFull => (StatusTone.error, Icons.cloud_off_rounded, t.queueFullTitle, t.queueFullBody),
+      SubmitState.queueFull => (
+        StatusTone.error,
+        Icons.cloud_off_rounded,
+        t.queueFullTitle,
+        t.queueFullBody,
+      ),
       _ => null,
     };
     if (outcome != null) {
@@ -360,12 +639,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           children: [
             BodyText(body),
             if (state.submit == SubmitState.server && state.reference != null)
-              BodyText(t.serverReference(state.reference!), size: 13, color: HisbahColors.inkMuted),
+              BodyText(
+                t.serverReference(state.reference!),
+                size: 13,
+                color: HisbahColors.inkMuted,
+              ),
           ],
         ),
       );
     }
-    return [for (final card in cards) ...[const SizedBox(height: 14), card]];
+    return [
+      for (final card in cards) ...[const SizedBox(height: 14), card],
+    ];
   }
 }
 
@@ -430,7 +715,12 @@ class _MethodTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (selected) const Icon(Icons.check_circle_rounded, size: 18, color: HisbahColors.primary),
+                if (selected)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    size: 18,
+                    color: HisbahColors.primary,
+                  ),
               ],
             ),
           ),
@@ -441,7 +731,12 @@ class _MethodTile extends StatelessWidget {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.title, required this.subtitle, required this.backLabel, required this.onBack});
+  const _TopBar({
+    required this.title,
+    required this.subtitle,
+    required this.backLabel,
+    required this.onBack,
+  });
 
   final String title;
   final String subtitle;
@@ -451,7 +746,9 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
-    decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: HisbahColors.border))),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: HisbahColors.border)),
+    ),
     child: Row(
       children: [
         IconButton(
@@ -467,9 +764,21 @@ class _TopBar extends StatelessWidget {
             children: [
               Semantics(
                 header: true,
-                child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-              Text(subtitle, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: HisbahColors.inkMuted,
+                ),
+              ),
             ],
           ),
         ),
@@ -512,8 +821,19 @@ class _OrderSummary extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(t.totalWord, style: const TextStyle(fontSize: 14, color: HisbahColors.inkMuted)),
-                      Num(shekel(summary.total), key: const Key('checkout.total'), size: 32, weight: FontWeight.w700),
+                      Text(
+                        t.totalWord,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: HisbahColors.inkMuted,
+                        ),
+                      ),
+                      Num(
+                        shekel(summary.total),
+                        key: const Key('checkout.total'),
+                        size: 32,
+                        weight: FontWeight.w700,
+                      ),
                       if (summary.discount.isPositive)
                         Text.rich(
                           key: const Key('checkout.totalBeforeDiscount'),
@@ -521,30 +841,51 @@ class _OrderSummary extends StatelessWidget {
                             children: [
                               TextSpan(
                                 text: shekel(summary.subtotal),
-                                style: const TextStyle(decoration: TextDecoration.lineThrough),
+                                style: const TextStyle(
+                                  decoration: TextDecoration.lineThrough,
+                                ),
                               ),
-                              TextSpan(text: '  ·  ${t.discountWord} ${shekel(summary.discount)}'),
+                              TextSpan(
+                                text:
+                                    '  ·  ${t.discountWord} ${shekel(summary.discount)}',
+                              ),
                             ],
                           ),
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: StatusTone.paid.fg),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: StatusTone.paid.fg,
+                          ),
                         ),
                     ],
                   ),
                 ),
                 TextButton.icon(
                   onPressed: onToggle,
-                  icon: Icon(open ? Icons.expand_less_rounded : Icons.expand_more_rounded, size: 18),
+                  icon: Icon(
+                    open
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    size: 18,
+                  ),
                   label: Text(open ? t.hideItems : t.showItems),
-                  style: TextButton.styleFrom(minimumSize: const Size(0, 44), textStyle: const TextStyle(fontWeight: FontWeight.w700)),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 44),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ],
             ),
             if (open) ...[
               for (final line in cart.lines)
                 Container(
-                  key: Key('checkout.line.${line.product.id}${line.pack ? '.pack' : ''}'),
+                  key: Key(
+                    'checkout.line.${line.product.id}${line.pack ? '.pack' : ''}',
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: const BoxDecoration(border: Border(top: BorderSide(color: HisbahColors.border))),
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: HisbahColors.border)),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -559,7 +900,9 @@ class _OrderSummary extends StatelessWidget {
                                     text: line.pack
                                         ? ' · ${line.quantity.format(ProductUnit.piece)} ${t.packWord} (${t.packEquals(line.baseQuantity.format(ProductUnit.piece))})'
                                         : ' · ${line.quantity.format(line.product.unit)} ${line.product.isWeighed ? t.kgShort : t.pieceWord}',
-                                    style: const TextStyle(color: HisbahColors.inkMuted),
+                                    style: const TextStyle(
+                                      color: HisbahColors.inkMuted,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -581,7 +924,11 @@ class _OrderSummary extends StatelessWidget {
                             enabled: !locked,
                             onChanged: (price) => onPrice(line, price),
                           ),
-                          PriceNotes(line: line, enabled: !locked, onRestore: () => onPrice(line, null)),
+                          PriceNotes(
+                            line: line,
+                            enabled: !locked,
+                            onRestore: () => onPrice(line, null),
+                          ),
                         ],
                       ),
                     ],
@@ -591,7 +938,10 @@ class _OrderSummary extends StatelessWidget {
                 alignment: AlignmentDirectional.centerStart,
                 child: TextButton(
                   onPressed: locked ? null : () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(minimumSize: const Size(0, 44), textStyle: const TextStyle(fontWeight: FontWeight.w700)),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 44),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   child: Text(t.editCart),
                 ),
               ),
@@ -604,7 +954,12 @@ class _OrderSummary extends StatelessWidget {
 }
 
 class _PaidField extends StatelessWidget {
-  const _PaidField({required this.controller, required this.state, required this.total, required this.onChanged});
+  const _PaidField({
+    required this.controller,
+    required this.state,
+    required this.total,
+    required this.onChanged,
+  });
 
   final TextEditingController controller;
   final CheckoutState state;
@@ -622,7 +977,10 @@ class _PaidField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(t.paidNowLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(
+          t.paidNowLabel,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 6),
         _AmountInput(
           fieldKey: const Key('checkout.paid'),
@@ -682,7 +1040,13 @@ class _DiscountSection extends StatelessWidget {
           onPressed: locked ? null : onToggle,
           icon: const Icon(Icons.sell_outlined, size: 18),
           label: Text(t.addDiscount),
-          style: TextButton.styleFrom(minimumSize: const Size(0, 44), textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          style: TextButton.styleFrom(
+            minimumSize: const Size(0, 44),
+            textStyle: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       );
     }
@@ -702,13 +1066,28 @@ class _DiscountSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.sell_outlined, size: 18, color: HisbahColors.primary),
+                const Icon(
+                  Icons.sell_outlined,
+                  size: 18,
+                  color: HisbahColors.primary,
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: Text(t.discountLabel, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700))),
+                Expanded(
+                  child: Text(
+                    t.discountLabel,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
                 TextButton(
                   key: const Key('checkout.removeDiscount'),
                   onPressed: locked ? null : onToggle,
-                  style: TextButton.styleFrom(minimumSize: const Size(0, 44), textStyle: const TextStyle(fontWeight: FontWeight.w700)),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 44),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   child: Text(t.removeDiscount),
                 ),
               ],
@@ -721,11 +1100,15 @@ class _DiscountSection extends StatelessWidget {
                 enabled: !locked,
                 hint: t.phDiscount,
                 error: error,
-                note: t.discountHint(shekel(summary.subtotal), shekel(summary.total)),
+                note: t.discountHint(
+                  shekel(summary.subtotal),
+                  shekel(summary.total),
+                ),
                 onChanged: onChanged,
               ),
             ),
-            if (roundTotals(summary.subtotal) case final targets when targets.isNotEmpty) ...[
+            if (roundTotals(summary.subtotal) case final targets
+                when targets.isNotEmpty) ...[
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -735,9 +1118,14 @@ class _DiscountSection extends StatelessWidget {
                     ChoiceChip(
                       key: Key('checkout.roundTo.${target.toApi()}'),
                       label: Text(t.discountMakeIt(shekel(target))),
-                      selected: chosen.isPositive && summary.total.cents == target.cents,
+                      selected:
+                          chosen.isPositive &&
+                          summary.total.cents == target.cents,
                       onSelected: locked ? null : (_) => onRound(target),
-                      labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      labelStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                 ],
               ),
@@ -783,24 +1171,48 @@ class _AmountInput extends StatelessWidget {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           textDirection: TextDirection.ltr,
           textAlign: TextAlign.left,
-          inputFormatters: [const LatinDigitsFormatter(), FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, fontFeatures: [FontFeature.tabularFigures()]),
+          inputFormatters: [
+            const LatinDigitsFormatter(),
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          ],
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            fontFeatures: [FontFeature.tabularFigures()],
+          ),
           decoration: InputDecoration(
             hintText: hint,
             hintTextDirection: Directionality.of(context),
-            hintStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: HisbahColors.inkMuted),
+            hintStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: HisbahColors.inkMuted,
+            ),
             filled: true,
             fillColor: error != null ? HisbahColors.raised : null,
             suffixIcon: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('₪', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: HisbahColors.inkMuted)),
+              child: Text(
+                '₪',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: HisbahColors.inkMuted,
+                ),
+              ),
             ),
-            suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
             enabledBorder: error == null
                 ? null
                 : OutlineInputBorder(
                     borderRadius: BorderRadius.circular(HisbahRadius.field),
-                    borderSide: BorderSide(color: StatusTone.error.fg, width: 2),
+                    borderSide: BorderSide(
+                      color: StatusTone.error.fg,
+                      width: 2,
+                    ),
                   ),
           ),
         ),
@@ -811,23 +1223,43 @@ class _AmountInput extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: 3),
-                child: Icon(Icons.warning_amber_rounded, size: 16, color: StatusTone.error.fg),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  size: 16,
+                  color: StatusTone.error.fg,
+                ),
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(error, style: TextStyle(fontSize: 14, height: 1.5, fontWeight: FontWeight.w600, color: StatusTone.error.fg)),
+                child: Text(
+                  error,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    fontWeight: FontWeight.w600,
+                    color: StatusTone.error.fg,
+                  ),
+                ),
               ),
             ],
           )
         else
-          Text(note, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
+          Text(
+            note,
+            style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
+          ),
       ],
     );
   }
 }
 
 class _CustomerSection extends StatelessWidget {
-  const _CustomerSection({required this.state, required this.summary, required this.locked, required this.onPick});
+  const _CustomerSection({
+    required this.state,
+    required this.summary,
+    required this.locked,
+    required this.onPick,
+  });
 
   final CheckoutState state;
   final CheckoutSummary summary;
@@ -862,8 +1294,19 @@ class _CustomerSection extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(customer.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        Num(customer.phoneDisplay, size: 13, weight: FontWeight.w400, color: HisbahColors.inkMuted),
+                        Text(
+                          customer.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Num(
+                          customer.phoneDisplay,
+                          size: 13,
+                          weight: FontWeight.w400,
+                          color: HisbahColors.inkMuted,
+                        ),
                         Text.rich(
                           TextSpan(
                             text: '${t.balanceWord} ',
@@ -872,7 +1315,9 @@ class _CustomerSection extends StatelessWidget {
                                 text: shekel(customer.balance),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  color: customer.balance.isPositive ? StatusTone.debt.fg : HisbahColors.ink,
+                                  color: customer.balance.isPositive
+                                      ? StatusTone.debt.fg
+                                      : HisbahColors.ink,
                                 ),
                               ),
                               TextSpan(
@@ -882,7 +1327,10 @@ class _CustomerSection extends StatelessWidget {
                               ),
                             ],
                           ),
-                          style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: HisbahColors.inkMuted,
+                          ),
                         ),
                       ],
                     ),
@@ -890,7 +1338,10 @@ class _CustomerSection extends StatelessWidget {
                   TextButton(
                     key: const Key('checkout.changeCustomer'),
                     onPressed: locked ? null : onPick,
-                    style: TextButton.styleFrom(minimumSize: const Size(0, 44), textStyle: const TextStyle(fontWeight: FontWeight.w700)),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(0, 44),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
                     child: Text(t.changeWord),
                   ),
                 ],
@@ -904,7 +1355,10 @@ class _CustomerSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               side: missing
                   ? BorderSide(color: StatusTone.error.fg, width: 2)
-                  : const BorderSide(color: HisbahColors.borderStrong, width: 1.5),
+                  : const BorderSide(
+                      color: HisbahColors.borderStrong,
+                      width: 1.5,
+                    ),
             ),
             child: InkWell(
               key: const Key('checkout.pickCustomer'),
@@ -915,10 +1369,26 @@ class _CustomerSection extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(
                   children: [
-                    const Icon(Icons.person_outline_rounded, size: 20, color: HisbahColors.primary),
+                    const Icon(
+                      Icons.person_outline_rounded,
+                      size: 20,
+                      color: HisbahColors.primary,
+                    ),
                     const SizedBox(width: 10),
-                    Expanded(child: Text(t.pickCustomer, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
-                    const Icon(Icons.chevron_left_rounded, size: 20, color: HisbahColors.inkMuted),
+                    Expanded(
+                      child: Text(
+                        t.pickCustomer,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_left_rounded,
+                      size: 20,
+                      color: HisbahColors.inkMuted,
+                    ),
                   ],
                 ),
               ),
@@ -932,7 +1402,13 @@ class _CustomerSection extends StatelessWidget {
               onPressed: locked ? null : onPick,
               icon: const Icon(Icons.add_rounded, size: 18),
               label: Text(t.addCustomerToInvoice),
-              style: TextButton.styleFrom(minimumSize: const Size(0, 44), textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 44),
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
         if (missing) ...[
@@ -943,13 +1419,24 @@ class _CustomerSection extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: 3),
-                child: Icon(Icons.warning_amber_rounded, size: 16, color: StatusTone.error.fg),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  size: 16,
+                  color: StatusTone.error.fg,
+                ),
               ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  state.mode == SaleMode.credit ? t.customerRequiredCredit : t.customerRequiredPartial,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, height: 1.5, color: StatusTone.error.fg),
+                  state.mode == SaleMode.credit
+                      ? t.customerRequiredCredit
+                      : t.customerRequiredPartial,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                    color: StatusTone.error.fg,
+                  ),
                 ),
               ),
             ],
@@ -961,7 +1448,11 @@ class _CustomerSection extends StatelessWidget {
 }
 
 class _DueSection extends StatelessWidget {
-  const _DueSection({required this.state, required this.locked, required this.onPick});
+  const _DueSection({
+    required this.state,
+    required this.locked,
+    required this.onPick,
+  });
 
   final CheckoutState state;
   final bool locked;
@@ -977,14 +1468,26 @@ class _DueSection extends StatelessWidget {
         Text.rich(
           TextSpan(
             text: t.dueLabel,
-            children: [TextSpan(text: ' ${t.optionalParen}', style: const TextStyle(fontWeight: FontWeight.w400, color: HisbahColors.inkMuted))],
+            children: [
+              TextSpan(
+                text: ' ${t.optionalParen}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w400,
+                  color: HisbahColors.inkMuted,
+                ),
+              ),
+            ],
           ),
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         OptionRow(
           children: [
-            for (final (due, label) in [(DueChoice.none, t.dueNone), (DueChoice.week, t.dueWeek), (DueChoice.month, t.dueMonth)])
+            for (final (due, label) in [
+              (DueChoice.none, t.dueNone),
+              (DueChoice.week, t.dueWeek),
+              (DueChoice.month, t.dueMonth),
+            ])
               OptionButton(
                 label: label,
                 fontSize: 13,
@@ -996,7 +1499,10 @@ class _DueSection extends StatelessWidget {
         if (date != null) ...[
           const SizedBox(height: 8),
           Text.rich(
-            TextSpan(text: '${t.dueOn} ', children: [TextSpan(text: dayMonthYear(date))]),
+            TextSpan(
+              text: '${t.dueOn} ',
+              children: [TextSpan(text: dayMonthYear(date))],
+            ),
             style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
           ),
         ],
@@ -1021,9 +1527,21 @@ class _AmountGrid extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Text(label, style: TextStyle(fontSize: 14, height: 1.6, fontWeight: strong ? FontWeight.w700 : FontWeight.w400)),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.6,
+                    fontWeight: strong ? FontWeight.w700 : FontWeight.w400,
+                  ),
+                ),
               ),
-              Num(amount, size: 14, weight: strong ? FontWeight.w700 : FontWeight.w400, color: strong ? strongColor : HisbahColors.ink),
+              Num(
+                amount,
+                size: 14,
+                weight: strong ? FontWeight.w700 : FontWeight.w400,
+                color: strong ? strongColor : HisbahColors.ink,
+              ),
             ],
           ),
         ),
@@ -1042,10 +1560,18 @@ class _ConfirmSummary extends StatelessWidget {
     final t = AppLocalizations.of(context);
     final s = summary;
     final (statusLabel, tone, icon) = s.debt.isZero
-        ? (t.statusPaidFull, StatusTone.paid, Icons.check_circle_outline_rounded)
+        ? (
+            t.statusPaidFull,
+            StatusTone.paid,
+            Icons.check_circle_outline_rounded,
+          )
         : s.paid.isPositive
         ? (t.statusPartialDebt, StatusTone.partial, Icons.timelapse_rounded)
-        : (t.statusFullDebt, StatusTone.debt, Icons.radio_button_unchecked_rounded);
+        : (
+            t.statusFullDebt,
+            StatusTone.debt,
+            Icons.radio_button_unchecked_rounded,
+          );
     return LineCard(
       radius: 16,
       child: Padding(
@@ -1055,13 +1581,19 @@ class _ConfirmSummary extends StatelessWidget {
             if (s.discount.isPositive) ...[
               _SummaryRow(label: t.subtotalWord, value: shekel(s.subtotal)),
               const Divider(height: 1, color: HisbahColors.border),
-              _SummaryRow(key: const Key('checkout.discountRow'), label: t.discountWord, value: shekel(s.discount)),
+              _SummaryRow(
+                key: const Key('checkout.discountRow'),
+                label: t.discountWord,
+                value: shekel(s.discount),
+              ),
               const Divider(height: 1, color: HisbahColors.border),
             ],
             _SummaryRow(label: t.totalWord, value: shekel(s.total)),
             const Divider(height: 1, color: HisbahColors.border),
             _SummaryRow(
-              label: s.paid.isPositive ? '${t.paidWord} · ${paymentMethodLabel(t, method)}' : t.paidWord,
+              label: s.paid.isPositive
+                  ? '${t.paidWord} · ${paymentMethodLabel(t, method)}'
+                  : t.paidWord,
               value: shekel(s.paid),
             ),
             const Divider(height: 1.5, thickness: 1.5, color: HisbahColors.ink),
@@ -1073,18 +1605,37 @@ class _ConfirmSummary extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(t.remainingWord, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                        Text(
+                          t.remainingWord,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-                          decoration: BoxDecoration(color: tone.bg, borderRadius: BorderRadius.circular(999)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: tone.bg,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(icon, size: 13, color: tone.fg),
                               const SizedBox(width: 4),
                               Flexible(
-                                child: Text(statusLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: tone.fg)),
+                                child: Text(
+                                  statusLabel,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: tone.fg,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -1097,7 +1648,9 @@ class _ConfirmSummary extends StatelessWidget {
                     key: const Key('checkout.debt'),
                     size: 28,
                     weight: FontWeight.w700,
-                    color: s.debt.isPositive ? StatusTone.debt.fg : StatusTone.paid.fg,
+                    color: s.debt.isPositive
+                        ? StatusTone.debt.fg
+                        : StatusTone.paid.fg,
                   ),
                 ],
               ),
@@ -1128,11 +1681,17 @@ class _SummaryRow extends StatelessWidget {
 }
 
 class _ConfirmBar extends StatelessWidget {
-  const _ConfirmBar({required this.summary, required this.state, required this.onConfirm});
+  const _ConfirmBar({
+    required this.summary,
+    required this.state,
+    required this.onConfirm,
+    this.disabled = false,
+  });
 
   final CheckoutSummary summary;
   final CheckoutState state;
   final VoidCallback onConfirm;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -1150,7 +1709,7 @@ class _ConfirmBar extends StatelessWidget {
 
     var label = t.confirmSale;
     String? amount = shekel(s.total);
-    var disabled = state.busy;
+    var disabled = state.busy || this.disabled;
     if (state.busy) {
       label = t.savingSale;
       amount = null;
@@ -1162,7 +1721,8 @@ class _ConfirmBar extends StatelessWidget {
     } else if (s.limitWarning) {
       label = t.continueOverLimit;
       amount = null;
-    } else if (state.submit == SubmitState.offline || state.submit == SubmitState.server) {
+    } else if (state.submit == SubmitState.offline ||
+        state.submit == SubmitState.server) {
       label = t.retrySale;
     }
 
@@ -1174,7 +1734,11 @@ class _ConfirmBar extends StatelessWidget {
           note,
           key: const Key('checkout.barNote'),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: noteColor),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: noteColor,
+          ),
         ),
         const SizedBox(height: 6),
         FilledButton(
@@ -1183,6 +1747,183 @@ class _ConfirmBar extends StatelessWidget {
           child: BusyLabel(busy: state.busy, label: label, amount: amount),
         ),
       ],
+    );
+  }
+}
+
+class _ResumedInvoiceCheckoutScreen extends ConsumerStatefulWidget {
+  const _ResumedInvoiceCheckoutScreen({required this.invoice});
+
+  final Map<String, dynamic> invoice;
+
+  @override
+  ConsumerState<_ResumedInvoiceCheckoutScreen> createState() =>
+      _ResumedInvoiceCheckoutScreenState();
+}
+
+class _ResumedInvoiceCheckoutScreenState
+    extends ConsumerState<_ResumedInvoiceCheckoutScreen> {
+  bool _busy = false;
+  String? _error;
+  String? _uncertainAction;
+
+  String _waitingSince(String? createdAt) {
+    final created = DateTime.tryParse(createdAt ?? '')?.toUtc();
+    if (created == null) return 'وقت الانتظار غير متاح';
+    final elapsed = DateTime.now().toUtc().difference(created);
+    final days = elapsed.inDays;
+    final hours = elapsed.inHours.remainder(24);
+    final minutes = elapsed.inMinutes.remainder(60);
+    if (days > 0) return 'قيد الانتظار منذ $days يوم و$hours ساعة';
+    if (hours > 0) return 'قيد الانتظار منذ $hours ساعة و$minutes دقيقة';
+    return 'قيد الانتظار منذ ${minutes.clamp(1, 59)} دقيقة';
+  }
+
+  Future<void> _confirm() async {
+    if (_busy || _uncertainAction == 'reject') return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(moreRepositoryProvider)
+          .confirmSuspendedInvoice((widget.invoice['id'] as num).toInt());
+      if (mounted) Navigator.of(context).pop(true);
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = failure.message ?? 'تعذر تأكيد الاستلام. أعد المحاولة.';
+        _uncertainAction = SaleRepository.isFinalAnswer(failure)
+            ? null
+            : 'confirm';
+      });
+    }
+  }
+
+  Future<void> _reject() async {
+    if (_busy || _uncertainAction == 'confirm') return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(moreRepositoryProvider)
+          .closeSuspendedInvoice(
+            (widget.invoice['id'] as num).toInt(),
+            status: 'rejected',
+            reason: 'رفض التحويل',
+          );
+      if (mounted) Navigator.of(context).pop(true);
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = failure.message ?? 'تعذر رفض الفاتورة. أعد المحاولة.';
+        _uncertainAction = SaleRepository.isFinalAnswer(failure)
+            ? null
+            : 'reject';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = widget.invoice['items'] as List<dynamic>? ?? const [];
+    final accountName =
+        widget.invoice['account_snapshot_name'] as String? ?? '';
+    final accountIdentifier =
+        widget.invoice['account_snapshot_identifier'] as String? ?? '';
+    return Scaffold(
+      appBar: AppBar(title: const Text('استئناف الفاتورة المعلقة')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text(
+            '#${widget.invoice['reference']}',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(_waitingSince(widget.invoice['created_at'] as String?)),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              title: Text(accountName),
+              subtitle: Text(
+                accountIdentifier,
+                textDirection: TextDirection.ltr,
+              ),
+              leading: const Icon(Icons.account_balance_wallet_outlined),
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (final rawItem in items)
+            Card(
+              child: ListTile(
+                title: Text(rawItem['item_name'] as String? ?? ''),
+                subtitle: Text(
+                  rawItem['sale_unit'] == 'pack'
+                      ? '${rawItem['quantity']} كرتونة · ${rawItem['pack_size']} قطعة للكرتونة'
+                      : '${rawItem['quantity']} ${rawItem['unit'] == 'kg' ? 'كغم' : 'قطعة'}',
+                ),
+                trailing: Text(rawItem['total'] as String? ?? ''),
+              ),
+            ),
+          const SizedBox(height: 8),
+          Text(
+            'الإجمالي: ${widget.invoice['total_amount']}',
+            textAlign: TextAlign.end,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ],
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _busy || _uncertainAction == 'confirm'
+                      ? null
+                      : _reject,
+                  child: Text(
+                    _uncertainAction == 'reject'
+                        ? 'إعادة الرفض'
+                        : 'رفض التحويل',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton(
+                  onPressed: _busy || _uncertainAction == 'reject'
+                      ? null
+                      : _confirm,
+                  child: BusyLabel(
+                    busy: _busy,
+                    label: _uncertainAction == 'confirm'
+                        ? 'إعادة تأكيد الاستلام'
+                        : 'تأكيد الاستلام',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1216,7 +1957,10 @@ class OverrideSheet extends ConsumerWidget {
                 width: 40,
                 height: 5,
                 margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(color: HisbahColors.sheetHandle, borderRadius: BorderRadius.circular(3)),
+                decoration: BoxDecoration(
+                  color: HisbahColors.sheetHandle,
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
             ),
             Row(
@@ -1224,14 +1968,27 @@ class OverrideSheet extends ConsumerWidget {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(color: StatusTone.warning.bg, shape: BoxShape.circle),
-                  child: Icon(Icons.warning_amber_rounded, size: 22, color: StatusTone.warning.fg),
+                  decoration: BoxDecoration(
+                    color: StatusTone.warning.bg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    size: 22,
+                    color: StatusTone.warning.fg,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Semantics(
                     header: true,
-                    child: Text(t.overrideTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                    child: Text(
+                      t.overrideTitle,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -1241,21 +1998,50 @@ class OverrideSheet extends ConsumerWidget {
               color: HisbahColors.raised,
               radius: 14,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 child: Column(
                   children: [
-                    _OverrideRow(label: t.customerLabel, value: customer?.name ?? '', isText: true, first: true),
-                    _OverrideRow(label: t.overrideBalanceNow, value: shekel(customer?.balance ?? Money.zero)),
-                    _OverrideRow(label: t.limitThisSaleDebt, value: shekel(s.debt)),
-                    _OverrideRow(label: t.overrideBalanceAfter, value: shekel(s.balanceAfter), bold: true),
-                    _OverrideRow(label: t.limitCeiling, value: limit == null ? '' : shekel(limit)),
-                    _OverrideRow(label: t.limitOverBy, value: shekel(s.overBy), bold: true, emphasis: true),
+                    _OverrideRow(
+                      label: t.customerLabel,
+                      value: customer?.name ?? '',
+                      isText: true,
+                      first: true,
+                    ),
+                    _OverrideRow(
+                      label: t.overrideBalanceNow,
+                      value: shekel(customer?.balance ?? Money.zero),
+                    ),
+                    _OverrideRow(
+                      label: t.limitThisSaleDebt,
+                      value: shekel(s.debt),
+                    ),
+                    _OverrideRow(
+                      label: t.overrideBalanceAfter,
+                      value: shekel(s.balanceAfter),
+                      bold: true,
+                    ),
+                    _OverrideRow(
+                      label: t.limitCeiling,
+                      value: limit == null ? '' : shekel(limit),
+                    ),
+                    _OverrideRow(
+                      label: t.limitOverBy,
+                      value: shekel(s.overBy),
+                      bold: true,
+                      emphasis: true,
+                    ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 12),
-            BodyText(t.overrideNote(user?.name ?? '', _roleLabel(t, user)), color: HisbahColors.inkMuted),
+            BodyText(
+              t.overrideNote(user?.name ?? '', _roleLabel(t, user)),
+              color: HisbahColors.inkMuted,
+            ),
             if (state.submit == SubmitState.forbidden) ...[
               const SizedBox(height: 12),
               ToneCard(
@@ -1270,20 +2056,31 @@ class OverrideSheet extends ConsumerWidget {
             OutlinedButton(
               key: const Key('override.back'),
               onPressed: state.busy ? null : () => Navigator.of(context).pop(),
-              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
               child: Text(t.overrideBack),
             ),
             const SizedBox(height: 10),
             FilledButton(
               key: const Key('override.confirm'),
-              style: FilledButton.styleFrom(backgroundColor: StatusTone.warning.fg),
+              style: FilledButton.styleFrom(
+                backgroundColor: StatusTone.warning.fg,
+              ),
               onPressed: state.busy || state.submit == SubmitState.forbidden
                   ? null
                   : () async {
-                      final outcome = await ref.read(checkoutControllerProvider.notifier).confirmOverride(cart);
-                      if (outcome is CheckoutDone && context.mounted) Navigator.of(context).pop(outcome);
+                      final outcome = await ref
+                          .read(checkoutControllerProvider.notifier)
+                          .confirmOverride(cart);
+                      if (outcome is CheckoutDone && context.mounted) {
+                        Navigator.of(context).pop(outcome);
+                      }
                     },
-              child: BusyLabel(busy: state.busy, label: state.busy ? t.savingShort : t.overrideConfirm),
+              child: BusyLabel(
+                busy: state.busy,
+                label: state.busy ? t.savingShort : t.overrideConfirm,
+              ),
             ),
           ],
         ),
@@ -1291,11 +2088,12 @@ class OverrideSheet extends ConsumerWidget {
     );
   }
 
-  static String _roleLabel(AppLocalizations t, AppUser? user) => switch (user?.role) {
-    UserRole.owner => t.roleOwner,
-    UserRole.manager => t.roleManager,
-    _ => t.roleEmployee,
-  };
+  static String _roleLabel(AppLocalizations t, AppUser? user) =>
+      switch (user?.role) {
+        UserRole.owner => t.roleOwner,
+        UserRole.manager => t.roleManager,
+        _ => t.roleEmployee,
+      };
 }
 
 class _OverrideRow extends StatelessWidget {
@@ -1324,18 +2122,35 @@ class _OverrideRow extends StatelessWidget {
         border: Border(
           top: emphasis
               ? const BorderSide(color: HisbahColors.ink, width: 1.5)
-              : (first ? BorderSide.none : const BorderSide(color: HisbahColors.border)),
+              : (first
+                    ? BorderSide.none
+                    : const BorderSide(color: HisbahColors.border)),
         ),
       ),
       child: Row(
         children: [
           Expanded(
-            child: Text(label, style: TextStyle(fontSize: 15, fontWeight: bold ? FontWeight.w700 : FontWeight.w400, color: color)),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+                color: color,
+              ),
+            ),
           ),
           if (isText)
-            Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700))
+            Text(
+              value,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            )
           else
-            Num(value, size: 15, weight: bold ? FontWeight.w700 : FontWeight.w400, color: color),
+            Num(
+              value,
+              size: 15,
+              weight: bold ? FontWeight.w700 : FontWeight.w400,
+              color: color,
+            ),
         ],
       ),
     );

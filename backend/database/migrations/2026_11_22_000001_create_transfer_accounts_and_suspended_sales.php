@@ -49,7 +49,7 @@ return new class extends Migration
 
         Schema::create('suspended_invoice_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('suspended_invoice_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('suspended_invoice_id')->constrained()->restrictOnDelete();
             $table->foreignId('product_id')->constrained()->restrictOnDelete();
             $table->string('item_name');
             $table->string('unit');
@@ -66,7 +66,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('store_id')->constrained()->restrictOnDelete();
             $table->foreignId('product_id')->constrained()->restrictOnDelete();
-            $table->foreignId('suspended_invoice_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('suspended_invoice_id')->constrained()->restrictOnDelete();
             $table->decimal('quantity', 12, 3);
             $table->string('status')->default('active')->index();
             $table->timestamp('released_at')->nullable();
@@ -78,7 +78,7 @@ return new class extends Migration
         Schema::create('suspended_invoice_events', function (Blueprint $table) {
             $table->id();
             $table->foreignId('store_id')->constrained()->restrictOnDelete();
-            $table->foreignId('suspended_invoice_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('suspended_invoice_id')->constrained()->restrictOnDelete();
             $table->foreignId('user_id')->constrained()->restrictOnDelete();
             $table->string('from_status')->nullable();
             $table->string('to_status');

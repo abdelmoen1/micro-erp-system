@@ -8,7 +8,7 @@ class SuspendedInvoiceItem extends Model
 {
     protected $fillable = [
         'suspended_invoice_id', 'product_id', 'item_name', 'unit',
-        'quantity', 'sale_unit', 'pack_size', 'unit_price', 'total',
+        'quantity', 'sale_unit', 'pack_size', 'base_quantity', 'unit_price', 'total',
     ];
 
     protected function casts(): array
@@ -16,10 +16,12 @@ class SuspendedInvoiceItem extends Model
         return [
             'quantity' => 'decimal:3',
             'pack_size' => 'integer',
+            'base_quantity' => 'decimal:3',
             'unit_price' => 'decimal:2',
             'total' => 'decimal:2',
         ];
     }
 
     public function product() { return $this->belongsTo(Product::class); }
+    public function reservation() { return $this->hasOne(InventoryReservation::class); }
 }

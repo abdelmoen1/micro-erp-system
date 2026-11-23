@@ -53,17 +53,23 @@ class SaleService
      *     cashier set for this sale, otherwise the product's price is used
      * @return array{invoice: Invoice, warnings: list<array<string, mixed>>}
      */
-    public function create(User $actor, array $data, ?OfflineSale $offline = null): array
+    public function create(User $actor, array $data, ?OfflineSale $offline = null, ?array $reservedLines = null): array
     {
-        return DB::transaction(function () use ($actor, $data, $offline) {
+        return DB::transaction(function () use ($actor, $data, $offline, $reservedLines) {
             // Offline (doc 16 §4): what no longer matches the server is a review flag, not a refusal.
             $warnings = [];
 
             $customer = $this->lockCustomer($actor, $data['customer_id'] ?? null, $offline !== null, $warnings);
-            $products = $this->lockProducts($actor, $data['items'], $offline !== null, $warnings);
+            $reservedProducts = $reservedLines === null
+                ? []
+                : array_values(array_unique(array_map(
+                    fn(array $line) => (int) $line['product_id'],
+                    $reservedLines,
+                )));
+            $products = $this->lockProducts($actor, $data['items'], $offline !== null, $warnings, $reservedProducts);
 
             $priceEdits = [];
-            $lines = $this->priceLines($data['items'], $products, $offline, $warnings, $priceEdits);
+            $lines = $this->priceLines($data['items'], $products, $offline, $warnings, $priceEdits, $reservedLines);
             $subtotal = Money::sum(array_column($lines, 'total'));
             $discount = Money::of($data['discount_amount'] ?? 0);
 
@@ -110,8 +116,8 @@ class SaleService
 
                 $invoice->items()->create([
                     'product_id' => $product->id,
-                    'item_name' => $product->name,
-                    'unit' => $product->unit,
+                    'item_name' => $line['item_name'],
+                    'unit' => $line['unit'],
                     'quantity' => $line['quantity'],
                     // Snapshot: this line's quantity and unit price are per carton of this size.
                     'pack_size' => $line['pack_size'],
@@ -129,6 +135,7 @@ class SaleService
                     referenceType: 'invoice',
                     referenceId: $invoice->id,
                     allowNegative: true,
+                    reservationId: $line['reservation_id'],
                 );
 
                 if (Quantity::isNegative($movement->balance_after)) {
@@ -276,7 +283,13 @@ class SaleService
     }
 
     /** @return Collection<int, Product> keyed by id, locked in id order */
-    private function lockProducts(User $actor, array $items, bool $offline, array &$warnings): Collection
+    private function lockProducts(
+        User $actor,
+        array $items,
+        bool $offline,
+        array &$warnings,
+        array $reservedProducts = [],
+    ): Collection
     {
         $ids = collect($items)->pluck('product_id')->map(fn($id) => (int) $id)->unique()->sort()->values();
 
@@ -298,7 +311,7 @@ class SaleService
                 $errors["items.{$index}.product_id"] = ['المنتج غير موجود في متجرك.'];
             } elseif (!$product->isActive() && $offline) {
                 $warnings[] = ['code' => self::FLAG_PRODUCT_INACTIVE, 'product_id' => $product->id, 'name' => $product->name];
-            } elseif (!$product->isActive()) {
+            } elseif (!$product->isActive() && !in_array($product->id, $reservedProducts, true)) {
                 $errors["items.{$index}.product_id"] = ['هذا المنتج موقوف ولا يمكن بيعه.'];
             }
         }
@@ -317,24 +330,32 @@ class SaleService
      *
      * @param list<array<string, mixed>> $priceEdits filled with each line whose price was set by hand
      */
-    private function priceLines(array $items, Collection $products, ?OfflineSale $offline, array &$warnings, array &$priceEdits): array
-    {
+    private function priceLines(
+        array $items,
+        Collection $products,
+        ?OfflineSale $offline,
+        array &$warnings,
+        array &$priceEdits,
+        ?array $reservedLines = null,
+    ): array {
         $lines = [];
         $errors = [];
 
         foreach ($items as $index => $item) {
             $product = $products->get((int) $item['product_id']);
+            $reservedLine = $reservedLines[$index] ?? null;
             $quantity = Quantity::of((string) $item['quantity']);
             $byPack = ($item['sale_unit'] ?? null) === Pack::SALE_UNIT;
 
-            if ($byPack && !$product->hasPack()) {
+            if ($byPack && !$product->hasPack() && $reservedLine === null) {
                 $errors["items.{$index}.sale_unit"] = ['هذا المنتج لا يُباع بالكرتونة.'];
 
                 continue;
             }
 
             // A carton line counts whole cartons; otherwise the product's own unit decides.
-            if (!Quantity::fitsUnit($quantity, $byPack ? Quantity::UNIT_PIECE : $product->unit)) {
+            $unit = $reservedLine['unit'] ?? $product->unit;
+            if (!Quantity::fitsUnit($quantity, $byPack ? Quantity::UNIT_PIECE : $unit)) {
                 $errors["items.{$index}.quantity"] = [$byPack ? 'الكرتونة تُباع كاملة؛ أدخل عددًا صحيحًا من الكراتين.' : 'هذا المنتج يباع بالقطعة؛ أدخل عددًا صحيحًا.'];
 
                 continue;
@@ -342,13 +363,15 @@ class SaleService
 
             // The price of the unit actually sold: per carton for a carton line, never per piece.
             $unitPrice = Money::of($byPack ? $product->pack_price : $product->selling_price);
-            $packSize = $byPack ? (int) $product->pack_size : null;
+            $packSize = $reservedLine !== null
+                ? $reservedLine['pack_size']
+                : ($byPack ? (int) $product->pack_size : null);
             $setPrice = isset($item['unit_price']) ? Money::of((string) $item['unit_price']) : null;
             $charged = $setPrice === null ? $offline?->chargedPrice($product->id, $item['sale_unit'] ?? null) : null;
 
             if ($setPrice !== null) {
                 // Changed at the till on purpose: charged as set, never a review flag.
-                if (Money::compare($setPrice, $unitPrice) !== 0) {
+                if ($reservedLine === null && Money::compare($setPrice, $unitPrice) !== 0) {
                     $priceEdits[] = [
                         'product_id' => $product->id,
                         'sale_unit' => $byPack ? Pack::SALE_UNIT : null,
@@ -370,9 +393,12 @@ class SaleService
 
             $lines[] = [
                 'product' => $product,
+                'item_name' => $reservedLine['item_name'] ?? $product->name,
+                'unit' => $unit,
                 'quantity' => $quantity,
                 'pack_size' => $packSize,
-                'base_quantity' => Pack::baseQuantity($quantity, $packSize),
+                'base_quantity' => $reservedLine['base_quantity'] ?? Pack::baseQuantity($quantity, $packSize),
+                'reservation_id' => $reservedLine['reservation_id'] ?? null,
                 'unit_price' => $unitPrice,
                 'total' => Money::times($unitPrice, $quantity),
             ];

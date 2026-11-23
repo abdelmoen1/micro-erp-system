@@ -13,15 +13,19 @@ class ReceivingAccountController extends Controller
 {
     public function index(Request $request)
     {
+        $includeInactive = $request->boolean('include_inactive');
+        if ($includeInactive) {
+            $this->authorizeManage($request);
+        }
         $provider = $request->validate([
-            'provider' => ['nullable', Rule::in(PaymentMethods::ALL)],
+            'provider' => ['nullable', Rule::in(PaymentMethods::TRANSFER_PROVIDERS)],
         ])['provider'] ?? null;
         $query = ReceivingAccount::query()->forStore($request->user()->store_id)
             ->whereNull('deleted_at')->orderBy('provider')->orderBy('account_name');
         if ($provider !== null) {
             $query->where('provider', $provider);
         }
-        if (!$request->boolean('include_inactive')) {
+        if (!$includeInactive) {
             $query->where('active', true);
         }
         return response()->json(['data' => $query->get()]);
@@ -31,7 +35,7 @@ class ReceivingAccountController extends Controller
     {
         $this->authorizeManage($request);
         $data = $request->validate([
-            'provider' => ['required', Rule::in(PaymentMethods::ALL)],
+            'provider' => ['required', Rule::in(PaymentMethods::TRANSFER_PROVIDERS)],
             'account_name' => ['required', 'string', 'max:255'],
             'account_identifier' => ['required', 'string', 'max:255'],
             'active' => ['sometimes', 'boolean'],
@@ -51,7 +55,7 @@ class ReceivingAccountController extends Controller
             abort(404);
         }
         $data = $request->validate([
-            'provider' => ['sometimes', Rule::in(PaymentMethods::ALL)],
+            'provider' => ['sometimes', Rule::in(PaymentMethods::TRANSFER_PROVIDERS)],
             'account_name' => ['sometimes', 'string', 'max:255'],
             'account_identifier' => ['sometimes', 'string', 'max:255'],
             'active' => ['sometimes', 'boolean'],
