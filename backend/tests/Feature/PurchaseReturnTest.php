@@ -287,4 +287,5 @@ class PurchaseReturnTest extends TestCase
         $this->assertSame('1.000', Product::find($almonds->product_id)->current_stock);
         $this->assertSame('0.000', $cola->fresh()->returned_quantity);
     }
+
 }
