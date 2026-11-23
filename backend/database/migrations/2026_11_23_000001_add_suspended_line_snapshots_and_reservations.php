@@ -33,6 +33,11 @@ return new class extends Migration
         }
 
         Schema::table('suspended_invoice_items', function (Blueprint $table) {
+            $table->index('suspended_invoice_id');
+            $table->index('product_id');
+        });
+
+        Schema::table('suspended_invoice_items', function (Blueprint $table) {
             $table->dropUnique(['suspended_invoice_id', 'product_id']);
             $table->decimal('base_quantity', 12, 3)->default(0);
         });
@@ -96,6 +101,8 @@ return new class extends Migration
 
         Schema::table('suspended_invoice_items', function (Blueprint $table) {
             $table->dropColumn('base_quantity');
+            $table->dropIndex(['suspended_invoice_id']);
+            $table->dropIndex(['product_id']);
             $table->unique(['suspended_invoice_id', 'product_id']);
         });
     }
