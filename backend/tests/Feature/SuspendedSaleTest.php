@@ -484,4 +484,67 @@ class SuspendedSaleTest extends TestCase
             ->where('status', InventoryReservation::STATUS_RELEASED)->count());
         $this->assertSame('3.000', $product->fresh()->current_stock);
     }
+
+    public function test_receiving_account_rejects_empty_provider_and_blank_fields_on_create_and_update(): void
+    {
+        $store = $this->makeStore();
+        $owner = $this->makeUser($store);
+        $api = $this->actingAs($owner, 'sanctum');
+
+        $api->postJson('/api/v1/receiving-accounts', [
+            'provider' => '',
+            'account_name' => '   ',
+            'account_identifier' => '',
+        ], $this->idem())
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['provider', 'account_name', 'account_identifier']);
+
+        $account = ReceivingAccount::create([
+            'store_id' => $store->id,
+            'provider' => 'palpay',
+            'account_name' => 'Main',
+            'account_identifier' => '0590000000',
+            'active' => true,
+        ]);
+
+        $api->patchJson("/api/v1/receiving-accounts/{$account->id}", [
+            'provider' => '',
+            'account_name' => '',
+            'account_identifier' => '',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['provider', 'account_name', 'account_identifier']);
+    }
+
+    public function test_double_confirm_with_distinct_idempotency_keys_finalizes_once_and_preserves_stock(): void
+    {
+        $store = $this->makeStore();
+        $owner = $this->makeUser($store);
+        $product = $this->makeProduct($store, ['current_stock' => 5]);
+        $account = ReceivingAccount::create([
+            'store_id' => $store->id,
+            'provider' => 'palpay',
+            'account_name' => 'Main',
+            'account_identifier' => '0590000000',
+            'active' => true,
+        ]);
+        $api = $this->actingAs($owner, 'sanctum');
+        $suspended = $api->postJson('/api/v1/suspended-invoices', [
+            'items' => [['product_id' => $product->id, 'quantity' => 3]],
+            'payment_method' => 'palpay',
+            'receiving_account_id' => $account->id,
+        ], $this->idem())->assertCreated()->json('data');
+
+        $first = $api->postJson("/api/v1/suspended-invoices/{$suspended['id']}/confirm", [], $this->idem())
+            ->assertOk()
+            ->assertJsonPath('already_completed', false);
+        $second = $api->postJson("/api/v1/suspended-invoices/{$suspended['id']}/confirm", [], $this->idem())
+            ->assertOk()
+            ->assertJsonPath('already_completed', true);
+
+        $this->assertSame($first->json('final_invoice.id'), $second->json('final_invoice.id'));
+        $this->assertSame('2.000', $product->fresh()->current_stock);
+        $this->assertSame(1, Invoice::count());
+        $this->assertSame(1, StockMovement::where('type', StockMovement::TYPE_SALE)->count());
+    }
 }

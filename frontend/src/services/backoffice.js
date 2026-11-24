@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiIdempotent, apiSend, session } from "./apiClient";
+import { apiGet, apiIdempotent, apiSend, newIdempotencyKey, session } from "./apiClient";
 import { queryKeys } from "./queryClient";
 
 // S3 back-office data (W-06 … W-15). Reads return the API page as is ({ data, meta }); writes
@@ -311,19 +311,28 @@ export const useSuspendedInvoices = (status = "pending_transfer") =>
 export function useCloseSuspendedInvoice() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }) => apiIdempotent("POST", `/suspended-invoices/${id}/close`, body),
-    onSuccess: () => client.invalidateQueries({ queryKey: ["suspendedInvoices"] }),
+    mutationFn: ({ id, body, key }) =>
+      apiIdempotent("POST", `/suspended-invoices/${id}/close`, body, { idempotencyKey: key ?? newIdempotencyKey() }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["suspendedInvoices"] });
+      client.invalidateQueries({ queryKey: queryKeys.products.all });
+    },
   });
 }
 
 export function useConfirmSuspendedInvoice() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (id) => apiIdempotent("POST", `/suspended-invoices/${id}/confirm`, {}),
+    mutationFn: (arg) => {
+      const id = typeof arg === "object" && arg !== null ? arg.id : arg;
+      const key = typeof arg === "object" && arg !== null ? arg.key : undefined;
+      return apiIdempotent("POST", `/suspended-invoices/${id}/confirm`, {}, { idempotencyKey: key ?? newIdempotencyKey() });
+    },
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["suspendedInvoices"] });
       client.invalidateQueries({ queryKey: queryKeys.sales.all });
       client.invalidateQueries({ queryKey: queryKeys.products.all });
+      client.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }

@@ -9,7 +9,11 @@ const qty = (quantity, unit) => (unit === "kg" ? `${quantity} كغ` : String(qua
 /** A table cell under a header that already says it is money: `1,245.50`. */
 const amount = (value) => shekel(value).replace("₪ ", "");
 
-const cartons = (i) => (i.loose_pieces ? `${i.cartons} كرتونة + ${i.loose_pieces} قطعة` : `${i.cartons} كرتونة`);
+const cartons = (i) => {
+  const count = i.remaining_cartons ?? i.cartons;
+  const loose = i.remaining_loose_pieces ?? i.loose_pieces;
+  return loose ? `${count} كرتونة + ${loose} قطعة` : `${count} كرتونة`;
+};
 
 export function saleDoc(s) {
   return {
@@ -78,7 +82,7 @@ export function purchaseDoc(p) {
     facts: [["المورد", p.supplier.name], ["التاريخ", dateTime(p.at)], ...(p.by ? [["بواسطة", p.by]] : [])],
     rows: remainingItems.map((i) => ({
       name: i.item_name,
-      quantity: i.cartons != null ? cartons(i) : qty(i.remaining_quantity ?? i.quantity, i.unit),
+      quantity: (i.remaining_cartons ?? i.cartons) != null ? cartons(i) : qty(i.remaining_quantity ?? i.quantity, i.unit),
       price: amount(i.buy_price),
       amount: amount(i.remaining_line_value ?? i.line_total),
     })),

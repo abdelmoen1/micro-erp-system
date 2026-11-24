@@ -28,6 +28,13 @@ class PurchaseInvoiceResource extends JsonResource
             $remainingValue = Money::sub($item->line_total, $returnedValue);
             $remainingQuantity = Quantity::sub($item->quantity, $item->returned_quantity);
             $remainingAmount = Money::add($remainingAmount, $remainingValue);
+            $remainingCartons = null;
+            $remainingLoosePieces = 0;
+            if ($item->cartons !== null && (int) $item->pack_size > 0 && Quantity::isWhole($remainingQuantity)) {
+                $remainingPieces = (int) substr(Quantity::of($remainingQuantity), 0, -4);
+                $remainingCartons = intdiv($remainingPieces, (int) $item->pack_size);
+                $remainingLoosePieces = $remainingPieces % (int) $item->pack_size;
+            }
 
             return [
                 'id' => $item->id,
@@ -40,8 +47,10 @@ class PurchaseInvoiceResource extends JsonResource
                 'returned_value' => Money::of($returnedValue),
                 'remaining_line_value' => Money::of($remainingValue),
                 'cartons' => $item->cartons,
+                'remaining_cartons' => $remainingCartons,
                 'pack_size' => $item->pack_size,
                 'loose_pieces' => (int) $item->loose_pieces,
+                'remaining_loose_pieces' => $remainingLoosePieces,
                 'buy_price' => Money::of($item->buy_price),
                 'line_total' => Money::of($item->line_total),
             ];

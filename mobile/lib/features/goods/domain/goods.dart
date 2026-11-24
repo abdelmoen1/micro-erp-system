@@ -284,7 +284,9 @@ class PurchaseLine {
     required this.buyPrice,
     required this.total,
     this.cartons,
+    this.remainingCartons,
     this.loosePieces = 0,
+    this.remainingLoosePieces,
   });
 
   factory PurchaseLine.fromJson(Map<String, dynamic> json) => PurchaseLine(
@@ -299,7 +301,9 @@ class PurchaseLine {
     buyPrice: Money.parse(json['buy_price'] as String? ?? '0'),
     total: Money.parse(json['line_total'] as String? ?? '0'),
     cartons: (json['cartons'] as num?)?.toInt(),
+    remainingCartons: (json['remaining_cartons'] as num?)?.toInt(),
     loosePieces: (json['loose_pieces'] as num?)?.toInt() ?? 0,
+    remainingLoosePieces: (json['remaining_loose_pieces'] as num?)?.toInt(),
   );
 
   final int id;
@@ -315,9 +319,11 @@ class PurchaseLine {
   final Money buyPrice;
   final Money total;
   final int? cartons;
+  final int? remainingCartons;
 
   /// Pieces of an opened carton that came with the whole ones.
   final int loosePieces;
+  final int? remainingLoosePieces;
 
   Quantity get returnable => remaining ?? quantity - returned;
 

@@ -22,7 +22,7 @@ class ReconcilePurchaseReturns extends Command
         $invoiceId = $this->option('invoice');
         $apply = (bool) $this->option('apply');
 
-        $query = PurchaseItem::query()->with(['invoice', 'invoice.returns.items']);
+        $query = PurchaseItem::query()->with(['product', 'invoice', 'invoice.returns.items']);
         if ($invoiceId !== null) {
             $query->where('purchase_invoice_id', (int) $invoiceId);
         }
@@ -43,7 +43,7 @@ class ReconcilePurchaseReturns extends Command
             $remainingValue = Money::sub($item->line_total, $actualValue);
 
             $quantityMismatch = Quantity::compare($item->returned_quantity, $actualQuantity) !== 0;
-            $ifFullyReturned = Quantity::isZero($remainingQuantity) && Quantity::compare($actualValue, $item->line_total) !== 0;
+            $ifFullyReturned = Quantity::isZero($remainingQuantity) && Money::compare($actualValue, $item->line_total) !== 0;
 
             if (!$quantityMismatch && !$ifFullyReturned) {
                 continue;

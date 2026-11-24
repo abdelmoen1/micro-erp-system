@@ -110,15 +110,18 @@ export function PurchaseDetail() {
               </tr>
             </thead>
             <tbody>
-              {remainingItems.length > 0 ? remainingItems.map((i) => (
+              {remainingItems.length > 0 ? remainingItems.map((i) => {
+                const remainingCartons = i.remaining_cartons ?? i.cartons;
+                const remainingLoose = i.remaining_loose_pieces ?? i.loose_pieces;
+                return (
                 <tr key={i.id}>
                   <td style={{ fontWeight: 600 }}>{i.item_name}</td>
                   <td className="n m">
                     {i.remaining_quantity ?? i.quantity}
                     {i.unit === "kg" ? " كغ" : " قطعة"}
-                    {i.cartons || i.loose_pieces ? (
+                    {remainingCartons || remainingLoose ? (
                       <span className="cell-sub">
-                        {i.cartons} كرتونة{i.loose_pieces ? ` + ${i.loose_pieces} قطعة` : ""}
+                        {remainingCartons} كرتونة{remainingLoose ? ` + ${remainingLoose} قطعة` : ""}
                       </span>
                     ) : null}
                   </td>
@@ -132,7 +135,8 @@ export function PurchaseDetail() {
                     <MoneyText value={i.remaining_line_value ?? i.line_total} style={{ fontWeight: 700 }} />
                   </td>
                 </tr>
-              )) : (
+                );
+              }) : (
                 <tr>
                   <td colSpan={5} className="empty">تم إرجاع جميع الأصناف من هذه الفاتورة.</td>
                 </tr>

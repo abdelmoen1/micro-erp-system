@@ -55,9 +55,9 @@ class ReceivingAccountController extends Controller
             abort(404);
         }
         $data = $request->validate([
-            'provider' => ['sometimes', Rule::in(PaymentMethods::TRANSFER_PROVIDERS)],
-            'account_name' => ['sometimes', 'string', 'max:255'],
-            'account_identifier' => ['sometimes', 'string', 'max:255'],
+            'provider' => ['sometimes', 'required', Rule::in(PaymentMethods::TRANSFER_PROVIDERS)],
+            'account_name' => ['sometimes', 'required', 'string', 'max:255'],
+            'account_identifier' => ['sometimes', 'required', 'string', 'max:255'],
             'active' => ['sometimes', 'boolean'],
         ]);
         $account->update($data + ['updated_by' => $request->user()->id]);
