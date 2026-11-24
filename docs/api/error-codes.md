@@ -93,7 +93,8 @@ A repeated request with the same key and body returns the **original** status an
 
 | HTTP | `code` | Meaning |
 |---|---|---|
-| 422 | `INSUFFICIENT_STOCK` | A stock **adjustment** would make the product's stock negative (`errors.quantity` gives the current stock). Nothing is written. A **sale** never returns this code (D-27: see the `NEGATIVE_STOCK` warning below) |
+| 422 | `INSUFFICIENT_STOCK` | A stock adjustment or other non-sale movement would make the product's stock negative (`errors.quantity` gives the current stock). Nothing is written. |
+| 422 | `INSUFFICIENT_UNRESERVED_STOCK` | An outgoing movement would consume stock reserved for pending transfer invoices. Nothing is written; finalize or release those reservations first. |
 | 422 | `IMPORT_INVALID` | `POST /products/import` (US-0408): the CSV has errors, or a missing header / no rows / more than 2000 rows. Nothing is imported. `details.errors` lists `{row, column, message}` (first 200) |
 
 ### Sales (US-0501 – US-0503, [`sales.http`](sales.http))
@@ -111,6 +112,18 @@ A repeated request with the same key and body returns the **original** status an
 | 422 | `INVOICE_NOT_RETURNABLE` | `POST /sales/{id}/returns` on an opening debt, which has no goods | Manage it from the debts screens |
 
 Field rules on `POST /sales` come back as `VALIDATION_FAILED` with these `errors` keys: `items.N.product_id` (unknown, other store's or inactive product), `items.N.quantity` (a fraction for a `piece` product, more than 3 decimals, or ≤ 0), `paid_amount` (above the total, more than 2 decimals), `payment_method` (missing while `paid_amount > 0`), `customer_id` (missing while something stays unpaid, D-07), `due_date` (in the past in the store timezone, or sent for a fully paid sale).
+
+### Suspended transfer sales
+
+| HTTP | `code` | Meaning | Client behaviour |
+|---|---|---|---|
+| 409 | `SUSPENDED_INVOICE_NOT_PENDING` | Confirmation was attempted after the suspended invoice changed state | Reconcile server status; refresh the invoice |
+| 409 | `RESERVATION_MISSING` | The active stock reservation no longer exists | Refresh inventory and do not retry stock blindly |
+| 409 | `RESERVATION_MISMATCH` | The reserved line or base-unit quantity does not match the finalization request | Do not retry with a different quantity; reconcile the invoice and reservation |
+| 409 | `RESERVATION_NOT_DEDUCTED` | Not all line reservations were consumed by finalization | The transaction rolls back; reconcile before retrying |
+| 409 | `RESERVATION_PRODUCT_MISSING` | A reserved product no longer belongs to the store or is unavailable | Refresh the invoice and inventory |
+| 409 | `SUSPENDED_INVOICE_CHANGED` | The invoice's customer changed while confirmation was waiting for locks | Refresh the invoice and retry with a new operation key |
+| 409 | `SUSPENDED_INVOICE_NOT_OPEN` | Rejection/cancellation was attempted on a completed or already closed invoice | Refresh server status |
 
 #### Warning flags (successful responses)
 

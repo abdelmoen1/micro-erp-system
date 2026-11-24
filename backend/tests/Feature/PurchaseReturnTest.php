@@ -287,4 +287,89 @@ class PurchaseReturnTest extends TestCase
         $this->assertSame('1.000', Product::find($almonds->product_id)->current_stock);
         $this->assertSame('0.000', $cola->fresh()->returned_quantity);
     }
+
+    public function test_ten_cartons_partial_to_full_returns_track_remaining_cartons_value_and_history(): void
+    {
+        $this->actingAs($this->owner, 'sanctum')->postJson('/api/v1/purchases', [
+            'supplier_name' => 'شركة المجد',
+            'lines' => [[
+                'name' => 'زيت نباتي',
+                'barcode' => '6251234567814',
+                'unit' => 'piece',
+                'cartons' => 10,
+                'pack_size' => 12,
+                'buy_price' => '1000.00',
+                'selling_price' => '100.00',
+            ]],
+        ], $this->idem())->assertCreated();
+
+        $invoice = PurchaseInvoice::with('items')->latest('id')->firstOrFail();
+        $item = $invoice->items[0];
+        $api = $this->actingAs($this->owner, 'sanctum');
+
+        $this->sendBack($invoice, [['purchase_item_id' => $item->id, 'quantity' => 60]], 'إرجاع 5 كراتين')
+            ->assertCreated()
+            ->assertJsonPath('data.total_amount', '5000.00');
+        $api->getJson("/api/v1/purchases/{$invoice->id}")
+            ->assertOk()
+            ->assertJsonPath('data.items.0.remaining_cartons', 5)
+            ->assertJsonPath('data.items.0.remaining_loose_pieces', 0)
+            ->assertJsonPath('data.items.0.remaining_quantity', '60')
+            ->assertJsonPath('data.items.0.remaining_line_value', '5000.00')
+            ->assertJsonPath('data.remaining_amount', '5000.00');
+
+        $this->sendBack($invoice, [['purchase_item_id' => $item->id, 'quantity' => 48]], 'إرجاع 4 كراتين')
+            ->assertCreated()
+            ->assertJsonPath('data.total_amount', '4000.00');
+        $api->getJson("/api/v1/purchases/{$invoice->id}")
+            ->assertOk()
+            ->assertJsonPath('data.items.0.remaining_cartons', 1)
+            ->assertJsonPath('data.items.0.remaining_loose_pieces', 0)
+            ->assertJsonPath('data.items.0.remaining_quantity', '12')
+            ->assertJsonPath('data.items.0.remaining_line_value', '1000.00')
+            ->assertJsonPath('data.remaining_amount', '1000.00');
+
+        $this->sendBack($invoice, [['purchase_item_id' => $item->id, 'quantity' => 12]], 'إرجاع الكرتونة الأخيرة')
+            ->assertCreated()
+            ->assertJsonPath('data.total_amount', '1000.00');
+        $api->getJson("/api/v1/purchases/{$invoice->id}")
+            ->assertOk()
+            ->assertJsonPath('data.items.0.remaining_cartons', 0)
+            ->assertJsonPath('data.items.0.remaining_loose_pieces', 0)
+            ->assertJsonPath('data.items.0.remaining_quantity', '0')
+            ->assertJsonPath('data.items.0.returned_quantity', '120')
+            ->assertJsonPath('data.items.0.returned_value', '10000.00')
+            ->assertJsonPath('data.items.0.remaining_line_value', '0.00')
+            ->assertJsonPath('data.remaining_amount', '0.00')
+            ->assertJsonCount(3, 'data.returns');
+
+        $this->assertSame('0.000', Product::where('name', 'زيت نباتي')->sole()->current_stock);
+        $this->assertSame('0.00', Supplier::where('name', 'شركة المجد')->sole()->balance());
+    }
+
+    public function test_reconcile_purchase_returns_reports_dry_run_and_applies_only_returned_quantity(): void
+    {
+        $invoice = $this->delivery();
+        $cola = $invoice->items[0];
+        $this->sendBack($invoice, [['purchase_item_id' => $cola->id, 'quantity' => 24]])->assertCreated();
+
+        // Simulate a historical item whose returned_quantity column drifted from PurchaseReturnItem rows.
+        \App\Models\PurchaseItem::whereKey($cola->id)->update(['returned_quantity' => '0.000']);
+        $movementsBefore = \App\Models\StockMovement::count();
+        $returnsBefore = \App\Models\PurchaseReturn::count();
+
+        $this->artisan('hisbah:reconcile-purchase-returns', ['--invoice' => $invoice->id])
+            ->expectsOutputToContain('Dry run only.')
+            ->assertExitCode(0);
+        $this->assertSame('0.000', $cola->fresh()->returned_quantity);
+
+        $this->artisan('hisbah:reconcile-purchase-returns', ['--invoice' => $invoice->id, '--apply' => true])
+            ->expectsOutputToContain('Only returned_quantity fields were corrected.')
+            ->assertExitCode(0);
+        $this->assertSame('24.000', $cola->fresh()->returned_quantity);
+        $this->assertSame($movementsBefore, \App\Models\StockMovement::count());
+        $this->assertSame($returnsBefore, \App\Models\PurchaseReturn::count());
+        $this->assertSame('520.00', $invoice->fresh()->total);
+    }
+
 }

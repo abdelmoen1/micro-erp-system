@@ -260,7 +260,8 @@ class _LineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final cartons = line.cartons;
+    final cartons = line.remainingCartons ?? line.cartons;
+    final loosePieces = line.remainingLoosePieces ?? line.loosePieces;
     final remaining = line.remaining ?? line.returnable;
     final amount = line.unit == ProductUnit.kg ? '${remaining.format(line.unit)} ${t.kgShort}' : t.purchasePieces(remaining.format(line.unit));
     return Padding(
@@ -276,8 +277,8 @@ class _LineRow extends StatelessWidget {
                 Text(
                   cartons == null
                       ? '$amount × ${shekel(line.buyPrice)}'
-                      : line.loosePieces > 0
-                      ? '${t.purchaseCartonsLoose('$cartons', '${line.loosePieces}')} · ${shekel(line.buyPrice)} / ${t.packWord} · $amount'
+                      : loosePieces > 0
+                      ? '${t.purchaseCartonsLoose('$cartons', '$loosePieces')} · ${shekel(line.buyPrice)} / ${t.packWord} · $amount'
                       : '$cartons ${t.packWord} × ${shekel(line.buyPrice)} · $amount',
                   style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
                 ),

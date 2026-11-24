@@ -26,6 +26,8 @@ const Payments = lazy(() => import("./pages/Collections").then((m) => ({ default
 const Staff = lazy(() => import("./pages/Staff"));
 const SyncReview = lazy(() => import("./pages/SyncReview"));
 const Settings = lazy(() => import("./pages/Settings"));
+const ReceivingAccounts = lazy(() => import("./pages/ReceivingAccounts"));
+const SuspendedInvoices = lazy(() => import("./pages/SuspendedInvoices"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const SubscriptionExpired = lazy(() => import("./pages/SubscriptionExpired"));
 // Platform owner area: its own shell; the API refuses every /admin call from a store account.
@@ -84,6 +86,8 @@ export default function App() {
               <Route path="/staff" element={<Staff />} />
               <Route path="/sync" element={<SyncReview />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/receiving-accounts" element={<ReceivingAccounts />} />
+              <Route path="/suspended-invoices" element={<SuspendedInvoices />} />
             </Route>
           </Route>
           {/* AdminShell sends a visitor without a session to /admin/login. */}

@@ -16,9 +16,12 @@ use App\Models\SupplierPayment;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\SyncConflict;
+use App\Models\ReceivingAccount;
+use App\Models\SuspendedInvoice;
 use App\Models\User;
 use App\Services\IdempotencyService;
 use App\Services\SaleService;
+use App\Services\SuspendedSaleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -51,6 +54,9 @@ class IdempotencyTest extends TestCase
         'POST api/v1/purchases',
         'POST api/v1/purchases/{purchaseInvoice}/returns',
         'POST api/v1/suppliers/{supplier}/payments',
+        'POST api/v1/suspended-invoices',
+        'POST api/v1/suspended-invoices/{invoice}/confirm',
+        'POST api/v1/suspended-invoices/{invoice}/close',
     ];
 
     private Store $store;
@@ -254,6 +260,9 @@ class IdempotencyTest extends TestCase
             'goods from a supplier' => ['purchase'],
             'goods back to a supplier' => ['purchase-return'],
             'payment to a supplier' => ['supplier-payment'],
+            'suspend a transfer sale' => ['suspend-sale'],
+            'confirm a transfer sale' => ['confirm-suspended-sale'],
+            'close a suspended sale' => ['close-suspended-sale'],
         ];
     }
 
@@ -280,6 +289,9 @@ class IdempotencyTest extends TestCase
             'purchases' => PurchaseInvoice::count(),
             'supplier_payments' => SupplierPayment::count(),
             'purchase_returns' => PurchaseReturn::count(),
+            'suspended_invoices' => SuspendedInvoice::count(),
+            'suspended_statuses' => SuspendedInvoice::orderBy('id')->pluck('status')->all(),
+            'reservation_statuses' => \App\Models\InventoryReservation::orderBy('id')->pluck('status')->all(),
         ]);
 
         return match ($name) {
@@ -354,6 +366,53 @@ class IdempotencyTest extends TestCase
                 $invoice->items()->create(['product_id' => $product->id, 'quantity' => 1, 'buy_price' => '100.00', 'line_total' => '100.00']);
 
                 return ['POST', "/api/v1/suppliers/{$supplier->id}/payments", ['amount' => '40.00', 'method' => 'palpay'], $state];
+            })(),
+            'suspend-sale' => (function () use ($state) {
+                $product = $this->makeProduct($this->store, ['current_stock' => 5, 'selling_price' => '10.00', 'unit' => 'piece']);
+                $account = ReceivingAccount::create([
+                    'store_id' => $this->store->id,
+                    'provider' => 'palpay',
+                    'account_name' => 'Test',
+                    'account_identifier' => '0599463694',
+                    'active' => true,
+                ]);
+                return ['POST', '/api/v1/suspended-invoices', [
+                    'items' => [['product_id' => $product->id, 'quantity' => 1]],
+                    'payment_method' => 'palpay',
+                    'receiving_account_id' => $account->id,
+                ], $state];
+            })(),
+            'confirm-suspended-sale' => (function () use ($state) {
+                $product = $this->makeProduct($this->store, ['current_stock' => 5, 'selling_price' => '10.00', 'unit' => 'piece']);
+                $account = ReceivingAccount::create([
+                    'store_id' => $this->store->id,
+                    'provider' => 'jawwal_pay',
+                    'account_name' => 'Test',
+                    'account_identifier' => '0592288354',
+                    'active' => true,
+                ]);
+                $suspended = app(SuspendedSaleService::class)->suspend($this->owner, [
+                    'items' => [['product_id' => $product->id, 'quantity' => 1]],
+                    'payment_method' => 'jawwal_pay',
+                    'receiving_account_id' => $account->id,
+                ]);
+                return ['POST', "/api/v1/suspended-invoices/{$suspended->id}/confirm", [], $state];
+            })(),
+            'close-suspended-sale' => (function () use ($state) {
+                $product = $this->makeProduct($this->store, ['current_stock' => 5, 'selling_price' => '10.00', 'unit' => 'piece']);
+                $account = ReceivingAccount::create([
+                    'store_id' => $this->store->id,
+                    'provider' => 'bank_of_palestine',
+                    'account_name' => 'Test',
+                    'account_identifier' => '0593898334',
+                    'active' => true,
+                ]);
+                $suspended = app(SuspendedSaleService::class)->suspend($this->owner, [
+                    'items' => [['product_id' => $product->id, 'quantity' => 1]],
+                    'payment_method' => 'bank_of_palestine',
+                    'receiving_account_id' => $account->id,
+                ]);
+                return ['POST', "/api/v1/suspended-invoices/{$suspended->id}/close", ['status' => 'rejected', 'reason' => 'Rejected'], $state];
             })(),
             'resolve-sync-conflict' => (function () use ($customer, $state) {
                 $conflict = SyncConflict::create([

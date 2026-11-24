@@ -127,11 +127,11 @@ PrintDocument purchaseDocument(AppLocalizations t, PurchaseDetail p, AppUser? us
       if (line.returnable.isPositive)
       PrintRow(
         name: line.name,
-        quantity: line.cartons == null
+        quantity: (line.remainingCartons ?? line.cartons) == null
             ? _quantity(t, line.remaining ?? line.returnable, line.unit)
-            : line.loosePieces > 0
-            ? t.purchaseCartonsLoose('${line.cartons}', '${line.loosePieces}')
-            : '${line.cartons} ${t.packWord}',
+            : (line.remainingLoosePieces ?? line.loosePieces) > 0
+            ? t.purchaseCartonsLoose('${line.remainingCartons ?? line.cartons}', '${line.remainingLoosePieces ?? line.loosePieces}')
+            : '${line.remainingCartons ?? line.cartons} ${t.packWord}',
         price: amountOnly(line.buyPrice),
         amount: amountOnly(line.remainingLineValue ?? line.total),
       ),

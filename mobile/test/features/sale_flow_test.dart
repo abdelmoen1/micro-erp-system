@@ -560,6 +560,11 @@ void main() {
 
       expect(find.byKey(const Key('checkout.methodNote')), findsNothing, reason: 'cash needs no note');
       for (final method in ['cash', 'jawwal_pay', 'palpay', 'bank_of_palestine']) {
+        await tester.scrollUntilVisible(
+          find.byKey(Key('checkout.method.$method')),
+          200,
+          scrollable: find.byType(Scrollable).last,
+        );
         expect(find.byKey(Key('checkout.method.$method')), findsOneWidget);
       }
       await tap(tester, 'checkout.method.jawwal_pay');

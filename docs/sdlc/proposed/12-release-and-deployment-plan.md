@@ -117,6 +117,28 @@ Results are recorded in the release notes.
 | Mobile release defect | Halt the rollout; previous APK remains; the API stays backward-compatible for one version |
 | Feature-specific failure (OTP, AI, sync) | Disable via its feature flag; fix forward |
 
+### 6.1 Suspended-sales migration: forward-only in production
+
+The suspended-sales tables contain invoice, reservation, and audit history. Their foreign keys
+must prevent physical deletion of suspended invoices, and the mixed-unit migration changes line
+identity and backfills each line's base-unit quantity. Before applying either migration to a
+database with data:
+
+1. Take and verify an on-demand, restorable database backup; record row counts for suspended
+   invoices, invoice items, reservations, and events, plus a stock-reconciliation result.
+2. Run the migrations on a production-like MySQL 8 copy, verify the `base_quantity` backfill and
+   reservation-to-line mapping, and compare the recorded counts and stock balances.
+3. Apply migrations with `php artisan migrate --force`; then run the reconciliation and suspended
+   invoice smoke checks before accepting traffic.
+
+Do **not** run `migrate:rollback` for the suspended-sales table-creation migration in production:
+its `down()` drops those tables and destroys their history. Treat the mixed-unit migration as
+forward-only once invoices can contain multiple lines for one product; its guarded `down()` refuses
+to recreate the old unique key in that case. If deployment fails, keep the additive schema, restore
+service with a compatible prior application version, and repair through a reviewed forward
+migration. Restore the backup only through the approved recovery procedure; never repair financial
+or reservation rows with ad hoc SQL.
+
 ---
 
 ## 7. Backup and Recovery (NFR-16)

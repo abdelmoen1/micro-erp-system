@@ -150,5 +150,8 @@ return [
         'source' => 'المصدر',
         'filter' => 'التصفية',
         'dry_run' => 'الفحص فقط',
+        'provider' => 'مزود الدفع',
+        'account_name' => 'اسم صاحب الحساب',
+        'account_identifier' => 'رقم الهاتف أو رقم الحساب',
     ],
 ];

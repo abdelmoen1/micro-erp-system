@@ -1,5 +1,7 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_failure.dart';
 import '../../../core/config/env.dart';
+import '../../../core/api/idempotency_key_store.dart';
 import '../../auth/domain/app_user.dart';
 
 /// A manager or employee of the store (GET /users, owner only). The owner is not in the list.
@@ -86,9 +88,10 @@ class SupportTicket {
 /// The «More» tab's account and store screens. Field problems come back as `ValidationFailed`
 /// with the server's Arabic messages; a role without the right gets `Forbidden`.
 class MoreRepository {
-  MoreRepository(this._api);
+  MoreRepository(this._api, this._keys);
 
   final ApiClient _api;
+  final IdempotencyKeyStore _keys;
 
   Future<List<StaffMember>> staff() async {
     final body = await _api.get('/users');
@@ -143,4 +146,59 @@ class MoreRepository {
         '/me/password',
         body: {'current_password': current, 'password': password, 'password_confirmation': confirmation},
       );
+
+  Future<List<Map<String, dynamic>>> receivingAccounts({String? provider, bool includeInactive = false}) async {
+    final query = <String>[
+      if (provider != null) 'provider=$provider',
+      if (includeInactive) 'include_inactive=1',
+    ].join('&');
+    final body = await _api.get('/receiving-accounts${query.isEmpty ? '' : '?$query'}');
+    return [for (final row in body['data'] as List<dynamic>? ?? const []) Map<String, dynamic>.from(row as Map)];
+  }
+
+  Future<void> saveReceivingAccount({int? id, required String provider, required String name, required String identifier, required bool active}) {
+    final body = {'provider': provider, 'account_name': name, 'account_identifier': identifier, 'active': active};
+    return id == null ? _api.post('/receiving-accounts', body: body) : _api.patch('/receiving-accounts/$id', body: body);
+  }
+
+  Future<void> archiveReceivingAccount(int id) => _api.delete('/receiving-accounts/$id');
+
+  Future<List<Map<String, dynamic>>> suspendedInvoices(String status) async {
+    final body = await _api.get('/suspended-invoices?status=$status');
+    return [for (final row in body['data'] as List<dynamic>? ?? const []) Map<String, dynamic>.from(row as Map)];
+  }
+
+  Future<Map<String, dynamic>> suspendedInvoice(int id) async {
+    final body = await _api.get('/suspended-invoices/$id');
+    return Map<String, dynamic>.from(body['data'] as Map);
+  }
+
+  Future<void> confirmSuspendedInvoice(int id) async {
+    final operation = 'suspended-confirm-$id';
+    final key = await _keys.keyFor(operation);
+    try {
+      await _api.post('/suspended-invoices/$id/confirm', idempotencyKey: key);
+      await _keys.complete(operation);
+    } on ApiFailure catch (failure) {
+      if (_isFinalAnswer(failure)) await _keys.complete(operation);
+      rethrow;
+    }
+  }
+
+  Future<void> closeSuspendedInvoice(int id, {required String status, String? reason}) async {
+    final operation = 'suspended-$status-$id-${IdempotencyKeyStore.stableHash(reason ?? '')}';
+    final key = await _keys.keyFor(operation);
+    try {
+      await _api.post('/suspended-invoices/$id/close', body: {'status': status, 'reason': reason}, idempotencyKey: key);
+      await _keys.complete(operation);
+    } on ApiFailure catch (failure) {
+      if (_isFinalAnswer(failure)) await _keys.complete(operation);
+      rethrow;
+    }
+  }
+
+  bool _isFinalAnswer(ApiFailure failure) => switch (failure) {
+    NetworkFailure() || ServerError() || TooManyRequests() || Unauthenticated() => false,
+    _ => true,
+  };
 }

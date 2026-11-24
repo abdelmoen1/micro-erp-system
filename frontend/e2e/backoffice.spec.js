@@ -528,3 +528,105 @@ test("app download: without the GitHub API the button still serves the newest AP
     "https://github.com/abdelmoen1/micro-erp-system/releases/latest/download/hisbah.apk",
   );
 });
+
+test("receiving accounts: explicit provider placeholder blocks silent empty submit and renders field errors", async ({ page }) => {
+  await signIn(page);
+  let sent = [];
+  await page.route("**/api/v1/receiving-accounts**", async (r) => {
+    if (r.request().method() === "GET") {
+      return r.fulfill({ json: { data: [] } });
+    }
+    const body = r.request().postDataJSON();
+    sent.push(body);
+    if (sent.length === 1) {
+      return r.fulfill({
+        status: 422,
+        json: { message: "تحقق من الحقول.", errors: { account_identifier: ["رقم الهاتف أو رقم الحساب مستخدم من قبل."] } },
+      });
+    }
+    return r.fulfill({
+      status: 201,
+      json: { data: { id: 10, ...body, active: true, deleted_at: null } },
+    });
+  });
+
+  await page.goto("/receiving-accounts");
+  await expect(page.getByLabel(/مزود الدفع/)).toHaveValue("");
+  await page.getByRole("button", { name: "حفظ الحساب" }).click();
+  await expect(page.getByText("اختر مزود الدفع.")).toBeVisible();
+  await expect(page.getByText("اكتب اسم صاحب الحساب.")).toBeVisible();
+  await expect(page.getByText("اكتب رقم الهاتف أو رقم الحساب.")).toBeVisible();
+  expect(sent).toHaveLength(0);
+
+  await page.getByLabel(/مزود الدفع/).selectOption("palpay");
+  await page.getByLabel(/اسم صاحب الحساب/).fill("عبدالمعين");
+  await page.getByLabel(/رقم الهاتف أو رقم الحساب/).fill("0599000001");
+  await page.getByRole("button", { name: "حفظ الحساب" }).click();
+  await expect(page.getByText("رقم الهاتف أو رقم الحساب مستخدم من قبل.")).toBeVisible();
+
+  await page.getByLabel(/رقم الهاتف أو رقم الحساب/).fill("0599000002");
+  await page.getByRole("button", { name: "حفظ الحساب" }).click();
+  await expect(page.getByText("تم حفظ حساب الاستقبال.")).toBeVisible();
+  expect(sent[1]).toEqual({ provider: "palpay", account_name: "عبدالمعين", account_identifier: "0599000002", active: true });
+});
+
+test("suspended invoices: visible in navigation for authorized roles and supports confirm and reject", async ({ page }) => {
+  await signIn(page, { ...owner, role: "employee" });
+  const pendingRows = [
+    {
+      id: 41,
+      reference: "H-20261124-0001",
+      status: "pending_transfer",
+      total_amount: "120.00",
+      account_snapshot_name: "بال بي الرئيسي",
+      account_snapshot_identifier: "0599463694",
+      created_at: "2026-11-24T10:00:00Z",
+      customer: { id: 7, name: "أبو محمد" },
+      cashier: { id: 2, name: "أحمد" },
+    },
+    {
+      id: 42,
+      reference: "H-20261124-0002",
+      status: "pending_transfer",
+      total_amount: "80.00",
+      account_snapshot_name: "جوال بي",
+      account_snapshot_identifier: "0592288354",
+      created_at: "2026-11-24T10:05:00Z",
+      customer: null,
+      cashier: { id: 2, name: "أحمد" },
+    },
+  ];
+  const calls = [];
+  await page.route("**/api/v1/dashboard**", (r) => r.fulfill({ json: { data: { period: {}, summary: {}, payments: {}, customers: {}, returns: {}, charts: { sales: [], sales_hourly: [] }, recent_invoices: [] } } }));
+  await page.route("**/api/v1/products/low-stock", (r) => r.fulfill({ json: { data: [] } }));
+  await page.route("**/api/v1/products?status=all", (r) => r.fulfill({ json: { data: [], meta: { total: 0 } } }));
+  await page.route("**/api/v1/suspended-invoices**", async (r) => {
+    const url = r.request().url();
+    if (r.request().method() === "GET") {
+      return r.fulfill({ json: { data: pendingRows } });
+    }
+    calls.push({ url, method: r.request().method(), body: r.request().postDataJSON(), key: r.request().headers()["idempotency-key"] });
+    return r.fulfill({ json: { data: {} } });
+  });
+
+  await page.goto("/dashboard");
+  await page.getByRole("button", { name: "لاحقاً" }).click();
+  const nav = page.getByRole("navigation", { name: "القائمة الرئيسية" });
+  const link = nav.getByRole("link", { name: "الفواتير المعلقة" });
+  await expect(link).toBeVisible();
+  await link.click();
+  await expect(page).toHaveURL(/\/suspended-invoices/);
+  await expect(page.getByText("#H-20261124-0001")).toBeVisible();
+  await expect(page.getByText("#H-20261124-0002")).toBeVisible();
+
+  await page.getByRole("button", { name: "تأكيد الاستلام" }).first().click();
+  await expect.poll(() => calls.length).toBe(1);
+  expect(calls[0].url).toContain("/suspended-invoices/41/confirm");
+  expect(calls[0].key).toBeTruthy();
+
+  await page.getByRole("button", { name: "رفض" }).nth(1).click();
+  await expect.poll(() => calls.length).toBe(2);
+  expect(calls[1].url).toContain("/suspended-invoices/42/close");
+  expect(calls[1].body).toEqual({ status: "rejected", reason: "رفض التحويل" });
+  expect(calls[1].key).toBeTruthy();
+});

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\ApiException;
+use App\Models\InventoryReservation;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\User;
@@ -21,10 +22,10 @@ class StockService
      * Applies a signed quantity to the product. Sales (US-0501), voids (US-0503) and returns
      * (US-0601) reuse this with their own type and reference.
      *
-     * A sale may take the balance below zero (D-27: allowed with a warning and a NEGATIVE_STOCK
-     * flag; the caller reads `balance_after`). Every other change must keep it at zero or above.
+     * A sale may take unreserved balance below zero (D-27), but no outgoing movement can reduce
+     * physical stock below active reservations. Every other change must also keep stock nonnegative.
      *
-     * @throws ApiException 422 INSUFFICIENT_STOCK when a non-sale change would go below zero
+     * @throws ApiException 422 when an outgoing movement would consume a reservation or forbidden negative stock
      */
     public function move(
         Product $product,
@@ -35,12 +36,54 @@ class StockService
         ?string $referenceType = null,
         ?int $referenceId = null,
         bool $allowNegative = false,
+        ?int $reservationId = null,
     ): StockMovement {
         $quantity = Quantity::of($quantity);
 
-        return DB::transaction(function () use ($product, $type, $quantity, $actor, $reason, $referenceType, $referenceId, $allowNegative) {
+        return DB::transaction(function () use ($product, $type, $quantity, $actor, $reason, $referenceType, $referenceId, $allowNegative, $reservationId) {
             $locked = Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
             $balance = Quantity::add($locked->current_stock, $quantity);
+            $reservations = InventoryReservation::query()
+                ->where('store_id', $locked->store_id)
+                ->where('product_id', $locked->id)
+                ->where('status', InventoryReservation::STATUS_ACTIVE)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+            $reservationToConsume = null;
+            $reservedForOthers = '0.000';
+
+            foreach ($reservations as $reservation) {
+                if ($reservationId !== null && $reservation->id === $reservationId) {
+                    $reservationToConsume = $reservation;
+                    continue;
+                }
+                $reservedForOthers = Quantity::add($reservedForOthers, $reservation->quantity);
+            }
+
+            if ($reservationId !== null) {
+                if (
+                    !$reservationToConsume
+                    || Quantity::compare($quantity, Quantity::negate($reservationToConsume->quantity)) !== 0
+                ) {
+                    throw ApiException::conflict(
+                        'RESERVATION_MISMATCH',
+                        'حجز المخزون لا يطابق الكمية المطلوب إكمالها.'
+                    );
+                }
+            }
+
+            if (
+                Quantity::isNegative($quantity)
+                && Quantity::compare($reservedForOthers, '0') > 0
+                && Quantity::compare($balance, $reservedForOthers) < 0
+            ) {
+                throw ApiException::businessRule(
+                    'INSUFFICIENT_UNRESERVED_STOCK',
+                    'لا يمكن استخدام مخزون محجوز لفاتورة معلقة.',
+                    ['quantity' => ['المخزون المتاح بعد الحجوزات غير كافٍ.']]
+                );
+            }
 
             if (!$allowNegative && Quantity::isNegative($balance)) {
                 $available = Quantity::format($locked->current_stock, $locked->unit);
@@ -63,6 +106,12 @@ class StockService
             ]);
 
             $locked->update(['current_stock' => $balance]);
+            if ($reservationToConsume) {
+                $reservationToConsume->update([
+                    'status' => InventoryReservation::STATUS_DEDUCTED,
+                    'deducted_at' => now(),
+                ]);
+            }
             $product->setRawAttributes($locked->getAttributes(), true);
             $movement->setRelation('product', $locked);
 

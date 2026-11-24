@@ -191,6 +191,17 @@ Route::middleware(['auth:sanctum', 'active', 'store', 'throttle:api'])->group(fu
     }
     Route::post('sales', [InvoiceController::class, 'store'])->middleware('idempotent');
 
+    // Transfer receiving accounts and server-persisted suspended sales.
+    Route::get('receiving-accounts', [\App\Http\Controllers\Api\ReceivingAccountController::class, 'index']);
+    Route::post('receiving-accounts', [\App\Http\Controllers\Api\ReceivingAccountController::class, 'store']);
+    Route::match(['put', 'patch'], 'receiving-accounts/{account}', [\App\Http\Controllers\Api\ReceivingAccountController::class, 'update']);
+    Route::delete('receiving-accounts/{account}', [\App\Http\Controllers\Api\ReceivingAccountController::class, 'destroy']);
+    Route::get('suspended-invoices', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'index']);
+    Route::post('suspended-invoices', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'store'])->middleware('idempotent');
+    Route::get('suspended-invoices/{invoice}', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'show']);
+    Route::post('suspended-invoices/{invoice}/confirm', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'confirm'])->middleware('idempotent');
+    Route::post('suspended-invoices/{invoice}/close', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'close'])->middleware('idempotent');
+
     // Debts
     Route::get('debts', [DebtController::class, 'index']);
     Route::get('debts/balances', [DebtController::class, 'balances']);

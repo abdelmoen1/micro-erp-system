@@ -111,6 +111,8 @@ final customerRepositoryProvider = Provider<CustomerRepository>(
   (ref) => CustomerRepository(ref.watch(apiClientProvider), offline: ref.watch(offlineReadsProvider)),
 );
 
-final moreRepositoryProvider = Provider<MoreRepository>((ref) => MoreRepository(ref.watch(apiClientProvider)));
+final moreRepositoryProvider = Provider<MoreRepository>(
+  (ref) => MoreRepository(ref.watch(apiClientProvider), ref.watch(idempotencyKeyStoreProvider)),
+);
 
 final sessionProvider = NotifierProvider<SessionController, SessionState>(SessionController.new);

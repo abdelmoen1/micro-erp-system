@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\SyncConflict;
+use App\Models\ReceivingAccount;
+use App\Models\SuspendedInvoice;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as RouteDefinition;
 use Illuminate\Support\Facades\Route;
@@ -67,6 +69,24 @@ class StoreIsolationSweepTest extends TestCase
         $payment = $invoice->debt->payments()->create([
             'amount' => '10.00', 'method' => 'cash', 'paid_at' => now(), 'payment_group_id' => $group,
         ]);
+        $account = ReceivingAccount::create([
+            'store_id' => $theirs->id,
+            'provider' => 'palpay',
+            'account_name' => 'Foreign',
+            'account_identifier' => '0000',
+            'active' => true,
+        ]);
+        $suspended = SuspendedInvoice::create([
+            'store_id' => $theirs->id,
+            'reference' => 'FOREIGN-' . Str::uuid(),
+            'cashier_id' => $theirStaff->id,
+            'status' => SuspendedInvoice::STATUS_PENDING_TRANSFER,
+            'subtotal' => '10.00',
+            'discount_amount' => '0.00',
+            'total_amount' => '10.00',
+            'payment_method' => 'palpay',
+            'receiving_account_id' => $account->id,
+        ]);
 
         return [
             // Public, not store data: an unknown deletion reference and a provider that is not enabled are 404 too.
@@ -76,6 +96,7 @@ class StoreIsolationSweepTest extends TestCase
             'invoice' => $invoice->id,
             'debt' => $invoice->debt->id,
             'payment' => $payment->id,
+            'account' => $account->id,
             'paymentGroupId' => $group,
             'user' => $theirStaff->id,
             'product' => $this->makeProduct($theirs)->id,

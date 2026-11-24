@@ -226,3 +226,81 @@ test("a supplier page: what is owed, a payment with a key, and the way to their 
   expect(sent.body.amount).toBe("100");
   expect(sent.key).toBeTruthy();
 });
+
+test("purchase detail displays remaining cartons after partial return and hides fully returned items", async ({ page }) => {
+  await signIn(page);
+  await page.route("**/api/v1/purchases/99", (r) =>
+    r.fulfill({
+      json: {
+        data: {
+          id: 99,
+          supplier: { id: 7, name: "التاج مول" },
+          total: "10000.00",
+          returned_amount: "5000.00",
+          remaining_amount: "5000.00",
+          lines_count: 2,
+          by: "علي أحمد",
+          at: "2026-11-24T08:00:00Z",
+          items: [
+            {
+              id: 21,
+              product_id: 3,
+              item_name: "زيت نباتي",
+              unit: "piece",
+              quantity: "120",
+              returned_quantity: "60",
+              remaining_quantity: "60",
+              returned_value: "5000.00",
+              remaining_line_value: "5000.00",
+              cartons: 10,
+              remaining_cartons: 5,
+              pack_size: 12,
+              loose_pieces: 0,
+              remaining_loose_pieces: 0,
+              buy_price: "1000.00",
+              line_total: "10000.00",
+            },
+            {
+              id: 22,
+              product_id: 4,
+              item_name: "صنف مرجع بالكامل",
+              unit: "piece",
+              quantity: "24",
+              returned_quantity: "24",
+              remaining_quantity: "0",
+              returned_value: "200.00",
+              remaining_line_value: "0.00",
+              cartons: 2,
+              remaining_cartons: 0,
+              pack_size: 12,
+              loose_pieces: 0,
+              remaining_loose_pieces: 0,
+              buy_price: "100.00",
+              line_total: "200.00",
+            },
+          ],
+          returns: [
+            {
+              id: 8,
+              purchase_invoice_id: 99,
+              total_amount: "5000.00",
+              balance_reduction: "5000.00",
+              refund_amount: "0.00",
+              reason: "إرجاع 5 كراتين",
+              created_by: "علي أحمد",
+              created_at: "2026-11-24T09:00:00Z",
+              items: [{ item_name: "زيت نباتي", quantity: "60", total: "5000.00", from_stock: true }],
+            },
+          ],
+        },
+      },
+    }),
+  );
+
+  await page.goto("/purchases/99");
+  await expect(page.getByText("5 كرتونة")).toBeVisible();
+  await expect(page.getByText("10 كرتونة")).toHaveCount(0);
+  await expect(page.getByText("صنف مرجع بالكامل")).toHaveCount(0);
+  await expect(page.locator("tfoot")).toContainText("₪ 5,000.00");
+  await expect(page.getByText("إرجاع 5 كراتين")).toBeVisible();
+});

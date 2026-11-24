@@ -61,6 +61,11 @@ class ApiClient {
     true,
   );
 
+  Future<Map<String, dynamic>> delete(String path) => _send(
+    () => dio.delete<dynamic>(path, options: Options(extra: {'auth': true})),
+    true,
+  );
+
   Future<Map<String, dynamic>> _send(Future<Response<dynamic>> Function() request, bool auth) async {
     try {
       final response = await request();

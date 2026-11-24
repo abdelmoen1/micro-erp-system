@@ -47,6 +47,16 @@ export default function Settings() {
               <Icon name="arrow" size={18} />
             </Link>
           ) : null}
+          {owner || roleOf(me) === "manager" ? (
+            <Link className="card panel settings-link" to="/receiving-accounts">
+              <Icon name="payments" size={22} strokeWidth={1.8} />
+              <span>
+                <b>حسابات استقبال الحوالات</b>
+                <small>إضافة وتعديل حسابات بال بي وجوال بي والبنك</small>
+              </span>
+              <Icon name="arrow" size={18} />
+            </Link>
+          ) : null}
         </div>
       </div>
       <SupportSection />

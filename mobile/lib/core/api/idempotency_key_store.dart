@@ -47,4 +47,13 @@ class IdempotencyKeyStore {
     return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-'
         '${h.substring(16, 20)}-${h.substring(20)}';
   }
+
+  /// A deterministic, bounded suffix for persisted operation IDs.
+  static String stableHash(String value) {
+    var hash = 0;
+    for (final unit in value.codeUnits) {
+      hash = (hash * 31 + unit) & 0x7fffffff;
+    }
+    return hash.toRadixString(36);
+  }
 }
