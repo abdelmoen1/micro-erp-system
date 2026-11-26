@@ -6,6 +6,9 @@ import { centsOf, dateTime, moneyOf, shekel } from "../lib/format";
 import { session } from "../services/apiClient";
 import { useConfirmSuspendedInvoice, useCloseSuspendedInvoice, useRemoveHeldLine, useSuspendedInvoices } from "../services/backoffice";
 
+/** "2.000" pieces read as 2; weighed lines keep their grams. */
+const qty = (item) => (item.unit === "kg" ? item.quantity : String(Number(item.quantity)));
+
 const STATUS_LABEL = {
   pending_transfer: ["قيد انتظار التحويل", "partial"],
   completed: ["مكتملة", "active"],
@@ -49,7 +52,7 @@ export default function SuspendedInvoices() {
                 {(x.items ?? []).map((item) => (
                   <li key={item.id}>
                     <span>
-                      <span className="m">{item.quantity}</span> × {item.item_name}
+                      <span className="m">{qty(item)}</span> × {item.item_name}
                     </span>
                     {mayEdit(x) && x.items.length > 1 ? (
                       <button
@@ -100,7 +103,8 @@ function RemoveLineDialog({ invoice, item, onClose }) {
       <ConfirmSummary
         rows={[
           ["الإجمالي الآن", shekel(invoice.total_amount)],
-          ["البند", `${item.quantity} × ${item.item_name} = ${shekel(item.total)}`],
+          ["البند", `${qty(item)} × ${item.item_name}`],
+          ["قيمة البند", `−${shekel(item.total)}`],
         ]}
         total={["الإجمالي بعد الحذف", shekel(after)]}
       />

@@ -166,6 +166,7 @@ test("a line comes off a held invoice with its name and the new total in the con
   await page.getByRole("button", { name: "حذف سكر من الفاتورة #H-20261126-0001" }).click();
   const dialog = page.getByRole("alertdialog", { name: "حذف «سكر» من الفاتورة #H-20261126-0001؟" });
   await expect(dialog.getByText("₪ 30.00")).toBeVisible();
+  await expect(dialog.getByText("2 × سكر")).toBeVisible();
   await dialog.getByRole("button", { name: "حذف البند" }).click();
   await expect(dialog).toHaveCount(0);
   expect(removed).toBe("DELETE");
