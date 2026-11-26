@@ -13,6 +13,7 @@ import '../../print/domain/print_document.dart';
 import '../../print/presentation/print_sheet.dart';
 import '../../sale/presentation/sale_widgets.dart';
 import '../domain/returns.dart';
+import 'cancel_return_sheet.dart';
 import 'period_list.dart';
 
 AppUser? _user(WidgetRef ref) {
@@ -71,12 +72,13 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                     emptyIcon: Icons.assignment_return_outlined,
                     emptyTitle: t.returnsEmpty,
                     load: (from, to, page) => ref.read(goodsRepositoryProvider).purchaseReturns(from: from, to: to, page: page),
-                    row: (row, _) => ReturnRow(
+                    row: (row, reload) => ReturnRow(
                       key: Key('returns.purchase.${row.id}'),
                       title: row.supplierName ?? '',
                       at: row.at,
                       amount: row.total,
-                      onTap: () => showPurchaseReturn(context, ref, row),
+                      voided: row.voided,
+                      onTap: () => showPurchaseReturn(context, ref, row, onCancelled: reload),
                     ),
                   )
                 : PeriodList<SaleReturnRecord>(
@@ -85,12 +87,13 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                     emptyIcon: Icons.assignment_return_outlined,
                     emptyTitle: t.returnsEmpty,
                     load: (from, to, page) => ref.read(saleRepositoryProvider).saleReturns(from: from, to: to, page: page),
-                    row: (row, _) => ReturnRow(
+                    row: (row, reload) => ReturnRow(
                       key: Key('returns.sale.${row.id}'),
                       title: row.customerName ?? t.salesWalkIn,
                       at: row.at,
                       amount: row.total,
-                      onTap: () => showSaleReturn(context, ref, row),
+                      voided: row.voided,
+                      onTap: () => showSaleReturn(context, ref, row, onCancelled: reload),
                     ),
                   ),
           ),
@@ -101,12 +104,15 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
 }
 
 class ReturnRow extends StatelessWidget {
-  const ReturnRow({super.key, required this.title, required this.at, required this.amount, required this.onTap});
+  const ReturnRow({super.key, required this.title, required this.at, required this.amount, required this.onTap, this.voided = false});
 
   final String title;
   final DateTime at;
   final Money amount;
   final VoidCallback onTap;
+
+  /// A cancelled return stays listed, greyed and struck through, with no effect left.
+  final bool voided;
 
   @override
   Widget build(BuildContext context) => InkWell(
@@ -125,7 +131,11 @@ class ReturnRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Num(shekel(amount), size: 15, weight: FontWeight.w700),
+          if (voided) ...[
+            Text(AppLocalizations.of(context).returnVoidedBadge, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: HisbahColors.inkMuted)),
+            const SizedBox(width: 6),
+          ],
+          Num(shekel(amount), size: 15, weight: FontWeight.w700, color: voided ? HisbahColors.inkMuted : HisbahColors.ink),
           const Icon(Icons.chevron_left_rounded, color: HisbahColors.inkMuted),
         ],
       ),
@@ -133,23 +143,86 @@ class ReturnRow extends StatelessWidget {
   );
 }
 
-void showSaleReturn(BuildContext context, WidgetRef ref, SaleReturnRecord row) {
+/// The return as it prints. Owners and managers can cancel a return made by mistake from here;
+/// [onCancelled] refreshes the list or document it was opened from.
+void showSaleReturn(BuildContext context, WidgetRef ref, SaleReturnRecord row, {VoidCallback? onCancelled}) {
   final t = AppLocalizations.of(context);
   final document = saleReturnDocument(t, row, _user(ref));
-  showSaleSheet<void>(context, builder: (_) => _ReturnSheet(document: document));
+  final canCancel = (_user(ref)?.canOverride ?? false) && !row.voided;
+  showSaleSheet<void>(
+    context,
+    builder: (sheet) => _ReturnSheet(
+      document: document,
+      voidReason: row.voided ? row.voidReason ?? '' : null,
+      onCancel: !canCancel
+          ? null
+          : () => _cancel(
+              sheet,
+              CancelReturnSheet(
+                invoiceId: row.invoiceId,
+                effects: [
+                  if (row.lines.any((l) => !l.flagged)) t.cancelSaleReturnStock,
+                  if (row.toDebt.isPositive) t.cancelSaleReturnDebt(shekel(row.toDebt), row.customerName ?? t.salesWalkIn),
+                  if (row.refund.isPositive) t.cancelSaleReturnRefund(shekel(row.refund)),
+                ],
+                cancel: (reason) => ref.read(saleRepositoryProvider).voidSaleReturn(row.id, reason: reason),
+              ),
+              onCancelled,
+            ),
+    ),
+  );
 }
 
-void showPurchaseReturn(BuildContext context, WidgetRef ref, PurchaseReturnRecord row) {
+void showPurchaseReturn(BuildContext context, WidgetRef ref, PurchaseReturnRecord row, {VoidCallback? onCancelled}) {
   final t = AppLocalizations.of(context);
   final document = purchaseReturnDocument(t, row, _user(ref));
-  showSaleSheet<void>(context, builder: (_) => _ReturnSheet(document: document));
+  final canCancel = (_user(ref)?.canOverride ?? false) && !row.voided;
+  showSaleSheet<void>(
+    context,
+    builder: (sheet) => _ReturnSheet(
+      document: document,
+      voidReason: row.voided ? row.voidReason ?? '' : null,
+      onCancel: !canCancel
+          ? null
+          : () => _cancel(
+              sheet,
+              CancelReturnSheet(
+                invoiceId: row.invoiceId,
+                effects: [
+                  if (row.lines.any((l) => !l.flagged)) t.cancelPurchaseReturnStock,
+                  if (row.toBalance.isPositive) t.cancelPurchaseReturnBalance(shekel(row.toBalance), row.supplierName ?? ''),
+                  if (row.refund.isPositive) t.cancelPurchaseReturnRefund(shekel(row.refund)),
+                ],
+                cancel: (reason) => ref.read(goodsRepositoryProvider).voidPurchaseReturn(row.id, reason: reason),
+              ),
+              onCancelled,
+            ),
+    ),
+  );
+}
+
+/// Opens the cancel sheet over the return; once the server confirmed, both close and the caller refreshes.
+Future<void> _cancel(BuildContext sheet, CancelReturnSheet cancelSheet, VoidCallback? onCancelled) async {
+  final messenger = ScaffoldMessenger.maybeOf(sheet);
+  final done = AppLocalizations.of(sheet).cancelDone;
+  final cancelled = await showSaleSheet<bool>(sheet, builder: (_) => cancelSheet);
+  if (cancelled != true || !sheet.mounted) return;
+  Navigator.of(sheet).pop();
+  onCancelled?.call();
+  messenger?.showSnackBar(SnackBar(content: Text(done)));
 }
 
 /// The return as it prints, read on the phone.
 class _ReturnSheet extends StatelessWidget {
-  const _ReturnSheet({required this.document});
+  const _ReturnSheet({required this.document, this.onCancel, this.voidReason});
 
   final PrintDocument document;
+
+  /// Owners and managers, on a return that still stands.
+  final VoidCallback? onCancel;
+
+  /// Set when the return was cancelled (the reason may be empty).
+  final String? voidReason;
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +247,10 @@ class _ReturnSheet extends StatelessWidget {
         children: [
           SheetHeader(title: '${d.title} ${d.number}', closeLabel: t.backWord),
           const SizedBox(height: 10),
+          if (voidReason != null) ...[
+            ToneCard(key: const Key('return.voided'), tone: StatusTone.voided, icon: Icons.block_rounded, title: t.returnVoidedNote(voidReason!)),
+            const SizedBox(height: 10),
+          ],
           for (final (label, value) in d.facts) pair(label, value),
           const Divider(height: 20),
           for (final row in d.rows) ...[
@@ -189,6 +266,20 @@ class _ReturnSheet extends StatelessWidget {
           ],
           const SizedBox(height: 14),
           PrintButton(key: const Key('return.print'), document: () => d),
+          if (onCancel != null) ...[
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              key: const Key('return.cancel'),
+              onPressed: onCancel,
+              icon: const Icon(Icons.undo_rounded),
+              label: Text(t.cancelReturnAction),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                foregroundColor: HisbahColors.dangerSolid,
+                side: const BorderSide(color: HisbahColors.dangerSolid),
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -27,6 +27,8 @@ class SaleReturnRecord {
     required this.lines,
     this.customerName,
     this.by,
+    this.voidedAt,
+    this.voidReason,
   });
 
   factory SaleReturnRecord.fromJson(Map<String, dynamic> json) => SaleReturnRecord(
@@ -39,6 +41,8 @@ class SaleReturnRecord {
     at: _time(json['created_at']),
     customerName: (json['customer'] as Map<String, dynamic>?)?['name'] as String?,
     by: json['created_by'] as String?,
+    voidedAt: json['voided_at'] == null ? null : _time(json['voided_at']),
+    voidReason: json['void_reason'] as String?,
     lines: [
       for (final row in json['items'] as List<dynamic>? ?? const [])
         ReturnedLine(
@@ -61,6 +65,12 @@ class SaleReturnRecord {
   final String? customerName;
   final String? by;
   final List<ReturnedLine> lines;
+
+  /// Cancelled by mistake-correction: the row stays, with no effect on stock or balances.
+  final DateTime? voidedAt;
+  final String? voidReason;
+
+  bool get voided => voidedAt != null;
 }
 
 /// What went back to a supplier: the balance went down first, the rest came back as a refund.
@@ -76,6 +86,8 @@ class PurchaseReturnRecord {
     required this.lines,
     this.supplierName,
     this.by,
+    this.voidedAt,
+    this.voidReason,
   });
 
   factory PurchaseReturnRecord.fromJson(Map<String, dynamic> json) => PurchaseReturnRecord(
@@ -88,6 +100,8 @@ class PurchaseReturnRecord {
     at: _time(json['created_at']),
     supplierName: (json['supplier'] as Map<String, dynamic>?)?['name'] as String?,
     by: json['created_by'] as String?,
+    voidedAt: json['voided_at'] == null ? null : _time(json['voided_at']),
+    voidReason: json['void_reason'] as String?,
     lines: [
       for (final row in json['items'] as List<dynamic>? ?? const [])
         ReturnedLine(
@@ -110,6 +124,12 @@ class PurchaseReturnRecord {
   final String? supplierName;
   final String? by;
   final List<ReturnedLine> lines;
+
+  /// Cancelled by mistake-correction: the row stays, with no effect on stock or balances.
+  final DateTime? voidedAt;
+  final String? voidReason;
+
+  bool get voided => voidedAt != null;
 }
 
 /// A line chosen on the return form. [flagged] as on [ReturnedLine].

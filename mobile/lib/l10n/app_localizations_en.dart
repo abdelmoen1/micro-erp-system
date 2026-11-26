@@ -3656,4 +3656,98 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountOk => 'OK';
+
+  @override
+  String get cancelReturnAction => 'Cancel return';
+
+  @override
+  String cancelReturnTitle(int id) {
+    return 'Cancel the return on invoice #$id';
+  }
+
+  @override
+  String get cancelReturnEffectsTitle => 'What cancelling does:';
+
+  @override
+  String get cancelSaleReturnStock =>
+      'The returned items leave the stock again.';
+
+  @override
+  String cancelSaleReturnDebt(String amount, String name) {
+    return '$amount goes back on $name\'s debt.';
+  }
+
+  @override
+  String cancelSaleReturnRefund(String amount) {
+    return '$amount was refunded in cash: collect it back.';
+  }
+
+  @override
+  String get cancelPurchaseReturnStock => 'The items come back into stock.';
+
+  @override
+  String cancelPurchaseReturnBalance(String amount, String name) {
+    return '$amount goes back on $name\'s balance.';
+  }
+
+  @override
+  String cancelPurchaseReturnRefund(String amount) {
+    return 'The supplier refunded $amount: give it back.';
+  }
+
+  @override
+  String get cancelReturnKept =>
+      'The return stays in the records, marked cancelled with the reason.';
+
+  @override
+  String get cancelReasonLabel => 'Reason for cancelling';
+
+  @override
+  String get cancelReasonRequired =>
+      'Write the reason. It is kept in the audit log.';
+
+  @override
+  String get cancelForbidden => 'Only the owner or a manager can cancel.';
+
+  @override
+  String get cancelNetwork =>
+      'No connection: nothing was cancelled. Try again.';
+
+  @override
+  String get cancelDone => 'Return cancelled.';
+
+  @override
+  String get returnVoidedBadge => 'Cancelled';
+
+  @override
+  String returnVoidedNote(String reason) {
+    return 'This return was cancelled: $reason';
+  }
+
+  @override
+  String get productDelete => 'Delete product';
+
+  @override
+  String productDeleteTitle(String name) {
+    return 'Delete «$name» for good?';
+  }
+
+  @override
+  String get productDeleteBody =>
+      'This product was never sold, bought or adjusted, so it is removed as if never added. This can\'t be undone. To only hide it, stop it instead.';
+
+  @override
+  String get productDeleted => 'Product deleted.';
+
+  @override
+  String get moveReturnVoid => 'Return cancelled';
+
+  @override
+  String get movePurchaseVoid => 'Supplier invoice voided';
+
+  @override
+  String get movePurchaseReturnVoid => 'Supplier return cancelled';
+
+  @override
+  String get moveAdjustmentReversal => 'Adjustment taken back';
 }

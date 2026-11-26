@@ -84,6 +84,26 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     }
   }
 
+  /// Only a product nothing refers to (the server sends `deletable`); anything else is stopped.
+  Future<void> _delete(Product product) async {
+    final t = AppLocalizations.of(context);
+    final ok = await confirmDanger(
+      context,
+      title: t.productDeleteTitle(product.name),
+      body: t.productDeleteBody,
+      action: t.productDelete,
+    );
+    if (!ok || !mounted) return;
+    try {
+      await ref.read(productRepositoryProvider).delete(product.id);
+      if (!mounted) return;
+      showNote(context, t.productDeleted);
+      Navigator.of(context).pop(true);
+    } on ApiFailure catch (failure) {
+      if (mounted) showNote(context, failure is Forbidden ? t.prodViewOnly : (failure.message ?? t.staffActionError));
+    }
+  }
+
   Future<void> _reactivate(Product product) async {
     final t = AppLocalizations.of(context);
     try {
@@ -175,6 +195,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       child: Text(t.prodDeactivate),
                     ),
                   ],
+                  if (manager && p.deletable)
+                    TextButton(
+                      key: const Key('product.delete'),
+                      onPressed: () => _delete(p),
+                      style: TextButton.styleFrom(foregroundColor: HisbahColors.dangerSolid),
+                      child: Text(t.productDelete),
+                    ),
                 ],
               ),
             );
@@ -271,6 +298,10 @@ class _MoveRow extends StatelessWidget {
       'purchase_return' => t.movePurchaseReturn,
       'adjustment_in' => t.moveIn,
       'adjustment_out' => t.moveOut,
+      'sale_return_void' => t.moveReturnVoid,
+      'purchase_void' => t.movePurchaseVoid,
+      'purchase_return_void' => t.movePurchaseReturnVoid,
+      'adjustment_reversal' => t.moveAdjustmentReversal,
       _ => m.type,
     };
     final invoice = m.invoiceId;

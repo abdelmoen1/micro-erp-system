@@ -468,6 +468,22 @@ class SaleRepository {
     }
   }
 
+  /// POST /returns/sales/{id}/void (owner / manager): cancels a return made by mistake. The server
+  /// takes the goods off the shelf again and puts the amount back on the debt, once; same key
+  /// discipline as [voidSale], so a retry never reverses twice.
+  Future<SaleReturnRecord> voidSaleReturn(int returnId, {required String reason}) async {
+    final operationId = 'void-sale-return-$returnId-${stableHash(reason.trim())}';
+    final key = await _keys.keyFor(operationId);
+    try {
+      final body = await _api.post('/returns/sales/$returnId/void', body: {'reason': reason.trim()}, idempotencyKey: key);
+      await _keys.complete(operationId);
+      return SaleReturnRecord.fromJson(body['data'] as Map<String, dynamic>);
+    } on ApiFailure catch (failure) {
+      if (isFinalAnswer(failure)) await _keys.complete(operationId);
+      rethrow;
+    }
+  }
+
   /// Same value across app restarts (unlike [String.hashCode]).
   static String stableHash(String text) => IdempotencyKeyStore.stableHash(text);
 
