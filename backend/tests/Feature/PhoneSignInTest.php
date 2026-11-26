@@ -154,6 +154,8 @@ class PhoneSignInTest extends TestCase
 
     public function test_sending_is_limited_per_number_and_per_day(): void
     {
+        // Midday: travelling 2 minutes must not cross midnight, which resets the daily count.
+        $this->travelTo(now()->setTime(12, 0));
         $this->smsOn();
         $this->postJson('/api/v1/auth/otp', ['phone' => '0599123456', 'purpose' => 'register'])->assertOk();
         $this->postJson('/api/v1/auth/otp', ['phone' => '0599123456', 'purpose' => 'register'])
