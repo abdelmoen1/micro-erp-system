@@ -91,7 +91,7 @@ void main() {
   setUp(() {
     api = FakeApi();
     // The shape of accounting_test's dashboard (fields the home screen reads, for every role).
-    api.on('GET /dashboard', FakeResponse(200, {
+    api.on('GET /dashboard', const FakeResponse(200, {
       'data': {
         'summary': {'total_sales': '30.00', 'invoices_count': 1},
         'sales': {'total': '30.00', 'cash': '30.00', 'credit': '0.00'},
