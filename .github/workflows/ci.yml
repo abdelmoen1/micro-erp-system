@@ -130,5 +130,12 @@ jobs:
             echo "::error::Secret DEPLOY_DISPATCH_TOKEN is not set, so the API was not deployed (docs/deploy/render.md)."
             exit 1
           fi
-          gh workflow run deploy-api.yml -R abdelmoen1/hisbah-db-backups -f sha="$SHA"
+          # REST, not `gh workflow run`: that asks GraphQL for the default branch, which this
+          # Actions-only token may not read.
+          for attempt in 1 2 3; do
+            if gh api -X POST repos/abdelmoen1/hisbah-db-backups/actions/workflows/deploy-api.yml/dispatches \
+                 -f ref=main -f "inputs[sha]=$SHA"; then break; fi
+            [ "$attempt" -lt 3 ] || exit 1
+            sleep 20
+          done
           echo "Deploy of \`$SHA\` started in abdelmoen1/hisbah-db-backups (private): backup, migrate, deploy." >> "$GITHUB_STEP_SUMMARY"
