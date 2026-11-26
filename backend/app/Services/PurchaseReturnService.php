@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\ApiException;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseItem;
@@ -37,6 +38,12 @@ class PurchaseReturnService
     {
         return DB::transaction(function () use ($actor, $invoice, $lines, $reason) {
             $supplier = Supplier::query()->whereKey($invoice->supplier_id)->lockForUpdate()->firstOrFail();
+
+            // Read after the supplier lock, which a void of the invoice also takes first.
+            if (PurchaseInvoice::query()->whereKey($invoice->id)->value('voided_at') !== null) {
+                throw ApiException::conflict('PURCHASE_VOIDED', 'هذه الفاتورة ملغاة، فلا يمكن إرجاع أصناف منها.');
+            }
+
             $items = PurchaseItem::query()
                 ->where('purchase_invoice_id', $invoice->id)
                 ->with('product')
@@ -113,6 +120,91 @@ class PurchaseReturnService
     }
 
     /**
+     * Cancels a return to the supplier made by mistake: the goods it took off the shelf come back
+     * (`purchase_return_void`), the supplier's balance gets back what the return lowered (the
+     * voided row leaves the balance sum), and the lines' returned quantities drop. The row stays,
+     * marked voided with the reason, time and user; a second cancel is a 409.
+     *
+     * Lock order matches create(): supplier, return, lines, then products by id.
+     */
+    public function void(User $actor, PurchaseReturn $return, string $reason): PurchaseReturn
+    {
+        return DB::transaction(function () use ($actor, $return, $reason) {
+            Supplier::query()->forStore($actor->store_id)->whereKey($return->supplier_id)->lockForUpdate()->firstOrFail();
+
+            $locked = PurchaseReturn::query()
+                ->forStore($actor->store_id)
+                ->whereKey($return->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locked->isVoided()) {
+                throw ApiException::conflict('RETURN_ALREADY_VOIDED', 'هذا المرتجع ملغى مسبقًا.');
+            }
+
+            $lines = $locked->items()->get();
+            $items = PurchaseItem::query()
+                ->whereIn('id', $lines->pluck('purchase_item_id'))
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $restored = [];
+            $products = Product::query()
+                ->forStore($actor->store_id)
+                ->whereIn('id', $lines->where('from_stock', true)->pluck('product_id')->filter())
+                ->orderBy('id')
+                ->get()
+                ->keyBy('id');
+
+            // Exactly what the return took off the shelf, per product.
+            $taken = StockMovement::query()
+                ->where('store_id', $actor->store_id)
+                ->where('reference_type', 'purchase_return')
+                ->where('reference_id', $locked->id)
+                ->where('type', StockMovement::TYPE_PURCHASE_RETURN)
+                ->orderBy('product_id')
+                ->get()
+                ->groupBy('product_id');
+
+            foreach ($taken as $productId => $movements) {
+                $quantity = Quantity::negate($movements->reduce(fn(string $sum, StockMovement $m) => Quantity::add($sum, $m->quantity), '0'));
+                $product = $products->get($productId) ?? Product::query()->forStore($actor->store_id)->findOrFail($productId);
+                $this->stock->move(
+                    $product,
+                    StockMovement::TYPE_PURCHASE_RETURN_VOID,
+                    $quantity,
+                    $actor,
+                    reason: $reason,
+                    referenceType: 'purchase_return',
+                    referenceId: $locked->id,
+                );
+                $restored[] = ['product_id' => (int) $productId, 'quantity' => Quantity::format($quantity, $product->unit)];
+            }
+
+            foreach ($lines as $line) {
+                $item = $items->get($line->purchase_item_id);
+                $item->update(['returned_quantity' => Quantity::sub($item->returned_quantity, $line->quantity)]);
+            }
+
+            $locked->markVoided($actor, $reason);
+
+            $this->audit->record('purchase_return.voided', $locked, [
+                'purchase_invoice_id' => $locked->purchase_invoice_id,
+                'supplier_id' => $locked->supplier_id,
+                'reason' => $reason,
+                'total_amount' => Money::of($locked->total_amount),
+                'balance_restored' => Money::of($locked->balance_reduction),
+                // Cash the supplier paid back at the return: the store owes it back.
+                'refund_to_return' => Money::of($locked->refund_amount),
+                'stock_restored' => $restored,
+            ], $actor);
+
+            return $locked->load(['items.purchaseItem.product', 'creator', 'voider', 'supplier']);
+        });
+    }
+
+    /**
      * Each line: an item of this invoice, a positive quantity that fits the product's unit and does
      * not exceed bought − already returned. Its value is the line's own share, and the last return
      * of a line takes whatever is left of it, so rounding can never lose or add an agora.
@@ -165,7 +257,10 @@ class PurchaseReturnService
     private function lineValue(PurchaseItem $item, string $quantity, string $returnable): string
     {
         if (Quantity::compare($quantity, $returnable) === 0) {
-            $earlier = PurchaseReturnItem::query()->where('purchase_item_id', $item->id)->pluck('total');
+            $earlier = PurchaseReturnItem::query()
+                ->where('purchase_item_id', $item->id)
+                ->whereHas('purchaseReturn', fn($q) => $q->notVoided())
+                ->pluck('total');
 
             return Money::sub($item->line_total, Money::sum($earlier));
         }

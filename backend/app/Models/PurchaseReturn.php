@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Voidable;
 use App\Traits\BelongsToStore;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/** Goods sent back to the supplier from one purchase invoice. Never edited or deleted. */
+/** Goods sent back to the supplier from one purchase invoice. Never deleted: a mistake is voided. */
 class PurchaseReturn extends Model
 {
     use BelongsToStore;
+    use Voidable;
 
     protected $fillable = [
         'store_id',

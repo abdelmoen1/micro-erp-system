@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\ApiException;
 use App\Models\CatalogProduct;
 use App\Models\Product;
 use App\Models\StockMovement;
@@ -16,6 +17,74 @@ use Illuminate\Validation\ValidationException;
 class ProductService
 {
     public const DUPLICATE_BARCODE = 'الباركود مستخدم لمنتج آخر في متجرك';
+
+    /**
+     * Rows that make a product part of the store's history. Any one of them means the product can
+     * only be archived (status inactive), so invoices, returns and reports keep showing it.
+     */
+    private const HISTORY_TABLES = [
+        'invoice_items' => 'product_id',
+        'purchase_items' => 'product_id',
+        'sale_return_items' => 'product_id',
+        'purchase_return_items' => 'product_id',
+        'suspended_invoice_items' => 'product_id',
+        'inventory_reservations' => 'product_id',
+        'supplier_payments' => 'product_id',
+    ];
+
+    public function __construct(private readonly AuditService $audit) {}
+
+    /**
+     * Can the product be removed for good? Only a product added by mistake: no sale, purchase,
+     * return, held invoice or payment names it, and its stock ledger holds nothing but the opening
+     * row written when it was created.
+     */
+    public function isDeletable(Product $product): bool
+    {
+        foreach (self::HISTORY_TABLES as $table => $column) {
+            if (DB::table($table)->where($column, $product->id)->exists()) {
+                return false;
+            }
+        }
+
+        return !StockMovement::query()
+            ->where('product_id', $product->id)
+            ->where('type', '<>', StockMovement::TYPE_OPENING)
+            ->exists();
+    }
+
+    /**
+     * Permanent delete of an unused product (see isDeletable). Anything with history is refused
+     * with 409 PRODUCT_IN_USE so the caller offers archiving instead. The product's opening row is
+     * the only stock row removed: it records the product's creation, not a business operation, and
+     * the audit entry keeps a snapshot of both. The shared catalog item is never touched.
+     */
+    public function delete(User $actor, Product $product, ?string $reason = null): void
+    {
+        DB::transaction(function () use ($actor, $product, $reason) {
+            $locked = Product::query()->forStore($actor->store_id)->whereKey($product->id)->lockForUpdate()->firstOrFail();
+
+            if (!$this->isDeletable($locked)) {
+                throw ApiException::conflict(
+                    'PRODUCT_IN_USE',
+                    'لا يمكن حذف المنتج نهائيًا لأن له حركات أو فواتير مسجلة. يمكنك أرشفته (إيقافه) ليختفي من البيع ويبقى في السجلات.'
+                );
+            }
+
+            $this->audit->record('product.deleted', $locked, [
+                'reason' => $reason,
+                'snapshot' => $locked->only(['name', 'barcode', 'unit', 'selling_price', 'cost_price', 'current_stock', 'status', 'catalog_product_id']),
+                'opening_movements' => StockMovement::query()->where('product_id', $locked->id)->get(['id', 'quantity', 'created_at'])->toArray(),
+            ], $actor);
+
+            // The ledger model refuses deletes; this is the one sanctioned removal (opening rows only).
+            DB::table('stock_movements')
+                ->where('product_id', $locked->id)
+                ->where('type', StockMovement::TYPE_OPENING)
+                ->delete();
+            $locked->delete();
+        });
+    }
 
     /** Plan limit `max_products`: active products the store may have (create, import). */
     public static function ensureProductRoom(\App\Models\Store $store, int $adding = 1): void

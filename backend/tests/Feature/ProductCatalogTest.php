@@ -148,14 +148,19 @@ class ProductCatalogTest extends TestCase
     }
 
     /** TC-0401-04 + AC4 / BR-04: no hard delete; deactivation hides the product from the POS list and lookup. */
-    public function test_products_are_deactivated_never_deleted(): void
+    /**
+     * BR-04 as refined on 2026-11-27: a product with history is deactivated, never deleted. Only a
+     * product with no history at all may be deleted for good (SafeCancelTest).
+     */
+    public function test_products_with_history_are_deactivated_never_deleted(): void
     {
         $store = $this->makeStore();
         $owner = $this->makeUser($store);
         $product = $this->makeProduct($store, ['name' => 'Rice', 'barcode' => '555']);
         $api = $this->actingAs($owner, 'sanctum');
+        $api->postJson('/api/v1/stock-adjustments', ['product_id' => $product->id, 'quantity' => 1, 'reason' => 'count'], $this->idem())->assertCreated();
 
-        $api->deleteJson("/api/v1/products/{$product->id}")->assertStatus(405)->assertJsonPath('code', 'METHOD_NOT_ALLOWED');
+        $api->deleteJson("/api/v1/products/{$product->id}")->assertStatus(409)->assertJsonPath('code', 'PRODUCT_IN_USE');
         $this->assertNotNull($product->fresh());
 
         $api->postJson("/api/v1/products/{$product->id}/deactivate")->assertOk()->assertJsonPath('product.status', 'inactive');

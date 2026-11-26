@@ -123,6 +123,7 @@ class DashboardService
     {
         $returns = SaleReturn::query()
             ->where('store_id', $storeId)
+            ->notVoided()
             ->whereBetween('created_at', BusinessClock::toUtc($from, $to))
             ->get(['total_amount', 'debt_reduction', 'refund_amount']);
 
@@ -138,11 +139,12 @@ class DashboardService
     private function purchaseMetrics(int $storeId, CarbonImmutable $from, CarbonImmutable $to): array
     {
         $range = BusinessClock::toUtc($from, $to);
-        $invoices = PurchaseInvoice::query()->where('store_id', $storeId);
-        $returns = PurchaseReturn::query()->where('store_id', $storeId);
+        // Voided deliveries, returns and payments leave every figure (they stay in the registers).
+        $invoices = PurchaseInvoice::query()->where('store_id', $storeId)->notVoided();
+        $returns = PurchaseReturn::query()->where('store_id', $storeId)->notVoided();
         $period = (clone $invoices)->whereBetween('created_at', $range)->pluck('total');
         $sentBack = (clone $returns)->whereBetween('created_at', $range)->pluck('total_amount');
-        $paid = SupplierPayment::query()->where('store_id', $storeId)->pluck('amount');
+        $paid = SupplierPayment::query()->where('store_id', $storeId)->notVoided()->pluck('amount');
 
         return [
             'total' => Money::sum($period),

@@ -28,6 +28,8 @@ class ProductResource extends JsonResource
             'minimum_stock' => Quantity::format($this->minimum_stock, $this->unit),
             'is_low_stock' => Quantity::compare($this->current_stock, $this->minimum_stock) <= 0,
             'status' => $this->status,
+            // Only on GET /products/{id} for an owner or manager: may it be deleted for good?
+            'deletable' => $this->when(array_key_exists('deletable', $this->resource->getAttributes()),fn() => (bool) $this->resource->getAttribute('deletable')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

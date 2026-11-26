@@ -21,6 +21,12 @@ class ProductPolicy
         return $this->isOwnerOrManager($user) && $this->sameStore($user, $product);
     }
 
+    /** Permanent delete of an unused product (ProductService::delete decides "unused"). */
+    public function delete(User $user, Product $product): bool
+    {
+        return $this->isOwnerOrManager($user) && $this->sameStore($user, $product);
+    }
+
     /** US-0402 AC4 (05 §6: stock adjustment is Owner / Manager). */
     public function adjustStock(User $user): bool
     {

@@ -23,6 +23,7 @@ class PurchaseInvoiceResource extends JsonResource
             $returnedValue = Money::sum(
                 PurchaseReturnItem::query()
                     ->where('purchase_item_id', $item->id)
+                    ->whereHas('purchaseReturn', fn($q) => $q->notVoided())
                     ->pluck('total'),
             );
             $remainingValue = Money::sub($item->line_total, $returnedValue);
@@ -61,10 +62,15 @@ class PurchaseInvoiceResource extends JsonResource
             'id' => $this->id,
             'supplier' => ['id' => $this->supplier->id, 'name' => $this->supplier->name],
             'total' => Money::of($this->total),
-            'returned_amount' => Money::of($this->returned_amount ?? $this->returns()->sum('total_amount')),
+            'returned_amount' => Money::of($this->returned_amount ?? $this->returns()->notVoided()->sum('total_amount')),
             'lines_count' => $this->items_count ?? $this->items()->count(),
             'by' => $this->creator?->name,
             'at' => $this->created_at,
+            'status' => $this->voided_at ? 'voided' : 'active',
+            'voided_at' => $this->voided_at,
+            'voided_by_name' => $this->whenLoaded('voider', fn() => $this->voider?->name),
+            'void_reason' => $this->void_reason,
+            'paid_amount' => $this->whenLoaded('payments', fn() => Money::sum($this->payments->whereNull('voided_at')->pluck('amount'))),
             'remaining_amount' => $this->relationLoaded('items') ? Money::of($remainingAmount) : null,
             'items' => $items,
             'returns' => PurchaseReturnResource::collection($this->whenLoaded('returns')),

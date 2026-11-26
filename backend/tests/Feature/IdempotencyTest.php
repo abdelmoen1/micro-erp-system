@@ -57,6 +57,11 @@ class IdempotencyTest extends TestCase
         'POST api/v1/suspended-invoices',
         'POST api/v1/suspended-invoices/{invoice}/confirm',
         'POST api/v1/suspended-invoices/{invoice}/close',
+        'POST api/v1/purchases/{purchaseInvoice}/void',
+        'POST api/v1/returns/purchases/{purchaseReturn}/void',
+        'POST api/v1/returns/sales/{saleReturn}/void',
+        'POST api/v1/suppliers/{supplier}/payments/{payment}/void',
+        'POST api/v1/stock-movements/{movement}/reverse',
     ];
 
     private Store $store;
@@ -263,6 +268,11 @@ class IdempotencyTest extends TestCase
             'suspend a transfer sale' => ['suspend-sale'],
             'confirm a transfer sale' => ['confirm-suspended-sale'],
             'close a suspended sale' => ['close-suspended-sale'],
+            'void a supplier invoice' => ['void-purchase'],
+            'cancel a return to a supplier' => ['void-purchase-return'],
+            'cancel a customer return' => ['void-sale-return'],
+            'void a supplier payment' => ['void-supplier-payment'],
+            'reverse a stock adjustment' => ['reverse-movement'],
         ];
     }
 
@@ -292,6 +302,12 @@ class IdempotencyTest extends TestCase
             'suspended_invoices' => SuspendedInvoice::count(),
             'suspended_statuses' => SuspendedInvoice::orderBy('id')->pluck('status')->all(),
             'reservation_statuses' => \App\Models\InventoryReservation::orderBy('id')->pluck('status')->all(),
+            'voided' => [
+                SaleReturn::whereNotNull('voided_at')->count(),
+                PurchaseReturn::whereNotNull('voided_at')->count(),
+                PurchaseInvoice::whereNotNull('voided_at')->count(),
+                SupplierPayment::whereNotNull('voided_at')->count(),
+            ],
         ]);
 
         return match ($name) {
@@ -366,6 +382,47 @@ class IdempotencyTest extends TestCase
                 $invoice->items()->create(['product_id' => $product->id, 'quantity' => 1, 'buy_price' => '100.00', 'line_total' => '100.00']);
 
                 return ['POST', "/api/v1/suppliers/{$supplier->id}/payments", ['amount' => '40.00', 'method' => 'palpay'], $state];
+            })(),
+            'void-purchase', 'void-purchase-return', 'void-supplier-payment' => (function () use ($name, $state) {
+                $supplier = Supplier::create(['store_id' => $this->store->id, 'name' => 'شركة الأمل']);
+                // PurchaseService::record audits as the signed-in user.
+                $this->actingAs($this->owner, 'sanctum');
+                $invoice = app(\App\Services\PurchaseService::class)->record($this->owner, [
+                    'supplier_id' => $supplier->id,
+                    'paid_amount' => '20.00',
+                    'method' => 'cash',
+                    'lines' => [['name' => 'كولا', 'unit' => 'piece', 'cartons' => 1, 'pack_size' => 10, 'buy_price' => '50.00', 'selling_price' => '6.00']],
+                ]);
+
+                return match ($name) {
+                    'void-purchase' => ['POST', "/api/v1/purchases/{$invoice->id}/void", ['reason' => 'مكررة'], $state],
+                    'void-supplier-payment' => ['POST', "/api/v1/suppliers/{$supplier->id}/payments/{$invoice->payments->first()->id}/void", ['reason' => 'خطأ'], $state],
+                    'void-purchase-return' => (function () use ($invoice, $state) {
+                        $return = app(\App\Services\PurchaseReturnService::class)->create($this->owner, $invoice, [
+                            ['purchase_item_id' => $invoice->items->first()->id, 'quantity' => 2],
+                        ], 'تالف');
+
+                        return ['POST', "/api/v1/returns/purchases/{$return->id}/void", ['reason' => 'لم يُرجع'], $state];
+                    })(),
+                };
+            })(),
+            'void-sale-return' => (function () use ($customer, $state) {
+                $sale = app(SaleService::class)->create($this->owner, [
+                    'customer_id' => $customer->id,
+                    'paid_amount' => '0',
+                    'items' => [['product_id' => $this->makeProduct($this->store)->id, 'quantity' => 3]],
+                ])['invoice'];
+                $return = app(\App\Services\ReturnService::class)->create($this->owner, $sale, [
+                    ['invoice_item_id' => $sale->items->first()->id, 'quantity' => 1],
+                ], 'Damaged');
+
+                return ['POST', "/api/v1/returns/sales/{$return->id}/void", ['reason' => 'Entered by mistake'], $state];
+            })(),
+            'reverse-movement' => (function () use ($state) {
+                $product = $this->makeProduct($this->store, ['current_stock' => 10]);
+                $movement = app(\App\Services\StockService::class)->move($product, StockMovement::TYPE_ADJUSTMENT_IN, 4, $this->owner, 'جرد');
+
+                return ['POST', "/api/v1/stock-movements/{$movement->id}/reverse", ['reason' => 'رقم خاطئ'], $state];
             })(),
             'suspend-sale' => (function () use ($state) {
                 $product = $this->makeProduct($this->store, ['current_stock' => 5, 'selling_price' => '10.00', 'unit' => 'piece']);

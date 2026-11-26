@@ -123,7 +123,30 @@ Field rules on `POST /sales` come back as `VALIDATION_FAILED` with these `errors
 | 409 | `RESERVATION_NOT_DEDUCTED` | Not all line reservations were consumed by finalization | The transaction rolls back; reconcile before retrying |
 | 409 | `RESERVATION_PRODUCT_MISSING` | A reserved product no longer belongs to the store or is unavailable | Refresh the invoice and inventory |
 | 409 | `SUSPENDED_INVOICE_CHANGED` | The invoice's customer changed while confirmation was waiting for locks | Refresh the invoice and retry with a new operation key |
-| 409 | `SUSPENDED_INVOICE_NOT_OPEN` | Rejection/cancellation was attempted on a completed or already closed invoice | Refresh server status |
+| 409 | `SUSPENDED_INVOICE_NOT_OPEN` | Rejection/cancellation, or removing a line (`DELETE /suspended-invoices/{id}/items/{item}`), was attempted on a completed or already closed invoice | Refresh server status; a confirmed sale is corrected by a void or a return |
+| 422 | `SUSPENDED_INVOICE_LAST_LINE` | Removing the only line left would leave an empty invoice | Cancel the held invoice instead |
+| 422 | `SUSPENDED_INVOICE_DISCOUNT_TOO_HIGH` | After removing the line the discount would no longer be below the subtotal | Cancel the held invoice and hold it again |
+
+### Safe cancel: returns, supplier invoices, supplier payments, products, adjustments
+
+Every cancel is `POST …/void` (or `/reverse`) with a required `reason` and an `Idempotency-Key`, Owner / Manager only (403 otherwise; another store's record is 404). The document stays, marked `status: "voided"` with `voided_at`, `voided_by_name` and `void_reason`; its effects are reversed once, in one transaction. Nothing is written when a code below is returned.
+
+| HTTP | `code` | Meaning | Client behaviour |
+|---|---|---|---|
+| 409 | `RETURN_ALREADY_VOIDED` | `POST /returns/sales/{id}/void` or `/returns/purchases/{id}/void`: the return is already cancelled | Refresh the return |
+| 409 | `RETURN_NOT_VOIDABLE` | The sale behind a customer return was voided, or its debt no longer exists | Show the message; nothing can be reversed |
+| 409 | `RETURN_STOCK_CONSUMED` | The goods a customer return put back are no longer on the shelf (sold or adjusted since), so taking them back would make stock negative. `details.product_id` names the product | Show the message; correct the stock first |
+| 409 | `PURCHASE_ALREADY_VOIDED` | `POST /purchases/{id}/void` on a voided supplier invoice | Refresh the invoice |
+| 409 | `PURCHASE_HAS_RETURNS` | The supplier invoice still has returns that are not cancelled | Cancel those returns first |
+| 409 | `PURCHASE_VOID_OVERPAID` | Later payments to the supplier cover this invoice; voiding it would leave the store having paid more than it owes | Void the extra payment first |
+| 409 | `PURCHASE_STOCK_CONSUMED` | Goods from the invoice were sold or adjusted since, so removing them would make stock negative. `details.product_id` names the product | Correct the stock first |
+| 409 | `PURCHASE_VOIDED` | `POST /purchases/{id}/returns` on a voided supplier invoice | Refresh the invoice |
+| 409 | `PAYMENT_ALREADY_VOIDED` | `POST /suppliers/{id}/payments/{payment}/void` on a voided payment | Refresh the supplier |
+| 409 | `SUPPLIER_IN_USE` | `DELETE /suppliers/{id}` on a supplier with any invoice, payment or return | Archive it instead (`POST /suppliers/{id}/archive`) |
+| 409 | `PRODUCT_IN_USE` | `DELETE /products/{id}` on a product with any sale, purchase, return, held invoice, payment or stock movement other than its opening row | Archive it instead (deactivate) |
+| 409 | `MOVEMENT_NOT_REVERSIBLE` | `POST /stock-movements/{id}/reverse` on a movement that is not a manual adjustment | Correct the document that made it |
+| 409 | `MOVEMENT_ALREADY_REVERSED` | The adjustment was already taken back | Refresh the ledger |
+| 409 | `MOVEMENT_STOCK_CONSUMED` | Taking back an addition would make stock negative | Correct the stock first |
 
 #### Warning flags (successful responses)
 

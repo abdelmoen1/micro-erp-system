@@ -36,6 +36,16 @@ class StockMovement extends Model
     // Goods sent back to the supplier.
     public const TYPE_PURCHASE_RETURN = 'purchase_return';
 
+    // Safe cancel: each one reverses exactly the movements of the document it cancels.
+    public const TYPE_SALE_RETURN_VOID = 'sale_return_void';
+
+    public const TYPE_PURCHASE_RETURN_VOID = 'purchase_return_void';
+
+    public const TYPE_PURCHASE_VOID = 'purchase_void';
+
+    // An adjustment taken back (reference_type 'stock_movement' names the adjustment).
+    public const TYPE_ADJUSTMENT_REVERSAL = 'adjustment_reversal';
+
     protected $fillable = [
         'store_id',
         'product_id',

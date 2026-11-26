@@ -154,12 +154,16 @@ class StatementService
             ->get();
 
         foreach ($returns as $return) {
-            $events->push($this->event($return->created_at, 'return', '0.00', Money::of($return->debt_reduction), [
+            // Like a voided sale: a cancelled return stays in the list with no effect on the balance.
+            $voided = $return->isVoided();
+            $events->push($this->event($return->created_at, 'return', '0.00', $voided ? '0.00' : Money::of($return->debt_reduction), [
                 'sale_return_id' => $return->id,
                 'invoice_id' => $return->invoice_id,
                 'total_amount' => Money::of($return->total_amount),
                 'refund_amount' => Money::of($return->refund_amount),
                 'reason' => $return->reason,
+                'voided' => $voided,
+                'void_reason' => $return->void_reason,
                 'by' => $return->creator?->name,
             ]));
         }
