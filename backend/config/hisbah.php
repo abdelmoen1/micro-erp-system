@@ -7,6 +7,15 @@
 
 return [
 
+    // /up answers 500 while a migration has not run (App\Support\MigrationHealth), so a deploy that
+    // reaches production before its migrations never takes traffic. Off only for a deliberate rollback
+    // of the code onto a newer schema.
+    'health_requires_migrations' => filter_var(env('HEALTH_REQUIRES_MIGRATIONS', true), FILTER_VALIDATE_BOOL),
+
+    // The commit this server was built from (Render sets RENDER_GIT_COMMIT), served by GET /version so
+    // a deploy can be checked without a Render key.
+    'commit' => env('RENDER_GIT_COMMIT') ?: null,
+
     // Free trial a new store gets from its registration time, in days (once per owner number).
     'trial_days' => (int) env('HISBAH_TRIAL_DAYS', 14),
 

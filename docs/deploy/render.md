@@ -43,8 +43,47 @@ Entered in the dashboard (secret, `sync: false`):
    (after this branch is merged) → Render reads `render.yaml` and asks for the `sync: false` values.
 2. First deploy: watch the build and runtime logs.
 
-Migrations do not run automatically. If `php artisan migrate:status` (Render shell) shows pending migrations,
-review them before running anything against production data.
+Migrations never run inside the container. Production deploys go through the pipeline below.
+
+## Deploys: backup → migrate → deploy
+
+On 2026-11-25, Render auto-deployed #56 from `main` a day before its migrations ran. The code read
+`inventory_reservations` before that table existed, so every sale, purchase and return failed. Two
+safeguards now prevent this:
+
+1. **`/up` fails while a migration is pending** (`App\Support\MigrationHealth`, config
+   `hisbah.health_requires_migrations`). Render switches traffic only to a healthy deploy, so code that
+   arrives before its migrations never serves, and the previous version stays live.
+   `HEALTH_REQUIRES_MIGRATIONS=false` turns this off. Use it only for a deliberate rollback of the code onto a
+   newer schema.
+2. **One pipeline deploys the API.** Render auto-deploy is off (`autoDeployTrigger: "off"`).
+   - When the backend tests pass on `main`, the CI job «Deploy API» starts the workflow `deploy-api.yml` in the
+     private repository `abdelmoen1/hisbah-db-backups`. That repository already holds the database secrets.
+   - The workflow checks that the commit is on `main` and its backend tests passed, and reads what production runs
+     from `GET /api/v1/version`.
+   - It skips the deploy when nothing under `backend/` changed.
+   - If migrations are pending, it backs up first (`backup.yml`), then runs `php artisan migrate --force`.
+   - It then calls the Render deploy hook and waits until `/api/v1/version` reports the commit.
+   - A failed step stops everything after it, and GitHub emails the owner.
+
+To deploy a commit by hand: `hisbah-db-backups` → Actions → «Deploy API» → Run workflow, with the full SHA.
+
+### One-time setup (owner)
+
+| Where | What |
+|---|---|
+| Render → `hisbah-api` → Settings → Build & Deploy | **Auto-Deploy: Off** (the dashboard setting wins over `render.yaml` unless the service is Blueprint-synced) |
+| Render → `hisbah-api` → Settings → Deploy Hook | copy the URL into the `hisbah-db-backups` secret **`RENDER_DEPLOY_HOOK_URL`** |
+| GitHub → Settings → Developer settings → Fine-grained token | repository access: only `hisbah-db-backups`; permission **Actions: Read and write**; nothing else |
+| `micro-erp-system` → Settings → Secrets → Actions | that token as **`DEPLOY_DISPATCH_TOKEN`** |
+
+The token can only start workflows in the backups repository. It cannot read the dumps or the database secrets.
+Until it is set, the «Deploy API» CI job fails on `main` and says so.
+
+### Checking production
+
+- `GET /api/v1/version` returns the commit Render built (`RENDER_GIT_COMMIT`).
+- `GET /up` returns 200 only when the database answers and every migration has run.
 
 ## Verify before switching the app
 

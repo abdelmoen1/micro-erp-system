@@ -107,3 +107,28 @@ jobs:
       - run: flutter test
       - name: Test release artifact verifiers
         run: bash tool/ci/test_inspect_artifact_signatures.sh
+
+  # The API goes to production only through the private repository abdelmoen1/hisbah-db-backups,
+  # which holds the database secrets: back up → migrate → Render deploy hook → check /version.
+  # This public repository holds only a token that may start that workflow (docs/deploy/render.md).
+  deploy-api:
+    name: Deploy API (backup, migrate, deploy)
+    needs: [backend-sqlite, backend-mysql]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-api
+      cancel-in-progress: false
+    steps:
+      - name: Start the deploy workflow
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_DISPATCH_TOKEN }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Secret DEPLOY_DISPATCH_TOKEN is not set, so the API was not deployed (docs/deploy/render.md)."
+            exit 1
+          fi
+          gh workflow run deploy-api.yml -R abdelmoen1/hisbah-db-backups -f sha="$SHA"
+          echo "Deploy of \`$SHA\` started in abdelmoen1/hisbah-db-backups (private): backup, migrate, deploy." >> "$GITHUB_STEP_SUMMARY"

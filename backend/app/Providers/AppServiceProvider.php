@@ -6,6 +6,7 @@ use App\Services\OtpService;
 use App\Services\Sms\LogSmsSender;
 use App\Services\Sms\SmsSender;
 use App\Services\Sms\TextBeeSmsSender;
+use App\Support\MigrationHealth;
 use App\Support\ProductionSafety;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Events\DiagnosingHealth;
@@ -65,8 +66,11 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(20)->by('otp-ip:' . $request->ip()),
         ]);
 
-        // /up (hosting health check) fails when the database is unreachable, so a deploy
-        // without a working database is never reported healthy.
-        Event::listen(DiagnosingHealth::class, fn() => DB::connection()->getPdo());
+        // /up (hosting health check) fails when the database is unreachable or lacks a migration
+        // this code needs, so such a deploy is never reported healthy and never takes traffic.
+        Event::listen(DiagnosingHealth::class, function () {
+            DB::connection()->getPdo();
+            MigrationHealth::assertCurrent($this->app->make('migrator'));
+        });
     }
 }
