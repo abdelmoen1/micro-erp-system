@@ -1,7 +1,10 @@
-import { DataTable, EmptyState, ErrorBanner, PageHeader, Segments, StatusBadge } from "../components/ui";
-import { useConfirmSuspendedInvoice, useCloseSuspendedInvoice, useSuspendedInvoices } from "../services/backoffice";
-import { dateTime } from "../lib/format";
 import { useState } from "react";
+import Icon from "../components/Icon";
+import { ConfirmSummary, DataTable, Dialog, EmptyState, ErrorBanner, PageHeader, Segments, StatusBadge } from "../components/ui";
+import { canManage } from "../lib/domain";
+import { centsOf, dateTime, moneyOf, shekel } from "../lib/format";
+import { session } from "../services/apiClient";
+import { useConfirmSuspendedInvoice, useCloseSuspendedInvoice, useRemoveHeldLine, useSuspendedInvoices } from "../services/backoffice";
 
 const STATUS_LABEL = {
   pending_transfer: ["قيد انتظار التحويل", "partial"],
@@ -12,9 +15,13 @@ const STATUS_LABEL = {
 
 export default function SuspendedInvoices() {
   const [status, setStatus] = useState("pending_transfer");
+  const [removing, setRemoving] = useState(null);
   const list = useSuspendedInvoices(status);
   const confirm = useConfirmSuspendedInvoice();
   const close = useCloseSuspendedInvoice();
+  const me = session.user();
+  // Lines come off a held invoice before it is confirmed: owners, managers, or whoever held it.
+  const mayEdit = (x) => x.status === "pending_transfer" && (canManage(me) || x.cashier_id === me?.id);
 
   return (
     <>
@@ -34,6 +41,32 @@ export default function SuspendedInvoices() {
         columns={[
           { key: "reference", label: "المرجع", render: (x) => <span className="m">#{x.reference}</span> },
           { key: "customer", label: "الزبون", render: (x) => x.customer?.name ?? "بدون زبون" },
+          {
+            key: "items",
+            label: "الأصناف",
+            render: (x) => (
+              <ul className="held-lines">
+                {(x.items ?? []).map((item) => (
+                  <li key={item.id}>
+                    <span>
+                      <span className="m">{item.quantity}</span> × {item.item_name}
+                    </span>
+                    {mayEdit(x) && x.items.length > 1 ? (
+                      <button
+                        type="button"
+                        className="icon-btn danger"
+                        aria-label={`حذف ${item.item_name} من الفاتورة #${x.reference}`}
+                        title="حذف البند"
+                        onClick={() => setRemoving({ invoice: x, item })}
+                      >
+                        <Icon name="close" size={16} />
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ),
+          },
           { key: "cashier", label: "الكاشير", render: (x) => x.cashier?.name ?? "—" },
           { key: "total", label: "الإجمالي", numeric: true, render: (x) => <span className="m">{x.total_amount}</span> },
           { key: "account", label: "حساب الاستقبال", render: (x) => <span>{x.account_snapshot_name} · <span className="m" dir="ltr">{x.account_snapshot_identifier}</span></span> },
@@ -50,9 +83,37 @@ export default function SuspendedInvoices() {
           ) }] : []),
         ]}
         caption="الفواتير المعلقة"
-        minWidth={1000}
+        minWidth={1100}
         empty={<EmptyState icon="sales" title="لا توجد فواتير بهذه الحالة" text="الفواتير المعلقة تظهر هنا قبل اكتمال البيع." />}
       />
+      {removing ? <RemoveLineDialog {...removing} onClose={() => setRemoving(null)} /> : null}
     </>
+  );
+}
+
+/** Takes one line off a held invoice; the server recomputes the total and frees the reserved stock. */
+function RemoveLineDialog({ invoice, item, onClose }) {
+  const remove = useRemoveHeldLine();
+  const after = moneyOf(centsOf(invoice.total_amount) - centsOf(item.total));
+  return (
+    <Dialog title={`حذف «${item.item_name}» من الفاتورة #${invoice.reference}؟`} role="alertdialog" tone="warning" onClose={onClose}>
+      <ConfirmSummary
+        rows={[
+          ["الإجمالي الآن", shekel(invoice.total_amount)],
+          ["البند", `${item.quantity} × ${item.item_name} = ${shekel(item.total)}`],
+        ]}
+        total={["الإجمالي بعد الحذف", shekel(after)]}
+      />
+      <p className="field-hint">تتحرر الكمية المحجوزة لهذا البند وتعود متاحة للبيع. تبقى الفاتورة معلقة بباقي البنود.</p>
+      <ErrorBanner error={remove.error} />
+      <div className="dlg-actions">
+        <button type="button" className="btn btn-dd" disabled={remove.isPending} onClick={() => remove.mutate({ id: invoice.id, itemId: item.id }, { onSuccess: onClose })}>
+          {remove.isPending ? "جارٍ الحذف…" : "حذف البند"}
+        </button>
+        <button type="button" className="btn btn-g" onClick={onClose}>
+          رجوع
+        </button>
+      </div>
+    </Dialog>
   );
 }

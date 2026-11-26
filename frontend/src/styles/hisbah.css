@@ -464,6 +464,8 @@ a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border
 .panel-head h2 { font-size: 15px; font-weight: 700; }
 .panel .text-btn { color: var(--accent-600); font-size: 13px; }
 .panel .text-btn:hover { background: var(--brand-tint); }
+/* A cancel or delete inside a table row: same quiet link, in the danger colour. */
+.text-btn.danger, .panel .text-btn.danger { color: var(--danger); }
 .chart-note { height: 22px; font-size: 12px; color: var(--tx-2); }
 .area { position: relative; height: 230px; direction: ltr; cursor: crosshair; }
 .area svg { width: 100%; height: 100%; display: block; overflow: visible; }
@@ -516,6 +518,16 @@ tbody tr:hover { background: #f7f9f9; }
 
 /* A return in a list: what went back on one side, its value and print on the other. */
 .return-row { display: flex; justify-content: space-between; gap: 10px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 14px; }
+.return-row.voided { color: var(--voided-fg); }
+/* Lines of a held invoice, each with its own remove control. */
+.held-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 14px; }
+.held-lines li { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.icon-btn { display: inline-grid; place-items: center; min-width: 32px; min-height: 32px; border: 0; border-radius: 8px; background: transparent; color: var(--ink-muted); cursor: pointer; }
+.icon-btn.danger { color: var(--danger); }
+.icon-btn:hover { background: var(--danger-bg, rgba(154, 59, 42, 0.1)); }
+.icon-btn:focus-visible { outline: 2px solid var(--danger); outline-offset: 1px; }
+@media (pointer: coarse) { .icon-btn { min-width: 44px; min-height: 44px; } }
+.return-row.voided .return-side .m { text-decoration: line-through; }
 .return-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; }
 
 /* The printed invoice: black on white, as wide as the paper, whether a roll or A4. */

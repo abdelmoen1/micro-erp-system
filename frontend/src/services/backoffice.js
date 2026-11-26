@@ -72,6 +72,15 @@ export function useCustomerStatus() {
   });
 }
 
+/** Delete a customer with no sales, debts or payments (the server refuses one with history). */
+export function useDeleteCustomer() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }) => apiSend("DELETE", `/customers/${id}`),
+    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.customers.all }),
+  });
+}
+
 // ---------------------------------------------------------------- products (W-08, W-09, review, import)
 export const useProducts = (filters) =>
   useQuery({ queryKey: queryKeys.products.list(filters), queryFn: page(`/products${qs(filters)}`), placeholderData: (p) => p });
@@ -171,6 +180,71 @@ export function usePaySupplier() {
   const invalidate = useInvalidateLedger();
   return useMutation({
     mutationFn: ({ id, amount, method, key }) => apiIdempotent("POST", `/suppliers/${id}/payments`, { amount, method }, { idempotencyKey: key }),
+    onSuccess: invalidate,
+  });
+}
+
+// ---------------------------------------------------------------- safe cancel (never a delete)
+// A posted document is voided with a reason; the server reverses its stock and money effects once
+// (the dialog's Idempotency-Key makes a retried click replay, not repeat) and keeps the row.
+
+export function useVoidSaleReturn() {
+  const invalidate = useInvalidateLedger();
+  return useMutation({
+    mutationFn: ({ id, reason, key }) => apiIdempotent("POST", `/returns/sales/${id}/void`, { reason }, { idempotencyKey: key }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useVoidPurchaseReturn() {
+  const invalidate = useInvalidateLedger();
+  return useMutation({
+    mutationFn: ({ id, reason, key }) => apiIdempotent("POST", `/returns/purchases/${id}/void`, { reason }, { idempotencyKey: key }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useVoidPurchase() {
+  const invalidate = useInvalidateLedger();
+  return useMutation({
+    mutationFn: ({ id, reason, key }) => apiIdempotent("POST", `/purchases/${id}/void`, { reason }, { idempotencyKey: key }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useVoidSupplierPayment() {
+  const invalidate = useInvalidateLedger();
+  return useMutation({
+    mutationFn: ({ supplierId, id, reason, key }) =>
+      apiIdempotent("POST", `/suppliers/${supplierId}/payments/${id}/void`, { reason }, { idempotencyKey: key }),
+    onSuccess: invalidate,
+  });
+}
+
+/** Archive or bring back a supplier; delete only one with no documents at all. */
+export function useSupplierAction() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, action }) =>
+      action === "delete" ? apiSend("DELETE", `/suppliers/${id}`) : apiSend("POST", `/suppliers/${id}/${action}`),
+    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.suppliers.all }),
+  });
+}
+
+/** Permanent delete of a product nothing refers to (the server answers 409 otherwise). */
+export function useDeleteProduct() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }) => apiSend("DELETE", `/products/${id}`, reason ? { reason } : undefined),
+    onSuccess: () => Promise.all([client.invalidateQueries({ queryKey: queryKeys.products.all }), client.invalidateQueries({ queryKey: ["dashboard"] })]),
+  });
+}
+
+/** Take back a stock adjustment entered by mistake (an opposite movement, once). */
+export function useReverseMovement() {
+  const invalidate = useInvalidateLedger();
+  return useMutation({
+    mutationFn: ({ id, reason, key }) => apiIdempotent("POST", `/stock-movements/${id}/reverse`, { reason }, { idempotencyKey: key }),
     onSuccess: invalidate,
   });
 }
@@ -313,6 +387,18 @@ export function useCloseSuspendedInvoice() {
   return useMutation({
     mutationFn: ({ id, body, key }) =>
       apiIdempotent("POST", `/suspended-invoices/${id}/close`, body, { idempotencyKey: key ?? newIdempotencyKey() }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["suspendedInvoices"] });
+      client.invalidateQueries({ queryKey: queryKeys.products.all });
+    },
+  });
+}
+
+/** Remove one line from a held invoice before it is confirmed; its reserved stock is freed. */
+export function useRemoveHeldLine() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, itemId }) => apiSend("DELETE", `/suspended-invoices/${id}/items/${itemId}`).then((r) => r.data),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["suspendedInvoices"] });
       client.invalidateQueries({ queryKey: queryKeys.products.all });

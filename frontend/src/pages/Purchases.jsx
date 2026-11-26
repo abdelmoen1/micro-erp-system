@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Icon from "../components/Icon";
 import { usePrint } from "../components/usePrint";
-import { ConfirmSummary, Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, Field, MoneyText, PageHeader, Pager, ReasonField } from "../components/ui";
+import { CancelReturnDialog, VoidRecordDialog } from "../components/dialogs";
+import { ConfirmSummary, Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, Field, MoneyText, PageHeader, Pager, ReasonField, StatusBadge } from "../components/ui";
 import { centsOf, dateTime, isPositiveAmount, latinDigits, milliOf, moneyOf, shekel } from "../lib/format";
 import { purchaseDoc, purchaseReturnDoc } from "../lib/printDocs";
 import { newIdempotencyKey } from "../services/apiClient";
-import { usePurchase, usePurchases, useReturnPurchase, useSupplier } from "../services/backoffice";
+import { usePurchase, usePurchases, useReturnPurchase, useSupplier, useVoidPurchase } from "../services/backoffice";
 
 /** The purchases register: every supplier invoice, by date, or one supplier's from their page. */
 export function Purchases() {
@@ -28,7 +29,7 @@ export function Purchases() {
     { key: "by", label: "بواسطة", render: (p) => p.by ?? "—" },
     { key: "lines", label: "الأصناف", numeric: true, render: (p) => <span className="m">{p.lines_count}</span> },
     { key: "total", label: "الإجمالي", numeric: true, render: (p) => <MoneyText value={p.total} style={{ fontWeight: 700 }} /> },
-    { key: "ret", label: "المرتجع", numeric: true, render: (p) => (isPositiveAmount(p.returned_amount) ? <MoneyText value={p.returned_amount} style={{ color: "var(--warning-fg)", fontWeight: 600 }} /> : "—") },
+    { key: "ret", label: "المرتجع", numeric: true, render: (p) => (p.status === "voided" ? <StatusBadge status="voided" label="ملغاة" /> : isPositiveAmount(p.returned_amount) ? <MoneyText value={p.returned_amount} style={{ color: "var(--warning-fg)", fontWeight: 600 }} /> : "—") },
   ];
 
   return (
@@ -47,7 +48,7 @@ export function Purchases() {
       </div>
       <DataTable
         query={list}
-        rows={rows}
+        rows={rows.map((p) => ({ ...p, __class: p.status === "voided" ? "voided" : undefined }))}
         columns={columns}
         caption="قائمة المشتريات"
         minWidth={760}
@@ -63,6 +64,8 @@ export function PurchaseDetail() {
   const { id } = useParams();
   const purchase = usePurchase(id);
   const [returning, setReturning] = useState(false);
+  const [voiding, setVoiding] = useState(false);
+  const [cancellingReturn, setCancellingReturn] = useState(null);
   const { print, sheet } = usePrint();
 
   if (purchase.isError) return <ErrorState error={purchase.error} title="تعذّر فتح الفاتورة" onRetry={() => purchase.refetch()} />;
@@ -71,11 +74,23 @@ export function PurchaseDetail() {
   const p = purchase.data;
   const remainingItems = p.items.filter((i) => milliOf(i.remaining_quantity ?? (milliOf(i.quantity) - milliOf(i.returned_quantity))) > 0);
   const remainingAmount = remainingItems.reduce((sum, i) => sum + centsOf(i.remaining_line_value ?? i.line_total), 0);
-  const returnable = remainingItems.length > 0;
+  const voided = p.status === "voided";
+  const returnable = remainingItems.length > 0 && !voided;
+  const liveReturns = p.returns.filter((r) => r.status !== "voided").length;
 
   return (
     <>
       <Crumbs items={[["المشتريات", "/purchases"], [`#${p.id}`]]} />
+      {voided ? (
+        <div role="status" className="banner tone-voided">
+          <Icon name="ban" size={20} />
+          <span>
+            أُلغيت هذه الفاتورة في <span className="m">{dateTime(p.voided_at)}</span>
+            {p.voided_by_name ? ` بواسطة ${p.voided_by_name}` : ""}. خرجت بضاعتها من المخزون وأُلغيت دفعاتها، ولم تعد في رصيد المورد.
+            {p.void_reason ? <span className="sub">السبب: {p.void_reason}</span> : null}
+          </span>
+        </div>
+      ) : null}
       <header className="card profile">
         <div>
           <h1 className="m" style={{ fontSize: 26 }}>
@@ -93,8 +108,24 @@ export function PurchaseDetail() {
           <button type="button" className="btn btn-p btn-sm" disabled={!returnable} onClick={() => setReturning(true)}>
             إرجاع للمورد
           </button>
+          {!voided ? (
+            <button
+              type="button"
+              className="btn btn-dl btn-sm"
+              disabled={liveReturns > 0}
+              aria-describedby={liveReturns > 0 ? "pv-why" : undefined}
+              onClick={() => setVoiding(true)}
+            >
+              إلغاء الفاتورة
+            </button>
+          ) : null}
         </div>
       </header>
+      {!voided && liveReturns > 0 ? (
+        <p id="pv-why" className="field-hint">
+          على هذه الفاتورة مرتجعات قائمة. ألغِ المرتجعات أولاً ثم ألغِ الفاتورة.
+        </p>
+      ) : null}
 
       <section className="card panel">
         <h2 style={{ fontSize: 17 }}>الأصناف المتبقية</h2>
@@ -160,18 +191,29 @@ export function PurchaseDetail() {
         <h2 style={{ fontSize: 17 }}>المرتجعات</h2>
         {p.returns.length > 0 ? (
           p.returns.map((r) => (
-            <div key={r.id} className="return-row">
+            <div key={r.id} className={`return-row${r.status === "voided" ? " voided" : ""}`}>
               <span>
                 <b className="m">{dateTime(r.created_at)}</b> · {r.items.map((i) => `${i.quantity} × ${i.item_name}`).join("، ")}
                 <span className="cell-sub">
                   {r.created_by ?? ""} · السبب: {r.reason}
                 </span>
+                {r.status === "voided" ? (
+                  <span className="cell-sub">
+                    <StatusBadge status="voided" label="ملغى" /> {dateTime(r.voided_at)}
+                    {r.voided_by_name ? ` · ${r.voided_by_name}` : ""} — {r.void_reason}
+                  </span>
+                ) : null}
               </span>
               <span className="return-side">
                 <MoneyText value={r.total_amount} style={{ fontWeight: 700 }} />
                 <button type="button" className="text-btn" onClick={() => print(purchaseReturnDoc(r, p.supplier.name))}>
                   طباعة
                 </button>
+                {r.status !== "voided" ? (
+                  <button type="button" className="text-btn danger" onClick={() => setCancellingReturn(r)}>
+                    إلغاء المرتجع
+                  </button>
+                ) : null}
               </span>
             </div>
           ))
@@ -181,6 +223,23 @@ export function PurchaseDetail() {
       </section>
 
       {returning ? <ReturnDialog purchase={p} onClose={() => setReturning(false)} /> : null}
+      {cancellingReturn ? <CancelReturnDialog ret={{ ...cancellingReturn, supplier: p.supplier }} kind="purchases" onClose={() => setCancellingReturn(null)} /> : null}
+      {voiding ? (
+        <VoidRecordDialog
+          title={`إلغاء فاتورة المورد #${p.id} نهائياً؟`}
+          rows={[
+            ["الإجمالي", shekel(p.total)],
+            ["تخرج من المخزون", `${p.items.length} أصناف كما استُلمت`],
+            ...(isPositiveAmount(p.paid_amount) ? [["دفعات مع الفاتورة تُلغى", shekel(p.paid_amount)]] : []),
+          ]}
+          total={[`ينقص رصيد ${p.supplier.name}`, `−${shekel(moneyOf(centsOf(p.total) - centsOf(p.paid_amount ?? "0")))}`]}
+          note="تبقى الفاتورة في السجل بحالة «ملغاة». إن بيع شيء من بضاعتها أو دُفع للمورد بعدها أكثر مما يبقى عليه، فلن يُقبل الإلغاء ويظهر السبب."
+          confirmLabel="إلغاء الفاتورة نهائياً"
+          useAction={useVoidPurchase}
+          vars={{ id: p.id }}
+          onClose={() => setVoiding(false)}
+        />
+      ) : null}
       {sheet}
     </>
   );

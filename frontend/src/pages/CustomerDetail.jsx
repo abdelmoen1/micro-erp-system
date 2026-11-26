@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Icon from "../components/Icon";
 import { CustomerFormDialog, OpeningDebtDialog, RecordPaymentDialog } from "../components/dialogs";
 import { Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, MoneyText, StatusBadge } from "../components/ui";
 import { dateOnly, dateTime, initialOf, isPositiveAmount, shekel } from "../lib/format";
 import { session } from "../services/apiClient";
-import { useCustomer, useCustomerStatus, useCustomerSummary, useDebts, usePayments, useSales, useStatement } from "../services/backoffice";
+import { useCustomer, useCustomerStatus, useCustomerSummary, useDeleteCustomer, useDebts, usePayments, useSales, useStatement } from "../services/backoffice";
 import { canManage, methodLabel } from "../lib/domain";
 
 const TABS = [
@@ -31,7 +31,8 @@ function describe(e) {
     case "payment_reversal":
       return ["عكس دفعة", e.reason ? `السبب: ${e.reason}` : null];
     case "return":
-      return ["مرتجع", isPositiveAmount(e.refund_amount) ? `القيمة ${shekel(e.total_amount)} · أُعيد نقداً ${shekel(e.refund_amount)}` : `خُصم من الدين${e.reason ? ` · ${e.reason}` : ""}`];
+      if (e.voided) return ["مرتجع ملغى", `لا أثر على الرصيد${e.void_reason ? ` · السبب: ${e.void_reason}` : ""}`];
+      return ["مرتجع",isPositiveAmount(e.refund_amount) ? `القيمة ${shekel(e.total_amount)} · أُعيد نقداً ${shekel(e.refund_amount)}` : `خُصم من الدين${e.reason ? ` · ${e.reason}` : ""}`];
     default:
       return [e.type, null];
   }
@@ -49,6 +50,8 @@ export default function CustomerDetail() {
   const customer = useCustomer(id);
   const summary = useCustomerSummary(id);
   const status = useCustomerStatus();
+  const remove = useDeleteCustomer();
+  const navigate = useNavigate();
 
   if (customer.isError) return <ErrorState error={customer.error} title="تعذّر فتح ملف الزبون" onRetry={() => customer.refetch()} />;
   const c = customer.data;
@@ -122,6 +125,11 @@ export default function CustomerDetail() {
                   إيقاف الزبون
                 </button>
               ) : null}
+              {s && !s.last_activity_at ? (
+                <button type="button" className="btn btn-dl btn-sm" onClick={() => setDialog("delete")}>
+                  حذف الزبون
+                </button>
+              ) : null}
             </>
           ) : null}
         </div>
@@ -170,6 +178,21 @@ export default function CustomerDetail() {
             </button>
             <button type="button" className="btn btn-g" onClick={() => setDialog(null)}>
               إلغاء
+            </button>
+          </div>
+        </Dialog>
+      ) : null}
+      {dialog === "delete" && c ? (
+        <Dialog title={`حذف ${c.name} نهائياً؟`} role="alertdialog" tone="danger" onClose={() => setDialog(null)}>
+          <p>لا مبيعات ولا ديون ولا دفعات لهذا الزبون، فيُحذف كأنه لم يُضَف. لا يمكن التراجع عن الحذف.</p>
+          <p className="field-hint">إن أردت إخفاءه فقط مع إمكانية إعادته، استخدم «إيقاف الزبون».</p>
+          <ErrorBanner error={remove.error} />
+          <div className="dlg-actions">
+            <button type="button" className="btn btn-dd" disabled={remove.isPending} onClick={() => remove.mutate({ id }, { onSuccess: () => navigate("/customers", { replace: true }) })}>
+              {remove.isPending ? "جارٍ الحذف…" : "حذف الزبون"}
+            </button>
+            <button type="button" className="btn btn-g" onClick={() => setDialog(null)}>
+              رجوع
             </button>
           </div>
         </Dialog>

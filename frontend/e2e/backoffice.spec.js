@@ -96,7 +96,8 @@ test("W-11/W-12: void is blocked by returns; the return preview splits debt and 
   await expect(page.getByRole("button", { name: "إلغاء الفاتورة" })).toBeDisabled();
   await expect(page.getByText("لا يمكن إلغاء الفاتورة: عليها مرتجع.")).toBeVisible();
 
-  await page.getByRole("button", { name: "مرتجع" }).click();
+  // Exact: each existing return now has its own «إلغاء المرتجع» button.
+  await page.getByRole("button", { name: "مرتجع", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: /مرتجع من الفاتورة/ });
   for (let i = 0; i < 4; i++) await dialog.getByRole("button", { name: "زيادة تونة 160 غ" }).click({ force: true });
   await expect(dialog.getByRole("button", { name: "زيادة تونة 160 غ" })).toBeDisabled();
