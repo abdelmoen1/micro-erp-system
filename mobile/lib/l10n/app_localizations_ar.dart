@@ -3627,4 +3627,95 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get deleteAccountOk => 'حسناً';
+
+  @override
+  String get cancelReturnAction => 'إلغاء المرتجع';
+
+  @override
+  String cancelReturnTitle(int id) {
+    return 'إلغاء المرتجع على الفاتورة #$id';
+  }
+
+  @override
+  String get cancelReturnEffectsTitle => 'ما الذي يحدث عند الإلغاء:';
+
+  @override
+  String get cancelSaleReturnStock =>
+      'تخرج الأصناف المرتجعة من المخزون مرة أخرى.';
+
+  @override
+  String cancelSaleReturnDebt(String amount, String name) {
+    return 'يعود $amount على دين $name.';
+  }
+
+  @override
+  String cancelSaleReturnRefund(String amount) {
+    return 'رُدّ للزبون $amount نقداً: استرجعه منه.';
+  }
+
+  @override
+  String get cancelPurchaseReturnStock => 'تعود الأصناف إلى المخزون.';
+
+  @override
+  String cancelPurchaseReturnBalance(String amount, String name) {
+    return 'يعود $amount إلى رصيد $name.';
+  }
+
+  @override
+  String cancelPurchaseReturnRefund(String amount) {
+    return 'ردّ المورد $amount: أعده إليه.';
+  }
+
+  @override
+  String get cancelReturnKept => 'يبقى المرتجع في السجل بحالة «ملغى» مع السبب.';
+
+  @override
+  String get cancelReasonLabel => 'سبب الإلغاء';
+
+  @override
+  String get cancelReasonRequired => 'اكتب سبب الإلغاء — يُحفظ في سجل التدقيق';
+
+  @override
+  String get cancelForbidden => 'الإلغاء للمالك أو المدير فقط.';
+
+  @override
+  String get cancelNetwork => 'تعذّر الاتصال — لم يُلغَ شيء. أعد المحاولة.';
+
+  @override
+  String get cancelDone => 'تم إلغاء المرتجع.';
+
+  @override
+  String get returnVoidedBadge => 'ملغى';
+
+  @override
+  String returnVoidedNote(String reason) {
+    return 'أُلغي هذا المرتجع: $reason';
+  }
+
+  @override
+  String get productDelete => 'حذف الصنف نهائياً';
+
+  @override
+  String productDeleteTitle(String name) {
+    return 'حذف «$name» نهائياً؟';
+  }
+
+  @override
+  String get productDeleteBody =>
+      'هذا الصنف لم يُبع ولم يُشترَ ولم تُعدَّل كميته، فيُحذف كأنه لم يُضَف. لا يمكن التراجع عن الحذف. لإخفائه فقط استخدم «إيقاف».';
+
+  @override
+  String get productDeleted => 'حُذف الصنف.';
+
+  @override
+  String get moveReturnVoid => 'إلغاء مرتجع';
+
+  @override
+  String get movePurchaseVoid => 'إلغاء فاتورة مورد';
+
+  @override
+  String get movePurchaseReturnVoid => 'إلغاء مرتجع مشتريات';
+
+  @override
+  String get moveAdjustmentReversal => 'تراجع عن تعديل';
 }

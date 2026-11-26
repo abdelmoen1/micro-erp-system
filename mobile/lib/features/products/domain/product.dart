@@ -16,6 +16,7 @@ class Product {
     this.unit = ProductUnit.piece,
     this.packSize,
     this.packPrice,
+    this.deletable = false,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
@@ -31,6 +32,7 @@ class Product {
     isActive: json['status'] == 'active',
     packSize: (json['pack_size'] as num?)?.toInt(),
     packPrice: json['pack_price'] as String?,
+    deletable: json['deletable'] == true,
   );
 
   final int id;
@@ -55,6 +57,10 @@ class Product {
   /// Wholesale carton (piece products only): [packSize] pieces for [packPrice]. Stock stays in pieces.
   final int? packSize;
   final String? packPrice;
+
+  /// Sent with GET /products/{id} to owners and managers: nothing refers to the product (no sale,
+  /// purchase, return or adjustment), so it may be deleted for good instead of only stopped.
+  final bool deletable;
 
   Money get price => Money.parse(sellingPrice);
 

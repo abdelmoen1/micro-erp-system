@@ -109,6 +109,10 @@ class ProductRepository {
   /// FR-16: a stopped product comes back as it was (price, stock, carton).
   Future<void> reactivate(int id) => _api.patch('/products/$id', body: {'status': 'active'});
 
+  /// DELETE /products/{id}: only a product nothing refers to; the server answers 409
+  /// PRODUCT_IN_USE otherwise, and the product can only be stopped.
+  Future<void> delete(int id) => _api.delete('/products/$id');
+
   /// Products sold below zero, with their last sales, for the owner's review (D-27).
   Future<List<NegativeStockItem>> negativeStock() async {
     final body = await _api.get('/products/negative-stock');

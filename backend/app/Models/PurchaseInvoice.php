@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Voidable;
 use App\Traits\BelongsToStore;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PurchaseInvoice extends Model
 {
     use BelongsToStore;
+    use Voidable;
 
     protected $fillable = ['store_id', 'supplier_id', 'total', 'created_by'];
 

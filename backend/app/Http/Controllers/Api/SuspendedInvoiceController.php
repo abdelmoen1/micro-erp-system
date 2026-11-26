@@ -95,6 +95,14 @@ class SuspendedInvoiceController extends Controller
         ]);
     }
 
+    /** DELETE /suspended-invoices/{id}/items/{item}: a line removed before the invoice is confirmed. */
+    public function removeItem(Request $request, SuspendedInvoice $invoice, int $item)
+    {
+        $updated = $this->service->removeItem($request->user(), $invoice, $item);
+
+        return response()->json(['message' => 'تم حذف البند وإعادة حساب الإجمالي.', 'data' => $updated]);
+    }
+
     public function close(Request $request, SuspendedInvoice $invoice)
     {
         $data = $request->validate([

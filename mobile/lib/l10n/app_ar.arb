@@ -2232,5 +2232,85 @@
     }
   },
   "deleteAccountAlreadyScheduled": "طلبت حذف هذا المتجر من قبل. يمكنك الإلغاء من موقع حسبة قبل الموعد.",
-  "deleteAccountOk": "حسناً"
+  "deleteAccountOk": "حسناً",
+  "cancelReturnAction": "إلغاء المرتجع",
+  "cancelReturnTitle": "إلغاء المرتجع على الفاتورة #{id}",
+  "@cancelReturnTitle": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "cancelReturnEffectsTitle": "ما الذي يحدث عند الإلغاء:",
+  "cancelSaleReturnStock": "تخرج الأصناف المرتجعة من المخزون مرة أخرى.",
+  "cancelSaleReturnDebt": "يعود {amount} على دين {name}.",
+  "@cancelSaleReturnDebt": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelSaleReturnRefund": "رُدّ للزبون {amount} نقداً: استرجعه منه.",
+  "@cancelSaleReturnRefund": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelPurchaseReturnStock": "تعود الأصناف إلى المخزون.",
+  "cancelPurchaseReturnBalance": "يعود {amount} إلى رصيد {name}.",
+  "@cancelPurchaseReturnBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelPurchaseReturnRefund": "ردّ المورد {amount}: أعده إليه.",
+  "@cancelPurchaseReturnRefund": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelReturnKept": "يبقى المرتجع في السجل بحالة «ملغى» مع السبب.",
+  "cancelReasonLabel": "سبب الإلغاء",
+  "cancelReasonRequired": "اكتب سبب الإلغاء — يُحفظ في سجل التدقيق",
+  "cancelForbidden": "الإلغاء للمالك أو المدير فقط.",
+  "cancelNetwork": "تعذّر الاتصال — لم يُلغَ شيء. أعد المحاولة.",
+  "cancelDone": "تم إلغاء المرتجع.",
+  "returnVoidedBadge": "ملغى",
+  "returnVoidedNote": "أُلغي هذا المرتجع: {reason}",
+  "@returnVoidedNote": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "productDelete": "حذف الصنف نهائياً",
+  "productDeleteTitle": "حذف «{name}» نهائياً؟",
+  "@productDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productDeleteBody": "هذا الصنف لم يُبع ولم يُشترَ ولم تُعدَّل كميته، فيُحذف كأنه لم يُضَف. لا يمكن التراجع عن الحذف. لإخفائه فقط استخدم «إيقاف».",
+  "productDeleted": "حُذف الصنف.",
+  "moveReturnVoid": "إلغاء مرتجع",
+  "movePurchaseVoid": "إلغاء فاتورة مورد",
+  "movePurchaseReturnVoid": "إلغاء مرتجع مشتريات",
+  "moveAdjustmentReversal": "تراجع عن تعديل"
 }

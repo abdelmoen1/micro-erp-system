@@ -143,10 +143,14 @@ Route::middleware(['auth:sanctum', 'active', 'store', 'throttle:api'])->group(fu
     Route::get('products/{product}', [ProductController::class, 'show']);
     Route::patch('products/{product}', [ProductController::class, 'update']);
     Route::post('products/{product}/deactivate', [ProductController::class, 'deactivate']);
+    // Permanent delete only for a product with no history (else 409 PRODUCT_IN_USE: archive it).
+    Route::delete('products/{product}', [ProductController::class, 'destroy']);
     Route::get('products/{product}/movements', [ProductController::class, 'movements']);
 
     // Stock adjustments (US-0402): idempotent like the financial writes (05 §2).
     Route::post('stock-adjustments', [StockAdjustmentController::class, 'store'])->middleware('idempotent');
+    // An adjustment entered by mistake is taken back by an opposite movement, once.
+    Route::post('stock-movements/{movement}/reverse', [ProductController::class, 'reverseMovement'])->middleware('idempotent');
 
     // Goods from suppliers: invoice, stock and payment together; later payments on the account.
     // Plan feature `suppliers` gates new supplier writes; history stays readable.
@@ -155,12 +159,21 @@ Route::middleware(['auth:sanctum', 'active', 'store', 'throttle:api'])->group(fu
     Route::get('purchases/{purchaseInvoice}', [PurchaseController::class, 'show']);
     // Goods back to the supplier: the balance first, then a refund (the mirror of US-0601).
     Route::post('purchases/{purchaseInvoice}/returns', [PurchaseController::class, 'storeReturn'])->middleware(['idempotent', 'entitled:suppliers']);
+    // Safe cancel (never a delete): a mistaken document is voided with a reason and its effects
+    // reversed once. Corrections stay open after the plan's supplier feature ends.
+    Route::post('purchases/{purchaseInvoice}/void', [PurchaseController::class, 'void'])->middleware('idempotent');
     Route::get('returns/purchases', [PurchaseController::class, 'purchaseReturns']);
+    Route::post('returns/purchases/{purchaseReturn}/void', [PurchaseController::class, 'voidPurchaseReturn'])->middleware('idempotent');
     Route::get('returns/sales', [PurchaseController::class, 'saleReturns']);
+    Route::post('returns/sales/{saleReturn}/void', [PurchaseController::class, 'voidSaleReturn'])->middleware('idempotent');
     Route::get('suppliers', [SupplierController::class, 'index']);
     Route::get('suppliers/{supplier}', [SupplierController::class, 'show']);
+    Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy']);
+    Route::post('suppliers/{supplier}/archive', [SupplierController::class, 'archive']);
+    Route::post('suppliers/{supplier}/restore', [SupplierController::class, 'restore']);
     Route::get('suppliers/{supplier}/products/{product}', [SupplierController::class, 'product']);
     Route::post('suppliers/{supplier}/payments', [SupplierController::class, 'pay'])->middleware(['idempotent', 'entitled:suppliers']);
+    Route::post('suppliers/{supplier}/payments/{payment}/void', [SupplierController::class, 'voidPayment'])->middleware('idempotent');
 
     // Customers
     Route::apiResource('customers', CustomerController::class);
@@ -203,6 +216,7 @@ Route::middleware(['auth:sanctum', 'active', 'store', 'throttle:api'])->group(fu
     Route::get('suspended-invoices/{invoice}', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'show']);
     Route::post('suspended-invoices/{invoice}/confirm', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'confirm'])->middleware('idempotent');
     Route::post('suspended-invoices/{invoice}/close', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'close'])->middleware('idempotent');
+    Route::delete('suspended-invoices/{invoice}/items/{item}', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'removeItem'])->whereNumber('item');
 
     // Debts
     Route::get('debts', [DebtController::class, 'index']);

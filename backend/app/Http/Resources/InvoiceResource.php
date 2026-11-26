@@ -41,7 +41,7 @@ class InvoiceResource extends JsonResource
             'void_reason' => $this->void_reason,
             // US-0602: returns against the sale and their total value.
             'returns' => SaleReturnResource::collection($this->whenLoaded('returns')),
-            'returned_amount' => $this->whenLoaded('returns', fn() => Money::sum($this->returns->pluck('total_amount'))),
+            'returned_amount' => $this->whenLoaded('returns', fn() => Money::sum($this->returns->whereNull('voided_at')->pluck('total_amount'))),
         ];
     }
 }

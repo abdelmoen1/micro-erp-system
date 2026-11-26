@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { newIdempotencyKey } from "../services/apiClient";
-import { useOpeningDebt, usePayCustomer, useSaveCustomer } from "../services/backoffice";
+import { useOpeningDebt, usePayCustomer, useSaveCustomer, useVoidPurchaseReturn, useVoidSaleReturn } from "../services/backoffice";
 import { DEFAULT_PAYMENT_METHOD, PAYMENT_METHODS } from "../lib/domain";
-import { latinDigits, shekel } from "../lib/format";
-import { ConfirmSummary, Dialog, ErrorBanner, Field } from "./ui";
+import { isPositiveAmount, latinDigits, shekel } from "../lib/format";
+import { ConfirmSummary, Dialog, ErrorBanner, Field, ReasonField } from "./ui";
 
 // Dialogs shared by several back-office screens (W-07, W-13, W-14).
 
@@ -204,5 +204,78 @@ export function CustomerFormDialog({ customer, canSetLimit, onClose, onSaved }) 
         </div>
       </form>
     </Dialog>
+  );
+}
+
+/**
+ * Cancel a posted record (a return, a supplier invoice or payment, a stock adjustment): the effect
+ * first, a required reason, and a red button that names the action. `useAction` is the mutation
+ * hook; it gets `{ ...vars, reason, key }` with a key made once when the dialog opened, so a
+ * double click or a retry after a timeout never reverses anything twice. The button stays
+ * disabled while the request runs; the server's refusal (stock already used, payments in the way)
+ * is shown as it came.
+ */
+export function VoidRecordDialog({ title, rows, total, note, confirmLabel, useAction, vars, onClose, onDone, reasonLabel = "سبب الإلغاء" }) {
+  const [reason, setReason] = useState("");
+  const [tried, setTried] = useState(false);
+  const [key] = useState(newIdempotencyKey);
+  const action = useAction();
+  const submit = (e) => {
+    e.preventDefault();
+    setTried(true);
+    if (!reason.trim() || action.isPending) return;
+    action.mutate({ ...vars, reason: reason.trim(), key }, { onSuccess: (r) => (onDone ? onDone(r) : onClose()) });
+  };
+  const missing = tried && !reason.trim() ? "يجب كتابة سبب الإلغاء." : null;
+  return (
+    <Dialog title={title} role="alertdialog" tone="danger" onClose={onClose}>
+      <form className="form-stack" onSubmit={submit} noValidate>
+        {rows?.length ? <ConfirmSummary rows={rows} total={total} /> : null}
+        {note ? <p style={{ fontSize: 14 }}>{note}</p> : null}
+        <ReasonField id="vr-reason" label={reasonLabel} value={reason} onChange={setReason} error={missing ?? action.error?.fieldError?.("reason")} />
+        <ErrorBanner error={action.error && !action.error.fieldError?.("reason") ? action.error : null} />
+        <div className="dlg-actions">
+          <button type="submit" className="btn btn-dd" disabled={action.isPending}>
+            {action.isPending ? "جارٍ الإلغاء…" : confirmLabel}
+          </button>
+          <button type="button" className="btn btn-g" onClick={onClose}>
+            رجوع
+          </button>
+        </div>
+      </form>
+    </Dialog>
+  );
+}
+
+/**
+ * Cancels a return made by mistake. The summary says exactly what goes back: the goods to (or off)
+ * the shelf, the amount back onto the customer's debt or the supplier's balance, and any cash that
+ * was refunded and must now be collected back.
+ */
+export function CancelReturnDialog({ ret, kind, onClose }) {
+  const sale = kind === "sales";
+  const goods = (ret.items ?? []).filter((i) => (sale ? !i.damaged : i.from_stock));
+  const rows = [
+    ["قيمة المرتجع", shekel(ret.total_amount)],
+    [sale ? "تخرج من المخزون مرة أخرى" : "تعود إلى المخزون", goods.length ? goods.map((i) => `${i.quantity} × ${i.item_name}`).join("، ") : "لا شيء"],
+    ...(sale
+      ? isPositiveAmount(ret.debt_reduction)
+        ? [[`يعود على دين ${ret.customer?.name ?? "الزبون"}`, `+${shekel(ret.debt_reduction)}`]]
+        : []
+      : isPositiveAmount(ret.balance_reduction)
+        ? [[`يعود لرصيد ${ret.supplier?.name ?? "المورد"}`, `+${shekel(ret.balance_reduction)}`]]
+        : []),
+    ...(isPositiveAmount(ret.refund_amount) ? [[sale ? "مبلغ رُدّ للزبون نقداً: استرجعه منه" : "مبلغ ردّه المورد: أعده إليه", shekel(ret.refund_amount)]] : []),
+  ];
+  return (
+    <VoidRecordDialog
+      title={`إلغاء المرتجع على الفاتورة #${ret.invoice_id ?? ret.purchase_invoice_id}؟`}
+      rows={rows}
+      note="يبقى المرتجع في السجل بحالة «ملغى» مع السبب. إن كانت البضاعة المرتجعة قد بيعت بعده فلن يُقبل الإلغاء حتى يُصحَّح المخزون."
+      confirmLabel="إلغاء المرتجع"
+      useAction={sale ? useVoidSaleReturn : useVoidPurchaseReturn}
+      vars={{ id: ret.id }}
+      onClose={onClose}
+    />
   );
 }

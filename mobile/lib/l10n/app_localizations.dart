@@ -6439,6 +6439,156 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'حسناً'**
   String get deleteAccountOk;
+
+  /// No description provided for @cancelReturnAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء المرتجع'**
+  String get cancelReturnAction;
+
+  /// No description provided for @cancelReturnTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء المرتجع على الفاتورة #{id}'**
+  String cancelReturnTitle(int id);
+
+  /// No description provided for @cancelReturnEffectsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما الذي يحدث عند الإلغاء:'**
+  String get cancelReturnEffectsTitle;
+
+  /// No description provided for @cancelSaleReturnStock.
+  ///
+  /// In ar, this message translates to:
+  /// **'تخرج الأصناف المرتجعة من المخزون مرة أخرى.'**
+  String get cancelSaleReturnStock;
+
+  /// No description provided for @cancelSaleReturnDebt.
+  ///
+  /// In ar, this message translates to:
+  /// **'يعود {amount} على دين {name}.'**
+  String cancelSaleReturnDebt(String amount, String name);
+
+  /// No description provided for @cancelSaleReturnRefund.
+  ///
+  /// In ar, this message translates to:
+  /// **'رُدّ للزبون {amount} نقداً: استرجعه منه.'**
+  String cancelSaleReturnRefund(String amount);
+
+  /// No description provided for @cancelPurchaseReturnStock.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعود الأصناف إلى المخزون.'**
+  String get cancelPurchaseReturnStock;
+
+  /// No description provided for @cancelPurchaseReturnBalance.
+  ///
+  /// In ar, this message translates to:
+  /// **'يعود {amount} إلى رصيد {name}.'**
+  String cancelPurchaseReturnBalance(String amount, String name);
+
+  /// No description provided for @cancelPurchaseReturnRefund.
+  ///
+  /// In ar, this message translates to:
+  /// **'ردّ المورد {amount}: أعده إليه.'**
+  String cancelPurchaseReturnRefund(String amount);
+
+  /// No description provided for @cancelReturnKept.
+  ///
+  /// In ar, this message translates to:
+  /// **'يبقى المرتجع في السجل بحالة «ملغى» مع السبب.'**
+  String get cancelReturnKept;
+
+  /// No description provided for @cancelReasonLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب الإلغاء'**
+  String get cancelReasonLabel;
+
+  /// No description provided for @cancelReasonRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب سبب الإلغاء — يُحفظ في سجل التدقيق'**
+  String get cancelReasonRequired;
+
+  /// No description provided for @cancelForbidden.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإلغاء للمالك أو المدير فقط.'**
+  String get cancelForbidden;
+
+  /// No description provided for @cancelNetwork.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر الاتصال — لم يُلغَ شيء. أعد المحاولة.'**
+  String get cancelNetwork;
+
+  /// No description provided for @cancelDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إلغاء المرتجع.'**
+  String get cancelDone;
+
+  /// No description provided for @returnVoidedBadge.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملغى'**
+  String get returnVoidedBadge;
+
+  /// No description provided for @returnVoidedNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'أُلغي هذا المرتجع: {reason}'**
+  String returnVoidedNote(String reason);
+
+  /// No description provided for @productDelete.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف الصنف نهائياً'**
+  String get productDelete;
+
+  /// No description provided for @productDeleteTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف «{name}» نهائياً؟'**
+  String productDeleteTitle(String name);
+
+  /// No description provided for @productDeleteBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الصنف لم يُبع ولم يُشترَ ولم تُعدَّل كميته، فيُحذف كأنه لم يُضَف. لا يمكن التراجع عن الحذف. لإخفائه فقط استخدم «إيقاف».'**
+  String get productDeleteBody;
+
+  /// No description provided for @productDeleted.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُذف الصنف.'**
+  String get productDeleted;
+
+  /// No description provided for @moveReturnVoid.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء مرتجع'**
+  String get moveReturnVoid;
+
+  /// No description provided for @movePurchaseVoid.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء فاتورة مورد'**
+  String get movePurchaseVoid;
+
+  /// No description provided for @movePurchaseReturnVoid.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء مرتجع مشتريات'**
+  String get movePurchaseReturnVoid;
+
+  /// No description provided for @moveAdjustmentReversal.
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجع عن تعديل'**
+  String get moveAdjustmentReversal;
 }
 
 class _AppLocalizationsDelegate

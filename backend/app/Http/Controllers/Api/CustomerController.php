@@ -11,6 +11,7 @@ use App\Http\Resources\CustomerResource;
 use App\Services\AuditService;
 use App\Services\StatementService;
 use App\Support\BusinessClock;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
@@ -118,7 +119,10 @@ class CustomerController extends Controller
             ], 422);
         }
 
-        $customer->delete();
+        DB::transaction(function () use ($request, $customer) {
+            $this->audit->record('customer.deleted', $customer, ['name' => $customer->name, 'phone' => $customer->phone], $request->user());
+            $customer->delete();
+        });
 
         return response()->json([
             'message' => 'تم حذف العميل بنجاح.',

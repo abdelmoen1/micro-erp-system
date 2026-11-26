@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import Icon from "../components/Icon";
 import { ConfirmSummary, Crumbs, DataTable, Dialog, EmptyState, ErrorBanner, ErrorState, Field, Segments, StatusBadge } from "../components/ui";
 import { newIdempotencyKey, session } from "../services/apiClient";
-import { lookupCatalog, useAdjustStock, useMovements, useProduct, useProductStatus, useSaveProduct } from "../services/backoffice";
+import { lookupCatalog, useAdjustStock, useDeleteProduct, useMovements, useProduct, useProductStatus, useReverseMovement, useSaveProduct } from "../services/backoffice";
+import { VoidRecordDialog } from "../components/dialogs";
 import { canManage, stockState, cartonPieces, cartonsLabel } from "../lib/domain";
 import { dateTime, latinDigits } from "../lib/format";
 
@@ -16,6 +17,10 @@ const MOVEMENT = {
   purchase_return: "مرتجع مشتريات",
   adjustment_in: "تعديل: زيادة",
   adjustment_out: "تعديل: خصم",
+  adjustment_reversal: "تراجع عن تعديل",
+  sale_return_void: "إلغاء مرتجع",
+  purchase_void: "إلغاء فاتورة مورد",
+  purchase_return_void: "إلغاء مرتجع مشتريات",
 };
 
 const REASONS = ["جرد الرف", "تالف أو منتهي الصلاحية", "استلام بضاعة", "تصحيح خطأ إدخال"];
@@ -45,6 +50,9 @@ export default function ProductDetail() {
   const movements = useMovements(isNew ? null : id);
   const status = useProductStatus();
   const [confirmStop, setConfirmStop] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [reversing, setReversing] = useState(null);
+  const remove = useDeleteProduct();
 
   if (!isNew && product.isError) return <ErrorState error={product.error} title="تعذّر فتح الصنف" onRetry={() => product.refetch()} />;
   if (!isNew && product.isPending) return <div className="card sk" style={{ height: 320 }} />;
@@ -120,6 +128,22 @@ export default function ProductDetail() {
                   ),
                 },
                 { key: "after", label: "بعدها", numeric: true, render: (m) => <span className="m">{m.balance_after}</span> },
+                ...(manager
+                  ? [
+                      {
+                        key: "undo",
+                        label: "",
+                        render: (m) =>
+                          m.type !== "adjustment_in" && m.type !== "adjustment_out" ? null : m.reversed ? (
+                            <span className="cell-sub">تم التراجع عنه</span>
+                          ) : (
+                            <button type="button" className="text-btn" onClick={() => setReversing(m)} aria-label={`التراجع عن تعديل ${m.quantity} بتاريخ ${dateTime(m.created_at)}`}>
+                              تراجع
+                            </button>
+                          ),
+                      },
+                    ]
+                  : []),
               ]}
               empty={<EmptyState icon="products" title="لا حركات بعد" />}
             />
@@ -132,10 +156,50 @@ export default function ProductDetail() {
                 إيقاف الصنف
               </button>
             ) : null}
+            {manager && p.deletable ? (
+              <button type="button" className="btn btn-t danger" onClick={() => setConfirmDelete(true)} style={{ alignSelf: "flex-start" }}>
+                حذف الصنف نهائياً
+              </button>
+            ) : null}
           </section>
         ) : null}
       </div>
       {adjusting ? <AdjustDialog product={p} onClose={() => setParams({})} /> : null}
+      {reversing ? (
+        <VoidRecordDialog
+          title={`التراجع عن تعديل «${p.name}»؟`}
+          rows={[
+            ["التعديل", `${reversing.quantity} ${p.unit === "kg" ? "كغ" : "قطعة"}`],
+            ["الكمية الآن", p.current_stock],
+          ]}
+          note="تُسجَّل حركة عكسية بنفس الكمية، ويبقى التعديل الأصلي في السجل."
+          reasonLabel="سبب التراجع"
+          confirmLabel="تراجع عن التعديل"
+          useAction={useReverseMovement}
+          vars={{ id: reversing.id }}
+          onClose={() => setReversing(null)}
+        />
+      ) : null}
+      {confirmDelete ? (
+        <Dialog title={`حذف «${p.name}» نهائياً؟`} role="alertdialog" tone="danger" onClose={() => setConfirmDelete(false)}>
+          <p>هذا الصنف لم يُبع ولم يُشترَ ولم تُعدَّل كميته، لذلك يمكن حذفه كأنه لم يُضَف. لا يمكن التراجع عن الحذف.</p>
+          <p className="field-hint">إن أردت إخفاءه فقط مع إمكانية إعادته، استخدم «إيقاف الصنف».</p>
+          <ErrorBanner error={remove.error} />
+          <div className="dlg-actions">
+            <button
+              type="button"
+              className="btn btn-dd"
+              disabled={remove.isPending}
+              onClick={() => remove.mutate({ id: p.id }, { onSuccess: () => navigate("/products", { replace: true }) })}
+            >
+              {remove.isPending ? "جارٍ الحذف…" : "حذف الصنف نهائياً"}
+            </button>
+            <button type="button" className="btn btn-g" onClick={() => setConfirmDelete(false)}>
+              رجوع
+            </button>
+          </div>
+        </Dialog>
+      ) : null}
       {confirmStop ? (
         <Dialog title={`إيقاف «${p.name}»؟`} role="alertdialog" tone="warning" icon="ban" onClose={() => setConfirmStop(false)}>
           <p>لن يظهر في البيع ولا في قائمة المخزن. حركاته وفواتيره السابقة تبقى في السجل.</p>

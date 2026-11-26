@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\ApiException;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\StockMovement;
@@ -114,8 +115,136 @@ class PurchaseService
         });
     }
 
-    /** An existing supplier by id, or by name typed in the goods flow (created the first time). */
+    /**
+     * Voids a delivery recorded by mistake. The goods it added leave the shelf again
+     * (`purchase_void`), the payments made with it are voided, and the invoice leaves the
+     * supplier's balance. Every row stays, marked voided with the reason, time and user.
+     *
+     * Refused (409, nothing written): a second void; returns still standing on it (cancel them
+     * first); goods no longer on the shelf; or later payments that would leave the store having
+     * paid the supplier more than it owes (void those payments first). Lock order: supplier,
+     * invoice, its payments, then products by id.
+     */
+    public function void(User $actor, PurchaseInvoice $invoice, string $reason): PurchaseInvoice
+    {
+        return DB::transaction(function () use ($actor, $invoice, $reason) {
+            $supplier = Supplier::query()->forStore($actor->store_id)->whereKey($invoice->supplier_id)->lockForUpdate()->firstOrFail();
+            $locked = PurchaseInvoice::query()->forStore($actor->store_id)->whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->isVoided()) {
+                throw ApiException::conflict('PURCHASE_ALREADY_VOIDED', 'هذه الفاتورة ملغاة مسبقًا.');
+            }
+
+            if ($locked->returns()->notVoided()->exists()) {
+                throw ApiException::conflict('PURCHASE_HAS_RETURNS', 'على هذه الفاتورة مرتجعات قائمة. ألغِ المرتجعات أولًا ثم ألغِ الفاتورة.');
+            }
+
+            $payments = $locked->payments()->notVoided()->lockForUpdate()->get();
+            $paidWithIt = Money::sum($payments->pluck('amount'));
+            $after = Money::add(Money::sub($supplier->balance(), $locked->total), $paidWithIt);
+
+            if (Money::compare($after, '0') < 0) {
+                throw ApiException::conflict(
+                    'PURCHASE_VOID_OVERPAID',
+                    'دفعات لاحقة للمورد تغطي هذه الفاتورة؛ إلغاؤها يجعل المدفوع أكثر من المستحق. ألغِ الدفعة الزائدة أولًا.'
+                );
+            }
+
+            $removed = $this->takeBackStock($actor, $locked, $reason);
+
+            foreach ($payments as $payment) {
+                $payment->markVoided($actor, $reason);
+            }
+            $locked->markVoided($actor, $reason);
+
+            $this->audit->record('purchase.voided', $locked, [
+                'supplier_id' => $supplier->id,
+                'reason' => $reason,
+                'total' => Money::of($locked->total),
+                'payments_voided' => $payments->pluck('id')->all(),
+                'paid_voided' => $paidWithIt,
+                'stock_removed' => $removed,
+            ], $actor);
+
+            return $locked->load(['supplier', 'creator', 'voider', 'items.product', 'payments']);
+        });
+    }
+
+    /** Voids a supplier payment recorded by mistake: the amount is owed to the supplier again. */
+    public function voidPayment(User $actor, SupplierPayment $payment, string $reason): SupplierPayment
+    {
+        return DB::transaction(function () use ($actor, $payment, $reason) {
+            $supplier = Supplier::query()->forStore($actor->store_id)->whereKey($payment->supplier_id)->lockForUpdate()->firstOrFail();
+            $locked = SupplierPayment::query()->forStore($actor->store_id)->whereKey($payment->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->isVoided()) {
+                throw ApiException::conflict('PAYMENT_ALREADY_VOIDED', 'هذه الدفعة ملغاة مسبقًا.');
+            }
+
+            $locked->markVoided($actor, $reason);
+
+            $this->audit->record('supplier_payment.voided', $locked, [
+                'supplier_id' => $supplier->id,
+                'purchase_invoice_id' => $locked->purchase_invoice_id,
+                'amount' => Money::of($locked->amount),
+                'method' => $locked->method,
+                'reason' => $reason,
+            ], $actor);
+
+            return $locked;
+        });
+    }
+
+    /** @return list<array{product_id: int, quantity: string}> what left the shelf */
+    private function takeBackStock(User $actor, PurchaseInvoice $invoice, string $reason): array
+    {
+        $added = StockMovement::query()
+            ->where('store_id', $actor->store_id)
+            ->where('reference_type', 'purchase_invoice')
+            ->where('reference_id', $invoice->id)
+            ->where('type', StockMovement::TYPE_PURCHASE)
+            ->orderBy('product_id')
+            ->get()
+            ->groupBy('product_id');
+
+        $removed = [];
+
+        foreach ($added as $productId => $movements) {
+            $quantity = Quantity::negate($movements->reduce(fn(string $sum, StockMovement $m) => Quantity::add($sum, $m->quantity), '0'));
+            $product = Product::query()->forStore($actor->store_id)->findOrFail($productId);
+
+            try {
+                $this->stock->move($product, StockMovement::TYPE_PURCHASE_VOID, $quantity, $actor, $reason, 'purchase_invoice', $invoice->id);
+            } catch (ApiException $e) {
+                $available = Quantity::format($product->fresh()->current_stock, $product->unit);
+                throw new ApiException(409, 'PURCHASE_STOCK_CONSUMED',
+                    "لا يمكن إلغاء الفاتورة: بضاعة «{$product->name}» منها لم تعد كلها في المخزون (المتوفر الآن {$available}). صحّح المخزون أولًا ثم أعد المحاولة.",
+                    details: ['product_id' => $product->id, 'cause' => $e->errorCode],
+                );
+            }
+
+            $removed[] = ['product_id' => (int) $productId, 'quantity' => Quantity::format($quantity, $product->unit)];
+        }
+
+        return $removed;
+    }
+
+    /**
+     * An existing supplier by id, or by name typed in the goods flow (created the first time).
+     * A new delivery brings an archived supplier back to the list.
+     */
     private function supplierFor(User $user, array $data): Supplier
+    {
+        $supplier = $this->findOrCreateSupplier($user, $data);
+
+        if ($supplier->isArchived()) {
+            $supplier->forceFill(['status' => Supplier::STATUS_ACTIVE])->save();
+        }
+
+        return $supplier;
+    }
+
+    private function findOrCreateSupplier(User $user, array $data): Supplier
     {
         if (!empty($data['supplier_id'])) {
             return Supplier::query()->forStore($user->store_id)->findOrFail($data['supplier_id']);

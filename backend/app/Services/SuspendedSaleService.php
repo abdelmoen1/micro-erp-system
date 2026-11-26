@@ -320,6 +320,76 @@ class SuspendedSaleService
         });
     }
 
+    /**
+     * Removes one line from a held invoice before it is confirmed: its stock reservation goes with
+     * it (freeing the stock), and the subtotal and total are worked out again from the lines left.
+     * The removed line is kept in the invoice's event history.
+     *
+     * Refused: an invoice that is no longer open (409, a confirmed sale is corrected by a void or
+     * a return), the last line (422, cancel the invoice instead, so an empty invoice can never be
+     * confirmed), or a discount that would no longer be below the new subtotal (422). Owners and
+     * managers may remove lines; a cashier only on an invoice they held.
+     */
+    public function removeItem(User $actor, SuspendedInvoice $invoice, int $itemId): SuspendedInvoice
+    {
+        return DB::transaction(function () use ($actor, $invoice, $itemId) {
+            $locked = SuspendedInvoice::query()->forStore($actor->store_id)
+                ->whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+
+            if (!$actor->hasRole(UserRole::OWNER, UserRole::MANAGER) && (int) $locked->cashier_id !== (int) $actor->id) {
+                abort(403, 'حذف بنود فاتورة معلقة متاح للمالك أو المدير أو لمن علّقها.');
+            }
+
+            if (!in_array($locked->status, [SuspendedInvoice::STATUS_DRAFT, SuspendedInvoice::STATUS_PENDING_TRANSFER], true)) {
+                throw ApiException::conflict('SUSPENDED_INVOICE_NOT_OPEN', 'لا يمكن تعديل بنود فاتورة مؤكدة أو مغلقة. صحّح الفاتورة المؤكدة بالإلغاء أو المرتجع.');
+            }
+
+            $items = $locked->items()->orderBy('id')->lockForUpdate()->get();
+            $item = $items->firstWhere('id', $itemId);
+            if (!$item) {
+                abort(404);
+            }
+
+            if ($items->count() === 1) {
+                throw ApiException::businessRule('SUSPENDED_INVOICE_LAST_LINE', 'لا يمكن حذف البند الأخير. ألغِ الفاتورة المعلقة بدلًا من ذلك.', [
+                    'item' => ['لا يمكن حذف البند الأخير. ألغِ الفاتورة المعلقة بدلًا من ذلك.'],
+                ]);
+            }
+
+            $subtotal = Money::sum($items->reject(fn($line) => $line->id === $item->id)->pluck('total'));
+            $discount = Money::of($locked->discount_amount);
+            if (Money::isPositive($discount) && Money::compare($discount, $subtotal) >= 0) {
+                throw ApiException::businessRule('SUSPENDED_INVOICE_DISCOUNT_TOO_HIGH', 'الخصم أكبر من مجموع الفاتورة بعد حذف البند. ألغِ الفاتورة وأنشئها من جديد.', [
+                    'discount_amount' => ['الخصم يجب أن يكون أقل من مجموع الفاتورة.'],
+                ]);
+            }
+
+            InventoryReservation::query()
+                ->where('suspended_invoice_item_id', $item->id)
+                ->lockForUpdate()
+                ->get()
+                ->each(fn(InventoryReservation $r) => $r->update(['status' => InventoryReservation::STATUS_RELEASED, 'released_at' => now()]));
+
+            $snapshot = $item->only(['id', 'product_id', 'item_name', 'unit', 'quantity', 'sale_unit', 'pack_size', 'base_quantity', 'unit_price', 'total']);
+            // A draft line, not a posted record: it goes (with its released reservation), the event keeps it.
+            $item->delete();
+
+            $oldTotal = Money::of($locked->total_amount);
+            $locked->update([
+                'subtotal' => $subtotal,
+                'total_amount' => Money::sub($subtotal, $discount),
+            ]);
+
+            $this->event($locked, $actor, $locked->status, $locked->status, 'item_removed', [
+                'item' => $snapshot,
+                'old_total' => $oldTotal,
+                'new_total' => Money::of($locked->total_amount),
+            ]);
+
+            return $locked->load(['customer', 'cashier', 'items.product', 'reservations', 'events']);
+        });
+    }
+
     private function event(
         SuspendedInvoice $invoice,
         User $actor,

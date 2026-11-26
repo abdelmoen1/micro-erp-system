@@ -25,6 +25,10 @@ class SaleReturnResource extends JsonResource
             'reason' => $this->reason,
             'created_by' => $this->whenLoaded('creator', fn() => $this->creator?->name),
             'created_at' => $this->created_at,
+            'status' => $this->voided_at ? 'voided' : 'active',
+            'voided_at' => $this->voided_at,
+            'voided_by_name' => $this->whenLoaded('voider', fn() => $this->voider?->name),
+            'void_reason' => $this->void_reason,
             'items' => $this->whenLoaded('items', fn() => $this->items->map(fn($item) => [
                 'invoice_item_id' => $item->invoice_item_id,
                 'product_id' => $item->product_id,

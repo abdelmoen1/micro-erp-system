@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReturnPurchaseRequest;
+use App\Http\Requests\VoidReasonRequest;
 use App\Http\Resources\PurchaseInvoiceResource;
 use App\Http\Resources\PurchaseReturnResource;
 use App\Http\Resources\SaleReturnResource;
@@ -12,6 +13,9 @@ use App\Models\PurchaseInvoice;
 use App\Models\PurchaseReturn;
 use App\Models\SaleReturn;
 use App\Services\PurchaseReturnService;
+use App\Services\PurchaseService;
+use App\Services\ReturnService;
+use App\Support\Money;
 use App\Support\BusinessClock;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,7 +28,11 @@ use Illuminate\Support\Facades\Gate;
  */
 class PurchaseController extends Controller
 {
-    public function __construct(private readonly PurchaseReturnService $returns) {}
+    public function __construct(
+        private readonly PurchaseReturnService $returns,
+        private readonly PurchaseService $purchases,
+        private readonly ReturnService $saleReturns,
+    ) {}
 
     /** GET /purchases: date range in the store timezone, and one supplier when asked. */
     public function index(Request $request)
@@ -36,7 +44,8 @@ class PurchaseController extends Controller
             ->forStore($request->user()->store_id)
             ->with(['supplier', 'creator'])
             ->withCount('items')
-            ->withSum('returns as returned_amount', 'total_amount')
+            ->withSum(['returns as returned_amount' => fn(Builder $q) => $q->notVoided()], 'total_amount')
+            ->with('voider')
             ->when($filters['supplier_id'] ?? null, fn($q, $id) => $q->where('supplier_id', $id));
 
         return PurchaseInvoiceResource::collection($this->page($purchases, $request, $filters));
@@ -50,10 +59,50 @@ class PurchaseController extends Controller
         return new PurchaseInvoiceResource($purchaseInvoice->load([
             'supplier',
             'creator',
+            'voider',
             'items.product',
+            'payments',
             'returns.items.purchaseItem.product',
             'returns.creator',
+            'returns.voider',
         ]));
+    }
+
+    /** POST /purchases/{id}/void: a delivery recorded by mistake (stock out, its payments voided). */
+    public function void(VoidReasonRequest $request, PurchaseInvoice $purchaseInvoice)
+    {
+        $voided = $this->purchases->void($request->user(), $purchaseInvoice, $request->validated('reason'));
+
+        return response()->json([
+            'message' => 'تم إلغاء فاتورة المورد وإخراج بضاعتها من المخزون.',
+            'data' => new PurchaseInvoiceResource($voided->load(['returns.items.purchaseItem.product', 'returns.creator', 'returns.voider'])),
+            'balance' => $voided->supplier->balance(),
+        ]);
+    }
+
+    /** POST /returns/purchases/{id}/void: a return to the supplier made by mistake. */
+    public function voidPurchaseReturn(VoidReasonRequest $request, PurchaseReturn $purchaseReturn)
+    {
+        $voided = $this->returns->void($request->user(), $purchaseReturn, $request->validated('reason'));
+
+        return response()->json([
+            'message' => 'تم إلغاء المرتجع وإعادة البضاعة إلى المخزون ورصيد المورد.',
+            'data' => new PurchaseReturnResource($voided),
+            'balance' => $voided->supplier->balance(),
+        ]);
+    }
+
+    /** POST /returns/sales/{id}/void: a customer return made by mistake. */
+    public function voidSaleReturn(VoidReasonRequest $request, SaleReturn $saleReturn)
+    {
+        $voided = $this->saleReturns->void($request->user(), $saleReturn, $request->validated('reason'));
+
+        return response()->json([
+            'message' => Money::isPositive($voided->refund_amount)
+                ? 'تم إلغاء المرتجع. استرجع من العميل المبلغ الذي رُدّ له نقدًا (' . Money::of($voided->refund_amount) . ').'
+                : 'تم إلغاء المرتجع وإعادة الدين والمخزون كما كانا.',
+            'data' => new SaleReturnResource($voided),
+        ]);
     }
 
     /** POST /purchases/{id}/returns: the server computes the split; the client only previews. */
@@ -77,7 +126,7 @@ class PurchaseController extends Controller
 
         $returns = PurchaseReturn::query()
             ->forStore($request->user()->store_id)
-            ->with(['supplier', 'creator', 'items.purchaseItem.product'])
+            ->with(['supplier', 'creator', 'voider', 'items.purchaseItem.product'])
             ->when($filters['supplier_id'] ?? null, fn($q, $id) => $q->where('supplier_id', $id));
 
         return PurchaseReturnResource::collection($this->page($returns, $request, $filters));
@@ -90,7 +139,7 @@ class PurchaseController extends Controller
 
         $returns = SaleReturn::query()
             ->forStore($request->user()->store_id)
-            ->with(['customer', 'creator', 'items.invoiceItem']);
+            ->with(['customer', 'creator', 'voider', 'items.invoiceItem']);
 
         return SaleReturnResource::collection($this->page($returns, $request, $filters));
     }

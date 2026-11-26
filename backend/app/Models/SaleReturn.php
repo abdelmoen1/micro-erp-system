@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Voidable;
 use App\Traits\BelongsToStore;
 use Illuminate\Database\Eloquent\Model;
 
-/** US-0601: one return against one sale. Never edited or deleted. */
+/** US-0601: one return against one sale. Never deleted: a mistake is voided (ReturnService::void). */
 class SaleReturn extends Model
 {
     use BelongsToStore;
+    use Voidable;
 
     protected $fillable = [
         'store_id',

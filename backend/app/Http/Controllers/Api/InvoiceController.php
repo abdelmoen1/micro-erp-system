@@ -110,6 +110,7 @@ class InvoiceController extends Controller
             'voider',
             'returns.items.invoiceItem',
             'returns.creator',
+            'returns.voider',
         ]);
 
         return new InvoiceResource($invoice);
@@ -148,7 +149,7 @@ class InvoiceController extends Controller
             'message' => 'تم تسجيل المرتجع وإعادة الكميات إلى المخزون.',
             'data' => new SaleReturnResource($return),
             'invoice' => new InvoiceResource($invoice->fresh()->load([
-                'customer', 'items', 'debt.payments', 'creator', 'voider', 'returns.items.invoiceItem', 'returns.creator',
+                'customer', 'items', 'debt.payments', 'creator', 'voider', 'returns.items.invoiceItem', 'returns.creator', 'returns.voider',
             ])),
         ], 201);
     }

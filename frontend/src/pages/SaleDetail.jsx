@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Icon from "../components/Icon";
 import { usePrint } from "../components/usePrint";
+import { CancelReturnDialog } from "../components/dialogs";
 import { ConfirmSummary, Crumbs, Dialog, ErrorBanner, ErrorState, MoneyText, ReasonField, StatusBadge } from "../components/ui";
 import { centsOf as cents, dateOnly, dateTime, isPositiveAmount, latinDigits, milliOf as milli, moneyOf as money, shekel } from "../lib/format";
 import { saleDoc, saleReturnDoc } from "../lib/printDocs";
@@ -28,8 +29,9 @@ export default function SaleDetail() {
   const debt = s.debt;
   const paidLater = debt?.total_payments ?? "0.00";
   const hasReturns = (s.returns ?? []).length > 0;
-  const voidBlock = hasReturns
-    ? "لا يمكن إلغاء الفاتورة: عليها مرتجع. لتصحيح كمية، استخدم «مرتجع»."
+  const liveReturns = (s.returns ?? []).filter((r) => r.status !== "voided").length > 0;
+  const voidBlock = liveReturns
+    ? "لا يمكن إلغاء الفاتورة: عليها مرتجع. ألغِ المرتجع أولاً، أو صحّح الكمية بمرتجع."
     : isPositiveAmount(paidLater)
       ? "لا يمكن إلغاء الفاتورة: على دينها دفعات قائمة. اعكس الدفعات أولاً."
       : null;
@@ -201,12 +203,18 @@ export default function SaleDetail() {
             <h2 style={{ fontSize: 17 }}>المرتجعات</h2>
             {hasReturns ? (
               s.returns.map((r) => (
-                <div key={r.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, paddingTop: 8, borderTop: "1px solid var(--border)", fontSize: 14 }}>
+                <div key={r.id} className={`return-row${r.status === "voided" ? " voided" : ""}`}>
                   <span>
                     <b className="m">{dateTime(r.created_at)}</b> · {(r.items ?? []).map((i) => `${i.quantity} × ${i.item_name}${i.damaged ? " (تالفة)" : ""}`).join("، ")}
                     <span className="cell-sub">
                       {r.created_by ?? ""} · السبب: {r.reason}
                     </span>
+                    {r.status === "voided" ? (
+                      <span className="cell-sub">
+                        <StatusBadge status="voided" label="ملغى" /> {dateTime(r.voided_at)}
+                        {r.voided_by_name ? ` · ${r.voided_by_name}` : ""} — {r.void_reason}
+                      </span>
+                    ) : null}
                   </span>
                   <span style={{ textAlign: "left" }}>
                     <MoneyText value={r.total_amount} style={{ fontWeight: 700 }} />
@@ -217,6 +225,11 @@ export default function SaleDetail() {
                     <button type="button" className="text-btn" onClick={() => print(saleReturnDoc(r, s.id, s.customer?.name))}>
                       طباعة
                     </button>
+                    {manager && r.status !== "voided" && !voided ? (
+                      <button type="button" className="text-btn danger" onClick={() => setDialog({ cancelReturn: r })}>
+                        إلغاء المرتجع
+                      </button>
+                    ) : null}
                   </span>
                 </div>
               ))
@@ -229,6 +242,9 @@ export default function SaleDetail() {
 
       {dialog === "return" ? <ReturnDialog sale={s} onClose={() => setDialog(null)} /> : null}
       {dialog === "void" ? <VoidDialog sale={s} onClose={() => setDialog(null)} /> : null}
+      {dialog?.cancelReturn ? (
+        <CancelReturnDialog ret={{ ...dialog.cancelReturn, customer: s.customer }} kind="sales" onClose={() => setDialog(null)} />
+      ) : null}
       {sheet}
     </>
   );

@@ -22,6 +22,8 @@ class StockMovementResource extends JsonResource
             'reason' => $this->reason,
             'reference_type' => $this->reference_type,
             'reference_id' => $this->reference_id,
+            // Only in a product's ledger: an adjustment already taken back.
+            'reversed' => $this->when(array_key_exists('reversed', $this->resource->getAttributes()), fn() => (bool) $this->resource->getAttribute('reversed')),
             'created_by' => $this->created_by,
             'created_at' => $this->created_at,
         ];

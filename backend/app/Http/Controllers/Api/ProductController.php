@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Http\Requests\VoidReasonRequest;
 use App\Http\Resources\CatalogProductResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\StockMovementResource;
@@ -12,15 +14,19 @@ use App\Models\CatalogProduct;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Services\ProductImportService;
+use App\Services\AuditService;
 use App\Services\ProductService;
+use App\Services\StockService;
 use App\Support\Barcode;
 use App\Support\Money;
 use App\Support\Quantity;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
- * US-0401 product catalog. There is no DELETE: products are deactivated (BR-04, FR-16).
+ * US-0401 product catalog. A product with history is archived (deactivated, BR-04, FR-16); only a
+ * product added by mistake, with no history at all, may be deleted for good.
  * Other stores' products resolve to 404 through BelongsToStore route binding.
  */
 class ProductController extends Controller
@@ -127,9 +133,28 @@ class ProductController extends Controller
         ], 201);
     }
 
-    public function show(Product $product)
+    public function show(Request $request, Product $product)
     {
+        // The detail screen offers «حذف نهائي» only for a product nothing refers to.
+        if ($request->user()->can('delete', $product)) {
+            $product->setAttribute('deletable', $this->products->isDeletable($product));
+        }
+
         return new ProductResource($product);
+    }
+
+    /**
+     * DELETE /products/{id}: permanent removal of a product added by mistake (Owner / Manager).
+     * A product with any history answers 409 PRODUCT_IN_USE; archive it (deactivate) instead.
+     */
+    public function destroy(Request $request, Product $product)
+    {
+        $this->authorize('delete', $product);
+        $reason = $request->validate(['reason' => ['nullable', 'string', 'max:500']])['reason'] ?? null;
+
+        $this->products->delete($request->user(), $product, $reason);
+
+        return response()->json(['message' => 'تم حذف المنتج نهائيًا.']);
     }
 
     public function update(UpdateProductRequest $request, Product $product)
@@ -191,9 +216,75 @@ class ProductController extends Controller
     public function movements(Product $product)
     {
         $movements = $product->movements()->orderByDesc('id')->paginate(20);
-        $movements->getCollection()->each->setRelation('product', $product);
+        $reversed = StockMovement::query()
+            ->where('product_id', $product->id)
+            ->where('type', StockMovement::TYPE_ADJUSTMENT_REVERSAL)
+            ->whereIn('reference_id', $movements->getCollection()->pluck('id'))
+            ->pluck('reference_id')
+            ->all();
+        $movements->getCollection()->each(function (StockMovement $movement) use ($product, $reversed) {
+            $movement->setRelation('product', $product);
+            $movement->setAttribute('reversed', in_array($movement->id, $reversed, false));
+        });
 
         return StockMovementResource::collection($movements);
+    }
+
+    /**
+     * POST /stock-movements/{movement}/reverse: takes back an adjustment entered by mistake with an
+     * opposite `adjustment_reversal` movement (the ledger is append-only). Owner / Manager, a reason,
+     * once per adjustment, and never below zero stock.
+     */
+    public function reverseMovement(VoidReasonRequest $request, StockMovement $movement, StockService $stock, AuditService $audit)
+    {
+        $reason = $request->validated('reason');
+
+        $reversal = DB::transaction(function () use ($request, $movement, $stock, $audit, $reason) {
+            $actor = $request->user();
+            // The product lock serialises two reversals of the same adjustment (double click, retry).
+            $product = Product::query()->forStore($actor->store_id)->whereKey($movement->product_id)->lockForUpdate()->firstOrFail();
+
+            if (!in_array($movement->type, [StockMovement::TYPE_ADJUSTMENT_IN, StockMovement::TYPE_ADJUSTMENT_OUT], true)) {
+                throw ApiException::conflict('MOVEMENT_NOT_REVERSIBLE', 'هذه الحركة ناتجة عن مستند (بيع أو شراء أو مرتجع)؛ صحّحها من المستند نفسه.');
+            }
+
+            $done = StockMovement::query()
+                ->where('product_id', $product->id)
+                ->where('type', StockMovement::TYPE_ADJUSTMENT_REVERSAL)
+                ->where('reference_type', 'stock_movement')
+                ->where('reference_id', $movement->id)
+                ->exists();
+            if ($done) {
+                throw ApiException::conflict('MOVEMENT_ALREADY_REVERSED', 'تم التراجع عن هذا التعديل مسبقًا.');
+            }
+
+            $quantity = Quantity::negate($movement->quantity);
+            try {
+                $reversal = $stock->move($product, StockMovement::TYPE_ADJUSTMENT_REVERSAL, $quantity, $actor, $reason, 'stock_movement', $movement->id);
+            } catch (ApiException $e) {
+                $available = Quantity::format($product->current_stock, $product->unit);
+                throw new ApiException(409, 'MOVEMENT_STOCK_CONSUMED',
+                    "لا يمكن التراجع عن هذا التعديل: المخزون الحالي ({$available}) لا يكفي لإخراج الكمية التي أُضيفت.",
+                    details: ['cause' => $e->errorCode],
+                );
+            }
+
+            $audit->record('stock.adjustment_reversed', $product, [
+                'movement_id' => $movement->id,
+                'reversal_id' => $reversal->id,
+                'quantity' => Quantity::format($quantity, $product->unit),
+                'balance_after' => Quantity::format($reversal->balance_after, $product->unit),
+                'reason' => $reason,
+            ], $actor);
+
+            return $reversal;
+        });
+
+        return response()->json([
+            'message' => 'تم التراجع عن تعديل المخزون.',
+            'movement' => new StockMovementResource($reversal),
+            'product' => new ProductResource($reversal->product),
+        ], 201);
     }
 
     /** US-0401 AC3 (FR-17): the active product with this barcode in my store, or 404. */

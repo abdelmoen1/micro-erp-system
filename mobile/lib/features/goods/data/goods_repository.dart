@@ -72,6 +72,21 @@ class GoodsRepository {
     }
   }
 
+  /// POST /returns/purchases/{id}/void (owner / manager): cancels a return to the supplier made by
+  /// mistake. The goods come back on the shelf and the amount back on the supplier's balance, once.
+  Future<PurchaseReturnRecord> voidPurchaseReturn(int returnId, {required String reason}) async {
+    final operationId = 'void-purchase-return-$returnId-${SaleRepository.stableHash(reason.trim())}';
+    final key = await _keys.keyFor(operationId);
+    try {
+      final answer = await _api.post('/returns/purchases/$returnId/void', body: {'reason': reason.trim()}, idempotencyKey: key);
+      await _keys.complete(operationId);
+      return PurchaseReturnRecord.fromJson(answer['data'] as Map<String, dynamic>);
+    } on ApiFailure catch (failure) {
+      if (SaleRepository.isFinalAnswer(failure)) await _keys.complete(operationId);
+      rethrow;
+    }
+  }
+
   /// Saved on the supplier's account in full; payments are recorded there afterwards.
   Future<GoodsReceipt> record({
     required String supplierName,

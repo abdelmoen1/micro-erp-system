@@ -88,7 +88,24 @@ class StoreIsolationSweepTest extends TestCase
             'receiving_account_id' => $account->id,
         ]);
 
+        $theirProduct = $this->makeProduct($theirs);
+        $theirPurchase = $theirSupplier->invoices()->create(['store_id' => $theirs->id, 'total' => '10.00']);
+
         return [
+            // Safe cancel: another store's movement, returns and held-invoice line.
+            'movement' => $theirProduct->movements()->firstOrFail()->id,
+            'saleReturn' => \App\Models\SaleReturn::create([
+                'store_id' => $theirs->id, 'invoice_id' => $invoice->id, 'total_amount' => '1.00',
+                'debt_reduction' => '1.00', 'refund_amount' => '0.00', 'reason' => 'x',
+            ])->id,
+            'purchaseReturn' => \App\Models\PurchaseReturn::create([
+                'store_id' => $theirs->id, 'supplier_id' => $theirSupplier->id, 'purchase_invoice_id' => $theirPurchase->id,
+                'total_amount' => '1.00', 'balance_reduction' => '1.00', 'refund_amount' => '0.00', 'reason' => 'x',
+            ])->id,
+            'item' => $suspended->items()->create([
+                'product_id' => $theirProduct->id, 'item_name' => 'x', 'unit' => 'piece', 'quantity' => 1,
+                'base_quantity' => 1, 'unit_price' => '10.00', 'total' => '10.00',
+            ])->id,
             // Public, not store data: an unknown deletion reference and a provider that is not enabled are 404 too.
             'reference' => (string) Str::uuid(),
             'provider' => 'palpay',
