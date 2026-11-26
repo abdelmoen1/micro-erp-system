@@ -37,6 +37,8 @@ use App\Http\Controllers\Api\Admin\SupportTicketController as AdminSupportTicket
 Route::post('/login', [AuthController::class, 'login']);
 // Sign-in by mobile number: what the screens offer, one-time SMS codes, and a forgotten password.
 Route::get('/auth/options', [AuthController::class, 'options']);
+// The commit this server runs: the deploy workflow checks it after a deploy.
+Route::get('/version', fn() => response()->json(['data' => ['commit' => config('hisbah.commit')]]))->middleware('throttle:60,1');
 Route::post('/auth/otp', [AuthController::class, 'sendOtp'])->middleware('throttle:otp');
 Route::post('/auth/password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:register');
 Route::middleware('throttle:register')->group(function () {

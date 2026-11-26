@@ -7,15 +7,10 @@ use Tests\TestCase;
 
 /**
  * /up is the hosting health check (render.yaml): it must report a missing database as unhealthy
- * instead of only proving that Laravel boots.
+ * instead of only proving that Laravel boots. The migration half of the check: MigrationHealthCheckTest.
  */
 class HealthCheckTest extends TestCase
 {
-    public function test_up_is_healthy_when_the_database_answers(): void
-    {
-        $this->get('/up')->assertOk();
-    }
-
     public function test_up_fails_when_the_database_is_unreachable(): void
     {
         config(['database.connections.broken' => [

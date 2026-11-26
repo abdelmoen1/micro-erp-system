@@ -10,8 +10,11 @@ services:
     plan: free
     region: frankfurt
     branch: main
-    # CI on main has known unrelated failures (web build, MySQL tests), so deploys follow commits.
-    autoDeployTrigger: commit
+    # No auto-deploy: a commit deployed before its migrations took the shops down on 2026-11-25.
+    # Deploys come from the private repo's «Deploy API» workflow (backup → migrate → deploy hook),
+    # started by CI on main. Also switch Auto-Deploy off in the dashboard (docs/deploy/render.md).
+    autoDeployTrigger: "off"
+    # /up also fails while a migration has not run, so such a deploy never takes traffic.
     healthCheckPath: /up
     buildFilter:
       paths:
