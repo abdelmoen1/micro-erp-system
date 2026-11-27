@@ -226,6 +226,59 @@ class PurchaseReturnTest extends TestCase
         $this->assertSame('0.000', Product::where('name', 'كولا علبة')->sole()->current_stock);
     }
 
+    public function test_a_product_sent_back_in_full_leaves_the_suppliers_invoice(): void
+    {
+        $invoice = $this->delivery();
+        [$cola, $almonds] = $invoice->items;
+        $owner = $this->actingAs($this->owner, 'sanctum');
+
+        $this->sendBack($invoice, [
+            ['purchase_item_id' => $cola->id, 'quantity' => 96],
+            ['purchase_item_id' => $almonds->id, 'quantity' => '2.5'],
+        ])->assertCreated()->assertJsonPath('balance', '210.00');
+
+        $owner->getJson("/api/v1/suppliers/{$invoice->supplier_id}")
+            ->assertOk()
+            ->assertJsonPath('data.balance', '210.00')
+            ->assertJsonCount(1, 'data.products')
+            ->assertJsonPath('data.products.0.name', 'لوز نيء')
+            ->assertJsonPath('data.products.0.total', '210.00');
+
+        $owner->getJson("/api/v1/suppliers/{$invoice->supplier_id}/products/{$cola->product_id}")
+            ->assertOk()
+            ->assertJsonCount(0, 'data.invoices');
+
+        $owner->getJson("/api/v1/suppliers/{$invoice->supplier_id}/products/{$almonds->product_id}")
+            ->assertOk()
+            ->assertJsonCount(1, 'data.invoices')
+            ->assertJsonPath('data.invoices.0.quantity', '7.500')
+            ->assertJsonPath('data.invoices.0.bought_quantity', '10.000')
+            ->assertJsonPath('data.invoices.0.returned_quantity', '2.500')
+            ->assertJsonPath('data.invoices.0.total', '210.00');
+    }
+
+    public function test_a_partly_returned_carton_line_shows_what_is_left_and_a_cancelled_return_brings_the_line_back(): void
+    {
+        $invoice = $this->delivery();
+        $cola = $invoice->items[0];
+        $owner = $this->actingAs($this->owner, 'sanctum');
+
+        $this->sendBack($invoice, [['purchase_item_id' => $cola->id, 'quantity' => 30]])->assertCreated();
+        $owner->getJson("/api/v1/suppliers/{$invoice->supplier_id}/products/{$cola->product_id}")
+            ->assertJsonPath('data.invoices.0.quantity', '66')
+            ->assertJsonPath('data.invoices.0.cartons', 2)
+            ->assertJsonPath('data.invoices.0.loose_pieces', 18)
+            ->assertJsonPath('data.invoices.0.total', '165.00');
+
+        $rest = $this->sendBack($invoice, [['purchase_item_id' => $cola->id, 'quantity' => 66]])->assertCreated()->json('data.id');
+        $owner->getJson("/api/v1/suppliers/{$invoice->supplier_id}")->assertJsonCount(1, 'data.products');
+
+        $owner->postJson("/api/v1/returns/purchases/{$rest}/void", ['reason' => 'أُدخل بالخطأ'], $this->idem())->assertOk();
+        $owner->getJson("/api/v1/suppliers/{$invoice->supplier_id}")
+            ->assertJsonCount(2, 'data.products')
+            ->assertJsonFragment(['name' => 'كولا علبة', 'unit' => 'piece', 'total' => '165.00']);
+    }
+
     public function test_a_mixed_full_and_partial_return_tracks_each_line_and_its_remaining_quantity(): void
     {
         $invoice = $this->delivery();
