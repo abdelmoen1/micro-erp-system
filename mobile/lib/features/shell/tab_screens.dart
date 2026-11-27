@@ -18,6 +18,7 @@ import '../more/presentation/change_password_screen.dart';
 import '../more/presentation/delete_account_screen.dart';
 import '../more/presentation/change_phone_screen.dart';
 import '../more/presentation/more_widgets.dart';
+import '../more/presentation/obligations_screen.dart';
 import '../more/presentation/staff_screen.dart';
 import '../more/presentation/store_settings_screen.dart';
 import '../more/presentation/support_screen.dart';
@@ -373,6 +374,14 @@ class _MoreTab extends ConsumerWidget {
                 title: t.purchasesTitle,
                 subtitle: t.purchasesSub,
                 onTap: () => pushScreen<void>(context, const PurchasesScreen()),
+              ),
+              // Running costs: each day's share comes off the net profit on Home.
+              MoreTile(
+                key: const Key('more.obligations'),
+                icon: Icons.event_repeat_rounded,
+                title: t.obTitle,
+                subtitle: t.obMoreSub,
+                onTap: () => pushScreen<void>(context, const ObligationsScreen()),
               ),
               MoreTile(
                 key: const Key('more.suppliers'),

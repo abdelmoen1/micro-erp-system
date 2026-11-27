@@ -19,6 +19,8 @@ class PaymentResource extends JsonResource
             'id' => $this->id,
             'amount' => Money::of($this->amount),
             'method' => $this->method,
+            'account_name' => $this->account_snapshot_name,
+            'account_identifier' => $this->account_snapshot_identifier,
             'paid_at' => $this->paid_at,
             'notes' => $this->notes,
             'is_reversed' => (bool) $this->is_reversed,

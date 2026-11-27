@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../../../core/motion/motion.dart';
 import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
 import '../../../core/providers.dart';
@@ -130,7 +131,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       },
       child: Scaffold(
         appBar: AppBar(title: Text(page.value?.$1.name ?? '')),
-        body: page.when(
+        body: FadeSwitcher(fill: true, child: page.when(
           loading: () => const LoadingView.detail(),
           error: (_, _) => ErrorView(message: t.prodDetailError, onRetry: () => ref.invalidate(productDetailProvider(widget.productId))),
           data: (data) {
@@ -206,7 +207,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               ),
             );
           },
-        ),
+        )),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/motion/motion.dart';
 import '../../../core/api/api_failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
@@ -22,11 +23,11 @@ class StoreSettingsScreen extends ConsumerWidget {
     final profile = ref.watch(storeProfileProvider);
     return Scaffold(
       appBar: AppBar(title: Text(t.storeTitle)),
-      body: profile.when(
+      body: FadeSwitcher(fill: true, child: profile.when(
         loading: () => const LoadingView.detail(),
         error: (_, _) => ErrorView(message: t.storeLoadError, onRetry: () => ref.invalidate(storeProfileProvider)),
         data: (store) => _StoreForm(store: store),
-      ),
+      )),
     );
   }
 }

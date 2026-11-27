@@ -211,6 +211,12 @@ Route::middleware(['auth:sanctum', 'active', 'store', 'throttle:api'])->group(fu
     Route::post('receiving-accounts', [\App\Http\Controllers\Api\ReceivingAccountController::class, 'store']);
     Route::match(['put', 'patch'], 'receiving-accounts/{account}', [\App\Http\Controllers\Api\ReceivingAccountController::class, 'update']);
     Route::delete('receiving-accounts/{account}', [\App\Http\Controllers\Api\ReceivingAccountController::class, 'destroy']);
+
+    // «الالتزامات»: running costs Home takes off the day's profit (owner / manager).
+    Route::get('obligations', [\App\Http\Controllers\Api\ObligationController::class, 'index']);
+    Route::post('obligations', [\App\Http\Controllers\Api\ObligationController::class, 'store']);
+    Route::match(['put', 'patch'], 'obligations/{obligation}', [\App\Http\Controllers\Api\ObligationController::class, 'update']);
+    Route::delete('obligations/{obligation}', [\App\Http\Controllers\Api\ObligationController::class, 'destroy']);
     Route::get('suspended-invoices', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'index']);
     Route::post('suspended-invoices', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'store'])->middleware('idempotent');
     Route::get('suspended-invoices/{invoice}', [\App\Http\Controllers\Api\SuspendedInvoiceController::class, 'show']);

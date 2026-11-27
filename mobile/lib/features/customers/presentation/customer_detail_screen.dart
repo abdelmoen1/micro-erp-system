@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/motion/motion.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/ltr_value.dart';
@@ -47,7 +48,7 @@ class CustomerDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(customer.name)),
-      body: ledger.when(
+      body: FadeSwitcher(fill: true, child: ledger.when(
         loading: () => const LoadingView.detail(),
         error: (_, _) =>
             ErrorView(message: t.custDetailError, onRetry: () => ref.invalidate(customerLedgerProvider(customer.id))),
@@ -96,7 +97,7 @@ class CustomerDetailScreen extends ConsumerWidget {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 }

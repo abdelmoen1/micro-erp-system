@@ -124,10 +124,11 @@ class CustomerRepository {
     required String method,
     required String idempotencyKey,
     Money? amount,
+    int? receivingAccountId,
   }) async {
     final body = await _api.post(
       '/customers/$customerId/debts/pay-all',
-      body: {'method': method, 'amount': ?amount?.toApi()},
+      body: {'method': method, 'amount': ?amount?.toApi(), 'receiving_account_id': ?receivingAccountId},
       idempotencyKey: idempotencyKey,
     );
     final data = body['data'] as Map<String, dynamic>? ?? const {};
@@ -150,12 +151,18 @@ class CustomerRepository {
     required Money amount,
     required Money remainingBefore,
     bool sendAmount = true,
+    int? receivingAccountId,
   }) async {
     final item = await local.enqueue(
       clientTransactionId: idempotencyKey,
       userId: userId,
       type: 'payment',
-      payload: {'customer_id': customer.id, 'method': method, if (sendAmount) 'amount': amount.toApi()},
+      payload: {
+        'customer_id': customer.id,
+        'method': method,
+        if (sendAmount) 'amount': amount.toApi(),
+        'receiving_account_id': ?receivingAccountId,
+      },
       summary: {'amount': amount.toApi(), 'method': method, 'customer_name': customer.name},
       effects: [OutboxEffect.balance(customer.id, Money.cents(-amount.cents))],
     );

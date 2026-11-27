@@ -21,6 +21,7 @@ class InvoiceItem extends Model
         'pack_size',
         'returned_quantity',
         'unit_price',
+        'unit_cost',
         'total',
     ];
 
@@ -31,6 +32,7 @@ class InvoiceItem extends Model
             'returned_quantity' => 'decimal:3',
             'pack_size' => 'integer',
             'unit_price' => 'decimal:2',
+            'unit_cost' => 'decimal:2',
             'total' => 'decimal:2',
         ];
     }

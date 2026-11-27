@@ -114,6 +114,7 @@ class StoreIsolationSweepTest extends TestCase
             'debt' => $invoice->debt->id,
             'payment' => $payment->id,
             'account' => $account->id,
+            'obligation' => \App\Models\Obligation::create(['store_id' => $theirs->id, 'name' => 'Rent', 'amount' => '100.00', 'frequency' => 'monthly'])->id,
             'paymentGroupId' => $group,
             'user' => $theirStaff->id,
             'product' => $this->makeProduct($theirs)->id,

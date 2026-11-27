@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' show DateFormat;
 
 import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
+import '../../../core/motion/motion.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
 import '../../../l10n/app_localizations.dart';
@@ -290,57 +291,74 @@ class _CartScreenState extends ConsumerState<CartScreen> with TillActions<CartSc
                 onDiscard: _discard,
                 onTransfers: _openTransfers,
               ),
-            if (_feedback != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                child: ScanFeedbackCard(
-                  feedback: _feedback!,
-                  onAction: switch (_feedback!.kind) {
-                    ScanFeedbackKind.unknown => () => _search(),
-                    ScanFeedbackKind.networkError => () => _handleCode(_feedback!.code, retry: true),
-                    ScanFeedbackKind.outOfStock => countOutOfStock,
-                    _ => null,
-                  },
-                ),
-              ),
-            Expanded(
-              child: cart.isEmpty
-                  ? ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 12), children: const [_EmptyCart()])
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                      children: [
-                        if (stockChanged) ...[
-                          ToneCard(
-                            key: const Key('cart.stockChanged'),
-                            tone: StatusTone.warning,
-                            icon: Icons.inventory_2_outlined,
-                            title: t.heldStockChanged,
-                          ),
-                          const SizedBox(height: 10),
-                        ],
-                        LineCard(
-                          child: Column(
-                            children: [
-                              for (final (i, line) in cart.lines.indexed)
-                                CartLineRow(
-                                  key: Key('cart.line.${line.product.id}${line.pack ? '.pack' : ''}'),
-                                  line: line,
-                                  divider: i > 0,
-                                  justAdded: line.product.id == _justId,
-                                  overStock: cart.exceedsStock(line),
-                                  onIncrement: () => increment(line),
-                                  onDecrement: () =>
-                                      till.setQuantity(line.product, line.quantity - Quantity.one, pack: line.pack),
-                                  onEditWeight: () => openWeight(line.product),
-                                  onRemove: () => till.remove(line.product.id, pack: line.pack),
-                                  onAddPack: () => addToTill(line.product, pack: true),
-                                  onPrice: (price) => till.setPrice(line.product.id, price, pack: line.pack),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
+            // Each scan's message cross-fades over the last one; the slot folds away when it clears.
+            FadeSwitcher(
+              size: true,
+              child: _feedback == null
+                  ? const SizedBox(width: double.infinity)
+                  : Padding(
+                      key: ObjectKey(_feedback),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                      child: ScanFeedbackCard(
+                        feedback: _feedback!,
+                        onAction: switch (_feedback!.kind) {
+                          ScanFeedbackKind.unknown => () => _search(),
+                          ScanFeedbackKind.networkError => () => _handleCode(_feedback!.code, retry: true),
+                          ScanFeedbackKind.outOfStock => countOutOfStock,
+                          _ => null,
+                        },
+                      ),
                     ),
+            ),
+            Expanded(
+              child: FadeSwitcher(
+                child: cart.isEmpty
+                    ? ListView(
+                        key: const ValueKey('cart.emptyList'),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                        children: const [_EmptyCart()],
+                      )
+                    : ListView(
+                        key: const ValueKey('cart.lines'),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        children: [
+                          if (stockChanged) ...[
+                            ToneCard(
+                              key: const Key('cart.stockChanged'),
+                              tone: StatusTone.warning,
+                              icon: Icons.inventory_2_outlined,
+                              title: t.heldStockChanged,
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                          LineCard(
+                            child: Column(
+                              children: [
+                                // A new line opens into the list instead of appearing at once.
+                                for (final (i, line) in cart.lines.indexed)
+                                  GrowIn(
+                                    key: ValueKey('cart.grow.${line.product.id}${line.pack ? '.pack' : ''}'),
+                                    child: CartLineRow(
+                                      key: Key('cart.line.${line.product.id}${line.pack ? '.pack' : ''}'),
+                                      line: line,
+                                      divider: i > 0,
+                                      justAdded: line.product.id == _justId,
+                                      overStock: cart.exceedsStock(line),
+                                      onIncrement: () => increment(line),
+                                      onDecrement: () =>
+                                          till.setQuantity(line.product, line.quantity - Quantity.one, pack: line.pack),
+                                      onEditWeight: () => openWeight(line.product),
+                                      onRemove: () => till.remove(line.product.id, pack: line.pack),
+                                      onAddPack: () => addToTill(line.product, pack: true),
+                                      onPrice: (price) => till.setPrice(line.product.id, price, pack: line.pack),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
             ),
             ActionBar(
               bottomInset: bottomInset,
@@ -357,7 +375,17 @@ class _CartScreenState extends ConsumerState<CartScreen> with TillActions<CartSc
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: AlignmentDirectional.centerStart,
-                          child: Num(shekel(cart.total), key: const Key('cart.total'), size: 28, weight: FontWeight.w700),
+                          // The total pops when it changes, so the cashier sees the scan counted.
+                          child: Bump(
+                            value: cart.total,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Num(
+                              shekel(cart.total),
+                              key: const Key('cart.total'),
+                              size: 28,
+                              weight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ],
                     ),

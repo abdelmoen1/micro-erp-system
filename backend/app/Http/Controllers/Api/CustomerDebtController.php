@@ -69,6 +69,7 @@ class CustomerDebtController extends Controller
             $validated['method'],
             $validated['paid_at'] ?? null,
             $validated['notes'] ?? null,
+            isset($validated['receiving_account_id']) ? (int) $validated['receiving_account_id'] : null,
         );
 
         return self::paidResponse($result, isset($validated['amount']));

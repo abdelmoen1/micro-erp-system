@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/motion/motion.dart';
 import '../../../core/api/api_failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
@@ -176,14 +177,17 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
       ];
     }
     return [
-      LineCard(
-        child: Column(
-          children: [
-            for (var i = 0; i < _customers.length; i++) ...[
-              if (i > 0) const Divider(height: 1, color: HisbahColors.border),
-              _CustomerRow(customer: _customers[i], onTap: () => _open(_customers[i])),
+      // Eases in where the skeleton was; a search keeps the card and only its rows change.
+      EntranceFade(
+        child: LineCard(
+          child: Column(
+            children: [
+              for (var i = 0; i < _customers.length; i++) ...[
+                if (i > 0) const Divider(height: 1, color: HisbahColors.border),
+                _CustomerRow(customer: _customers[i], onTap: () => _open(_customers[i])),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     ];

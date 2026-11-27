@@ -6907,6 +6907,288 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تعذّر حفظ الحساب. أعد المحاولة.'**
   String get rxSaveError;
+
+  /// No description provided for @homeNetProfit.
+  ///
+  /// In ar, this message translates to:
+  /// **'صافي ربح اليوم'**
+  String get homeNetProfit;
+
+  /// No description provided for @homeNetProfitNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'بعد التكلفة والالتزامات'**
+  String get homeNetProfitNote;
+
+  /// No description provided for @homeNetLossNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'خسارة بعد التكلفة والالتزامات'**
+  String get homeNetLossNote;
+
+  /// No description provided for @profitTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'صافي ربح اليوم'**
+  String get profitTitle;
+
+  /// No description provided for @profitIntro.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما ربحه المحل اليوم بعيدًا عن رأس مال البضاعة والمصاريف الثابتة.'**
+  String get profitIntro;
+
+  /// No description provided for @profitSales.
+  ///
+  /// In ar, this message translates to:
+  /// **'ربح المبيعات'**
+  String get profitSales;
+
+  /// No description provided for @profitSalesHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعر البيع ناقص سعر الشراء لكل صنف بيع'**
+  String get profitSalesHint;
+
+  /// No description provided for @profitDiscounts.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخصومات'**
+  String get profitDiscounts;
+
+  /// No description provided for @profitReturns.
+  ///
+  /// In ar, this message translates to:
+  /// **'ربح المرتجعات'**
+  String get profitReturns;
+
+  /// No description provided for @profitObligations.
+  ///
+  /// In ar, this message translates to:
+  /// **'حصة اليوم من الالتزامات'**
+  String get profitObligations;
+
+  /// No description provided for @profitNet.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصافي'**
+  String get profitNet;
+
+  /// No description provided for @profitUncosted.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count, plural, =1{صنف واحد بيع اليوم ليس له سعر شراء، فلم يدخل في الحساب.} =2{صنفان بيعا اليوم ليس لهما سعر شراء، فلم يدخلا في الحساب.} few{{count} أصناف بيعت اليوم ليس لها سعر شراء، فلم تدخل في الحساب.} other{{count} صنفًا بيع اليوم ليس لها سعر شراء، فلم تدخل في الحساب.}}'**
+  String profitUncosted(int count);
+
+  /// No description provided for @profitUncostedHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف سعر الشراء من صفحة المنتج ليدخل في الربح.'**
+  String get profitUncostedHint;
+
+  /// No description provided for @profitManageObligations.
+  ///
+  /// In ar, this message translates to:
+  /// **'الالتزامات'**
+  String get profitManageObligations;
+
+  /// No description provided for @profitNoObligations.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُضف التزامات بعد، مثل الإيجار والكهرباء والرواتب.'**
+  String get profitNoObligations;
+
+  /// No description provided for @obTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الالتزامات'**
+  String get obTitle;
+
+  /// No description provided for @obMoreSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإيجار والكهرباء والرواتب وأي مصروف ثابت'**
+  String get obMoreSub;
+
+  /// No description provided for @obIntro.
+  ///
+  /// In ar, this message translates to:
+  /// **'تُخصم حصة كل يوم منها من صافي الربح في الرئيسية.'**
+  String get obIntro;
+
+  /// No description provided for @obEmptyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا التزامات بعد'**
+  String get obEmptyTitle;
+
+  /// No description provided for @obEmptyBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف مصاريف المحل الثابتة مثل الإيجار والكهرباء والرواتب.'**
+  String get obEmptyBody;
+
+  /// No description provided for @obAdd.
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة التزام'**
+  String get obAdd;
+
+  /// No description provided for @obEdit.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل الالتزام'**
+  String get obEdit;
+
+  /// No description provided for @obName.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم'**
+  String get obName;
+
+  /// No description provided for @obNameHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثل: إيجار المحل'**
+  String get obNameHint;
+
+  /// No description provided for @obAmount.
+  ///
+  /// In ar, this message translates to:
+  /// **'المبلغ'**
+  String get obAmount;
+
+  /// No description provided for @obFrequency.
+  ///
+  /// In ar, this message translates to:
+  /// **'كل متى يُدفع'**
+  String get obFrequency;
+
+  /// No description provided for @obDaily.
+  ///
+  /// In ar, this message translates to:
+  /// **'يوميًا'**
+  String get obDaily;
+
+  /// No description provided for @obWeekly.
+  ///
+  /// In ar, this message translates to:
+  /// **'أسبوعيًا'**
+  String get obWeekly;
+
+  /// No description provided for @obMonthly.
+  ///
+  /// In ar, this message translates to:
+  /// **'شهريًا'**
+  String get obMonthly;
+
+  /// No description provided for @obYearly.
+  ///
+  /// In ar, this message translates to:
+  /// **'سنويًا'**
+  String get obYearly;
+
+  /// No description provided for @obPerDay.
+  ///
+  /// In ar, this message translates to:
+  /// **'حصة اليوم {amount}'**
+  String obPerDay(String amount);
+
+  /// No description provided for @obDailyTotal.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُخصم من ربح كل يوم'**
+  String get obDailyTotal;
+
+  /// No description provided for @obPaused.
+  ///
+  /// In ar, this message translates to:
+  /// **'متوقف'**
+  String get obPaused;
+
+  /// No description provided for @obActive.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُخصم من الربح'**
+  String get obActive;
+
+  /// No description provided for @obDelete.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف الالتزام'**
+  String get obDelete;
+
+  /// No description provided for @obDeleteBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف «{name}»؟ لن يُخصم من الربح بعد الآن.'**
+  String obDeleteBody(String name);
+
+  /// No description provided for @obDeleteAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف'**
+  String get obDeleteAction;
+
+  /// No description provided for @obSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ الالتزام'**
+  String get obSave;
+
+  /// No description provided for @obSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُفظ الالتزام'**
+  String get obSaved;
+
+  /// No description provided for @obDeleted.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُذف الالتزام'**
+  String get obDeleted;
+
+  /// No description provided for @obNameRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب اسم الالتزام.'**
+  String get obNameRequired;
+
+  /// No description provided for @obAmountInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب مبلغًا أكبر من صفر.'**
+  String get obAmountInvalid;
+
+  /// No description provided for @obLoadError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تحميل الالتزامات. تحقّق من الاتصال وأعد المحاولة.'**
+  String get obLoadError;
+
+  /// No description provided for @obSaveError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر حفظ الالتزام. أعد المحاولة.'**
+  String get obSaveError;
+
+  /// No description provided for @payAccount.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحساب الذي وصل عليه التحويل'**
+  String get payAccount;
+
+  /// No description provided for @payAccountPick.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر الحساب (اختياري)'**
+  String get payAccountPick;
+
+  /// No description provided for @payAccountChange.
+  ///
+  /// In ar, this message translates to:
+  /// **'تغيير'**
+  String get payAccountChange;
 }
 
 class _AppLocalizationsDelegate

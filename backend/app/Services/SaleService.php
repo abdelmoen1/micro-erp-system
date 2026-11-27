@@ -122,6 +122,8 @@ class SaleService
                     // Snapshot: this line's quantity and unit price are per carton of this size.
                     'pack_size' => $line['pack_size'],
                     'unit_price' => $line['unit_price'],
+                    // Cost per piece (or kg) when sold, so the day's profit keeps today's cost.
+                    'unit_cost' => $product->cost_price === null ? null : Money::of($product->cost_price),
                     'total' => $line['total'],
                 ]);
 

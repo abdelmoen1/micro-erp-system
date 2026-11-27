@@ -21,6 +21,8 @@ class PayAllDebtsRequest extends FormRequest
             // US-0705 AC2: optional custom amount; without it the whole balance is paid.
             'amount' => ['nullable', ...Money::inputRules()],
             'method' => ['required', 'string', Rule::in(PaymentMethods::ALL)],
+            // A transfer may say which of the store's accounts it arrived on (checked in the service).
+            'receiving_account_id' => ['nullable', 'integer'],
             'paid_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];

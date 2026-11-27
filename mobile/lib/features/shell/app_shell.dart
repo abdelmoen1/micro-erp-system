@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/offline/offline_store.dart';
 import '../../core/providers.dart';
+import '../../core/motion/motion.dart';
 import '../../core/theme/hisbah_tokens.dart';
 import '../../l10n/app_localizations.dart';
 import '../guide/coach_tour.dart';
@@ -14,16 +15,19 @@ import '../sync/presentation/sync_screen.dart';
 /// الرئيسية · الزبائن · بيع (+) · المنتجات · المزيد — بيع is column 3 of 5, the exact centre
 /// (TL change to US-1505, 2026-10-15).
 enum AppTab {
-  home('/home', Icons.home_outlined),
-  customers('/customers', Icons.group_outlined),
-  pos('/pos', Icons.add),
-  products('/products', Icons.inventory_2_outlined),
-  more('/more', Icons.short_text_rounded);
+  home('/home', Icons.home_outlined, Icons.home_rounded),
+  customers('/customers', Icons.group_outlined, Icons.group_rounded),
+  pos('/pos', Icons.add, Icons.add),
+  products('/products', Icons.inventory_2_outlined, Icons.inventory_2_rounded),
+  more('/more', Icons.short_text_rounded, Icons.short_text_rounded);
 
-  const AppTab(this.path, this.icon);
+  const AppTab(this.path, this.icon, this.activeIcon);
 
   final String path;
   final IconData icon;
+
+  /// Filled when the tab is current, so where you are reads at a glance (not by colour alone).
+  final IconData activeIcon;
 
   String label(AppLocalizations t) => switch (this) {
     AppTab.home => t.tabHome,
@@ -48,12 +52,25 @@ class AppShell extends ConsumerWidget {
       body: _SyncOnResume(
         child: Column(
           children: [
-            if (banner) const OfflineBanner(),
+            // Slides down when the connection drops and folds away when it is back.
+            FadeSwitcher(size: true, child: banner ? const OfflineBanner() : const SizedBox(width: double.infinity)),
             Expanded(
               // The body's own context: its MediaQuery bottom padding includes the bar height
               // (extendBody), so the end of every tab can scroll clear of the bar.
               child: Builder(
-                builder: (body) => MediaQuery.removePadding(context: body, removeTop: banner, child: shell),
+                builder: (body) => MediaQuery.removePadding(
+                  context: body,
+                  removeTop: banner,
+                  child: _SwipeTabs(
+                    onStep: (step) {
+                      final next = shell.currentIndex + step;
+                      if (next < 0 || next >= AppTab.values.length) return;
+                      Haptics.select();
+                      shell.goBranch(next);
+                    },
+                    child: _TabFade(index: shell.currentIndex, child: shell),
+                  ),
+                ),
               ),
             ),
           ],
@@ -62,10 +79,101 @@ class AppShell extends ConsumerWidget {
       bottomNavigationBar: HisbahNavBar(
         current: AppTab.values[shell.currentIndex],
         // Re-tapping the active tab returns to its root (ia.md §1).
-        onSelect: (tab) => shell.goBranch(tab.index, initialLocation: tab.index == shell.currentIndex),
+        onSelect: (tab) {
+          if (tab.index != shell.currentIndex) Haptics.select();
+          shell.goBranch(tab.index, initialLocation: tab.index == shell.currentIndex);
+        },
       ),
     );
   }
+}
+
+/// A sideways swipe moves one tab along the bar, in reading order: in Arabic a swipe to the right
+/// goes from الرئيسية to الزبائن to بيع, and a swipe to the left comes back. Lists that scroll
+/// sideways inside a tab (the held carts) keep their own swipe: the inner scroller wins.
+class _SwipeTabs extends StatefulWidget {
+  const _SwipeTabs({required this.onStep, required this.child});
+
+  /// +1: the next tab along the bar; −1: the one before.
+  final ValueChanged<int> onStep;
+  final Widget child;
+
+  @override
+  State<_SwipeTabs> createState() => _SwipeTabsState();
+}
+
+class _SwipeTabsState extends State<_SwipeTabs> {
+  /// A deliberate swipe: fast enough, or far enough across the screen.
+  static const _minVelocity = 350.0;
+  static const _minDistance = 70.0;
+
+  double _dx = 0;
+
+  void _end(DragEndDetails details) {
+    final v = details.primaryVelocity ?? 0;
+    final dx = _dx;
+    _dx = 0;
+    if (v.abs() < _minVelocity && dx.abs() < _minDistance) return;
+    final right = (v.abs() >= _minVelocity ? v : dx) > 0;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    widget.onStep(right == rtl ? 1 : -1);
+  }
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    behavior: HitTestBehavior.translucent,
+    onHorizontalDragStart: (_) => _dx = 0,
+    onHorizontalDragUpdate: (d) => _dx += d.delta.dx,
+    onHorizontalDragEnd: _end,
+    child: widget.child,
+  );
+}
+
+/// A new tab slides in from the side it sits on in the bar and fades up; the tabs keep their
+/// state (the stack is untouched).
+class _TabFade extends StatefulWidget {
+  const _TabFade({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  @override
+  State<_TabFade> createState() => _TabFadeState();
+}
+
+class _TabFadeState extends State<_TabFade> with SingleTickerProviderStateMixin {
+  late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 260), value: 1);
+  late final _curve = CurvedAnimation(parent: _c, curve: HisbahMotion.enter);
+
+  /// −1 or 1: which screen edge the new tab enters from.
+  double _from = 0;
+
+  @override
+  void didUpdateWidget(_TabFade old) {
+    super.didUpdateWidget(old);
+    if (old.index == widget.index || HisbahMotion.reduced(context)) return;
+    final forward = widget.index > old.index;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    // A later tab sits toward the reading end of the bar (the left in Arabic).
+    _from = forward == rtl ? -1 : 1;
+    _c.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _curve,
+    builder: (_, child) => Opacity(
+      opacity: .35 + .65 * _curve.value,
+      child: Transform.translate(offset: Offset(48 * _from * (1 - _curve.value), 0), child: child),
+    ),
+    child: widget.child,
+  );
 }
 
 /// Back in the foreground after an outage or a night: send what waits and refresh the cache.
@@ -149,7 +257,7 @@ class HisbahNavBar extends StatelessWidget {
                             tab,
                             _SideTab(
                               key: Key('nav.${tab.name}'),
-                              icon: tab.icon,
+                              icon: current == tab ? tab.activeIcon : tab.icon,
                               label: tab.label(t),
                               active: current == tab,
                               onTap: () => onSelect(tab),
@@ -194,20 +302,37 @@ class _SideTab extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Icon(icon, size: 24, color: color),
+              // The icon lifts a little and turns solid as its tab becomes current.
+              AnimatedSlide(
+                offset: Offset(0, active ? -0.06 : 0),
+                duration: HisbahMotion.of(context, HisbahMotion.fast),
+                curve: HisbahMotion.enter,
+                child: AnimatedSwitcher(
+                  duration: HisbahMotion.of(context, HisbahMotion.fast),
+                  transitionBuilder: (child, a) => ScaleTransition(
+                    scale: Tween(begin: .7, end: 1.0).animate(CurvedAnimation(parent: a, curve: Curves.easeOutBack)),
+                    child: FadeTransition(opacity: a, child: child),
+                  ),
+                  child: Icon(icon, key: ValueKey(icon), size: 24, color: color),
+                ),
+              ),
               const SizedBox(height: 3),
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  style: TextStyle(fontSize: 12, color: color, fontWeight: active ? FontWeight.w700 : FontWeight.w500),
+                child: AnimatedDefaultTextStyle(
+                  duration: HisbahMotion.of(context, HisbahMotion.fast),
+                  style: DefaultTextStyle.of(context).style.merge(
+                    TextStyle(fontSize: 12, color: color, fontWeight: active ? FontWeight.w700 : FontWeight.w500),
+                  ),
+                  child: Text(label, maxLines: 1),
                 ),
               ),
               const SizedBox(height: 2),
+              // The indicator grows out from the centre.
               AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: 20,
+                duration: HisbahMotion.of(context, HisbahMotion.base),
+                curve: HisbahMotion.enter,
+                width: active ? 20 : 4,
                 height: 3,
                 decoration: BoxDecoration(
                   color: active ? HisbahColors.primary : Colors.transparent,
@@ -245,24 +370,34 @@ class _SellButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Stays inside its own column, so it never covers the neighbouring targets.
-            AnimatedContainer(
-              key: const Key('nav.pos.circle'),
-              duration: const Duration(milliseconds: 150),
-              width: size,
-              height: size,
-              margin: EdgeInsets.only(top: (58 - size) / 2, bottom: (58 - size) / 2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: current ? HisbahColors.ground : HisbahColors.primary,
-                border: current ? Border.all(color: HisbahColors.primary, width: 2) : null,
-                // Ring of the bar colour that "cuts" the button out of the bar, edged with the
-                // bar's own hairline so the raised part reads without a drop shadow.
-                boxShadow: const [
-                  BoxShadow(color: HisbahColors.border, spreadRadius: 6),
-                  BoxShadow(color: HisbahColors.surface, spreadRadius: 5),
-                ],
+            PressScale(
+              scale: .9,
+              child: AnimatedContainer(
+                key: const Key('nav.pos.circle'),
+                duration: HisbahMotion.of(context, HisbahMotion.fast),
+                curve: HisbahMotion.enter,
+                width: size,
+                height: size,
+                margin: EdgeInsets.only(top: (58 - size) / 2, bottom: (58 - size) / 2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: current ? HisbahColors.ground : HisbahColors.primary,
+                  border: current ? Border.all(color: HisbahColors.primary, width: 2) : null,
+                  // Ring of the bar colour that "cuts" the button out of the bar, edged with the
+                  // bar's own hairline so the raised part reads without a drop shadow.
+                  boxShadow: const [
+                    BoxShadow(color: HisbahColors.border, spreadRadius: 6),
+                    BoxShadow(color: HisbahColors.surface, spreadRadius: 5),
+                  ],
+                ),
+                // A quarter turn as بيع becomes the current tab.
+                child: AnimatedRotation(
+                  turns: current ? .25 : 0,
+                  duration: HisbahMotion.of(context, HisbahMotion.base),
+                  curve: HisbahMotion.enter,
+                  child: Icon(Icons.add, size: 28, color: current ? HisbahColors.primary : HisbahColors.onPrimary),
+                ),
               ),
-              child: Icon(Icons.add, size: 28, color: current ? HisbahColors.primary : HisbahColors.onPrimary),
             ),
             const SizedBox(height: 3),
             FittedBox(

@@ -30,4 +30,9 @@ class SaleReturnItem extends Model
     {
         return $this->belongsTo(InvoiceItem::class);
     }
+
+    public function saleReturn()
+    {
+        return $this->belongsTo(SaleReturn::class);
+    }
 }

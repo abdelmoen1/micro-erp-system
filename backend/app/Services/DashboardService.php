@@ -5,11 +5,14 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\Debt;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Obligation;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseReturn;
 use App\Models\SaleReturn;
+use App\Models\SaleReturnItem;
 use App\Models\Store;
 use App\Models\SupplierPayment;
 use App\Support\BusinessClock;
@@ -74,6 +77,8 @@ class DashboardService
             'returns' => $returns,
             // Owner / Manager only, like the suppliers themselves.
             'purchases' => $withCosts ? $this->purchaseMetrics($storeId, $from, $to) : null,
+            // «صافي الربح»: what the period earned past the goods' cost and the running costs.
+            'profit' => $withCosts ? $this->profitMetrics($storeId, $clock, $from, $to) : null,
             'insights' => $insights,
             'customers' => $customerMetrics,
             'invoices' => [
@@ -133,6 +138,103 @@ class DashboardService
             'debt_reduction' => Money::sum($returns->pluck('debt_reduction')),
             'refunded' => Money::sum($returns->pluck('refund_amount')),
         ];
+    }
+
+    /**
+     * Net profit of the period, away from the capital in stock:
+     *   sales profit   = each sold line's total − its pieces (or kg) × the cost when sold,
+     *   − discounts given on the period's invoices,
+     *   − the profit of goods customers brought back in the period,
+     *   − each day's share of the active obligations (rent, electricity, salaries…).
+     * A line whose product has no cost price cannot be priced: it stays out and is counted in
+     * `uncosted_lines`, so the app can say the figure is missing something. Older lines without a
+     * cost snapshot use the product's current cost.
+     *
+     * @return array{sales_profit: string, discounts: string, returns_profit: string, obligations: string, net: string, uncosted_lines: int}
+     */
+    private function profitMetrics(int $storeId, BusinessClock $clock, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $invoices = $this->invoicesBetween($storeId, $from, $to)
+            ->where('source', 'sale')
+            ->with('items.product:id,cost_price')
+            ->get(['id', 'discount_amount']);
+
+        $salesProfit = '0.00';
+        $uncosted = 0;
+        foreach ($invoices as $invoice) {
+            foreach ($invoice->items as $item) {
+                $cost = $this->unitCost($item);
+                if ($cost === null) {
+                    $uncosted++;
+
+                    continue;
+                }
+                $salesProfit = Money::add(
+                    $salesProfit,
+                    Money::sub($item->total, Money::times($cost, $item->baseQuantity((string) $item->quantity))),
+                );
+            }
+        }
+        $discounts = Money::sum($invoices->pluck('discount_amount'));
+
+        $returnsProfit = '0.00';
+        $returnItems = SaleReturnItem::query()
+            ->whereHas('saleReturn', fn(Builder $q) => $q->where('store_id', $storeId)->notVoided()
+                ->whereBetween('created_at', BusinessClock::toUtc($from, $to)))
+            ->with('invoiceItem.product:id,cost_price')
+            ->get();
+        foreach ($returnItems as $returned) {
+            $cost = $returned->invoiceItem ? $this->unitCost($returned->invoiceItem) : null;
+            if ($cost === null) {
+                continue;
+            }
+            // Back on the shelf: the sale's profit is undone. Damaged: the refund is all lost,
+            // since the goods' cost was spent and nothing returns to stock.
+            $lost = $returned->damaged
+                ? Money::of($returned->total)
+                : Money::sub($returned->total, Money::times($cost, $returned->invoiceItem->baseQuantity((string) $returned->quantity)));
+            $returnsProfit = Money::add($returnsProfit, $lost);
+        }
+
+        $obligations = $this->obligationsCost($storeId, $clock, $from, $to);
+        $net = Money::sub(Money::sub(Money::sub($salesProfit, $discounts), $returnsProfit), $obligations);
+
+        return [
+            'sales_profit' => $salesProfit,
+            'discounts' => $discounts,
+            'returns_profit' => $returnsProfit,
+            'obligations' => $obligations,
+            'net' => $net,
+            'uncosted_lines' => $uncosted,
+        ];
+    }
+
+    /** Cost per piece (or kg) of a sold line: its snapshot, else the product's cost now. */
+    private function unitCost(InvoiceItem $item): ?string
+    {
+        $cost = $item->unit_cost ?? $item->product?->cost_price;
+
+        return $cost === null ? null : Money::of($cost);
+    }
+
+    /** The active obligations' shares for each local day of the period (today: one day). */
+    private function obligationsCost(int $storeId, BusinessClock $clock, CarbonImmutable $from, CarbonImmutable $to): string
+    {
+        $obligations = Obligation::query()->forStore($storeId)->where('active', true)->get();
+        if ($obligations->isEmpty()) {
+            return '0.00';
+        }
+
+        // Never past today: a month's view charges the days that have happened.
+        $last = $to->min($clock->now())->startOfDay();
+        $total = '0';
+        for ($day = $from->startOfDay(); $day <= $last; $day = $day->addDay()) {
+            foreach ($obligations as $obligation) {
+                $total = bcadd($total, $obligation->shareOn($day), 6);
+            }
+        }
+
+        return Money::of($total);
     }
 
     /** The period's purchases and goods sent back, and what the store owes all its suppliers now. */

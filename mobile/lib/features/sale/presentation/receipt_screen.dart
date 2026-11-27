@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
+import '../../../core/motion/motion.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
 import '../../../l10n/app_localizations.dart';
@@ -78,12 +79,9 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                       liveRegion: true,
                       child: Row(
                         children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(color: circle, shape: BoxShape.circle),
-                            child: Icon(icon, size: 26, color: Colors.white),
-                          ),
+                          // The sale's one celebrated moment: the circle pops and the tick draws.
+                          // A void swaps in its own sign with the same pop.
+                          SuccessMark(color: circle, icon: voided ? icon : null),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -110,7 +108,12 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ReceiptPaper(receipt: r, user: user, strike: strike),
+                    // The slip rises into place just after the tick, like paper leaving a printer.
+                    EntranceFade(
+                      delay: const Duration(milliseconds: 180),
+                      offset: 28,
+                      child: ReceiptPaper(receipt: r, user: user, strike: strike),
+                    ),
                     if (voided) ...[
                       const SizedBox(height: 12),
                       Container(
