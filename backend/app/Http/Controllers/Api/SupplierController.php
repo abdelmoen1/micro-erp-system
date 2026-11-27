@@ -60,16 +60,21 @@ class SupplierController extends Controller
             ->loadSum(['payments as paid' => fn($q) => $q->notVoided()], 'amount')
             ->loadSum(['returns as returned' => fn($q) => $q->notVoided()], 'balance_reduction');
 
-        $products = PurchaseItem::query()
+        // A line sent back in full leaves the supplier's invoice; the rest count only what is left.
+        $lines = PurchaseItem::query()
             ->whereIn('purchase_invoice_id', $supplier->invoices()->notVoided()->select('id'))
             ->with('product')
             ->get()
+            ->reject(fn(PurchaseItem $item) => $item->isFullyReturned());
+        $returnedValues = PurchaseItem::returnedValues($lines->pluck('id'));
+
+        $products = $lines
             ->groupBy('product_id')
             ->map(fn($rows, $productId) => [
                 'id' => (int) $productId,
                 'name' => $rows->first()->product->name,
                 'unit' => $rows->first()->product->unit,
-                'total' => Money::sum($rows->pluck('line_total')),
+                'total' => Money::sum($rows->map(fn(PurchaseItem $item) => Money::sub($item->line_total, $returnedValues[$item->id] ?? '0'))),
             ])
             ->sortBy('name')
             ->values();
@@ -97,25 +102,38 @@ class SupplierController extends Controller
         ]]);
     }
 
-    /** One product at this supplier: its invoices. */
+    /**
+     * One product at this supplier: its invoices, each with what is still on it. An invoice whose
+     * whole quantity of the product went back to the supplier no longer lists it.
+     */
     public function product(Request $request, Supplier $supplier, Product $product)
     {
         Gate::authorize('adjustStock', Product::class);
 
-        $invoices = $supplier->productLines($product->id)->with('invoice.creator')->latest('id')->limit(200)->get()
-            ->map(fn(PurchaseItem $item) => [
+        $lines = $supplier->productLines($product->id)->with('invoice.creator')->latest('id')->limit(200)->get()
+            ->reject(fn(PurchaseItem $item) => $item->isFullyReturned())
+            ->values();
+        $returnedValues = PurchaseItem::returnedValues($lines->pluck('id'));
+
+        $invoices = $lines->map(function (PurchaseItem $item) use ($product, $returnedValues) {
+            [$cartons, $loosePieces] = $item->remainingCartons();
+
+            return [
                 'id' => $item->id,
                 'invoice_id' => $item->purchase_invoice_id,
                 'at' => $item->created_at,
                 'by' => $item->invoice->creator?->name,
-                'quantity' => Quantity::format($item->quantity, $product->unit),
-                'cartons' => $item->cartons,
+                'quantity' => Quantity::format($item->remainingQuantity(), $product->unit),
+                'bought_quantity' => Quantity::format($item->quantity, $product->unit),
+                'returned_quantity' => Quantity::format($item->returned_quantity, $product->unit),
+                'cartons' => $cartons,
                 'pack_size' => $item->pack_size,
-                'loose_pieces' => (int) $item->loose_pieces,
+                'loose_pieces' => $loosePieces,
                 'buy_price' => Money::of($item->buy_price),
-                'total' => Money::of($item->line_total),
+                'total' => Money::sub($item->line_total, $returnedValues[$item->id] ?? '0'),
                 'voided' => $item->invoice->isVoided(),
-            ]);
+            ];
+        });
 
         return response()->json(['data' => [
             'supplier' => ['id' => $supplier->id, 'name' => $supplier->name],

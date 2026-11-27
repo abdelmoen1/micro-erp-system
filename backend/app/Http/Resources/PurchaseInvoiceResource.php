@@ -27,15 +27,9 @@ class PurchaseInvoiceResource extends JsonResource
                     ->pluck('total'),
             );
             $remainingValue = Money::sub($item->line_total, $returnedValue);
-            $remainingQuantity = Quantity::sub($item->quantity, $item->returned_quantity);
+            $remainingQuantity = $item->remainingQuantity();
             $remainingAmount = Money::add($remainingAmount, $remainingValue);
-            $remainingCartons = null;
-            $remainingLoosePieces = 0;
-            if ($item->cartons !== null && (int) $item->pack_size > 0 && Quantity::isWhole($remainingQuantity)) {
-                $remainingPieces = (int) substr(Quantity::of($remainingQuantity), 0, -4);
-                $remainingCartons = intdiv($remainingPieces, (int) $item->pack_size);
-                $remainingLoosePieces = $remainingPieces % (int) $item->pack_size;
-            }
+            [$remainingCartons, $remainingLoosePieces] = $item->remainingCartons();
 
             return [
                 'id' => $item->id,
