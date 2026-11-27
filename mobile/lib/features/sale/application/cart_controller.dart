@@ -43,6 +43,17 @@ final class ScanUnknown extends ScanResult {
   const ScanUnknown(super.code);
 }
 
+/// The product is known but its shelf is empty, or the cart already takes all of it: no sale below
+/// zero. The cart is unchanged; [product] carries the stock the lookup returned.
+final class ScanOutOfStock extends ScanResult {
+  const ScanOutOfStock(super.code, this.product);
+
+  final Product product;
+}
+
+/// What a cart change did. [outOfStock] left the cart as it was: more than the recorded stock.
+enum CartChange { done, needsWeight, outOfStock }
+
 /// The lookup failed (network, server); the cart is unchanged.
 final class ScanFailed extends ScanResult {
   const ScanFailed(super.code, this.failure);
@@ -83,24 +94,38 @@ class CartController extends Notifier<Cart> {
     }
     if (!ref.mounted) return ScanIgnored(code);
 
-    state = state.addPiece(product);
+    if (addProduct(product) == CartChange.outOfStock) return ScanOutOfStock(code, product);
     return ScanAdded(code, state.lineFor(product.id)!, elapsed: started.elapsed, lookup: lookupWatch.elapsed);
   }
 
-  /// A product picked from manual search: +1 for pieces. Returns false for a kg product, which
-  /// needs the weight sheet first.
-  bool addProduct(Product product) {
-    if (product.isWeighed) return false;
-    state = state.addPiece(product);
-    return true;
+  /// A product picked from manual search (or just added from the till): +1 for pieces. A kg
+  /// product needs the weight sheet first; an empty shelf adds nothing.
+  CartChange addProduct(Product product) {
+    if (product.isWeighed) return CartChange.needsWeight;
+    final next = (state.lineFor(product.id)?.quantity ?? Quantity.zero) + Quantity.one;
+    return setQuantity(product, next);
   }
 
-  /// Weight sheet (kg) or stepper (pieces, or cartons with [pack]); zero removes the line.
-  void setQuantity(Product product, Quantity quantity, {bool pack = false}) =>
-      state = state.setQuantity(product, quantity, pack: pack);
+  /// Weight sheet (kg) or stepper (pieces, or cartons with [pack]); zero removes the line. Never
+  /// past the recorded stock: then the cart stays as it was.
+  CartChange setQuantity(Product product, Quantity quantity, {bool pack = false}) {
+    if (!state.allows(product, quantity, pack: pack)) return CartChange.outOfStock;
+    state = state.setQuantity(product, quantity, pack: pack);
+    return CartChange.done;
+  }
 
   /// «+ كرتونة»: one more carton of [product], on its own line next to the pieces.
-  void addPack(Product product) => state = state.addPack(product);
+  CartChange addPack(Product product) {
+    if (!product.hasPack) throw ArgumentError.value(product.id, 'product', 'This product is not sold by the carton');
+    final next = (state.lineFor(product.id, pack: true)?.quantity ?? Quantity.zero) + Quantity.one;
+    return setQuantity(product, next, pack: true);
+  }
+
+  /// A held cart taken back (or the one being held swapped out).
+  void replace(Cart cart) {
+    state = cart;
+    ref.read(repeatScanGuardProvider).reset();
+  }
 
   void remove(int productId, {bool pack = false}) => state = state.remove(productId, pack: pack);
 

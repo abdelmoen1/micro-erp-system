@@ -707,7 +707,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String lineStockNote(String stock) {
-    return 'Only $stock in recorded stock. The sale is allowed and flagged for review.';
+    return 'Only $stock in recorded stock — lower the quantity or count the shelf before payment.';
   }
 
   @override
@@ -911,7 +911,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dueOn => 'Due:';
 
   @override
-  String get negativeStockTitle => 'Stock warning: you can continue';
+  String get negativeStockTitle =>
+      'More than the stock — fix it before payment';
 
   @override
   String negativeStockRow(String stock, String quantity) {
@@ -3750,4 +3751,194 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moveAdjustmentReversal => 'Adjustment taken back';
+
+  @override
+  String stockOutTitle(String name) {
+    return '$name is out of stock';
+  }
+
+  @override
+  String stockOutLeft(String quantity) {
+    return 'Only $quantity left — no selling past the stock.';
+  }
+
+  @override
+  String get stockOutEmpty =>
+      'No selling below zero. If some is on the shelf, count it now and carry on.';
+
+  @override
+  String get stockOutEmployee =>
+      'No selling below zero. Ask the owner or a manager to count it.';
+
+  @override
+  String get stockCountAction => 'Count';
+
+  @override
+  String get quickAddTitle => 'New item — add it and sell';
+
+  @override
+  String get quickAddBody =>
+      'This barcode is not in the store yet. Type its name, price and how many are on the shelf: it goes into the stock and onto this sale at once.';
+
+  @override
+  String get quickAddShelf => 'On the shelf';
+
+  @override
+  String get quickAddShelfInvalid => 'Type a quantity above zero to sell it';
+
+  @override
+  String get quickAddSave => 'Add and sell';
+
+  @override
+  String quickAddDone(String name) {
+    return '$name added to the stock and the sale';
+  }
+
+  @override
+  String get holdCart => 'Hold';
+
+  @override
+  String get holdTitle => 'Hold this customer’s cart';
+
+  @override
+  String get holdBody =>
+      'It stays on this phone until you come back to it, even if the app closes. Nothing is sold or taken from stock before payment.';
+
+  @override
+  String get holdLabel => 'Customer name or a note';
+
+  @override
+  String get holdLabelHint => 'e.g. Abu Ahmad';
+
+  @override
+  String get holdConfirm => 'Hold and serve the next';
+
+  @override
+  String holdDone(String label) {
+    return '$label’s cart is on hold';
+  }
+
+  @override
+  String get heldTitle => 'Held carts';
+
+  @override
+  String heldUnnamed(int count) {
+    return 'Customer $count';
+  }
+
+  @override
+  String get heldSwapTitle => 'The current customer’s cart is open';
+
+  @override
+  String heldSwapBody(String label) {
+    return 'The open cart goes on hold and $label’s cart opens to finish.';
+  }
+
+  @override
+  String get heldSwapConfirm => 'Hold current and open';
+
+  @override
+  String heldOpened(String label) {
+    return '$label’s cart is open';
+  }
+
+  @override
+  String get heldDiscard => 'Delete';
+
+  @override
+  String heldDiscardTitle(String label) {
+    return 'Delete $label’s held cart?';
+  }
+
+  @override
+  String get heldDiscardBody =>
+      'Nothing was sold from it, so no stock or debt changes.';
+
+  @override
+  String get heldStockChanged =>
+      'Stock changed since the hold — check the marked lines before payment.';
+
+  @override
+  String transfersPending(int count) {
+    return 'Awaiting transfer · $count';
+  }
+
+  @override
+  String get homeHideAmounts => 'Hide amounts';
+
+  @override
+  String get homeShowAmounts => 'Show amounts';
+
+  @override
+  String get salesThisWeek => 'This week';
+
+  @override
+  String get salesThisMonth => 'This month';
+
+  @override
+  String get salesTotalTitle => 'Total sales';
+
+  @override
+  String get salesTotalCash => 'Total cash sales';
+
+  @override
+  String get salesTotalCredit => 'Total credit sales';
+
+  @override
+  String get salesTotalAllTime => 'Pick a period to see its total';
+
+  @override
+  String get salesTotalNote => 'Voided sales left out';
+
+  @override
+  String get rxLabel => 'Receiving account';
+
+  @override
+  String get rxPick => 'Pick the account the transfer reached';
+
+  @override
+  String rxTitle(String provider) {
+    return '$provider account';
+  }
+
+  @override
+  String get rxAdd => 'Add a new account';
+
+  @override
+  String get rxName => 'Account name';
+
+  @override
+  String get rxNameHint => 'e.g. Shop wallet';
+
+  @override
+  String get rxIdentifier => 'Account or phone number';
+
+  @override
+  String get rxIdentifierHint => 'The number the customer sends to';
+
+  @override
+  String get rxSave => 'Save and use it';
+
+  @override
+  String get rxRequired => 'Type the account name and number.';
+
+  @override
+  String rxEmpty(String provider) {
+    return 'No $provider account yet. Add it here once and it stays for next time.';
+  }
+
+  @override
+  String rxEmptyEmployee(String provider) {
+    return 'No $provider account yet. Ask the owner or a manager to add it.';
+  }
+
+  @override
+  String get rxManage => 'Edit or archive accounts';
+
+  @override
+  String get rxLoadError =>
+      'Could not load the accounts. Check the connection and try again.';
+
+  @override
+  String get rxSaveError => 'Could not save the account. Try again.';
 }

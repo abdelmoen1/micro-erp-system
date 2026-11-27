@@ -708,7 +708,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String lineStockNote(String stock) {
-    return 'المخزون المسجّل $stock فقط — البيع مسموح ويُسجَّل للمراجعة';
+    return 'المخزون المسجّل $stock فقط — قلّل الكمية أو اجرده قبل الدفع';
   }
 
   @override
@@ -911,7 +911,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dueOn => 'الاستحقاق:';
 
   @override
-  String get negativeStockTitle => 'تنبيه مخزون — يمكنك المتابعة';
+  String get negativeStockTitle => 'الكمية أكثر من المخزون — عدّلها قبل الدفع';
 
   @override
   String negativeStockRow(String stock, String quantity) {
@@ -3718,4 +3718,193 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get moveAdjustmentReversal => 'تراجع عن تعديل';
+
+  @override
+  String stockOutTitle(String name) {
+    return 'نفد مخزون $name';
+  }
+
+  @override
+  String stockOutLeft(String quantity) {
+    return 'المتوفر $quantity فقط — لا يُباع أكثر من المخزون.';
+  }
+
+  @override
+  String get stockOutEmpty =>
+      'لا يُباع بالسالب. إذا عندك منه على الرف، اجرده الآن وكمّل البيع.';
+
+  @override
+  String get stockOutEmployee =>
+      'لا يُباع بالسالب. اطلب من المالك أو المدير جرده.';
+
+  @override
+  String get stockCountAction => 'جرد';
+
+  @override
+  String get quickAddTitle => 'صنف جديد — أضِفه وبِعه';
+
+  @override
+  String get quickAddBody =>
+      'هذا الباركود غير مسجَّل. اكتب اسمه وسعره وكم عندك منه على الرف: يُضاف للمخزون ولفاتورة الزبون مباشرة.';
+
+  @override
+  String get quickAddShelf => 'الموجود على الرف';
+
+  @override
+  String get quickAddShelfInvalid => 'اكتب كمية أكبر من صفر حتى تبيعه';
+
+  @override
+  String get quickAddSave => 'أضِف وبِع';
+
+  @override
+  String quickAddDone(String name) {
+    return 'أُضيف $name للمخزون والفاتورة';
+  }
+
+  @override
+  String get holdCart => 'علّق';
+
+  @override
+  String get holdTitle => 'تعليق فاتورة الزبون';
+
+  @override
+  String get holdBody =>
+      'تبقى محفوظة على هذا الجوال حتى ترجع لها، حتى لو أُغلق التطبيق. لا يُسجَّل بيع ولا يُخصم مخزون قبل الدفع.';
+
+  @override
+  String get holdLabel => 'اسم الزبون أو علامة';
+
+  @override
+  String get holdLabelHint => 'مثلاً: أبو أحمد';
+
+  @override
+  String get holdConfirm => 'علّق وابدأ زبوناً جديداً';
+
+  @override
+  String holdDone(String label) {
+    return 'عُلّقت فاتورة $label';
+  }
+
+  @override
+  String get heldTitle => 'فواتير معلّقة';
+
+  @override
+  String heldUnnamed(int count) {
+    return 'زبون $count';
+  }
+
+  @override
+  String get heldSwapTitle => 'فاتورة الزبون الحالي مفتوحة';
+
+  @override
+  String heldSwapBody(String label) {
+    return 'تُعلَّق الفاتورة المفتوحة الآن، وتُفتح فاتورة $label لتكمّلها.';
+  }
+
+  @override
+  String get heldSwapConfirm => 'علّق الحالية وافتح';
+
+  @override
+  String heldOpened(String label) {
+    return 'فُتحت فاتورة $label';
+  }
+
+  @override
+  String get heldDiscard => 'حذف';
+
+  @override
+  String heldDiscardTitle(String label) {
+    return 'حذف فاتورة $label المعلّقة؟';
+  }
+
+  @override
+  String get heldDiscardBody => 'لم يُبَع منها شيء، فلا يتغير مخزون ولا دين.';
+
+  @override
+  String get heldStockChanged =>
+      'تغيّر المخزون منذ التعليق — راجع الأسطر المعلَّمة قبل الدفع.';
+
+  @override
+  String transfersPending(int count) {
+    return 'بانتظار حوالة · $count';
+  }
+
+  @override
+  String get homeHideAmounts => 'إخفاء المبالغ';
+
+  @override
+  String get homeShowAmounts => 'إظهار المبالغ';
+
+  @override
+  String get salesThisWeek => 'هذا الأسبوع';
+
+  @override
+  String get salesThisMonth => 'هذا الشهر';
+
+  @override
+  String get salesTotalTitle => 'مجموع المبيعات';
+
+  @override
+  String get salesTotalCash => 'مجموع المبيعات النقدية';
+
+  @override
+  String get salesTotalCredit => 'مجموع المبيعات الآجلة';
+
+  @override
+  String get salesTotalAllTime => 'اختر فترة لترى مجموعها';
+
+  @override
+  String get salesTotalNote => 'بدون الفواتير الملغاة';
+
+  @override
+  String get rxLabel => 'حساب استقبال الحوالة';
+
+  @override
+  String get rxPick => 'اختر الحساب الذي وصلته الحوالة';
+
+  @override
+  String rxTitle(String provider) {
+    return 'حساب $provider';
+  }
+
+  @override
+  String get rxAdd => 'إضافة حساب جديد';
+
+  @override
+  String get rxName => 'اسم الحساب';
+
+  @override
+  String get rxNameHint => 'مثلاً: محفظة المحل';
+
+  @override
+  String get rxIdentifier => 'رقم الحساب أو الجوال';
+
+  @override
+  String get rxIdentifierHint => 'الرقم الذي يحوّل إليه الزبون';
+
+  @override
+  String get rxSave => 'احفظ واختره';
+
+  @override
+  String get rxRequired => 'اكتب اسم الحساب ورقمه.';
+
+  @override
+  String rxEmpty(String provider) {
+    return 'لا يوجد حساب $provider بعد. أضِفه هنا مرة واحدة ويبقى للمرات القادمة.';
+  }
+
+  @override
+  String rxEmptyEmployee(String provider) {
+    return 'لا يوجد حساب $provider بعد. اطلب من المالك أو المدير إضافته.';
+  }
+
+  @override
+  String get rxManage => 'تعديل الحسابات وأرشفتها';
+
+  @override
+  String get rxLoadError =>
+      'تعذّر تحميل الحسابات. تحقّق من الاتصال وأعد المحاولة.';
+
+  @override
+  String get rxSaveError => 'تعذّر حفظ الحساب. أعد المحاولة.';
 }

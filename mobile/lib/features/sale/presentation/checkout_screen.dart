@@ -20,6 +20,7 @@ import '../domain/cart.dart';
 import 'customer_picker_sheet.dart';
 import 'price_editing.dart';
 import 'receipt_screen.dart';
+import 'receiving_account_picker.dart';
 import 'sale_widgets.dart';
 
 /// Payment method labels, in the order of the 2 × 2 grid (05 §3.1).
@@ -112,6 +113,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     _controller.setMethod(method);
   }
 
+  /// The account the transfer goes to, picked (or added) like a customer. Null when left.
+  Future<Map<String, dynamic>?> _pickAccount(String method) async {
+    final account = await showReceivingAccountPicker(
+      context,
+      provider: method,
+      providerLabel: paymentMethodLabel(AppLocalizations.of(context), method),
+      selectedId: (_selectedReceivingAccount?['id'] as num?)?.toInt(),
+    );
+    if (account != null && mounted) {
+      setState(() {
+        _selectedReceivingAccount = account;
+        _suspendError = null;
+      });
+    }
+    return account;
+  }
+
   Future<void> _confirm(Cart cart) async {
     final outcome = await _controller.confirm(cart, _user);
     if (!mounted) return;
@@ -130,50 +148,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     try {
       var account = _selectedReceivingAccount;
       if (account == null) {
-        final accounts = await ref
-            .read(saleRepositoryProvider)
-            .receivingAccounts(state.method);
-        if (!mounted) return;
-        if (accounts.isEmpty) {
-          setState(() {
-            _suspendBusy = false;
-            _suspendError = 'لا يوجد حساب نشط لهذا المزود. اطلب من المدير إضافة حساب استقبال.';
-          });
-          return;
-        }
-        account = await showModalBottomSheet<Map<String, dynamic>>(
-          context: context,
-          useSafeArea: true,
-          builder: (context) => SafeArea(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'اختر حساب استقبال الحوالة',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                  ),
-                ),
-                for (final item in accounts)
-                  ListTile(
-                    title: Text(item['account_name'] as String? ?? ''),
-                    subtitle: Text(
-                      item['account_identifier'] as String? ?? '',
-                      textDirection: TextDirection.ltr,
-                    ),
-                    onTap: () => Navigator.pop(context, item),
-                  ),
-              ],
-            ),
-          ),
-        );
+        // Not picked yet: the same picker as the row above, with «add» right there.
+        account = await _pickAccount(state.method);
         if (!mounted) return;
         if (account == null) {
           setState(() => _suspendBusy = false);
           return;
         }
-        setState(() => _selectedReceivingAccount = account);
       }
 
       final current = ref.read(checkoutControllerProvider);
@@ -405,6 +386,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         ),
                       ],
                     ],
+                    if (state.mode == SaleMode.cash && state.method != 'cash') ...[
+                      const SizedBox(height: 14),
+                      _AccountSection(
+                        account: _selectedReceivingAccount,
+                        locked: locked || _suspendBusy,
+                        onPick: () => _pickAccount(state.method),
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     _CustomerSection(
                       state: state,
@@ -444,14 +433,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                 color: Theme.of(context).colorScheme.error,
                               ),
                             ),
-                          ),
-                        ),
-                      if (_selectedReceivingAccount != null &&
-                          !_suspendUncertain)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            'الحساب: ${_selectedReceivingAccount!['account_name']}',
                           ),
                         ),
                       SizedBox(
@@ -1253,6 +1234,73 @@ class _AmountInput extends StatelessWidget {
   }
 }
 
+/// «حساب استقبال الحوالة»: the chosen account with «تغيير», or one row that opens the picker.
+class _AccountSection extends StatelessWidget {
+  const _AccountSection({required this.account, required this.locked, required this.onPick});
+
+  final Map<String, dynamic>? account;
+  final bool locked;
+  final VoidCallback onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final chosen = account;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GroupLabel(t.rxLabel),
+        const SizedBox(height: 8),
+        Material(
+          color: chosen == null ? HisbahColors.raised : HisbahColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: HisbahColors.borderStrong, width: 1.5),
+          ),
+          child: InkWell(
+            key: const Key('checkout.pickAccount'),
+            borderRadius: BorderRadius.circular(16),
+            onTap: locked ? null : onPick,
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 56),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.account_balance_wallet_outlined, size: 20, color: HisbahColors.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: chosen == null
+                        ? Text(t.rxPick, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                chosen['account_name'] as String? ?? '',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                              ),
+                              Num(
+                                chosen['account_identifier'] as String? ?? '',
+                                size: 13,
+                                weight: FontWeight.w400,
+                                color: HisbahColors.inkMuted,
+                              ),
+                            ],
+                          ),
+                  ),
+                  if (chosen == null)
+                    const Icon(Icons.chevron_left_rounded, size: 20, color: HisbahColors.inkMuted)
+                  else
+                    Text(t.changeWord, style: const TextStyle(fontWeight: FontWeight.w700, color: HisbahColors.primary)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _CustomerSection extends StatelessWidget {
   const _CustomerSection({
     required this.state,
@@ -1698,8 +1746,11 @@ class _ConfirmBar extends StatelessWidget {
     final t = AppLocalizations.of(context);
     final s = summary;
     final customer = state.customer;
+    final overStock = s.cart.overStockLines.isNotEmpty;
 
-    final (note, noteColor) = s.limitBlocked
+    final (note, noteColor) = overStock
+        ? (t.negativeStockTitle, StatusTone.warning.fg)
+        : s.limitBlocked
         ? (t.barLimitBlocked, StatusTone.error.fg)
         : s.debt.isZero
         ? (t.barPaidFull, StatusTone.paid.fg)
@@ -1714,6 +1765,10 @@ class _ConfirmBar extends StatelessWidget {
       label = t.savingSale;
       amount = null;
     } else if (s.limitBlocked) {
+      disabled = true;
+    } else if (overStock && state.submit != SubmitState.uncertain) {
+      // No sale below zero: the marked lines come down (or the shelf is counted) first. A sale
+      // already sent and waiting for its answer is still checked, never blocked.
       disabled = true;
     } else if (state.submit == SubmitState.uncertain) {
       label = t.verifyAndRetry;

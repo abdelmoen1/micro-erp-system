@@ -32,7 +32,6 @@ import '../sale/presentation/sale_widgets.dart' show GroupLabel, LineCard;
 import '../sale/presentation/sales_history_screen.dart';
 import '../products/presentation/products_screen.dart';
 import '../sale/presentation/cart_screen.dart';
-import '../more/presentation/receiving_accounts_screen.dart';
 import '../sale/presentation/suspended_invoices_screen.dart';
 import 'app_shell.dart';
 
@@ -315,19 +314,6 @@ class _MoreTab extends ConsumerWidget {
                 title: t.moreStoreInfo,
                 subtitle: t.moreStoreInfoSub,
                 onTap: () => pushScreen<void>(context, const StoreSettingsScreen()),
-              ),
-            ],
-          ),
-        if (user.role == UserRole.owner || user.role == UserRole.manager)
-          _MoreSection(
-            title: 'حسابات التحويل',
-            tiles: [
-              MoreTile(
-                key: const Key('more.receivingAccounts'),
-                icon: Icons.account_balance_wallet_outlined,
-                title: 'حسابات استقبال الحوالات',
-                subtitle: 'إدارة حسابات المزوّدين لهذا المتجر',
-                onTap: () => pushScreen<void>(context, const ReceivingAccountsScreen()),
               ),
             ],
           ),

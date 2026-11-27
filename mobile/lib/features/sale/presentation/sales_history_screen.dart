@@ -8,9 +8,11 @@ import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/ltr_value.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../home/dashboard.dart' show salesSummaryProvider;
 import '../data/sale_repository.dart';
 import 'sale_detail_screen.dart';
 import 'sale_widgets.dart';
+import 'sales_total_card.dart';
 
 enum SalesPeriod { today, week, month, all }
 
@@ -63,16 +65,20 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
   (String?, String?) _range() {
     final today = DateTime.now();
     String day(int back) => _day.format(today.subtract(Duration(days: back)));
+    // The dashboard's own periods, so the green total above adds up the same days: the week from
+    // Monday (BusinessClock::periodBounds) and the calendar month.
     return switch (_period) {
       SalesPeriod.today => (day(0), day(0)),
-      SalesPeriod.week => (day(6), day(0)),
-      SalesPeriod.month => (day(29), day(0)),
+      SalesPeriod.week => (day(today.weekday - DateTime.monday), day(0)),
+      SalesPeriod.month => (day(today.day - 1), day(0)),
       SalesPeriod.all => (null, null),
     };
   }
 
   Future<void> _reload() async {
     _generation++;
+    // Pull to refresh (or a void from an invoice) also refreshes the green totals.
+    ref.invalidate(salesSummaryProvider);
     setState(() {
       _sales.clear();
       _page = 0;
@@ -118,8 +124,8 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
     final t = AppLocalizations.of(context);
     final periods = [
       (SalesPeriod.today, t.salesToday),
-      (SalesPeriod.week, t.sales7),
-      (SalesPeriod.month, t.sales30),
+      (SalesPeriod.week, t.salesThisWeek),
+      (SalesPeriod.month, t.salesThisMonth),
       (SalesPeriod.all, t.salesAll),
     ];
 
@@ -177,11 +183,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                     label: label,
                     fontSize: 13,
                     selected: _period == period,
-                    onTap: () {
-                      if (_period == period) return;
-                      setState(() => _period = period);
-                      _reload();
-                    },
+                    onTap: () => _setPeriod(period),
                   ),
               ],
             ),
@@ -210,10 +212,17 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
               ],
             ),
           ),
+          SalesTotalCard(period: _period, type: _type, onPeriod: _setPeriod),
           Expanded(child: body),
         ],
       ),
     );
+  }
+
+  void _setPeriod(SalesPeriod period) {
+    if (_period == period) return;
+    setState(() => _period = period);
+    _reload();
   }
 }
 

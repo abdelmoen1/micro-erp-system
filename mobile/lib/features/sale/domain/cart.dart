@@ -50,6 +50,21 @@ class CartLine {
 
   CartLine withQuantity(Quantity value) => CartLine(product: product, quantity: value, pack: pack, setPrice: setPrice);
 
+  /// A held cart on the phone: the product snapshot, the exact quantity and the price set for it.
+  Map<String, Object?> toJson() => {
+    'product': product.toJson(),
+    'quantity': quantity.toString(),
+    'pack': pack,
+    'set_price': setPrice?.toApi(),
+  };
+
+  factory CartLine.fromJson(Map<String, dynamic> json) => CartLine(
+    product: Product.fromJson(json['product'] as Map<String, dynamic>),
+    quantity: Quantity.parse(json['quantity'] as Object),
+    pack: json['pack'] == true,
+    setPrice: json['set_price'] == null ? null : Money.parse(json['set_price'] as String),
+  );
+
   bool same(int productId, bool byPack) => product.id == productId && pack == byPack;
 }
 
@@ -60,7 +75,19 @@ class Cart {
 
   static const empty = Cart();
 
+  factory Cart.fromJson(List<dynamic> json) => Cart([
+    for (final line in json) CartLine.fromJson(line as Map<String, dynamic>),
+  ]);
+
   final List<CartLine> lines;
+
+  List<Map<String, Object?>> toJson() => [for (final line in lines) line.toJson()];
+
+  /// The same lines with newer product snapshots (a held cart taken back: fresh stock and names).
+  Cart withProducts(Map<int, Product> fresh) => Cart([
+    for (final line in lines)
+      CartLine(product: fresh[line.product.id] ?? line.product, quantity: line.quantity, pack: line.pack, setPrice: line.setPrice),
+  ]);
 
   bool get isEmpty => lines.isEmpty;
 
@@ -70,9 +97,28 @@ class Cart {
   Quantity baseQuantityOf(int productId) =>
       lines.where((line) => line.product.id == productId).fold(Quantity.zero, (sum, line) => sum + line.baseQuantity);
 
-  /// D-27: selling more than the recorded stock is allowed; the UI only warns. Counts every line of
-  /// the product, so 2 cartons of 24 against 30 in stock are over it.
+  /// Counts every line of the product, so 2 cartons of 24 against 30 in stock are over it. The cart
+  /// never lets a line grow past the stock ([allows]); a cart can still end up over it when the
+  /// stock fell meanwhile (another cashier, a held cart taken back later), and the UI then warns.
   bool exceedsStock(CartLine line) => baseQuantityOf(line.product.id) > line.product.currentStock;
+
+  /// What is left of [product] on the shelf for its [pack] line (or its piece / kg line): the
+  /// recorded stock less what the cart's other lines of it already take. In the product's own unit.
+  Quantity roomFor(Product product, {bool pack = false}) {
+    final others = lines
+        .where((line) => line.product.id == product.id && !line.same(product.id, pack))
+        .fold(Quantity.zero, (sum, line) => sum + line.baseQuantity);
+    return product.currentStock - others;
+  }
+
+  /// No sale below zero: a line may go up to [quantity] only while every line of the product
+  /// together stays within [product]'s recorded stock. Lowering a line is always allowed.
+  bool allows(Product product, Quantity quantity, {bool pack = false}) {
+    final current = lineFor(product.id, pack: pack)?.quantity ?? Quantity.zero;
+    if (quantity <= current) return true;
+    final base = pack ? Quantity.milli(quantity.milli * (product.packSize ?? 1)) : quantity;
+    return base <= roomFor(product, pack: pack);
+  }
 
   /// Lines whose product would go above the recorded stock (NEGATIVE_STOCK preview).
   List<CartLine> get overStockLines => [

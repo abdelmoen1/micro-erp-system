@@ -135,6 +135,7 @@ class _TodayCard extends ConsumerWidget {
     final session = ref.watch(sessionProvider);
     final name = session is SignedIn ? session.user.name.trim() : '';
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final hidden = ref.watch(hideAmountsProvider);
     const onTeal = HisbahColors.onPrimary;
     const onTealMuted = Color(0xCCFFFFFF);
 
@@ -181,9 +182,13 @@ class _TodayCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (name.isNotEmpty)
-                  Text(
-                    t.homeGreeting(name),
-                    style: const TextStyle(color: onTeal, fontSize: 17, fontWeight: FontWeight.w700),
+                  Padding(
+                    // Clear of the eye in the top corner.
+                    padding: const EdgeInsetsDirectional.only(end: 48),
+                    child: Text(
+                      t.homeGreeting(name),
+                      style: const TextStyle(color: onTeal, fontSize: 17, fontWeight: FontWeight.w700),
+                    ),
                   ),
                 Text(
                   DateFormat.MMMMEEEEd(locale).format(DateTime.now()),
@@ -198,6 +203,7 @@ class _TodayCard extends ConsumerWidget {
                   child: _Amount(
                     today.totalSales,
                     key: const Key('home.totalSales'),
+                    hidden: hidden,
                     style: const TextStyle(color: onTeal, fontSize: 34, fontWeight: FontWeight.w800, height: 1.2),
                   ),
                 ),
@@ -228,6 +234,22 @@ class _TodayCard extends ConsumerWidget {
               child: InkWell(
                 key: const Key('home.today.open'),
                 onTap: () => _openSales(context, SalesType.all),
+              ),
+            ),
+          ),
+          // Above the card's own tap: the eye only hides or shows the figure.
+          PositionedDirectional(
+            top: 10,
+            end: 10,
+            child: Material(
+              color: const Color(0x26FFFFFF),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: IconButton(
+                key: const Key('home.today.eye'),
+                tooltip: hidden ? t.homeShowAmounts : t.homeHideAmounts,
+                onPressed: () => ref.read(hideAmountsProvider.notifier).toggle(),
+                icon: Icon(hidden ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: onTeal),
               ),
             ),
           ),
@@ -408,14 +430,17 @@ class _StatTile extends StatelessWidget {
 
 /// Amount with the shekel sign, laid out LTR inside the RTL screen ("1,250.00 ₪").
 class _Amount extends StatelessWidget {
-  const _Amount(this.amount, {super.key, required this.style});
+  const _Amount(this.amount, {super.key, required this.style, this.hidden = false});
 
   final String amount;
   final TextStyle style;
 
+  /// The green card's eye is closed: «•••• ₪» instead of the figure.
+  final bool hidden;
+
   @override
   Widget build(BuildContext context) => Text(
-    '${formatMoney(amount)} ${AppLocalizations.of(context).currencySymbol}',
+    '${hidden ? hiddenAmount : formatMoney(amount)} ${AppLocalizations.of(context).currencySymbol}',
     textDirection: TextDirection.ltr,
     maxLines: 1,
     style: style,

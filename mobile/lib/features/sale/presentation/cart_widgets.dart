@@ -12,15 +12,20 @@ import 'sale_widgets.dart';
 // stepper or weight button, and the one-message scan feedback slot.
 
 /// The scan feedback slot: one message at a time, the newest replaces the older (hi-fi M-02).
-enum ScanFeedbackKind { loading, added, updated, weighedAdded, duplicate, unknown, networkError }
+enum ScanFeedbackKind { loading, added, updated, weighedAdded, duplicate, unknown, networkError, outOfStock }
 
 class ScanFeedback {
-  const ScanFeedback(this.kind, {this.code = '', this.productName = '', this.quantity = ''});
+  const ScanFeedback(this.kind, {this.code = '', this.productName = '', this.quantity = '', this.canCount = false});
 
   final ScanFeedbackKind kind;
   final String code;
   final String productName;
+
+  /// The line's quantity now; for [ScanFeedbackKind.outOfStock], what is left (empty: nothing).
   final String quantity;
+
+  /// [ScanFeedbackKind.outOfStock] for an owner or manager: «جرد» counts the shelf right here.
+  final bool canCount;
 }
 
 class ScanFeedbackCard extends StatelessWidget {
@@ -69,6 +74,18 @@ class ScanFeedbackCard extends StatelessWidget {
         t.scanLookupFailed,
         t.scanLookupFailedBody,
         t.retry,
+      ),
+      // No sale below zero: the cart stayed as it was.
+      ScanFeedbackKind.outOfStock => (
+        StatusTone.warning,
+        Icons.remove_shopping_cart_outlined,
+        t.stockOutTitle(feedback.productName),
+        feedback.quantity.isNotEmpty
+            ? t.stockOutLeft(feedback.quantity)
+            : feedback.canCount
+            ? t.stockOutEmpty
+            : t.stockOutEmployee,
+        feedback.canCount ? t.stockCountAction : null,
       ),
     };
     final showCode = feedback.kind == ScanFeedbackKind.unknown || feedback.kind == ScanFeedbackKind.loading;
