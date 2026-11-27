@@ -156,9 +156,11 @@ class MoreRepository {
     return [for (final row in body['data'] as List<dynamic>? ?? const []) Map<String, dynamic>.from(row as Map)];
   }
 
-  Future<void> saveReceivingAccount({int? id, required String provider, required String name, required String identifier, required bool active}) {
+  /// The account as saved (with its id), so a new one can be chosen at once.
+  Future<Map<String, dynamic>> saveReceivingAccount({int? id, required String provider, required String name, required String identifier, required bool active}) async {
     final body = {'provider': provider, 'account_name': name, 'account_identifier': identifier, 'active': active};
-    return id == null ? _api.post('/receiving-accounts', body: body) : _api.patch('/receiving-accounts/$id', body: body);
+    final answer = id == null ? await _api.post('/receiving-accounts', body: body) : await _api.patch('/receiving-accounts/$id', body: body);
+    return Map<String, dynamic>.from(answer['data'] as Map? ?? const {});
   }
 
   Future<void> archiveReceivingAccount(int id) => _api.delete('/receiving-accounts/$id');

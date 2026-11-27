@@ -35,6 +35,22 @@ class Product {
     deletable: json['deletable'] == true,
   );
 
+  /// The same shape [Product.fromJson] reads: a held cart keeps its products on the phone this way.
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    'barcode': barcode,
+    'unit': unit.apiValue,
+    'selling_price': sellingPrice,
+    'cost_price': costPrice,
+    'current_stock': currentStock.format(unit),
+    'minimum_stock': minimumStock.format(unit),
+    'is_low_stock': isLowStock,
+    'status': isActive ? 'active' : 'inactive',
+    'pack_size': packSize,
+    'pack_price': packPrice,
+  };
+
   final int id;
   final String name;
   final String? barcode;

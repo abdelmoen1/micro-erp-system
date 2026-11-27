@@ -1343,7 +1343,7 @@ abstract class AppLocalizations {
   /// No description provided for @lineStockNote.
   ///
   /// In ar, this message translates to:
-  /// **'المخزون المسجّل {stock} فقط — البيع مسموح ويُسجَّل للمراجعة'**
+  /// **'المخزون المسجّل {stock} فقط — قلّل الكمية أو اجرده قبل الدفع'**
   String lineStockNote(String stock);
 
   /// No description provided for @stockWord.
@@ -1721,7 +1721,7 @@ abstract class AppLocalizations {
   /// No description provided for @negativeStockTitle.
   ///
   /// In ar, this message translates to:
-  /// **'تنبيه مخزون — يمكنك المتابعة'**
+  /// **'الكمية أكثر من المخزون — عدّلها قبل الدفع'**
   String get negativeStockTitle;
 
   /// No description provided for @negativeStockRow.
@@ -6589,6 +6589,324 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تراجع عن تعديل'**
   String get moveAdjustmentReversal;
+
+  /// No description provided for @stockOutTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'نفد مخزون {name}'**
+  String stockOutTitle(String name);
+
+  /// No description provided for @stockOutLeft.
+  ///
+  /// In ar, this message translates to:
+  /// **'المتوفر {quantity} فقط — لا يُباع أكثر من المخزون.'**
+  String stockOutLeft(String quantity);
+
+  /// No description provided for @stockOutEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يُباع بالسالب. إذا عندك منه على الرف، اجرده الآن وكمّل البيع.'**
+  String get stockOutEmpty;
+
+  /// No description provided for @stockOutEmployee.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يُباع بالسالب. اطلب من المالك أو المدير جرده.'**
+  String get stockOutEmployee;
+
+  /// No description provided for @stockCountAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'جرد'**
+  String get stockCountAction;
+
+  /// No description provided for @quickAddTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'صنف جديد — أضِفه وبِعه'**
+  String get quickAddTitle;
+
+  /// No description provided for @quickAddBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الباركود غير مسجَّل. اكتب اسمه وسعره وكم عندك منه على الرف: يُضاف للمخزون ولفاتورة الزبون مباشرة.'**
+  String get quickAddBody;
+
+  /// No description provided for @quickAddShelf.
+  ///
+  /// In ar, this message translates to:
+  /// **'الموجود على الرف'**
+  String get quickAddShelf;
+
+  /// No description provided for @quickAddShelfInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب كمية أكبر من صفر حتى تبيعه'**
+  String get quickAddShelfInvalid;
+
+  /// No description provided for @quickAddSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضِف وبِع'**
+  String get quickAddSave;
+
+  /// No description provided for @quickAddDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'أُضيف {name} للمخزون والفاتورة'**
+  String quickAddDone(String name);
+
+  /// No description provided for @holdCart.
+  ///
+  /// In ar, this message translates to:
+  /// **'علّق'**
+  String get holdCart;
+
+  /// No description provided for @holdTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعليق فاتورة الزبون'**
+  String get holdTitle;
+
+  /// No description provided for @holdBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تبقى محفوظة على هذا الجوال حتى ترجع لها، حتى لو أُغلق التطبيق. لا يُسجَّل بيع ولا يُخصم مخزون قبل الدفع.'**
+  String get holdBody;
+
+  /// No description provided for @holdLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم الزبون أو علامة'**
+  String get holdLabel;
+
+  /// No description provided for @holdLabelHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثلاً: أبو أحمد'**
+  String get holdLabelHint;
+
+  /// No description provided for @holdConfirm.
+  ///
+  /// In ar, this message translates to:
+  /// **'علّق وابدأ زبوناً جديداً'**
+  String get holdConfirm;
+
+  /// No description provided for @holdDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'عُلّقت فاتورة {label}'**
+  String holdDone(String label);
+
+  /// No description provided for @heldTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'فواتير معلّقة'**
+  String get heldTitle;
+
+  /// No description provided for @heldUnnamed.
+  ///
+  /// In ar, this message translates to:
+  /// **'زبون {count}'**
+  String heldUnnamed(int count);
+
+  /// No description provided for @heldSwapTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'فاتورة الزبون الحالي مفتوحة'**
+  String get heldSwapTitle;
+
+  /// No description provided for @heldSwapBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تُعلَّق الفاتورة المفتوحة الآن، وتُفتح فاتورة {label} لتكمّلها.'**
+  String heldSwapBody(String label);
+
+  /// No description provided for @heldSwapConfirm.
+  ///
+  /// In ar, this message translates to:
+  /// **'علّق الحالية وافتح'**
+  String get heldSwapConfirm;
+
+  /// No description provided for @heldOpened.
+  ///
+  /// In ar, this message translates to:
+  /// **'فُتحت فاتورة {label}'**
+  String heldOpened(String label);
+
+  /// No description provided for @heldDiscard.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف'**
+  String get heldDiscard;
+
+  /// No description provided for @heldDiscardTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف فاتورة {label} المعلّقة؟'**
+  String heldDiscardTitle(String label);
+
+  /// No description provided for @heldDiscardBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُبَع منها شيء، فلا يتغير مخزون ولا دين.'**
+  String get heldDiscardBody;
+
+  /// No description provided for @heldStockChanged.
+  ///
+  /// In ar, this message translates to:
+  /// **'تغيّر المخزون منذ التعليق — راجع الأسطر المعلَّمة قبل الدفع.'**
+  String get heldStockChanged;
+
+  /// No description provided for @transfersPending.
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار حوالة · {count}'**
+  String transfersPending(int count);
+
+  /// No description provided for @homeHideAmounts.
+  ///
+  /// In ar, this message translates to:
+  /// **'إخفاء المبالغ'**
+  String get homeHideAmounts;
+
+  /// No description provided for @homeShowAmounts.
+  ///
+  /// In ar, this message translates to:
+  /// **'إظهار المبالغ'**
+  String get homeShowAmounts;
+
+  /// No description provided for @salesThisWeek.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الأسبوع'**
+  String get salesThisWeek;
+
+  /// No description provided for @salesThisMonth.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الشهر'**
+  String get salesThisMonth;
+
+  /// No description provided for @salesTotalTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مجموع المبيعات'**
+  String get salesTotalTitle;
+
+  /// No description provided for @salesTotalCash.
+  ///
+  /// In ar, this message translates to:
+  /// **'مجموع المبيعات النقدية'**
+  String get salesTotalCash;
+
+  /// No description provided for @salesTotalCredit.
+  ///
+  /// In ar, this message translates to:
+  /// **'مجموع المبيعات الآجلة'**
+  String get salesTotalCredit;
+
+  /// No description provided for @salesTotalAllTime.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر فترة لترى مجموعها'**
+  String get salesTotalAllTime;
+
+  /// No description provided for @salesTotalNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'بدون الفواتير الملغاة'**
+  String get salesTotalNote;
+
+  /// No description provided for @rxLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'حساب استقبال الحوالة'**
+  String get rxLabel;
+
+  /// No description provided for @rxPick.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر الحساب الذي وصلته الحوالة'**
+  String get rxPick;
+
+  /// No description provided for @rxTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'حساب {provider}'**
+  String rxTitle(String provider);
+
+  /// No description provided for @rxAdd.
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة حساب جديد'**
+  String get rxAdd;
+
+  /// No description provided for @rxName.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم الحساب'**
+  String get rxName;
+
+  /// No description provided for @rxNameHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثلاً: محفظة المحل'**
+  String get rxNameHint;
+
+  /// No description provided for @rxIdentifier.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الحساب أو الجوال'**
+  String get rxIdentifier;
+
+  /// No description provided for @rxIdentifierHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرقم الذي يحوّل إليه الزبون'**
+  String get rxIdentifierHint;
+
+  /// No description provided for @rxSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظ واختره'**
+  String get rxSave;
+
+  /// No description provided for @rxRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب اسم الحساب ورقمه.'**
+  String get rxRequired;
+
+  /// No description provided for @rxEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد حساب {provider} بعد. أضِفه هنا مرة واحدة ويبقى للمرات القادمة.'**
+  String rxEmpty(String provider);
+
+  /// No description provided for @rxEmptyEmployee.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد حساب {provider} بعد. اطلب من المالك أو المدير إضافته.'**
+  String rxEmptyEmployee(String provider);
+
+  /// No description provided for @rxManage.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل الحسابات وأرشفتها'**
+  String get rxManage;
+
+  /// No description provided for @rxLoadError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تحميل الحسابات. تحقّق من الاتصال وأعد المحاولة.'**
+  String get rxLoadError;
+
+  /// No description provided for @rxSaveError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر حفظ الحساب. أعد المحاولة.'**
+  String get rxSaveError;
 }
 
 class _AppLocalizationsDelegate

@@ -23,6 +23,7 @@ import 'cart_widgets.dart';
 import 'checkout_screen.dart';
 import 'product_search_sheet.dart';
 import 'sale_widgets.dart';
+import 'sell_and_count.dart';
 import 'weight_sheet.dart';
 
 /// «مسح» on the sale tab: the camera stays on and every product read goes into the cart, shown in a
@@ -48,7 +49,8 @@ class SaleScannerScreen extends ConsumerStatefulWidget {
   ConsumerState<SaleScannerScreen> createState() => _SaleScannerScreenState();
 }
 
-class _SaleScannerScreenState extends ConsumerState<SaleScannerScreen> with WidgetsBindingObserver {
+class _SaleScannerScreenState extends ConsumerState<SaleScannerScreen>
+    with WidgetsBindingObserver, TillActions<SaleScannerScreen> {
   /// The panel's resting height: the camera keeps the upper part, where the frame is.
   static const _panelInitial = 0.44;
   static const _panelMin = 0.24;
@@ -198,9 +200,11 @@ class _SaleScannerScreenState extends ConsumerState<SaleScannerScreen> with Widg
         ref.read(scanCueProvider).success();
         _show(null);
         await _openWeight(product);
+      case ScanOutOfStock(:final product):
+        showOutOfStock(product);
       case ScanUnknown(:final code):
         unawaited(HapticFeedback.mediumImpact());
-        _show(ScanFeedback(ScanFeedbackKind.unknown, code: code));
+        await addUnknown(code);
       case ScanFailed(:final code):
         _show(ScanFeedback(ScanFeedbackKind.networkError, code: code));
     }
@@ -216,7 +220,7 @@ class _SaleScannerScreenState extends ConsumerState<SaleScannerScreen> with Widg
       _cart.remove(product.id);
       return;
     }
-    _cart.setQuantity(product, result.quantity!);
+    if (!applyWeight(product, result.quantity!)) return;
     setState(() => _justId = product.id);
     if (existing == null) _show(ScanFeedback(ScanFeedbackKind.weighedAdded, productName: product.name), flash: true);
   }
@@ -227,21 +231,29 @@ class _SaleScannerScreenState extends ConsumerState<SaleScannerScreen> with Widg
     final product = await showProductSearch(context);
     _release('search');
     if (product == null || !mounted) return;
-    if (product.isWeighed) {
-      await _openWeight(product);
-      return;
+    await addToTill(product);
+  }
+
+  // ---- the till's stock rules (sell_and_count.dart) ----
+
+  @override
+  void showFeedback(ScanFeedback? feedback, {bool flash = false}) => _show(feedback, flash: flash);
+
+  @override
+  void markJust(int productId) => setState(() => _justId = productId);
+
+  @override
+  Future<void> openWeight(Product product) => _openWeight(product);
+
+  /// The camera holds while the count or new-product sheet covers it.
+  @override
+  Future<R> covered<R>(String reason, Future<R> Function() sheet) async {
+    _hold(reason);
+    try {
+      return await sheet();
+    } finally {
+      _release(reason);
     }
-    _cart.addProduct(product);
-    final line = ref.read(cartControllerProvider).lineFor(product.id)!;
-    setState(() => _justId = product.id);
-    _show(
-      ScanFeedback(
-        line.quantity > Quantity.one ? ScanFeedbackKind.updated : ScanFeedbackKind.added,
-        productName: product.name,
-        quantity: line.quantity.format(product.unit),
-      ),
-      flash: true,
-    );
   }
 
   /// Opens the payment screen. The sale is created there, only by its confirm button.
@@ -313,6 +325,7 @@ class _SaleScannerScreenState extends ConsumerState<SaleScannerScreen> with Widg
                               onAction: switch (feedback.kind) {
                                 ScanFeedbackKind.unknown => _search,
                                 ScanFeedbackKind.networkError => () => _handleCode(feedback.code, retry: true),
+                                ScanFeedbackKind.outOfStock => countOutOfStock,
                                 _ => null,
                               },
                             ),
@@ -327,10 +340,8 @@ class _SaleScannerScreenState extends ConsumerState<SaleScannerScreen> with Widg
                             scroll: scroll,
                             justId: _justId,
                             onSearch: _search,
-                            onIncrement: (line) {
-                              _cart.setQuantity(line.product, line.quantity + Quantity.one, pack: line.pack);
-                              setState(() => _justId = line.product.id);
-                            },
+                            onIncrement: increment,
+                            onAddPack: (line) => addToTill(line.product, pack: true),
                             onDecrement: (line) =>
                                 _cart.setQuantity(line.product, line.quantity - Quantity.one, pack: line.pack),
                             onEditWeight: (line) => _openWeight(line.product),
@@ -461,9 +472,11 @@ class _CartPanel extends ConsumerWidget {
     required this.onDecrement,
     required this.onEditWeight,
     required this.onRemove,
+    required this.onAddPack,
     required this.footer,
   });
 
+  final void Function(CartLine line) onAddPack;
   final ScrollController scroll;
   final int? justId;
   final VoidCallback onSearch;
@@ -556,7 +569,7 @@ class _CartPanel extends ConsumerWidget {
                                     onDecrement: () => onDecrement(line),
                                     onEditWeight: () => onEditWeight(line),
                                     onRemove: () => onRemove(line),
-                                    onAddPack: () => ref.read(cartControllerProvider.notifier).addPack(line.product),
+                                    onAddPack: () => onAddPack(line),
                                     onPrice: (price) => ref
                                         .read(cartControllerProvider.notifier)
                                         .setPrice(line.product.id, price, pack: line.pack),

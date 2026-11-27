@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -141,6 +143,67 @@ final dashboardProvider = FutureProvider.autoDispose<TodayDashboard>((ref) async
   final body = await ref.watch(apiClientProvider).get('/dashboard', query: {'period': 'today'});
   return TodayDashboard.fromJson(body['data'] as Map<String, dynamic>? ?? const {});
 });
+
+/// One period's sales as the dashboard counts them (active sales, voided ones left out).
+class SalesSummary {
+  const SalesSummary({required this.total, required this.cash, required this.credit, required this.count});
+
+  factory SalesSummary.fromJson(Map<String, dynamic> json) {
+    final sales = json['sales'] as Map<String, dynamic>? ?? const {};
+    final summary = json['summary'] as Map<String, dynamic>? ?? const {};
+    return SalesSummary(
+      total: '${sales['total'] ?? summary['total_sales'] ?? '0.00'}',
+      cash: '${sales['cash'] ?? '0.00'}',
+      credit: '${sales['credit'] ?? '0.00'}',
+      count: (summary['invoices_count'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  final String total;
+  final String cash;
+  final String credit;
+  final int count;
+}
+
+/// `today`, `this_week` (Monday on) or `this_month`, in the store's own time zone.
+final salesSummaryProvider = FutureProvider.autoDispose.family<SalesSummary, String>((ref, period) async {
+  final body = await ref.watch(apiClientProvider).get('/dashboard', query: {'period': period});
+  return SalesSummary.fromJson(body['data'] as Map<String, dynamic>? ?? const {});
+});
+
+/// The eye on the green card: amounts hidden from whoever stands at the counter. Kept on the phone.
+class HideAmounts extends Notifier<bool> {
+  static const _key = 'home.hide_amounts';
+
+  @override
+  bool build() {
+    unawaited(_restore());
+    return false;
+  }
+
+  Future<void> _restore() async {
+    try {
+      final saved = await ref.read(keyValueStoreProvider).read(_key);
+      if (ref.mounted && saved == '1') state = true;
+    } on Object {
+      // Unreadable: amounts show.
+    }
+  }
+
+  Future<void> toggle() async {
+    state = !state;
+    try {
+      await ref.read(keyValueStoreProvider).write(_key, state ? '1' : '0');
+    } on Object {
+      // The choice still holds until the app closes.
+    }
+  }
+}
+
+final hideAmountsProvider = NotifierProvider<HideAmounts, bool>(HideAmounts.new);
+
+/// What a hidden amount shows instead of the figure.
+const hiddenAmount = '••••';
 
 final _money = NumberFormat('#,##0.00', 'en');
 

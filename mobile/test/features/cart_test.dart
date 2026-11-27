@@ -459,8 +459,8 @@ void main() {
     test(
       'manual search adds pieces; clear empties the cart and the cooldown',
       () async {
-        expect(controller().addProduct(cola), isTrue);
-        expect(controller().addProduct(almonds), isFalse);
+        expect(controller().addProduct(cola), CartChange.done);
+        expect(controller().addProduct(almonds), CartChange.needsWeight);
         expect(cart().lines, hasLength(1));
 
         controller().clear();
