@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/motion/motion.dart';
 import '../../../core/money/fixed_point.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
@@ -116,7 +117,7 @@ class SaleDetailScreen extends ConsumerWidget {
                 ],
               ),
             ),
-      body: sale.when(
+      body: FadeSwitcher(fill: true, child: sale.when(
         loading: () => const LoadingView.detail(),
         error: (_, _) =>
             ErrorView(message: t.saleDetailError, onRetry: () => ref.invalidate(saleDetailProvider(saleId))),
@@ -179,7 +180,7 @@ class SaleDetailScreen extends ConsumerWidget {
             ),
           );
         },
-      ),
+      )),
     );
   }
 

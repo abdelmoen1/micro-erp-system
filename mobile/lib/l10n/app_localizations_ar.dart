@@ -3907,4 +3907,164 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rxSaveError => 'تعذّر حفظ الحساب. أعد المحاولة.';
+
+  @override
+  String get homeNetProfit => 'صافي ربح اليوم';
+
+  @override
+  String get homeNetProfitNote => 'بعد التكلفة والالتزامات';
+
+  @override
+  String get homeNetLossNote => 'خسارة بعد التكلفة والالتزامات';
+
+  @override
+  String get profitTitle => 'صافي ربح اليوم';
+
+  @override
+  String get profitIntro =>
+      'ما ربحه المحل اليوم بعيدًا عن رأس مال البضاعة والمصاريف الثابتة.';
+
+  @override
+  String get profitSales => 'ربح المبيعات';
+
+  @override
+  String get profitSalesHint => 'سعر البيع ناقص سعر الشراء لكل صنف بيع';
+
+  @override
+  String get profitDiscounts => 'الخصومات';
+
+  @override
+  String get profitReturns => 'ربح المرتجعات';
+
+  @override
+  String get profitObligations => 'حصة اليوم من الالتزامات';
+
+  @override
+  String get profitNet => 'الصافي';
+
+  @override
+  String profitUncosted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count صنفًا بيع اليوم ليس لها سعر شراء، فلم تدخل في الحساب.',
+      few: '$count أصناف بيعت اليوم ليس لها سعر شراء، فلم تدخل في الحساب.',
+      two: 'صنفان بيعا اليوم ليس لهما سعر شراء، فلم يدخلا في الحساب.',
+      one: 'صنف واحد بيع اليوم ليس له سعر شراء، فلم يدخل في الحساب.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get profitUncostedHint =>
+      'أضف سعر الشراء من صفحة المنتج ليدخل في الربح.';
+
+  @override
+  String get profitManageObligations => 'الالتزامات';
+
+  @override
+  String get profitNoObligations =>
+      'لم تُضف التزامات بعد، مثل الإيجار والكهرباء والرواتب.';
+
+  @override
+  String get obTitle => 'الالتزامات';
+
+  @override
+  String get obMoreSub => 'الإيجار والكهرباء والرواتب وأي مصروف ثابت';
+
+  @override
+  String get obIntro => 'تُخصم حصة كل يوم منها من صافي الربح في الرئيسية.';
+
+  @override
+  String get obEmptyTitle => 'لا التزامات بعد';
+
+  @override
+  String get obEmptyBody =>
+      'أضف مصاريف المحل الثابتة مثل الإيجار والكهرباء والرواتب.';
+
+  @override
+  String get obAdd => 'إضافة التزام';
+
+  @override
+  String get obEdit => 'تعديل الالتزام';
+
+  @override
+  String get obName => 'الاسم';
+
+  @override
+  String get obNameHint => 'مثل: إيجار المحل';
+
+  @override
+  String get obAmount => 'المبلغ';
+
+  @override
+  String get obFrequency => 'كل متى يُدفع';
+
+  @override
+  String get obDaily => 'يوميًا';
+
+  @override
+  String get obWeekly => 'أسبوعيًا';
+
+  @override
+  String get obMonthly => 'شهريًا';
+
+  @override
+  String get obYearly => 'سنويًا';
+
+  @override
+  String obPerDay(String amount) {
+    return 'حصة اليوم $amount';
+  }
+
+  @override
+  String get obDailyTotal => 'يُخصم من ربح كل يوم';
+
+  @override
+  String get obPaused => 'متوقف';
+
+  @override
+  String get obActive => 'يُخصم من الربح';
+
+  @override
+  String get obDelete => 'حذف الالتزام';
+
+  @override
+  String obDeleteBody(String name) {
+    return 'حذف «$name»؟ لن يُخصم من الربح بعد الآن.';
+  }
+
+  @override
+  String get obDeleteAction => 'حذف';
+
+  @override
+  String get obSave => 'حفظ الالتزام';
+
+  @override
+  String get obSaved => 'حُفظ الالتزام';
+
+  @override
+  String get obDeleted => 'حُذف الالتزام';
+
+  @override
+  String get obNameRequired => 'اكتب اسم الالتزام.';
+
+  @override
+  String get obAmountInvalid => 'اكتب مبلغًا أكبر من صفر.';
+
+  @override
+  String get obLoadError =>
+      'تعذّر تحميل الالتزامات. تحقّق من الاتصال وأعد المحاولة.';
+
+  @override
+  String get obSaveError => 'تعذّر حفظ الالتزام. أعد المحاولة.';
+
+  @override
+  String get payAccount => 'الحساب الذي وصل عليه التحويل';
+
+  @override
+  String get payAccountPick => 'اختر الحساب (اختياري)';
+
+  @override
+  String get payAccountChange => 'تغيير';
 }

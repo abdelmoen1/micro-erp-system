@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/motion/motion.dart';
 import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
 import '../../../core/providers.dart';
@@ -190,20 +191,23 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       ];
     }
     return [
-      LineCard(
-        child: Column(
-          children: [
-            const _TableHeader(),
-            for (final product in _products) ...[
-              const Divider(height: 1, color: HisbahColors.border),
-              _ProductRow(
-                product: product,
-                onTap: () async {
-                  if (await openProduct(context, product.id) && mounted) unawaited(_load());
-                },
-              ),
+      // Eases in where the skeleton was; a search or filter keeps the card and only its rows change.
+      EntranceFade(
+        child: LineCard(
+          child: Column(
+            children: [
+              const _TableHeader(),
+              for (final product in _products) ...[
+                const Divider(height: 1, color: HisbahColors.border),
+                _ProductRow(
+                  product: product,
+                  onTap: () async {
+                    if (await openProduct(context, product.id) && mounted) unawaited(_load());
+                  },
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     ];

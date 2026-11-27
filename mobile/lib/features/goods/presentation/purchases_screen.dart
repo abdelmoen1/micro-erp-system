@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/motion/motion.dart';
 import '../../../core/money/fixed_point.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
@@ -184,7 +185,7 @@ class PurchaseDetailScreen extends ConsumerWidget {
                 ],
               ),
             ),
-      body: purchase.when(
+      body: FadeSwitcher(fill: true, child: purchase.when(
         loading: () => const LoadingView.detail(),
         error: (_, _) => ErrorView(message: t.listLoadError, onRetry: () => ref.invalidate(purchaseProvider(purchaseId))),
         data: (p) => ListView(
@@ -248,7 +249,7 @@ class PurchaseDetailScreen extends ConsumerWidget {
             ],
           ],
         ),
-      ),
+      )),
     );
   }
 }

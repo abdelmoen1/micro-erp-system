@@ -3941,4 +3941,163 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rxSaveError => 'Could not save the account. Try again.';
+
+  @override
+  String get homeNetProfit => 'Today\'s net profit';
+
+  @override
+  String get homeNetProfitNote => 'After costs and obligations';
+
+  @override
+  String get homeNetLossNote => 'A loss after costs and obligations';
+
+  @override
+  String get profitTitle => 'Today\'s net profit';
+
+  @override
+  String get profitIntro =>
+      'What the shop earned today, apart from the money in stock and the fixed costs.';
+
+  @override
+  String get profitSales => 'Profit on sales';
+
+  @override
+  String get profitSalesHint => 'Selling price minus cost, for each item sold';
+
+  @override
+  String get profitDiscounts => 'Discounts';
+
+  @override
+  String get profitReturns => 'Profit on returns';
+
+  @override
+  String get profitObligations => 'Today\'s share of obligations';
+
+  @override
+  String get profitNet => 'Net';
+
+  @override
+  String profitUncosted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count items sold today have no cost price, so they are left out.',
+      one: 'One item sold today has no cost price, so it is left out.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get profitUncostedHint =>
+      'Add the cost price on the product\'s page to count it.';
+
+  @override
+  String get profitManageObligations => 'Obligations';
+
+  @override
+  String get profitNoObligations =>
+      'No obligations yet, such as rent, electricity and salaries.';
+
+  @override
+  String get obTitle => 'Obligations';
+
+  @override
+  String get obMoreSub => 'Rent, electricity, salaries and other fixed costs';
+
+  @override
+  String get obIntro => 'Each day\'s share comes off the net profit on Home.';
+
+  @override
+  String get obEmptyTitle => 'No obligations yet';
+
+  @override
+  String get obEmptyBody =>
+      'Add the shop’s fixed costs, such as rent, electricity and salaries.';
+
+  @override
+  String get obAdd => 'Add obligation';
+
+  @override
+  String get obEdit => 'Edit obligation';
+
+  @override
+  String get obName => 'Name';
+
+  @override
+  String get obNameHint => 'e.g. Shop rent';
+
+  @override
+  String get obAmount => 'Amount';
+
+  @override
+  String get obFrequency => 'How often it is paid';
+
+  @override
+  String get obDaily => 'Daily';
+
+  @override
+  String get obWeekly => 'Weekly';
+
+  @override
+  String get obMonthly => 'Monthly';
+
+  @override
+  String get obYearly => 'Yearly';
+
+  @override
+  String obPerDay(String amount) {
+    return '$amount a day';
+  }
+
+  @override
+  String get obDailyTotal => 'Taken off each day’s profit';
+
+  @override
+  String get obPaused => 'Paused';
+
+  @override
+  String get obActive => 'Counted in the profit';
+
+  @override
+  String get obDelete => 'Delete obligation';
+
+  @override
+  String obDeleteBody(String name) {
+    return 'Delete “$name”? It will no longer come off the profit.';
+  }
+
+  @override
+  String get obDeleteAction => 'Delete';
+
+  @override
+  String get obSave => 'Save obligation';
+
+  @override
+  String get obSaved => 'Obligation saved';
+
+  @override
+  String get obDeleted => 'Obligation deleted';
+
+  @override
+  String get obNameRequired => 'Enter a name.';
+
+  @override
+  String get obAmountInvalid => 'Enter an amount above zero.';
+
+  @override
+  String get obLoadError =>
+      'Could not load the obligations. Check the connection and try again.';
+
+  @override
+  String get obSaveError => 'Could not save the obligation. Try again.';
+
+  @override
+  String get payAccount => 'Account the transfer arrived on';
+
+  @override
+  String get payAccountPick => 'Choose the account (optional)';
+
+  @override
+  String get payAccountChange => 'Change';
 }

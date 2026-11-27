@@ -32,6 +32,7 @@ class TodayDashboard {
     this.purchasesCount = 0,
     this.purchasesTotal,
     this.owedToSuppliers = '0.00',
+    this.profit,
   });
 
   factory TodayDashboard.fromJson(Map<String, dynamic> json) {
@@ -72,8 +73,12 @@ class TodayDashboard {
       purchasesCount: (purchases?['count'] as num?)?.toInt() ?? 0,
       purchasesTotal: purchases?['total'] as String?,
       owedToSuppliers: '${purchases?['owed_to_suppliers'] ?? '0.00'}',
+      profit: json['profit'] is Map<String, dynamic> ? NetProfit.fromJson(json['profit'] as Map<String, dynamic>) : null,
     );
   }
+
+  /// Null for an employee, or from a server without the figure: Home then shows the collections.
+  final NetProfit? profit;
 
   final String totalSales;
   final String cashSales;
@@ -111,6 +116,44 @@ class TodayDashboard {
   final String owedToSuppliers;
 
   bool get needsAttention => overdueCount + dueTodayCount + lowStockCount + negativeStockCount > 0;
+}
+
+/// «صافي الربح»: what the day earned away from the capital in stock and the running costs.
+/// net = salesProfit − discounts − returnsProfit − obligations (the server's arithmetic).
+class NetProfit {
+  const NetProfit({
+    required this.salesProfit,
+    required this.discounts,
+    required this.returnsProfit,
+    required this.obligations,
+    required this.net,
+    this.uncostedLines = 0,
+  });
+
+  factory NetProfit.fromJson(Map<String, dynamic> json) => NetProfit(
+    salesProfit: '${json['sales_profit'] ?? '0.00'}',
+    discounts: '${json['discounts'] ?? '0.00'}',
+    returnsProfit: '${json['returns_profit'] ?? '0.00'}',
+    obligations: '${json['obligations'] ?? '0.00'}',
+    net: '${json['net'] ?? '0.00'}',
+    uncostedLines: (json['uncosted_lines'] as num?)?.toInt() ?? 0,
+  );
+
+  /// Each sold line's price past its cost.
+  final String salesProfit;
+  final String discounts;
+
+  /// Profit undone by goods brought back.
+  final String returnsProfit;
+
+  /// Today's share of rent, electricity, salaries…
+  final String obligations;
+  final String net;
+
+  /// Sold lines whose product has no cost price: left out of the figure.
+  final int uncostedLines;
+
+  bool get isLoss => net.startsWith('-');
 }
 
 class RecentInvoice {

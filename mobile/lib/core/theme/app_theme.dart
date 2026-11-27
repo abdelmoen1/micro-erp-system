@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
+import '../motion/motion.dart';
 import 'hisbah_tokens.dart';
 
 /// Theme from the Direction A tokens ([HisbahColors]): selected at DR-2 part 1, final sign-off pending.
@@ -52,6 +54,17 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: HisbahColors.ground,
       visualDensity: VisualDensity.standard,
       materialTapTargetSize: MaterialTapTargetSize.padded,
+      // One page motion everywhere (pushed screens and the router's pages); iOS keeps its swipe-back.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: HisbahPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: HisbahPageTransitionsBuilder(),
+          TargetPlatform.linux: HisbahPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: HisbahPageTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: HisbahColors.ground,
         foregroundColor: ink,

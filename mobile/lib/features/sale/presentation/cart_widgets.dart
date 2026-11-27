@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/money/fixed_point.dart';
+import '../../../core/motion/motion.dart';
 import '../../../core/theme/hisbah_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/cart.dart';
@@ -186,7 +187,10 @@ class CartLineRow extends StatelessWidget {
     final justText = kg ? t.justAddedWeighed : (line.quantity > Quantity.one ? t.justIncremented : t.justNew);
     final unitText = kg ? t.kgShort : (pack ? t.packPer(product.packSize!) : t.pieceWord);
 
-    return Container(
+    // The «just added» tint fades out rather than switching off.
+    return AnimatedContainer(
+      duration: HisbahMotion.of(context, HisbahMotion.slow),
+      curve: HisbahMotion.move,
       color: justAdded ? HisbahColors.highlightRow : HisbahColors.surface,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
@@ -233,7 +237,10 @@ class CartLineRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Num(shekel(line.total), size: 17, weight: FontWeight.w700),
+                Bump(
+                  value: line.total,
+                  child: Num(shekel(line.total), size: 17, weight: FontWeight.w700),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -452,7 +459,11 @@ class _Stepper extends StatelessWidget {
             decoration: const BoxDecoration(
               border: Border.symmetric(vertical: BorderSide(color: HisbahColors.border)),
             ),
-            child: Num(quantity, key: Key('cart.qty.$keyId'), size: 17, weight: FontWeight.w700),
+            child: Bump(
+              value: quantity,
+              scale: 1.25,
+              child: Num(quantity, key: Key('cart.qty.$keyId'), size: 17, weight: FontWeight.w700),
+            ),
           ),
           _StepButton(
             key: Key('cart.inc.$keyId'),

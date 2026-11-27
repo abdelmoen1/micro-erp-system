@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_failure.dart';
 import '../../../core/money/fixed_point.dart';
+import '../../../core/motion/motion.dart';
 import '../../../core/offline/offline_store.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
@@ -10,6 +11,7 @@ import '../../../core/widgets/latin_digits.dart';
 import '../../../core/widgets/ltr_value.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/session_controller.dart';
+import '../../sale/presentation/receiving_account_picker.dart';
 import '../../sale/presentation/sale_widgets.dart';
 import '../../sync/application/sync_engine.dart';
 import '../domain/customer.dart';
@@ -47,11 +49,26 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
   late final _fullAmount = TextEditingController(text: widget.remaining.toApi());
   bool _full = true;
   String _method = paymentMethods.first;
+
+  /// The store's account a transfer arrived on (optional), picked like at checkout.
+  Map<String, dynamic>? _account;
   _Phase _phase = _Phase.form;
   String? _error;
   PaymentReceipt? _receipt;
 
   String get _operationId => 'payment-${widget.customer.id}';
+
+  int? get _accountId => _method == 'cash' ? null : (_account?['id'] as num?)?.toInt();
+
+  Future<void> _pickAccount(AppLocalizations t) async {
+    final account = await showReceivingAccountPicker(
+      context,
+      provider: _method,
+      providerLabel: methodLabel(t, _method),
+      selectedId: _accountId,
+    );
+    if (account != null && mounted) setState(() => _account = account);
+  }
 
   @override
   void dispose() {
@@ -95,9 +112,16 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     try {
       final receipt = await ref
           .read(customerRepositoryProvider)
-          .pay(customerId: widget.customer.id, method: _method, idempotencyKey: key, amount: _full ? null : value);
+          .pay(
+            customerId: widget.customer.id,
+            method: _method,
+            idempotencyKey: key,
+            amount: _full ? null : value,
+            receivingAccountId: _accountId,
+          );
       await keys.complete(_operationId);
       if (!mounted) return;
+      Haptics.success();
       setState(() {
         _receipt = receipt;
         _phase = _Phase.done;
@@ -139,10 +163,12 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
         amount: value,
         remainingBefore: widget.remaining,
         sendAmount: sendAmount,
+        receivingAccountId: _accountId,
       );
       await ref.read(idempotencyKeyStoreProvider).complete(_operationId);
       await ref.read(syncEngineProvider.notifier).enqueued();
       if (!mounted) return;
+      Haptics.success();
       setState(() {
         _receipt = receipt;
         _phase = _Phase.done;
@@ -167,33 +193,46 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
     );
   }
 
+  // The money is in: the tick draws itself, the amount counts up, then the rest settles in.
   Widget _done(AppLocalizations t, PaymentReceipt receipt) => Padding(
     padding: const EdgeInsets.all(24),
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(color: StatusTone.success.bg, shape: BoxShape.circle),
-            child: Icon(Icons.check_rounded, size: 40, color: StatusTone.success.fg),
+        Center(child: SuccessMark(color: StatusTone.success.fg, size: 84)),
+        const SizedBox(height: 16),
+        CountUp(
+          amount: receipt.paid.toApi(),
+          format: formatShekel,
+          builder: (_, text) => Text(
+            t.payDone(text),
+            key: const Key('payment.done'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
           ),
         ),
-        const SizedBox(height: 12),
-        Text(
-          t.payDone(formatShekel(receipt.paid.toApi())),
-          key: const Key('payment.done'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-        ),
         const SizedBox(height: 6),
-        Text(
-          t.payDoneRemaining(widget.customer.name, formatShekel(receipt.remainingAfter.toApi())),
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: HisbahColors.inkMuted, fontSize: 15),
+        EntranceFade(
+          delay: const Duration(milliseconds: 250),
+          child: Text(
+            t.payDoneRemaining(widget.customer.name, formatShekel(receipt.remainingAfter.toApi())),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: HisbahColors.inkMuted, fontSize: 15),
+          ),
         ),
+        if (_accountId != null) ...[
+          const SizedBox(height: 4),
+          EntranceFade(
+            delay: const Duration(milliseconds: 300),
+            child: Text(
+              '${methodLabel(t, _method)} · ${_account?['account_name'] ?? ''}',
+              key: const Key('payment.doneAccount'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: HisbahColors.inkMuted, fontSize: 13),
+            ),
+          ),
+        ],
         if (receipt.pending) ...[
           const SizedBox(height: 16),
           ToneCard(
@@ -286,9 +325,32 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
                     ChoiceChip(
                       label: Text(methodLabel(t, method)),
                       selected: _method == method,
-                      onSelected: busy ? null : (_) => setState(() => _method = method),
+                      // Another method: the account picked for the old one no longer applies.
+                      onSelected: busy
+                          ? null
+                          : (_) => setState(() {
+                              if (_method != method) _account = null;
+                              _method = method;
+                            }),
                     ),
                 ],
+              ),
+              // A transfer: which of the store's accounts it arrived on, as at checkout.
+              FadeSwitcher(
+                size: true,
+                child: _method == 'cash'
+                    ? const SizedBox(width: double.infinity)
+                    : Padding(
+                        key: const ValueKey('payment.accountSlot'),
+                        padding: const EdgeInsets.only(top: 12),
+                        child: _AccountRow(
+                          label: t.payAccount,
+                          account: _account,
+                          pickLabel: t.payAccountPick,
+                          changeLabel: t.payAccountChange,
+                          onTap: busy ? null : () => _pickAccount(t),
+                        ),
+                      ),
               ),
               const SizedBox(height: 16),
               LineCard(
@@ -325,6 +387,69 @@ class _RecordPaymentScreenState extends ConsumerState<RecordPaymentScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _AccountRow extends StatelessWidget {
+  const _AccountRow({
+    required this.label,
+    required this.account,
+    required this.pickLabel,
+    required this.changeLabel,
+    required this.onTap,
+  });
+
+  final String label;
+  final Map<String, dynamic>? account;
+  final String pickLabel;
+  final String changeLabel;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final picked = account;
+    return Material(
+      color: picked == null ? HisbahColors.raised : HisbahColors.primaryTint,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(HisbahRadius.field),
+        side: BorderSide(color: picked == null ? HisbahColors.borderStrong : HisbahColors.primaryOutline),
+      ),
+      child: InkWell(
+        key: const Key('payment.account'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(HisbahRadius.field),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              const Icon(Icons.account_balance_outlined, color: HisbahColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted)),
+                    if (picked == null)
+                      Text(pickLabel, style: const TextStyle(fontWeight: FontWeight.w700, color: HisbahColors.primary))
+                    else ...[
+                      Text('${picked['account_name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                      LtrValue(
+                        '${picked['account_identifier'] ?? ''}',
+                        style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (picked != null)
+                Text(changeLabel, style: const TextStyle(fontWeight: FontWeight.w700, color: HisbahColors.primary))
+              else
+                const Icon(Icons.chevron_left_rounded, color: HisbahColors.inkSubtle),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

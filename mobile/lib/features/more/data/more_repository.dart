@@ -165,6 +165,29 @@ class MoreRepository {
 
   Future<void> archiveReceivingAccount(int id) => _api.delete('/receiving-accounts/$id');
 
+  /// «الالتزامات»: the store's running costs (owner and managers).
+  Future<List<Map<String, dynamic>>> obligations() async {
+    final body = await _api.get('/obligations');
+    return [for (final row in body['data'] as List<dynamic>? ?? const []) Map<String, dynamic>.from(row as Map)];
+  }
+
+  Future<void> saveObligation({
+    int? id,
+    required String name,
+    required String amount,
+    required String frequency,
+    required bool active,
+  }) async {
+    final body = {'name': name, 'amount': amount, 'frequency': frequency, 'active': active};
+    if (id == null) {
+      await _api.post('/obligations', body: body);
+    } else {
+      await _api.patch('/obligations/$id', body: body);
+    }
+  }
+
+  Future<void> deleteObligation(int id) => _api.delete('/obligations/$id');
+
   Future<List<Map<String, dynamic>>> suspendedInvoices(String status) async {
     final body = await _api.get('/suspended-invoices?status=$status');
     return [for (final row in body['data'] as List<dynamic>? ?? const []) Map<String, dynamic>.from(row as Map)];

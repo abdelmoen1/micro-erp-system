@@ -240,6 +240,7 @@ class SyncService
             $validated['method'],
             $occurredAt->utc()->format('Y-m-d H:i:s'),
             $validated['notes'] ?? null,
+            isset($validated['receiving_account_id']) ? (int) $validated['receiving_account_id'] : null,
         );
 
         Payment::query()->where('payment_group_id', $result['payment_group_id'])->update(['synced_at' => now()]);
@@ -371,6 +372,7 @@ class SyncService
             (string) ($payload['method'] ?? 'cash'),
             $conflict->occurred_at?->utc()->format('Y-m-d H:i:s'),
             $payload['notes'] ?? null,
+            isset($payload['receiving_account_id']) ? (int) $payload['receiving_account_id'] : null,
         );
 
         Payment::query()->where('payment_group_id', $result['payment_group_id'])->update(['synced_at' => now()]);

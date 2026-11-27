@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../../core/motion/motion.dart';
 import '../../core/money/fixed_point.dart';
 import '../../core/providers.dart';
 import '../../core/theme/hisbah_tokens.dart';
@@ -126,7 +127,7 @@ class DebtorsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(t.homeOutstandingDebts)),
-      body: debtors.when(
+      body: FadeSwitcher(fill: true, child: debtors.when(
         loading: () => const LoadingView(),
         error: (_, _) => ErrorView(message: t.listLoadError, onRetry: () => ref.invalidate(debtorsProvider)),
         data: (rows) => rows.isEmpty
@@ -156,7 +157,7 @@ class DebtorsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-      ),
+      )),
     );
   }
 }

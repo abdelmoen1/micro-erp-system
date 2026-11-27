@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/motion/motion.dart';
 import '../../../core/api/api_failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
@@ -102,7 +103,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     final info = ref.watch(_deletionInfoProvider);
     return Scaffold(
       appBar: AppBar(title: Text(t.deleteAccountTitle)),
-      body: info.when(
+      body: FadeSwitcher(fill: true, child: info.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Padding(
           padding: const EdgeInsets.all(16),
@@ -176,7 +177,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             ],
           );
         },
-      ),
+      )),
     );
   }
 }

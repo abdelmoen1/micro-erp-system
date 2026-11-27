@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../../core/motion/motion.dart';
 import '../../core/providers.dart';
 import '../../core/theme/hisbah_tokens.dart';
 import '../../core/widgets/ltr_value.dart';
@@ -20,6 +21,7 @@ import '../sale/presentation/sales_history_screen.dart';
 import '../shell/app_shell.dart';
 import 'dashboard.dart';
 import 'drilldown_screens.dart';
+import 'net_profit_screen.dart';
 
 /// Home tab (owner / manager landing): today's sales, debts, shortcuts and latest invoices.
 class HomeDashboard extends ConsumerWidget {
@@ -30,17 +32,49 @@ class HomeDashboard extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final dashboard = ref.watch(dashboardProvider);
 
-    return dashboard.when(
-      loading: () => const Padding(padding: EdgeInsets.only(top: 8), child: LoadingView.detail(padding: EdgeInsets.zero)),
-      error: (_, _) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        child: ErrorView(message: t.homeLoadError, onRetry: () => ref.invalidate(dashboardProvider)),
+    // The skeleton cross-fades into the figures; a pull-to-refresh keeps the page and only the
+    // numbers that changed count to their new value.
+    return FadeSwitcher(
+      child: dashboard.when(
+        loading: () => const Padding(
+          key: ValueKey('home.loading'),
+          padding: EdgeInsets.only(top: 8),
+          child: LoadingView.detail(padding: EdgeInsets.zero),
+        ),
+        error: (_, _) => Padding(
+          key: const ValueKey('home.error'),
+          padding: const EdgeInsets.symmetric(vertical: 32),
+          child: ErrorView(message: t.homeLoadError, onRetry: () => ref.invalidate(dashboardProvider)),
+        ),
+        data: (today) => _Dashboard(key: const ValueKey('home.data'), today: today),
       ),
-      data: (today) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _TodayCard(today: today),
-          const SizedBox(height: 14),
+    );
+  }
+}
+
+/// The page's one orchestrated moment: on first show the hero, then the tiles, then the lists
+/// arrive in a quick cascade (about half a second in all). It does not replay on refresh.
+class _Dashboard extends StatelessWidget {
+  const _Dashboard({super.key, required this.today});
+
+  final TodayDashboard today;
+
+  static Widget _step(int i, Widget child) => EntranceFade(
+    delay: Duration(milliseconds: 55 * i),
+    child: child,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final profit = today.profit;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _step(0, _TodayCard(today: today)),
+        const SizedBox(height: 14),
+        _step(
+          1,
           _StatRow(
             first: _StatTile(
               key: const Key('home.cash'),
@@ -58,16 +92,31 @@ class HomeDashboard extends ConsumerWidget {
               onTap: () => _openSales(context, SalesType.onCredit),
             ),
           ),
-          const SizedBox(height: 12),
+        ),
+        const SizedBox(height: 12),
+        _step(
+          2,
           _StatRow(
-            first: _StatTile(
-              key: const Key('home.collected'),
-              icon: Icons.savings_outlined,
-              label: t.homeCollectedToday,
-              amount: today.collectedTotal,
-              note: t.homeCollectionsSplit(formatShekel(today.collectedAtSale), formatShekel(today.debtRepayments)),
-              onTap: () => pushScreen<void>(context, CollectionsScreen(today: today)),
-            ),
+            // Owners and managers see what the day earned past cost and running costs; the
+            // collections stay one tap further in. Staff (no costs) keep the collections here.
+            first: profit != null
+                ? _StatTile(
+                    key: const Key('home.netProfit'),
+                    icon: profit.isLoss ? Icons.trending_down_rounded : Icons.trending_up_rounded,
+                    label: t.homeNetProfit,
+                    amount: profit.net,
+                    note: profit.isLoss ? t.homeNetLossNote : t.homeNetProfitNote,
+                    tone: profit.isLoss ? StatusTone.error : StatusTone.paid,
+                    onTap: () => pushScreen<void>(context, NetProfitScreen(today: today)),
+                  )
+                : _StatTile(
+                    key: const Key('home.collected'),
+                    icon: Icons.savings_outlined,
+                    label: t.homeCollectedToday,
+                    amount: today.collectedTotal,
+                    note: t.homeCollectionsSplit(formatShekel(today.collectedAtSale), formatShekel(today.debtRepayments)),
+                    onTap: () => pushScreen<void>(context, CollectionsScreen(today: today)),
+                  ),
             second: _StatTile(
               key: const Key('home.outstanding'),
               icon: Icons.account_balance_wallet_outlined,
@@ -78,8 +127,11 @@ class HomeDashboard extends ConsumerWidget {
               onTap: () => pushScreen<void>(context, const DebtorsScreen()),
             ),
           ),
-          if (today.purchasesTotal != null) ...[
-            const SizedBox(height: 12),
+        ),
+        if (today.purchasesTotal != null) ...[
+          const SizedBox(height: 12),
+          _step(
+            3,
             _StatRow(
               first: _StatTile(
                 key: const Key('home.purchases'),
@@ -100,21 +152,41 @@ class HomeDashboard extends ConsumerWidget {
                 onTap: () => pushScreen<void>(context, const ReturnsScreen(period: ListPeriod.today)),
               ),
             ),
-          ],
-          const SizedBox(height: 22),
-          _SectionTitle(t.homeAttention),
-          const SizedBox(height: 10),
-          _Attention(today: today),
-          const SizedBox(height: 22),
-          _SectionTitle(t.homeShortcuts),
-          const SizedBox(height: 10),
-          const _Shortcuts(),
-          const SizedBox(height: 22),
-          _SectionTitle(t.homeRecentInvoices),
-          const SizedBox(height: 10),
-          _RecentInvoices(invoices: today.recentInvoices),
+          ),
         ],
-      ),
+        const SizedBox(height: 22),
+        _step(
+          4,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SectionTitle(t.homeAttention),
+              const SizedBox(height: 10),
+              _Attention(today: today),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        _step(
+          5,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [_SectionTitle(t.homeShortcuts), const SizedBox(height: 10), const _Shortcuts()],
+          ),
+        ),
+        const SizedBox(height: 22),
+        _step(
+          6,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SectionTitle(t.homeRecentInvoices),
+              const SizedBox(height: 10),
+              _RecentInvoices(invoices: today.recentInvoices),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -139,121 +211,122 @@ class _TodayCard extends ConsumerWidget {
     const onTeal = HisbahColors.onPrimary;
     const onTealMuted = Color(0xCCFFFFFF);
 
-    return Container(
-      key: const Key('home.today'),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(HisbahRadius.card + 4),
-        gradient: const LinearGradient(
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-          // Secondary into brand teal: the same identity, lighter than the old pressed-teal end.
-          colors: [HisbahColors.secondary, HisbahColors.primary],
+    return PressScale(
+      scale: .985,
+      child: Container(
+        key: const Key('home.today'),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(HisbahRadius.card + 4),
+          gradient: const LinearGradient(
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
+            // Secondary into brand teal: the same identity, lighter than the old pressed-teal end.
+            colors: [HisbahColors.secondary, HisbahColors.primary],
+          ),
+          boxShadow: const [BoxShadow(color: Color(0x29176D73), blurRadius: 16, offset: Offset(0, 6))],
         ),
-        boxShadow: const [BoxShadow(color: Color(0x29176D73), blurRadius: 16, offset: Offset(0, 6))],
-      ),
-      child: Stack(
-        children: [
-          // Decorative rings in the top corner.
-          PositionedDirectional(
-            top: -40,
-            end: -30,
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0x1FFFFFFF), width: 22),
+        child: Stack(
+          children: [
+            // Decorative rings in the top corner.
+            PositionedDirectional(
+              top: -40,
+              end: -30,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0x1FFFFFFF), width: 22),
+                ),
               ),
             ),
-          ),
-          PositionedDirectional(
-            bottom: -24,
-            end: 70,
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0x14FFFFFF)),
+            PositionedDirectional(
+              bottom: -24,
+              end: 70,
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0x14FFFFFF)),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (name.isNotEmpty)
-                  Padding(
-                    // Clear of the eye in the top corner.
-                    padding: const EdgeInsetsDirectional.only(end: 48),
-                    child: Text(
-                      t.homeGreeting(name),
-                      style: const TextStyle(color: onTeal, fontSize: 17, fontWeight: FontWeight.w700),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (name.isNotEmpty)
+                    Padding(
+                      // Clear of the eye in the top corner.
+                      padding: const EdgeInsetsDirectional.only(end: 48),
+                      child: Text(
+                        t.homeGreeting(name),
+                        style: const TextStyle(color: onTeal, fontSize: 17, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  Text(
+                    DateFormat.MMMMEEEEd(locale).format(DateTime.now()),
+                    style: const TextStyle(color: onTealMuted, fontSize: 13),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(t.homeTodaySales, style: const TextStyle(color: onTealMuted, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: _Amount(
+                      today.totalSales,
+                      key: const Key('home.totalSales'),
+                      hidden: hidden,
+                      count: true,
+                      style: const TextStyle(color: onTeal, fontSize: 34, fontWeight: FontWeight.w800, height: 1.2),
                     ),
                   ),
-                Text(
-                  DateFormat.MMMMEEEEd(locale).format(DateTime.now()),
-                  style: const TextStyle(color: onTealMuted, fontSize: 13),
-                ),
-                const SizedBox(height: 18),
-                Text(t.homeTodaySales, style: const TextStyle(color: onTealMuted, fontSize: 14)),
-                const SizedBox(height: 2),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: _Amount(
-                    today.totalSales,
-                    key: const Key('home.totalSales'),
-                    hidden: hidden,
-                    style: const TextStyle(color: onTeal, fontSize: 34, fontWeight: FontWeight.w800, height: 1.2),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(color: const Color(0x26FFFFFF), borderRadius: BorderRadius.circular(999)),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.receipt_long_outlined, size: 16, color: onTeal),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          t.homeInvoicesCount(today.invoicesCount),
-                          style: const TextStyle(color: onTeal, fontSize: 13, fontWeight: FontWeight.w600),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(color: const Color(0x26FFFFFF), borderRadius: BorderRadius.circular(999)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.receipt_long_outlined, size: 16, color: onTeal),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            t.homeInvoicesCount(today.invoicesCount),
+                            style: const TextStyle(color: onTeal, fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                ],
+              ),
+            ),
+            Positioned.fill(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(key: const Key('home.today.open'), onTap: () => _openSales(context, SalesType.all)),
+              ),
+            ),
+            // Above the card's own tap: the eye only hides or shows the figure.
+            PositionedDirectional(
+              top: 10,
+              end: 10,
+              child: Material(
+                color: const Color(0x26FFFFFF),
+                shape: const CircleBorder(),
+                clipBehavior: Clip.antiAlias,
+                child: IconButton(
+                  key: const Key('home.today.eye'),
+                  tooltip: hidden ? t.homeShowAmounts : t.homeHideAmounts,
+                  onPressed: () => ref.read(hideAmountsProvider.notifier).toggle(),
+                  icon: Icon(hidden ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: onTeal),
                 ),
-              ],
-            ),
-          ),
-          Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                key: const Key('home.today.open'),
-                onTap: () => _openSales(context, SalesType.all),
               ),
             ),
-          ),
-          // Above the card's own tap: the eye only hides or shows the figure.
-          PositionedDirectional(
-            top: 10,
-            end: 10,
-            child: Material(
-              color: const Color(0x26FFFFFF),
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: IconButton(
-                key: const Key('home.today.eye'),
-                tooltip: hidden ? t.homeShowAmounts : t.homeHideAmounts,
-                onPressed: () => ref.read(hideAmountsProvider.notifier).toggle(),
-                icon: Icon(hidden ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: onTeal),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -373,54 +446,57 @@ class _StatTile extends StatelessWidget {
     final fg = tone?.fg ?? HisbahColors.primary;
     final bg = tone?.bg ?? HisbahColors.primaryTint;
 
-    return Material(
-      color: HisbahColors.surface,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(HisbahRadius.card),
-        side: const BorderSide(color: HisbahColors.border),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
-                    child: Icon(icon, size: 20, color: fg),
-                  ),
-                  const Spacer(),
-                  const Icon(Icons.chevron_left_rounded, size: 20, color: HisbahColors.inkSubtle),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                label,
-                style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 2),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerStart,
-                child: _Amount(
-                  amount,
-                  style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: HisbahColors.ink),
+    return PressScale(
+      child: Material(
+        color: HisbahColors.surface,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(HisbahRadius.card),
+          side: const BorderSide(color: HisbahColors.border),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+                      child: Icon(icon, size: 20, color: fg),
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.chevron_left_rounded, size: 20, color: HisbahColors.inkSubtle),
+                  ],
                 ),
-              ),
-              if (note != null) ...[
-                const SizedBox(height: 2),
+                const SizedBox(height: 10),
                 Text(
-                  note!,
-                  style: TextStyle(fontSize: 12, color: fg, fontWeight: FontWeight.w600),
+                  label,
+                  style: const TextStyle(fontSize: 13, color: HisbahColors.inkMuted, fontWeight: FontWeight.w600),
                 ),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: _Amount(
+                    amount,
+                    count: true,
+                    style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: HisbahColors.ink),
+                  ),
+                ),
+                if (note != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    note!,
+                    style: TextStyle(fontSize: 12, color: fg, fontWeight: FontWeight.w600),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -430,7 +506,7 @@ class _StatTile extends StatelessWidget {
 
 /// Amount with the shekel sign, laid out LTR inside the RTL screen ("1,250.00 ₪").
 class _Amount extends StatelessWidget {
-  const _Amount(this.amount, {super.key, required this.style, this.hidden = false});
+  const _Amount(this.amount, {super.key, required this.style, this.hidden = false, this.count = false});
 
   final String amount;
   final TextStyle style;
@@ -438,13 +514,29 @@ class _Amount extends StatelessWidget {
   /// The green card's eye is closed: «•••• ₪» instead of the figure.
   final bool hidden;
 
+  /// Counts up to the figure (the dashboard's totals); list rows show it at once.
+  final bool count;
+
   @override
-  Widget build(BuildContext context) => Text(
-    '${hidden ? hiddenAmount : formatMoney(amount)} ${AppLocalizations.of(context).currencySymbol}',
-    textDirection: TextDirection.ltr,
-    maxLines: 1,
-    style: style,
-  );
+  Widget build(BuildContext context) {
+    final symbol = AppLocalizations.of(context).currencySymbol;
+    Widget text(String figure) => Text('$figure $symbol', textDirection: TextDirection.ltr, maxLines: 1, style: style);
+
+    // Closing or opening the eye cross-fades the figure and the dots.
+    return AnimatedSwitcher(
+      duration: HisbahMotion.of(context, HisbahMotion.fast),
+      layoutBuilder: (current, previous) =>
+          Stack(alignment: AlignmentDirectional.centerStart, children: [...previous, ?current]),
+      child: hidden
+          ? KeyedSubtree(key: const ValueKey('hidden'), child: text(hiddenAmount))
+          : KeyedSubtree(
+              key: const ValueKey('shown'),
+              child: count
+                  ? CountUp(amount: amount, format: formatMoney, builder: (_, figure) => text(figure))
+                  : text(formatMoney(amount)),
+            ),
+    );
+  }
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -551,35 +643,38 @@ class _Shortcut extends StatelessWidget {
       button: true,
       label: label,
       excludeSemantics: true,
-      child: Material(
-        color: filled ? HisbahColors.primary : HisbahColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(HisbahRadius.button),
-          side: filled ? BorderSide.none : const BorderSide(color: HisbahColors.border),
-        ),
-        elevation: filled ? 0 : 1,
-        shadowColor: HisbahColors.shadow,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(HisbahRadius.button),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 84),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 26, color: fg),
-                  const SizedBox(height: 8),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: fg),
+      child: PressScale(
+        scale: .94,
+        child: Material(
+          color: filled ? HisbahColors.primary : HisbahColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(HisbahRadius.button),
+            side: filled ? BorderSide.none : const BorderSide(color: HisbahColors.border),
+          ),
+          elevation: filled ? 0 : 1,
+          shadowColor: HisbahColors.shadow,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(HisbahRadius.button),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 84),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: 26, color: fg),
+                    const SizedBox(height: 8),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: fg),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

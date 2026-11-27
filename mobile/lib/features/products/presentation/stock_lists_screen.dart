@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../../../core/motion/motion.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/hisbah_tokens.dart';
 import '../../../core/widgets/ltr_value.dart';
@@ -30,7 +31,7 @@ class LowStockScreen extends ConsumerWidget {
     final products = ref.watch(lowStockProvider);
     return Scaffold(
       appBar: AppBar(title: Text(t.lowTitle)),
-      body: products.when(
+      body: FadeSwitcher(fill: true, child: products.when(
         loading: () => const LoadingView(),
         error: (_, _) => ErrorView(message: t.listLoadError, onRetry: () => ref.invalidate(lowStockProvider)),
         data: (rows) => rows.isEmpty
@@ -60,7 +61,7 @@ class LowStockScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-      ),
+      )),
     );
   }
 }
@@ -76,7 +77,7 @@ class NegativeStockScreen extends ConsumerWidget {
     final items = ref.watch(negativeStockProvider);
     return Scaffold(
       appBar: AppBar(title: Text(t.negTitle)),
-      body: items.when(
+      body: FadeSwitcher(fill: true, child: items.when(
         loading: () => const LoadingView(),
         error: (_, _) => ErrorView(message: t.listLoadError, onRetry: () => ref.invalidate(negativeStockProvider)),
         data: (rows) => rows.isEmpty
@@ -118,7 +119,7 @@ class NegativeStockScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-      ),
+      )),
     );
   }
 }

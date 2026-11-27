@@ -6,11 +6,13 @@ use App\Exceptions\ApiException;
 use App\Models\Customer;
 use App\Models\Debt;
 use App\Models\Payment;
+use App\Models\ReceivingAccount;
 use App\Models\User;
 use App\Support\Money;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * US-0703 payments v1 (D-10, D-11, DEF-10). Every payment names its store, customer and creator;
@@ -59,9 +61,18 @@ class PaymentService
      *
      * @return array{payment_group_id: string, debts_count: int, total_paid: string, remaining_after: string}
      */
-    public function payCustomer(User $actor, Customer $customer, ?string $amount, string $method, ?string $paidAt = null, ?string $notes = null): array
-    {
-        return DB::transaction(function () use ($actor, $customer, $amount, $method, $paidAt, $notes) {
+    public function payCustomer(
+        User $actor,
+        Customer $customer,
+        ?string $amount,
+        string $method,
+        ?string $paidAt = null,
+        ?string $notes = null,
+        ?int $receivingAccountId = null,
+    ): array {
+        $account = $this->receivingAccount($actor, $method, $receivingAccountId);
+
+        return DB::transaction(function () use ($actor, $customer, $amount, $method, $paidAt, $notes, $account) {
             $debts = $this->openDebts($actor->store_id, $customer->id);
 
             if ($debts->isEmpty()) {
@@ -87,7 +98,7 @@ class PaymentService
                     break;
                 }
                 $share = Money::compare($left, $debt->remaining_amount) < 0 ? $left : Money::of($debt->remaining_amount);
-                $this->record($actor, $debt, $share, $method, $paidAt, $notes, $groupId);
+                $this->record($actor, $debt, $share, $method, $paidAt, $notes, $groupId, $account);
                 $this->ledger->recalculate($debt);
                 $paid = Money::add($paid, $share);
                 $left = Money::sub($left, $share);
@@ -208,9 +219,21 @@ class PaymentService
             ->get();
     }
 
-    private function record(User $actor, Debt $debt, string $amount, string $method, ?string $paidAt, ?string $notes, ?string $groupId = null): Payment
-    {
+    private function record(
+        User $actor,
+        Debt $debt,
+        string $amount,
+        string $method,
+        ?string $paidAt,
+        ?string $notes,
+        ?string $groupId = null,
+        ?ReceivingAccount $account = null,
+    ): Payment {
         return $debt->payments()->create([
+            // The transfer account the money arrived on, as named then (like a transfer sale).
+            'receiving_account_id' => $account?->id,
+            'account_snapshot_name' => $account?->account_name,
+            'account_snapshot_identifier' => $account?->account_identifier,
             'store_id' => $debt->store_id,
             'customer_id' => $debt->customer_id,
             'amount' => Money::of($amount),
@@ -220,6 +243,23 @@ class PaymentService
             'created_by' => $actor->id,
             'payment_group_id' => $groupId,
         ]);
+    }
+
+    /** A transfer repayment may name the store's account it arrived on; cash never does. */
+    private function receivingAccount(User $actor, string $method, ?int $id): ?ReceivingAccount
+    {
+        if ($id === null || $method === 'cash') {
+            return null;
+        }
+
+        $account = ReceivingAccount::query()->forStore($actor->store_id)->where('active', true)->find($id);
+        if ($account === null || $account->provider !== $method) {
+            throw ValidationException::withMessages([
+                'receiving_account_id' => ['اختر حسابًا فعّالًا لطريقة الدفع نفسها.'],
+            ]);
+        }
+
+        return $account;
     }
 
     private function markReversed(User $actor, Payment $payment, string $reason): void

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/money/fixed_point.dart';
+import '../../../core/motion/motion.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/camera_tokens.dart';
 import '../../../core/theme/hisbah_tokens.dart';
@@ -315,19 +316,25 @@ class _SaleScannerScreenState extends ConsumerState<SaleScannerScreen>
                                 ),
                         ),
                         // The latest scan, right under the frame where the cashier is looking.
-                        if (feedback != null && granted)
+                        // Each new read cross-fades over the last message.
+                        if (granted)
                           Positioned(
                             left: 16,
                             right: 16,
                             top: frame.bottom + 10,
-                            child: ScanFeedbackCard(
-                              feedback: feedback,
-                              onAction: switch (feedback.kind) {
-                                ScanFeedbackKind.unknown => _search,
-                                ScanFeedbackKind.networkError => () => _handleCode(feedback.code, retry: true),
-                                ScanFeedbackKind.outOfStock => countOutOfStock,
-                                _ => null,
-                              },
+                            child: FadeSwitcher(
+                              child: feedback == null
+                                  ? const SizedBox.shrink()
+                                  : ScanFeedbackCard(
+                                      key: ObjectKey(feedback),
+                                      feedback: feedback,
+                                      onAction: switch (feedback.kind) {
+                                        ScanFeedbackKind.unknown => _search,
+                                        ScanFeedbackKind.networkError => () => _handleCode(feedback.code, retry: true),
+                                        ScanFeedbackKind.outOfStock => countOutOfStock,
+                                        _ => null,
+                                      },
+                                    ),
                             ),
                           ),
                         DraggableScrollableSheet(
@@ -644,7 +651,11 @@ class _CheckoutBar extends StatelessWidget {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,
-                  child: Num(shekel(total), key: const Key('cart.total'), size: 26, weight: FontWeight.w700),
+                  child: Bump(
+                    value: total,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Num(shekel(total), key: const Key('cart.total'), size: 26, weight: FontWeight.w700),
+                  ),
                 ),
               ],
             ),

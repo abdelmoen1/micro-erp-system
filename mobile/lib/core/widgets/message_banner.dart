@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../motion/motion.dart';
 import '../theme/hisbah_tokens.dart';
 
 /// Form-level message (invalid credentials, throttling, network, session expired).
@@ -27,45 +28,48 @@ class MessageBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = TextStyle(color: tone.fg, fontSize: 15, height: 1.6, fontWeight: FontWeight.w600);
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: tone.bg,
-          borderRadius: BorderRadius.circular(HisbahRadius.field),
-          border: Border.all(color: tone.line),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Icon(icon, size: 22, color: tone.fg),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text.rich(
-                    TextSpan(
-                      text: text,
-                      children: [
-                        if (trailing != null)
-                          TextSpan(
-                            text: ' $trailing',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                      ],
-                    ),
-                    style: style,
-                  ),
-                  if (detail != null) Text(detail!, style: style.copyWith(fontSize: 13, fontWeight: FontWeight.w500)),
-                ],
+    // Opens into place rather than popping, so the form below moves down where the eye can follow.
+    return GrowIn(
+      child: Semantics(
+        liveRegion: true,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: tone.bg,
+            borderRadius: BorderRadius.circular(HisbahRadius.field),
+            border: Border.all(color: tone.line),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(icon, size: 22, color: tone.fg),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text.rich(
+                      TextSpan(
+                        text: text,
+                        children: [
+                          if (trailing != null)
+                            TextSpan(
+                              text: ' $trailing',
+                              style: const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                        ],
+                      ),
+                      style: style,
+                    ),
+                    if (detail != null) Text(detail!, style: style.copyWith(fontSize: 13, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
